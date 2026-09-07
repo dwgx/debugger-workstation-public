@@ -31,13 +31,13 @@ function Test-HasFiles([string]$Dir) {
 }
 
 function Save-Url([string]$Url, [string]$OutFile) {
-    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $OutFile) | Out-Null
     if ((Test-Path -LiteralPath $OutFile) -and ((Get-Item -LiteralPath $OutFile).Length -gt 0)) {
         Write-Host "  skip exists $OutFile"
         return
     }
     Write-Host "  GET $Url"
     if ($Apply) {
+        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $OutFile) | Out-Null
         Invoke-WebRequest -Uri $Url -OutFile $OutFile -UseBasicParsing
     }
 }
@@ -57,7 +57,9 @@ function Expand-ToolZip([string]$Zip, [string]$Dest) {
 }
 
 $stage = Join-Path $InstallRoot '_download-stage'
-New-Item -ItemType Directory -Force -Path $stage | Out-Null
+if ($Apply) {
+    New-Item -ItemType Directory -Force -Path $stage | Out-Null
+}
 $sevenZip = $null
 
 # --- GitHub zip/exe jobs ---
