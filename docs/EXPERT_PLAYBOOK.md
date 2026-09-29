@@ -1,7 +1,7 @@
 # EXPERT_PLAYBOOK.md — 逆向 / 恶意样本 / 安全分析实战手册
 
 > 场景驱动。每节 = 遇到什么 → 怎么下手 → 具体命令参数 → 组合拳 → 老手才知道的坑。
-> 路径相对安装根(`D:\Tool\debugger`)。工具明细见 `TOOLS_INDEX.md`。
+> 路径相对安装根（本机 `D:\Software\Tool\WorkStation\debugger`）。工具明细见 `TOOLS_INDEX.md`。Agent 第一页：`skills/debugger-workstation/references/triage.md`。
 
 ---
 
@@ -36,14 +36,14 @@ Static-Reversing\PE-bear\PE-bear.exe   # 看 Imports / Sections 熵
 **场景**:无壳(或已脱壳)的 x86/x64 PE,要搞清核心逻辑。
 
 ```
-# 主力:Ghidra 深度分析
-Static-Reversing\Ghidra\ghidra_12.1.2_PUBLIC\ghidraRun.bat
-#   导入 → Analyze 全开 → Symbol Tree 找 entry/main
-# 脚本化批处理多个样本:
-Static-Reversing\Ghidra\...\support\analyzeHeadless.bat <项目dir> proj -import <样本> -postScript export_strings.py
+# Agent 无窗口(先这条)
+powershell -File scripts\ghidra-headless.ps1 -Sample <样本>
+powershell -File scripts\ida-cli.ps1 -Sample <样本>
+# GUI 仅给人点:
+Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\ghidraRun.bat
 
 # 想快/想脚本化:radare2
-Static-Reversing\radare2\bin\r2.exe -A <样本>
+Static-Reversing\radare2\radare2-6.2.2-w64\bin\radare2.exe -A <样本>
 #   aaa → afl(列函数)→ pdf @ sym.main(反汇编)→ axt @ <addr>(谁调它)
 ```
 

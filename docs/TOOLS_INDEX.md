@@ -1,17 +1,18 @@
 # Tool index (post-bootstrap)
 
-English contract: [`AGENTS.md`](../AGENTS.md). This cheat-sheet is Chinese. After `bootstrap.ps1 -Apply`, paths are relative to **your** install root (questionnaire default `D:\Tool\debugger`).
+English contract: [`AGENTS.md`](../AGENTS.md). This cheat-sheet is Chinese. Paths are relative to **this clone** (`local.json` `install_root`, this PC: `D:\Software\Tool\WorkStation\debugger`).
 
-# D:\Tool\debugger 工具索引(实战版)
+# 工具索引(实战版)
 
 生成日期:2026-06-14  
-重写:2026-07-04(从清单式改为专家用法参考)
+重写:2026-07-04(从清单式改为专家用法参考)  
+本机核验:2026-09-20（安装根 = 本 clone；YARA-X 1.20.0；Ghidra 12.1.3）
 
-> **说明(GitHub 读者)**:本文档描述的是 **bootstrap 部署后** 的完整工作站布局。`OriginalBase\`、`Launchers\`、`Reports\`、`MCP\tests\` 等目录由你在本机执行 `bootstrap.ps1` 并下载工具后生成,骨架仓库中刻意不含。
+> **说明(GitHub 读者)**:本文档描述的是 **bootstrap 部署后** 的完整工作站布局。`OriginalBase\`、`Launchers\` 等目录由本机生成,骨架仓库中刻意不含。
 >
-> **本文档定位**:不是"有什么",而是"怎么用"。每个工具给出 路径 / 核心用途(动词开头,一句话)/ 关键命令(2–3 条最常用命令+示例)。想要场景驱动的分析工作流(组合拳),看 `EXPERT_PLAYBOOK.md`。
+> **本文档定位**:不是"有什么",而是"怎么用"。每个工具给出 路径 / 核心用途(动词开头,一句话)/ 关键命令(2–3 条最常用命令+示例)。想要场景驱动的分析工作流(组合拳),看 `EXPERT_PLAYBOOK.md`。Agent 开火顺序: `skills/debugger-workstation/references/triage.md`。
 
-所有路径均相对安装根(默认 `D:\Tool\debugger`)。
+所有路径均相对安装根。
 
 ---
 
@@ -32,19 +33,20 @@ English contract: [`AGENTS.md`](../AGENTS.md). This cheat-sheet is Chinese. Afte
 ## 静态逆向
 
 ### Ghidra 12.1.3
-- **路径**:`Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\ghidraRun.bat`(需 Java)
+- **路径**:`Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\ghidraRun.bat`(需 Java 21)
 - **核心用途**:全平台反汇编+反编译,做深度静态分析和交叉引用追踪。
 - **关键命令**:
-  - GUI:`ghidraRun.bat`,新建项目 → 导入样本 → 双击 → Analyze(默认全开)。
-  - Headless 批量:`support\analyzeHeadless.bat <项目目录> <项目名> -import <样本> -postScript <脚本.py>`
-  - 反编译窗口 `Ctrl+E` 切 C 伪代码;`G` 跳地址;`Ctrl+Shift+F` 查函数被调用点。
+  - Agent CLI(无窗口):`powershell -File scripts\ghidra-headless.ps1 -Sample <pe>` → `decompiled\*.c` + `summary.json`。`-Http` 在 `127.0.0.1:8080` 起与 GhidraMCP 兼容的 HTTP。
+  - GUI:`ghidraRun.bat`,导入 → Analyze。插件 HTTP 给 router `ghidra` 用。
+  - 反编译窗口 `Ctrl+E`;`G` 跳地址;`Ctrl+Shift+F` 查 xref。
 
 ### IDA Pro(用户自备,商业)
-- **路径**:`Static-Reversing\IDA`(需用户购买安装 IDA Pro 8.3+;IDA Free 不支持 ida-pro-mcp)
-- **核心用途**:行业标准反汇编器,配合 ida-pro-mcp 让 AI 经端口 13337 驱动分析。
+- **路径**:`Static-Reversing\IDA`(junction → IDA 9.2;`idat.exe` + `ida.exe`)。不要下载、不要打包 IDA。
+- **核心用途**:行业标准反汇编器。Agent 默认 **idalib** 或 `idat -A`,不是 GUI 13337。
 - **关键命令**:
-  - 装 MCP 插件:IDA 内运行 `ida-pro-mcp --install`,重启后插件监听 13337。
-  - 快捷键:`F5` 反编译,`X` 交叉引用,`N` 重命名,`Y` 改类型,`;` 加注释。
+  - Agent CLI:`powershell -File scripts\ida-cli.ps1 -Sample <pe>`
+  - 交互 MCP:router backend `ida` → `idalib-mcp --stdio`。不要在 user MCP 再加一台 IDA。
+  - GUI 插件 13337 仅当人已打开 `ida.exe`。快捷键:`F5` / `X` / `N` / `Y`。
 
 ### PE-bear 0.7.2
 - **路径**:`Static-Reversing\PE-bear\PE-bear.exe`
@@ -79,7 +81,7 @@ English contract: [`AGENTS.md`](../AGENTS.md). This cheat-sheet is Chinese. Afte
   - `floss.exe <样本>` 全类型提取;`floss.exe --only static <样本>` 仅静态加速。
   - `floss.exe -q <样本>` 精简输出;解码字符串常暴露 C2 域名/密钥。
 
-### YARA-X 1.18.0(上游已到 1.19.0,建议更新)
+### YARA-X 1.20.0
 - **路径**:`Static-Reversing\YARA-X\yr.exe`
 - **核心用途**:用 YARA 规则扫描/分类样本,新一代 Rust 引擎,比旧 yara 快。
 - **关键命令**:
@@ -93,9 +95,11 @@ English contract: [`AGENTS.md`](../AGENTS.md). This cheat-sheet is Chinese. Afte
 - **关键命令**:拖入 dll/exe → 树状浏览命名空间;右键程序集 `Save Code` 导出整个反编译工程。命令行版 `ilspycmd.exe <dll> -o <输出目录>`。
 
 ### dnSpyEx 6.6.0
-- **路径**:`Static-Reversing\dnSpyEx\dnSpy.exe`
-- **核心用途**:反编译 + **调试** + 编辑 .NET,可下断点动态跟踪并直接改 IL/C#。
-- **关键命令**:拖入 → 设断点 `F9` → `F5` 附加/启动调试;右键方法 `Edit Method` 改代码后 `Compile`;`Edit Class`+保存生成打过补丁的程序集。
+- **路径**:CLI `Static-Reversing\dnSpyEx\dnSpy.Console.exe`;GUI `dnSpy.exe`
+- **核心用途**:反编译 + **调试** + 编辑 .NET。Agent 用 Console / `scripts\dnspy-console.ps1` / router `dnspy`(无窗口)。
+- **关键命令**:
+  - Agent:`powershell -File scripts\dnspy-console.ps1 -Sample <dll>`
+  - GUI:拖入 → `F9` 断点 → `F5`;`Edit Method` 改 IL/C#。
 
 ### ReClass.NET 1.2
 - **路径**:`Static-Reversing\ReClass.NET\x64\ReClass.NET.exe`
@@ -103,7 +107,7 @@ English contract: [`AGENTS.md`](../AGENTS.md). This cheat-sheet is Chinese. Afte
 - **关键命令**:附加进程 → 输入基址 → 逐字段标注类型(pointer/int/float/vtable),配合指针链定位对象。装 MCP 插件可让 AI 读结构。
 
 ### radare2(latest)
-- **路径**:`Static-Reversing\radare2\bin\radare2.exe`
+- **路径**:`Static-Reversing\radare2\radare2-6.2.2-w64\bin\radare2.exe`
 - **核心用途**:脚本化命令行逆向框架,也是官方 r2mcp 后端的前置。
 - **关键命令**:
   - 打开分析:`r2 -A <样本>`;`aaa` 深度分析;`afl` 列函数;`pdf @ main` 反汇编函数。
@@ -134,22 +138,22 @@ English contract: [`AGENTS.md`](../AGENTS.md). This cheat-sheet is Chinese. Afte
 
 ### Cheat Engine 7.7(用户锁定版,默认不更新)
 - **路径**:`Debuggers\Cheat Engine\cheatengine-x86_64.exe`
-- **核心用途**:内存扫描/锁定数值、Auto Assembler 打补丁、Lua 脚本自动化。
+- **核心用途**:内存扫描/锁定数值、Auto Assembler、Lua。**没有**有用的无窗口 CLI。
 - **关键命令**:
-  - 附加进程 → First Scan(值)→ 变化后 Next Scan 缩小 → 双击加入列表锁定。
-  - `Ctrl+Alt+A` 打开 Auto Assembler 写 AOB 注入;指针扫描找稳定基址链。
-  - MCP bridge:`autorun\ce_mcp_bridge.lua` 开机自动加载;需 CE 进程在跑。默认 `CE_MCP_ALLOW_SHELL=0`。
+  - Agent 先 `powershell -File scripts\ce-agent.ps1`(查 named pipe)。没有 pipe → 用 **x64dbg** MCP,不要干等 GUI。
+  - `-StartCe` 才会最小化启动窗口(仍是窗口)。`autorun\ce_mcp_bridge.lua` 已在 autorun。
+  - 默认 `CE_MCP_ALLOW_SHELL=0`。
 
 ---
 
 ## Android / 移动端
 
-### JADX 1.5.5(CLI + GUI)
-- **路径**:CLI `Mobile-Android\jadx\bin\jadx.bat`;GUI `Mobile-Android\jadx-gui-1.5.5-with-jre-win\jadx-gui-1.5.5.exe`(带 JRE)
-- **核心用途**:APK/DEX 一键反编译回 Java,读逻辑、找入口、搜敏感字符串。
+### JADX 1.5.6(CLI + GUI)
+- **路径**:CLI `Mobile-Android\jadx\bin\jadx.bat`;GUI `Mobile-Android\jadx\bin\jadx-gui.bat`
+- **核心用途**:APK/DEX 一键反编译回 Java。Agent 用 CLI,引擎与 GUI 相同。
 - **关键命令**:
-  - CLI:`jadx.bat -d <输出目录> <目标.apk>`;`--no-res` 跳资源加速。
-  - `jadx.bat -e ...` 导出为 Gradle 工程;GUI 里 `Ctrl+Shift+F` 全局搜字符串/API。
+  - Agent:`powershell -File scripts\jadx-decompile.ps1 -InputPath <apk>`
+  - 活 MCP:人开 `jadx-gui` + `plugins\jadx-ai-mcp-*.jar`。router `jadx` 可 list;HTTP 调用要 GUI。
 
 ### Apktool 3.0.2
 - **路径**:`Mobile-Android\Apktool\apktool.jar`(需 Java)
@@ -158,10 +162,12 @@ English contract: [`AGENTS.md`](../AGENTS.md). This cheat-sheet is Chinese. Afte
   - 解包:`java -jar apktool.jar d <目标.apk> -o <输出>`。
   - 回编:`java -jar apktool.jar b <目录> -o <新.apk>`,之后需重签名才能装。
 
-### MobSF(latest)
-- **路径**:`Mobile-Android\MobSF\Mobile-Security-Framework-MobSF`
-- **核心用途**:APK/IPA 自动化静态+动态安全评估,一键出权限/隐患/证书报告。
-- **关键命令**:启动 `run.bat`(Windows)→ 浏览器传样本 → 看静态报告;API key 在设置里,mobsf-mcp 需要 URL+key。
+### MobSF
+- **路径**:`Mobile-Android\MobSF`(本树 `manage.py` / `run.bat`)
+- **核心用途**:APK/IPA 静态(+可选动态)。Agent **不要**等浏览器。REST 是 `/api/v1/upload|scan|report_json`,key 是 **本机 MobSF API key**,不是 VirusTotal。
+- **关键命令**:
+  - Agent:`powershell -File scripts\mobsf-agent.ps1 -Sample <apk>` — REST 若无 key/服务则 apktool 本地静态。
+  - 可选全量:`run.bat`(waitress,无浏览器也行)。不要把 `.env` 提交进 git。
 
 ### objection 1.12.5
 - **路径**:`Mobile-Android\objection\.venv\Scripts\objection.exe`(基于 Frida)

@@ -75,7 +75,10 @@ $ghJobs = @(
     @{ name = 'Reqable'; repo = 'reqable/reqable-app'; tag = 'latest'; pat = 'reqable-app-windows-x86_64\.zip$'; dir = 'Network-HTTP\reqable-app-windows-x86_64' },
     @{ name = 'volatility3-win'; repo = 'volatilityfoundation/volatility3'; tag = 'latest'; pat = 'volatility3-win-exes-.*\.zip$'; dir = 'System-Forensics\volatility3' },
     @{ name = 'Ghidra-12.1.3'; repo = 'NationalSecurityAgency/ghidra'; tag = 'Ghidra_12.1.3_build'; pat = 'PUBLIC_.*\.zip$'; dir = 'Static-Reversing\Ghidra' },
-    @{ name = 'capa'; repo = 'mandiant/capa'; tag = 'latest'; pat = 'capa-v.*-windows\.zip$'; dir = 'Static-Reversing\capa' }
+    @{ name = 'capa'; repo = 'mandiant/capa'; tag = 'latest'; pat = 'capa-v.*-windows\.zip$'; dir = 'Static-Reversing\capa' },
+    @{ name = 'JADX'; repo = 'skylot/jadx'; tag = 'latest'; pat = '^jadx-[0-9.]+\.zip$'; dir = 'Mobile-Android\jadx' },
+    @{ name = 'ILSpy'; repo = 'icsharpcode/ILSpy'; tag = 'latest'; pat = 'ILSpy_windows_selfcontained_.*-x64\.zip$'; dir = 'Static-Reversing\ILSpy' },
+    @{ name = 'AssetRipper'; repo = 'AssetRipper/AssetRipper'; tag = 'latest'; pat = 'AssetRipper_win_x64\.zip$'; dir = 'Unpackers-Game\AssetRipper' }
 )
 
 foreach ($j in $ghJobs) {
@@ -169,6 +172,21 @@ if ($SkipExisting -and (Test-HasFiles $sysDest)) {
     Write-Host '  skip dest has files'
 } else {
     Expand-ToolZip $sysZip $sysDest
+}
+
+Write-Job 'Apktool' 'iBotPeaches/Apktool jar'
+try {
+    $a = Get-GhAsset 'iBotPeaches/Apktool' 'latest' '^apktool_.*\.jar$'
+    $jar = Join-Path $stage $a.name
+    Save-Url $a.url $jar
+    $apkDest = Join-Path $InstallRoot 'Mobile-Android\Apktool'
+    if ($Apply) {
+        New-Item -ItemType Directory -Force -Path $apkDest | Out-Null
+        Copy-Item $jar (Join-Path $apkDest 'apktool.jar') -Force
+        Copy-Item $jar (Join-Path $apkDest $a.name) -Force
+    }
+} catch {
+    Write-Warning ("Apktool: {0}" -f $_.Exception.Message)
 }
 
 Write-Job 'Npcap-installer' 'npcap.com (download only, do not run)'

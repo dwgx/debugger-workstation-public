@@ -7,8 +7,10 @@ SmartCLI owns **one PTY**. Use it for interactive CLIs. Do not occupy it for Gro
 | Tool | Why | Example start |
 |---|---|---|
 | radare2 / rizin | Visual panels, seek, `VV` | `r2 -A sample.exe` |
-| Ghidra `analyzeHeadless` | Long logs, prompts | see Ghidra `support\analyzeHeadless.bat` |
-| JADX CLI | Decompile wait | `jadx.bat -d out app.apk` |
+| Ghidra headless | Batch decompile | `scripts\ghidra-headless.ps1 -Sample <pe>` |
+| IDA `idat` | Batch Hex-Rays | `scripts\ida-cli.ps1 -Sample <pe>` |
+| JADX CLI | Decompile wait | `scripts\jadx-decompile.ps1 -InputPath app.apk` |
+| dnSpy.Console | .NET decompile | `scripts\dnspy-console.ps1 -Sample lib.dll` |
 | Apktool | Decode/build | `java -jar apktool.jar d app.apk` |
 | FLOSS / capa / YARA-X `yr` | Streaming analysis | `capa.exe sample` |
 | ILSpy `ilspycmd` | Console decompile | `ilspycmd Assembly.dll -o out` |
@@ -23,7 +25,7 @@ Flow: `smartcli.start` → `wait_ready` / `wait_regex` → `send_line` → `snap
 
 ## Do not put in SmartCLI
 
-GUI: x64dbg, IDA, ImHex, dnSpyEx, PE-bear, Cheat Engine, System Informer, Reqable, Wireshark GUI, AssetRipper GUI. Drive those via their MCP backend (router) or tell the human to click.
+GUI-only: x64dbg, ImHex, PE-bear, Cheat Engine window, System Informer, Reqable, Wireshark GUI, AssetRipper GUI, `ida.exe` / `dnSpy.exe` / `ghidraRun.bat`. Agent decompile uses the CLI wrappers (ida-cli / ghidra-headless / dnspy-console / jadx-decompile), not those windows. CE: `scripts\ce-agent.ps1` then x64dbg MCP.
 
 ## MCP vs CLI
 

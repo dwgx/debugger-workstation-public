@@ -1,5 +1,5 @@
 @echo off
-REM radare2 官方 MCP(r2mcp,纯 C)。由 r2pm 启动,不要直接执行 r2mcp。
-REM 需先安装 radare2 并执行: r2pm -Uci r2mcp
+REM radare2 official MCP (r2mcp). Start via r2pm, do not run r2mcp.exe directly.
 set "PYTHONIOENCODING=utf-8"
+set "PATH=%~dp0..\..\Static-Reversing\radare2\radare2-6.2.2-w64\bin;%PATH%"
 r2pm -r r2mcp

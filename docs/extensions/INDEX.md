@@ -6,7 +6,7 @@
 > 引入任一项前,先联网核验上游当前状态(是否维护、license、安全性),再决定 clone/集成。
 > 所有链接均为公开官方/社区仓库,可正常联网核验。
 
-最近核验:2026-09-01（本机补全 ImHex/radare2/7-Zip/Sysinternals/UPX/ilspycmd/capa；SmartCLI 配对见 `docs/SMARTCLI.md`）。
+最近核验:2026-09-20（本机升级 + smoke。对照 REMnux 8 MCP / FLARE-VM / flarevm-mcp：别人用「一个 MCP 调一整套 CLI」+ 技能教 agent 先 triage；GUI 反编译仍走插件。本站走 debugger-router + CLI 技能，不把 19 后端塞进用户全局 MCP）。
 
 新增本机实用项（不入库二进制）:
 
@@ -66,6 +66,8 @@
 - [x] 确认 `jadx-mcp-server` → **zinja-coder/jadx-mcp-server (Apache-2.0)**,需配 jadx-ai-mcp 插件。
 - [x] 确认 `x64dbg-automate` / `x64dbg-automate-pyclient` → **dariushoule/* (MIT)**。
 - [ ] 评估是否用 bethington/ghidra-mcp(LaurieWired fork,工具数更多)升级 Ghidra backend。
+- [ ] Owner-named `-Apply` for disk vs upstream: JADX 1.5.5→1.5.6, Apktool 3.0.2→3.0.3, radare2 6.2.0→6.2.2, ILSpy 10.1→11.0. AssetRipper 1.3.14→2.0.0 is a **major**; do not auto-jump.
+- [x] 2026-09-20: agent playbooks `skills/debugger-workstation/references/{triage,arsenal,mcp-router}.md`。Client MCP remains router-only.
 
 ---
 
