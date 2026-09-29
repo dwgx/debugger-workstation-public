@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>web-reverse lab</title>
+<style>
+  body { font: 14px/1.6 ui-monospace, Consolas, monospace; margin: 2rem; max-width: 50rem; }
+  code { background: #f2f2f2; padding: 0 .25rem; }
+  li { margin: .3rem 0; }
+</style>
+</head>
+<body>
+<h1>web-reverse lab target</h1>
+<p>Loopback-only. Four surfaces:</p>
+<ul>
+  <li><a href="/plain">/plain</a> — readable signer: HMAC-SHA256 over <code>ts + "." + body</code>, key in source.</li>
+  <li><a href="/obf">/obf</a> — hardened signer: string array, mangled identifiers, flattened control flow.</li>
+  <li><a href="/fingerprint">/fingerprint</a> — bot-detection surface: scores header + client signals, explains itself.</li>
+  <li><code>POST /api/submit</code> — signature gate: 401 bad/stale, 409 replayed, 200 accepted.</li>
+</ul>
+<p>Drive it with <code>tools/capture.mjs</code> (CDP), then <code>tools/recover.mjs</code> and <code>tools/replay.mjs</code>.
+Method: <code>web-reverse/README.md</code>.</p>
+</body>
+</html>

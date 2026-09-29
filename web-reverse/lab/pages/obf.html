@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>lab target — hardened signer</title></head>
+<body>
+<h1>lab target — hardened signer</h1>
+<p id="s">idle</p>
+<p><button id="go">submit</button></p>
+<!--
+  Deliberately hardened build of the same client as /plain:
+    * string-array indirection (every literal goes through _0x2f7a, XOR 0x17)
+    * identifier mangling, crypto core inside a closure
+    * control-flow flattening for the request flow (_0x33 is a state machine)
+  Nothing here hides a key from a determined analyst: the point is that the
+  algorithm has to be recovered from a live session rather than read off the page.
+  Methodology: ../../README.md
+-->
+<script>
+var _0xa=['{vu:srzx:d~py~yp:|rn:.q%t&v r:yxc:v:erv{:drterc:a&','8vg~8dbuz~c','o:{vu:cd','o:{vu:d~py','txycryc:cngr','vgg{~tvc~xy8}dxy','GXDC','{vu9dbuz~c','xg','yxytr','vc','_CCG7','{vypbvprd','|vc:|rn','|vc:zdp','erdgxydrCroc','xy{xvs'];
+function _0x2f7a(i){var s=_0xa[i],o='',k;for(k=0;k<s.length;k++)o+=String.fromCharCode(s.charCodeAt(k)^23);return o}
+var _0x9b=(function(){
+  function _0x1f(x,n){return (x>>>n)|(x<<(32-n))}
+  function _0x2a(s){return new TextEncoder().encode(s)}
+  function _0x3b(b){var o='',i;for(i=0;i<b.length;i++)o+=(b[i]<16?'0':'')+b[i].toString(16);return o}
+  function _0x4c(a,b){var o=new Uint8Array(a.length+b.length);o.set(a,0);o.set(b,a.length);return o}
+  var _0x5d=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  function _0x6e(by){
+    var L=by.length,p=new Uint8Array(((L+9+63)>>6)<<6);p.set(by);p[L]=0x80;
+    var v=new DataView(p.buffer);v.setUint32(p.length-8,Math.floor(L/536870912));v.setUint32(p.length-4,(L*8)>>>0);
+    var h0=0x6a09e667,h1=0xbb67ae85,h2=0x3c6ef372,h3=0xa54ff53a,h4=0x510e527f,h5=0x9b05688c,h6=0x1f83d9ab,h7=0x5be0cd19,W=new Array(64),o,i,off;
+    for(off=0;off<p.length;off+=64){
+      for(i=0;i<16;i++)W[i]=v.getInt32(off+(i<<2));
+      for(i=16;i<64;i++){var x=W[i-15],y=W[i-2];var s0=_0x1f(x,7)^_0x1f(x,18)^(x>>>3);var s1=_0x1f(y,17)^_0x1f(y,19)^(y>>>10);W[i]=(W[i-16]+s0+W[i-7]+s1)|0}
+      var a=h0,b=h1,c=h2,d=h3,e=h4,f=h5,g=h6,h=h7;
+      for(i=0;i<64;i++){
+        var S1=_0x1f(e,6)^_0x1f(e,11)^_0x1f(e,25),ch=(e&f)^(~e&g),t1=(h+S1+ch+_0x5d[i]+W[i])|0;
+        var S0=_0x1f(a,2)^_0x1f(a,13)^_0x1f(a,22),mj=(a&b)^(a&c)^(b&c),t2=(S0+mj)|0;
+        h=g;g=f;f=e;e=(d+t1)|0;d=c;c=b;b=a;a=(t1+t2)|0;
+      }
+      h0=(h0+a)|0;h1=(h1+b)|0;h2=(h2+c)|0;h3=(h3+d)|0;h4=(h4+e)|0;h5=(h5+f)|0;h6=(h6+g)|0;h7=(h7+h)|0;
+    }
+    o=new Uint8Array(32);var dv=new DataView(o.buffer);
+    dv.setInt32(0,h0);dv.setInt32(4,h1);dv.setInt32(8,h2);dv.setInt32(12,h3);dv.setInt32(16,h4);dv.setInt32(20,h5);dv.setInt32(24,h6);dv.setInt32(28,h7);
+    return o;
+  }
+  return { h: function(k,m){
+    var kk=_0x2a(k); if(kk.length>64) kk=_0x6e(kk);
+    var ip=new Uint8Array(64),op=new Uint8Array(64),i,b;
+    for(i=0;i<64;i++){b=i<kk.length?kk[i]:0;ip[i]=b^0x36;op[i]=b^0x5c}
+    return _0x3b(_0x6e(_0x4c(op,_0x6e(_0x4c(ip,_0x2a(m))))));
+  } };
+})();
+var _0x7c=null,_0x8d=null,_0x6e=null,_0x5a=null,_0x4f=null;
+function _0x19(){
+  var o={};o[_0x2f7a(8)]=_0x2f7a(7);o[_0x2f7a(9)]=Math.random().toString(36).slice(2,10);o[_0x2f7a(10)]=Date.now();
+  _0x6e=JSON.stringify(o);
+}
+function _0x33(){
+  var s=0;
+  while(true){
+    switch(s){
+      case 0: _0x19(); s=1; break;
+      case 1: _0x5a=String(Date.now()); _0x4f=_0x9b.h(_0x2f7a(0),_0x5a+'.'+_0x6e); s=2; break;
+      case 2: _0x7c=new XMLHttpRequest(); _0x7c.open(_0x2f7a(6),_0x2f7a(1),true); s=3; break;
+      case 3: _0x7c.setRequestHeader(_0x2f7a(4),_0x2f7a(5)); _0x7c.setRequestHeader(_0x2f7a(2),_0x5a); _0x7c.setRequestHeader(_0x2f7a(3),_0x4f); s=4; break;
+      case 4: _0x7c.onload=function(){document.getElementById('s').textContent=_0x2f7a(11)+_0x7c.status+'  sign '+_0x4f.slice(0,16)+'\u2026';}; s=5; break;
+      case 5: _0x7c.send(_0x6e); s=6; break;
+      case 6: return;
+      default: return;
+    }
+  }
+}
+document.getElementById('go').addEventListener('click',_0x33);
+</script>
+</body>
+</html>

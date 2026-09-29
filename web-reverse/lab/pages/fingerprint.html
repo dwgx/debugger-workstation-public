@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>lab target — bot-detection surface</title>
+<style>
+  body { font: 14px/1.6 ui-monospace, Consolas, monospace; margin: 2rem; max-width: 52rem; }
+  pre { background: #f4f4f4; padding: .75rem; overflow: auto; }
+  .hint { color: #666; }
+</style>
+</head>
+<body>
+<h1>lab target — bot-detection surface</h1>
+<p class="hint">A miniature of what a real anti-automation gate does: score the client from
+server-side header evidence <em>plus</em> client-side JS signals, then explain the verdict.
+Detector only — nothing on this page spoofs, patches or hides anything.</p>
+<pre id="out">collecting…</pre>
+
+<script>
+/* --- the inspector probe ---------------------------------------------------
+   Installing a getter on Error.prepareStackTrace and then reading `.stack`
+   yourself proves nothing: V8 formats the stack for the page too. So the page
+   separates the two questions:
+     prepareStackTraceReadWithoutTouch : did ANYTHING read the accessor during a
+        400 ms window in which the page never touched .stack itself? A CDP client
+        with Runtime.enable active answers yes; a plain windowed browser says no.
+     prepareStackTraceReadOnTouch     : control. V8 reads it when the page asks
+        for .stack, so this is expected true everywhere.
+   Both values are reported raw; the server decides what they are worth. */
+let stackReadFired = false;
+
+function installStackProbe() {
+  try {
+    Object.defineProperty(Error, 'prepareStackTrace', {
+      configurable: true,
+      get() { stackReadFired = true; return undefined; },
+      set() {}
+    });
+    return true;
+  } catch (e) { return false; }
+}
+function collect() {
+  const out = {
+    webdriver: navigator.webdriver === true,
+    hasWindowChrome: typeof window.chrome !== 'undefined' && window.chrome !== null,
+    plugins: navigator.plugins ? navigator.plugins.length : 0,
+    mimeTypes: navigator.mimeTypes ? navigator.mimeTypes.length : 0,
+    languages: navigator.languages ? navigator.languages.length : 0,
+    hasNotification: typeof Notification !== 'undefined',
+    hardwareConcurrency: navigator.hardwareConcurrency,
+    userAgent: navigator.userAgent
+  };
+
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (gl) {
+      const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+      out.webglVendor = gl.getParameter(dbg ? dbg.UNMASKED_VENDOR_WEBGL : gl.VENDOR);
+      out.webglRenderer = gl.getParameter(dbg ? dbg.UNMASKED_RENDERER_WEBGL : gl.RENDERER);
+    }
+  } catch (e) { out.webglError = String(e); }
+
+  return out;
+}
+
+function report() {
+  const signals = collect();
+  signals.stackProbeInstalled = installStackProbe();
+  signals.prepareStackTraceReadWithoutTouch = stackReadFired;
+
+  setTimeout(function () {
+    signals.prepareStackTraceReadWithoutTouch = stackReadFired;
+    stackReadFired = false;
+    void (new Error('probe')).stack;
+    signals.prepareStackTraceReadOnTouch = stackReadFired;
+    try { delete Error.prepareStackTrace; } catch (e) { /* leave it */ }
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/fingerprint', true);
+    xhr.setRequestHeader('content-type', 'application/json');
+    xhr.onload = function () {
+      let verdict = null;
+      try { verdict = JSON.parse(xhr.responseText); } catch (e) { verdict = { ok: false, raw: xhr.responseText }; }
+      verdict.raw = signals;
+      window.__labVerdict = verdict;
+      const lines = ['verdict  ' + verdict.verdict + '   score ' + verdict.score,
+        '', 'reasons'];
+      (verdict.reasons || []).forEach(r => lines.push('  ' + r.id.padEnd(26) + '+' + String(r.cost).padStart(3) + '  ' + r.side + '  ' + r.why));
+      lines.push('', 'observed (client)', JSON.stringify(signals, null, 2));
+      document.getElementById('out').textContent = lines.join('\n');
+    };
+    xhr.onerror = function () { document.getElementById('out').textContent = 'request failed'; };
+    xhr.send(JSON.stringify(signals));
+  }, 400);
+}
+
+report();
+window.__labCollect = collect;
+</script>
+</body>
+</html>

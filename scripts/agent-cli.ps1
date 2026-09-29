@@ -19,6 +19,7 @@ $catalog = @(
     @{ tool = 'ce'; script = 'ce-agent.ps1'; cli = 'none; JSON status + x64dbg fallback'; gui = 'cheatengine-x86_64.exe + autorun ce_mcp_bridge.lua'; mcp = 'router cheatengine needs named pipe; else x64dbg' }
     @{ tool = 'mobsf'; script = 'mobsf-agent.ps1'; cli = 'REST or apktool local-static'; gui = 'MobSF web UI not required'; mcp = 'router mobsf needs MOBSF_API_KEY (local, not VT)' }
     @{ tool = 'intel'; script = 'intel-agent.ps1'; cli = 'SHA256+DIE+capa; VT hash lookup if key'; gui = 'n/a'; mcp = 'router virustotal needs VIRUSTOTAL_API_KEY' }
+    @{ tool = 'web-reverse'; script = 'web-reverse-lab.ps1'; cli = 'node tools/loop.mjs (CDP capture -> deobfuscate -> replay -> bot-detection report)'; gui = 'n/a (headless lab Chrome, disposable profile)'; mcp = 'none; raw CDP over the devtools websocket, zero npm deps' }
 )
 
 if (-not $Tool -or $Tool -in @('catalog', 'list', '-h', '--help', '/?')) {
@@ -40,6 +41,7 @@ $map = @{
     ce     = 'ce-agent.ps1'
     mobsf  = 'mobsf-agent.ps1'
     intel  = 'intel-agent.ps1'
+    'web-reverse' = 'web-reverse-lab.ps1'
 }
 $key = $Tool.ToLowerInvariant()
 if (-not $map.ContainsKey($key)) {
