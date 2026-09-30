@@ -46,12 +46,15 @@ in one session; treat any "the tool cannot do X" as unverified until someone has
 
 ## 2. Verified state
 
+> Superseded in part by `.agent/HANDOFF.md`, which is the shorter and more current
+> entry point. Section 13 below covers the mission layer, which postdates §2.
+
 Run from the repo root. Each is the registry's `probe.command`.
 
 | Capability | Command | Result |
 |---|---|---|
-| registry selftest | `python scripts/registry-verify.py --selftest` | **14/14 rules fire** |
-| registry validate | `python scripts/registry-verify.py` | **11 capabilities, CLEAN** |
+| registry selftest | `python scripts/registry-verify.py --selftest` | **18/18 rules fire** |
+| registry validate | `python scripts/registry-verify.py` | **15 capabilities, CLEAN** |
 | ghidra fail-open | `powershell -File scripts\ghidra-failopen-regress.ps1` | **4/4 LOOP CLOSED** |
 | web/JS | `node web-reverse/tools/loop.mjs` | LOOP CLOSED |
 | web AST deobf | `node web-reverse/tools/loop2.mjs` | all checks incl. negative controls |
