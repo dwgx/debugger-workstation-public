@@ -148,3 +148,12 @@ desktop.ini
 # add a stale copy. Sources are tracked; build outputs are not.
 forensics-lab/lab/payload/*.dll
 forensics-lab/lab/payload/*.exe
+
+# --- managed-lab / headless-lab build output (2026-09-30) ---
+# Compiled samples, decompilations, hash manifests and Ghidra projects. The
+# sources and the known answers are committed by hand; everything produced from
+# them is not.
+/managed-lab/out/
+/headless-lab/out/
+managed-lab/**/obj/
+headless-lab/**/obj/

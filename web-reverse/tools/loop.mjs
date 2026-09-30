@@ -16,7 +16,12 @@ import { fileURLToPath } from 'node:url';
 import { createServer, keyId } from '../lab/server.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const ART = path.join(os.tmpdir(), 'web-reverse-captures', 'loop');
+/* Per-run artifact directory. A fixed shared path was a real false-failure
+   source: loop2.mjs spawns this script, so two concurrent runs both wrote
+   loop/obf.json and the loser replayed a capture the other had just replaced.
+   The symptom looked like a broken gate (200 where a copy must give 409).
+   Isolating by pid makes concurrent runs impossible to confuse. */
+const ART = path.join(os.tmpdir(), 'web-reverse-captures', process.env.WEB_REVERSE_ART || `loop-${process.pid}`);
 const steps = [];
 
 /* Children run ASYNC on purpose: the lab server lives in this process, so a

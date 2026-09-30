@@ -109,12 +109,25 @@ async function main() {
       if (p.request.url.includes('/api/intercept')) {
         /* ---- REQUEST rewrite: change a header and the body in flight ---- */
         const originalMarker = Object.entries(p.request.headers).find(([k]) => k.toLowerCase() === 'x-lab-marker')?.[1] ?? null;
+        /* Filter BOTH content-length and content-type.
+           Measured on Chrome 154: `Fetch.continueRequest` rejects the call with
+           "Unsafe header: content-length" if the header list contains it, the
+           call fails, the request stays paused, the page's fetch never
+           completes, and a `Runtime.evaluate {awaitPromise:true}` waiting on
+           that fetch never returns. The failure is invisible because the
+           handler's error was collected into handlerErrors, which is only read
+           AFTER the evaluate returns -- a branch that could not be reached.
+           So the tool hung with no output at all. CDP recomputes the framing
+           headers from postDataEntries, so the correct move is to drop them. */
         const headers = Object.entries(p.request.headers)
-          .filter(([k]) => k.toLowerCase() !== 'x-lab-marker' && k.toLowerCase() !== 'content-length')
+          .filter(([k]) => {
+            const n = k.toLowerCase();
+            return n !== 'x-lab-marker' && n !== 'content-length' && n !== 'content-type';
+          })
           .map(([name, value]) => ({ name, value }));
         headers.push({ name: 'x-lab-marker', value: 'rewritten-by-cdp' });
         const newBody = JSON.stringify({ from: 'page', marker: 'rewritten-by-cdp', rewritten: true });
-        headers.push({ name: 'content-length', value: String(Buffer.byteLength(newBody)) });
+        headers.push({ name: 'content-type', value: 'application/json' });
         rewrites.request = {
           url: p.request.url,
           originalMarker,
@@ -122,12 +135,16 @@ async function main() {
           newMarker: 'rewritten-by-cdp',
           newBody
         };
-        /* Fetch-domain postData is a BINARY parameter: base64 over JSON. Sending the
-           raw string is rejected with "Invalid parameters" (measured). */
+        /* `postData` (base64), NOT `postDataEntries`. Measured: with
+           postDataEntries the call SUCCEEDS and the header rewrite lands, but
+           the body arrives at the origin unchanged -- a silent partial rewrite
+           that reads exactly like a working interceptor. Fetch.continueRequest
+           takes postData as a base64 string; postDataEntries belongs to a
+           different CDP call and is accepted-and-ignored here. */
         dispatch(send('Fetch.continueRequest', {
           requestId: p.requestId,
           headers,
-          postDataEntries: [{ bytes: Buffer.from(newBody).toString('base64') }]
+          postData: Buffer.from(newBody).toString('base64')
         }, sessionId));
       }
     });
@@ -159,8 +176,13 @@ async function main() {
     await Promise.all(pending);
     if (handlerErrors.length) record('CDP rewrite calls all succeeded', false, handlerErrors.join(' | '));
 
-    /* ---- evidence: what the SERVER recorded, independent of the page ---- */
-    const [interceptRecord, fulfillRecord] = recorder.records;
+    /* ---- evidence: what the SERVER recorded, independent of the page ----
+       Select by URL, not by position. `recorder.records[0]` is the page-load
+       GET for /lab-page, so the checks were reading the navigation request and
+       reporting the rewrite as failed while the page had already shown the
+       rewritten marker. Evidence must name the request it is evidence for. */
+    const interceptRecord = recorder.records.find(r => r.url.includes('/api/intercept')) ?? null;
+    const fulfillRecord = recorder.records.find(r => r.url.includes('/api/fulfill')) ?? null;
     const serverSawMarker = interceptRecord?.headers['x-lab-marker'] ?? null;
     const serverSawBody = interceptRecord?.body ?? '';
     const serverFulfillBody = fulfillRecord?.body ?? '';

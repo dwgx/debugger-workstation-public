@@ -44,13 +44,33 @@ export class CDP {
     for (const fn of [...this.listeners]) fn(msg);
   }
 
-  send(method, params = {}, sessionId) {
+  /**
+   * Send a CDP command and await its reply.
+   *
+   * `timeoutMs` is not optional behaviour: a command whose reply never arrives
+   * (a request paused by the Fetch domain and never continued, for example)
+   * used to leave the pending slot alive forever, so the caller hung with no
+   * error and no output. A hang that cannot fail is a hang that cannot be
+   * diagnosed. Every command now settles one way or the other.
+   */
+  send(method, params = {}, sessionId, { timeoutMs = 15_000 } = {}) {
     const id = this.nextId++;
     const payload = { id, method, params };
     if (sessionId) payload.sessionId = sessionId;
     return new Promise((resolve, reject) => {
-      this.pending.set(id, { resolve, reject, method });
+      const slot = { resolve, reject, method };
+      const timer = setTimeout(() => {
+        if (!this.pending.delete(id)) return;
+        reject(new Error(`timeout ${timeoutMs}ms waiting for reply to ${method} (id ${id})`));
+      }, timeoutMs);
+      const done = (fn) => (v) => { clearTimeout(timer); fn(v); };
+      this.pending.set(id, {
+        resolve: done(resolve),
+        reject: (e) => { clearTimeout(timer); reject(e); },
+        method,
+      });
       this.ws.send(JSON.stringify(payload));
+      void slot;
     });
   }
 
