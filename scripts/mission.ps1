@@ -479,10 +479,17 @@ function Get-Verdict {
 
     # 4. independence -- two DIFFERENT capabilities. Independence is about the instrument,
     #    not the binary: two decompilers agreeing is one opinion held twice.
+    # Independence is about the FAMILY of instrument, not the tool id. Two decompilers
+    # agreeing is one opinion held twice -- REx-skill: "An ensemble of readers shares the
+    # decompiler's blind spots." {ghidra.decompile, ida.decompile} is therefore REFUSED as
+    # corroboration, even though they are two capabilities and two stars on GitHub.
+    $famOf = @{}
+    foreach ($c in $Registry.capabilities) { if ($c.evidence_source) { $famOf[$c.id] = $c.evidence_source } }
     $distinct = @($good | ForEach-Object { $_.capability } | Sort-Object -Unique)
-    G 'independence' ($distinct.Count -ge 2) "$($distinct.Count) distinct capabilities: $($distinct -join ', ')"
-    if ($distinct.Count -lt 2) {
-        G 'independence_insufficient' $false 'two facts from two DIFFERENT capabilities are required; independence is about the instrument, not the binary'
+    $families = @($good | ForEach-Object { $famOf[$_.capability] } | Where-Object { $_ } | Sort-Object -Unique)
+    G 'independence' ($families.Count -ge 2) ("$($distinct.Count) capabilities across $($families.Count) evidence famil(y/ies): " + ($families -join ', '))
+    if ($families.Count -lt 2) {
+        G 'independence_insufficient' $false ("every fact came from ONE instrument family (" + (($families + @('unclassified')) -join ',') + "). Independence is about the family of instrument, not the tool: two decompilers agreeing is one opinion held twice.")
     }
 
     # 5. bounded claim -- no wider than the least-covering does_not_prove allows
@@ -609,6 +616,15 @@ function Invoke-Selftest {
     C 'discharged: naming a guard that is not in the registry does not count' {
         $ev = @()
         (Get-Verdict -Claim 'nothing suspicious' -QuestionType 'Q1.identify' -Evidence $ev -Registry (Get-Registry) -DischargedIn @('a.capability.that.does.not.exist')).tier
+    } 'unresolved'
+
+    # Two DECOMPILERS are one opinion held twice. Distinct capability ids is not enough.
+    C 'independence: two decompilers from different tools are NOT independent' {
+        $ev = @(
+            [ordered]@{ capability = 'native.ida.decompile'; ok = $true; facts = @([ordered]@{ key = 'native.dec.code'; value = 'x' }) },
+            [ordered]@{ capability = 'native.ghidra.decompile'; ok = $true; facts = @([ordered]@{ key = 'native.ghidra.summary'; value = 'y' }) }
+        )
+        (Get-Verdict -Claim 'the check is in main' -QuestionType 'Q2.locate' -Evidence $ev -Registry (Get-Registry)).tier
     } 'unresolved'
 
     C 'a failed round contributes no facts to the verdict' {

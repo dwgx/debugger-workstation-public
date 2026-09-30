@@ -11,7 +11,8 @@
     "path_ref": "a filesystem path to an artifact; never the artifact's contents",
     "pcap": "a parsed packet-capture record set",
     "apk": "a parsed Android package manifest or dex summary",
-    "token": "a parsed JOSE/JWT: header, claims, signature presence -- never a live credential"
+    "token": "a parsed JOSE/JWT: header, claims, signature presence -- never a live credential",
+    "evidence_source": "which FAMILY of instrument produced a fact. Independence is about the family, not the tool id: ghidra.decompile and ida.decompile are both 'decompiler' and therefore cannot corroborate each other."
   },
   "capabilities": [
     {
@@ -173,7 +174,9 @@
       "provenance": {
         "source": "measured on this host 2026-09-30",
         "record": "docs/research/binary-mcp-map.md; native-lab/README.md"
-      }
+      },
+      "evidence_source": "decompiler",
+      "evidence_source_note": "Hex-Rays IDA 9.2 via idalib"
     },
     {
       "id": "native.ida.list_functions",
@@ -212,6 +215,14 @@
               "name",
               "size"
             ]
+          },
+          {
+            "key": "native.func.named",
+            "type": "string",
+            "fields": [
+              "name"
+            ],
+            "note": "the non-sub_ names only, i.e. what the analyser recovered rather than what it numbered"
           }
         ],
         "invalidates_on": [
@@ -300,7 +311,9 @@
       "provenance": {
         "source": "measured on this host 2026-09-30",
         "record": "native-lab/README.md"
-      }
+      },
+      "evidence_source": "static-analysis",
+      "evidence_source_note": "IDA function boundary recovery"
     },
     {
       "id": "web.js.cdp",
@@ -384,7 +397,9 @@
       "provenance": {
         "source": "measured on this host 2026-09-30",
         "record": "web-reverse/README.md"
-      }
+      },
+      "evidence_source": "dynamic-observation",
+      "evidence_source_note": "instrumented page over CDP"
     },
     {
       "id": "crypto.jose.parse",
@@ -462,7 +477,9 @@
       "provenance": {
         "source": "measured on this host 2026-09-30",
         "record": "crypto-lab/README.md"
-      }
+      },
+      "evidence_source": "structural-parser",
+      "evidence_source_note": "token structure decoded without acceptance"
     },
     {
       "id": "net.pcap.analyse",
@@ -542,7 +559,9 @@
       "provenance": {
         "source": "measured on this host 2026-09-30",
         "record": "net-reverse/README.md"
-      }
+      },
+      "evidence_source": "capture-analysis",
+      "evidence_source_note": "recorded flows only"
     },
     {
       "id": "forensics.memory.artefact",
@@ -621,7 +640,9 @@
       "provenance": {
         "source": "measured on this host 2026-09-30",
         "record": "forensics-lab/README.md"
-      }
+      },
+      "evidence_source": "artefact-parser",
+      "evidence_source_note": "host artefacts; refusals are results"
     },
     {
       "id": "managed.il.decompile",
@@ -698,7 +719,9 @@
       "provenance": {
         "source": "measured on this host 2026-09-30",
         "record": "managed-lab/README.md"
-      }
+      },
+      "evidence_source": "decompiler",
+      "evidence_source_note": "ILSpy managed decompilation"
     },
     {
       "id": "mobile.apk.static",
@@ -776,7 +799,9 @@
       "provenance": {
         "source": "measured on this host 2026-09-30",
         "record": "mobile-lab/README.md"
-      }
+      },
+      "evidence_source": "package-inspection",
+      "evidence_source_note": "built APK inspected with independent decoders"
     },
     {
       "id": "re.corpus.solve",
@@ -852,7 +877,9 @@
       "provenance": {
         "source": "measured on this host 2026-09-30",
         "record": "crackme-corpus/README.md"
-      }
+      },
+      "evidence_source": "practice",
+      "evidence_source_note": "self-built corpus, solved"
     },
     {
       "id": "dynamic.device.frida",
@@ -933,7 +960,9 @@
       "provenance": {
         "source": "measured 2026-09-30",
         "record": "docs/research/mobile-js-skill-map.md"
-      }
+      },
+      "evidence_source": "dynamic-instrumentation",
+      "evidence_source_note": "runtime instrumentation; absent on this host"
     },
     {
       "id": "fuzz.differential.parse",
@@ -1037,7 +1066,9 @@
       "provenance": {
         "source": "measured on this host 2026-09-30; four real defects found and fixed in this tree",
         "record": "fuzz-lab/README.md"
-      }
+      },
+      "evidence_source": "differential-oracle",
+      "evidence_source_note": "mutation plus a deliberately flawed twin"
     },
     {
       "id": "native.ghidra.decompile",
@@ -1175,7 +1206,9 @@
       "provenance": {
         "source": "measured on this host 2026-09-30",
         "record": "scripts/ghidra-failopen.md; docs/research/ghidra-capability-spec.md"
-      }
+      },
+      "evidence_source": "decompiler",
+      "evidence_source_note": "Ghidra 12.1.3 headless. SAME FAMILY as IDA decompile: two decompilers agreeing is one opinion held twice, not corroboration."
     },
     {
       "id": "native.crosscompare.ghidra",
@@ -1274,7 +1307,9 @@
       "provenance": {
         "source": "measured on this host 2026-09-30",
         "record": "docs/research/ghidra-capability-spec.md"
-      }
+      },
+      "evidence_source": "binary-similarity",
+      "evidence_source_note": "Ghidra Version Tracking correlators"
     }
   ]
 }
