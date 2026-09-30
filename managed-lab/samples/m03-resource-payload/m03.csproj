@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <AssemblyName>m03_resource</AssemblyName>
+    <RootNamespace>M03.ResourcePayload</RootNamespace>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <DebugType>portable</DebugType>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The payload ships as a file, but it is only inside the assembly because of
+         this one line. The analyst never sees the file on disk: only the embedded
+         resource, and the loader that decodes it. -->
+    <EmbeddedResource Include="payload.b64" />
+  </ItemGroup>
+
+</Project>
