@@ -2,7 +2,7 @@
 <#
 .SYNOPSIS
   CLI-Anything-style dispatcher for debugger-station. JSON stdout. No GUI.
-  No args: catalog. First arg: ghidra|ida|jadx|dnspy|ce|mobsf|intel
+  No args: catalog. First arg: ghidra|ida|jadx|dnspy|ce|mobsf|intel|web-reverse|crypto-lab
 #>
 param(
     [Parameter(Position = 0)][string]$Tool = '',
@@ -20,13 +20,16 @@ $catalog = @(
     @{ tool = 'mobsf'; script = 'mobsf-agent.ps1'; cli = 'REST or apktool local-static'; gui = 'MobSF web UI not required'; mcp = 'router mobsf needs MOBSF_API_KEY (local, not VT)' }
     @{ tool = 'intel'; script = 'intel-agent.ps1'; cli = 'SHA256+DIE+capa; VT hash lookup if key'; gui = 'n/a'; mcp = 'router virustotal needs VIRUSTOTAL_API_KEY' }
     @{ tool = 'web-reverse'; script = 'web-reverse-lab.ps1'; cli = 'node tools/loop.mjs (CDP capture -> deobfuscate -> replay -> bot-detection report)'; gui = 'n/a (headless lab Chrome, disposable profile)'; mcp = 'none; raw CDP over the devtools websocket, zero npm deps' }
+    @{ tool = 'crypto-lab'; script = 'crypto-lab.ps1'; cli = 'node tools/loop.mjs (issue -> classify -> verify matrix -> jsonwebtoken + PyJWT cross-check)'; gui = 'n/a (loopback issuer + 4 verifiers; analyzer is zero-dep)'; mcp = 'none; jsonwebtoken and PyJWT are oracles, not dependencies' }
+    @{ tool = 'crackme'; script = 'crackme-corpus.ps1'; cli = 'python tools/loop.py (build -> decompile -> solve -> negative control, all five)'; gui = 'n/a (MSVC build + Ghidra headless + radare2 + ilspycmd)'; mcp = 'none; the binary is the judge, not a model' }
+    @{ tool = 'forensics-lab'; script = 'forensics-lab.ps1'; cli = 'node tools/loop.mjs (synthetic image -> pslist/psscan/malfind/netscan -> triangulation -> ground truth -> 4 negative controls)'; gui = 'n/a (offline; no acquisition, no driver, no kernel access)'; mcp = 'none; real Volatility 3 is probed and its refusal recorded' }
 )
 
 if (-not $Tool -or $Tool -in @('catalog', 'list', '-h', '--help', '/?')) {
     [ordered]@{
         ok      = $true
         tool    = 'catalog'
-        pattern = 'CLI-Anything: Click-less PowerShell, JSON stdout, SKILL table. HKUDS/CLI-Anything has no IDA/Ghidra/JADX harness — this station wraps them.'
+        pattern = 'CLI-Anything: Click-less PowerShell, JSON stdout, SKILL table. HKUDS/CLI-Anything has no IDA/Ghidra/JADX harness -- this station wraps them.'
         clientMcp = 'debugger-router only'
         items   = $catalog
     } | ConvertTo-Json -Compress -Depth 6
@@ -42,6 +45,8 @@ $map = @{
     mobsf  = 'mobsf-agent.ps1'
     intel  = 'intel-agent.ps1'
     'web-reverse' = 'web-reverse-lab.ps1'
+    'crypto-lab'  = 'crypto-lab.ps1'
+    'forensics-lab' = 'forensics-lab.ps1'
 }
 $key = $Tool.ToLowerInvariant()
 if (-not $map.ContainsKey($key)) {

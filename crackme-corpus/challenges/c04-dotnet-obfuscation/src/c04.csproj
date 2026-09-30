@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    c04: self-authored .NET obfuscation teaching sample (crackme-corpus).
+
+    Deliberate build settings, because they are part of the lesson:
+      - Release plus no optimisation: the IL stays close to the source, which is
+        the point. A .NET obfuscation exercise is about reading decompiled
+        output; Debug keeps that output readable and honest.
+      - No ReadyToRun, no single-file publish: those would replace the IL with
+        native code and remove the thing being taught.
+      - Deterministic plus no strong name: nothing to see, but it keeps
+        rebuilds byte-stable so the corpus is reproducible.
+    Output goes to the gitignored crackme-corpus/out/ tree, never next to
+    the source. See ../README.md.
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>c04</AssemblyName>
+    <RootNamespace>Crackme.C04</RootNamespace>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <Optimize>false</Optimize>
+    <DebugType>portable</DebugType>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS0649;CS0169</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="c04_obfuscated.cs" />
+  </ItemGroup>
+
+</Project>
