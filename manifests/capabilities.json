@@ -1313,6 +1313,77 @@
       },
       "evidence_source": "binary-similarity",
       "evidence_source_note": "Ghidra Version Tracking correlators"
+    },
+    {
+      "id": "native.il2cpp.symbols",
+      "title": "Recover Unity IL2CPP method symbols via Il2CppDumper",
+      "domains": [
+        "native",
+        "game-engine",
+        "static-reversing"
+      ],
+      "question_types": [
+        "Q1.identify",
+        "Q7.origin"
+      ],
+      "state": "absent",
+      "consumes": {
+        "inputs": [
+          {
+            "name": "binary",
+            "type": "path_ref",
+            "required": true,
+            "note": "a Unity IL2CPP build: the executable plus its il2cpp_data/Metadata/global-metadata.dat"
+          }
+        ],
+        "prior": []
+      },
+      "produces": {
+        "facts": [],
+        "invalidates_on": []
+      },
+      "requires": {
+        "runtime": "dotnet6",
+        "net": "none",
+        "admin": false,
+        "device": false,
+        "disk_mb": 50,
+        "ram_mb": 512,
+        "wall_minutes": 2,
+        "tools": [
+          {
+            "name": "Il2CppDumper.exe",
+            "probe": "Unpackers-Game/Il2CppDumper-net6-win-v6.7.46/Il2CppDumper.exe"
+          }
+        ]
+      },
+      "proves": [],
+      "does_not_prove": [
+        "anything at all -- this capability is ABSENT, and an installed tool that never runs is not a capability",
+        "that the tool is broken: it is a net6 build and this host has only .NET 8.0.31 and 10.0.11. Measured 2026-09-30: with DOTNET_ROLL_FORWARD=LatestMajor it produces no output and does not exit within 12 s, where an error would have been far more useful"
+      ],
+      "gate": {
+        "lane": "debug",
+        "requires_verdict": true,
+        "escalation_class": "impossible"
+      },
+      "probe": {
+        "command": "powershell -File scripts\\il2cpp-probe.ps1",
+        "expect": "IL2CPP ABSENT",
+        "exit": 0,
+        "last_run": "2026-09-30",
+        "last_summary": "net6 build under DOTNET_ROLL_FORWARD=LatestMajor: no output, no exit within 12 s (killed). Runtime inventory: Microsoft.NETCore.App 8.0.31 and 10.0.11 only."
+      },
+      "negative_control": {
+        "id": "native.il2cpp.absent_is_reported",
+        "command": "probe the runtime inventory and the tool's start-up behaviour",
+        "expect_exit": 1,
+        "why": "must report the tool as absent rather than letting an installed binary imply a working capability. Also the gate check: IL2CPP binaries found on this host belong to third-party commercial software, which fails the provenance test -- 'it runs on my PC' is not ownership."
+      },
+      "provenance": {
+        "source": "measured on this host 2026-09-30",
+        "record": "scripts/il2cpp-probe.ps1"
+      }
     }
   ]
 }
