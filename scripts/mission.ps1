@@ -530,7 +530,26 @@ function Get-Verdict {
 
     # 3. observation -- a fact on the ORIGINAL bytes. Instrumented-about-instrumented
     #    results cannot be the terminal answer, so a claim resting on those is downgraded.
-    G 'observation' ($chain -ge 1) 'facts recorded against the original binary; no runtime instrumentation was available on this host, so proves_on_original is true by construction'
+    # Gate 3, observation. This used to be literally the same expression as gate 2 with a
+    # hardcoded sentence claiming no runtime instrumentation was available -- so it could not
+    # fail, and it emitted a FALSE FACTUAL CLAIM: with a dynamic.device.frida fact in the
+    # evidence it still passed and the mission reached `confirmed`.
+    # Now it checks the thing it says: no fact may come from a capability whose registry
+    # state is not `observed`, because a fact from an absent or blocked capability is a fact
+    # nobody produced.
+    $unavailable = @()
+    foreach ($e in $good) {
+        $capDef = $Registry.capabilities | Where-Object { $_.id -eq $e.capability } | Select-Object -First 1
+        if ($capDef -and $capDef.state -ne 'observed') { $unavailable += ("$($e.capability)=$($capDef.state)") }
+    }
+    # PowerShell has no `if` EXPRESSION, so the detail is computed first. The first attempt
+    # put the conditional inline as an argument and did not parse.
+    $obsDetail = if ($unavailable.Count) {
+        "evidence includes facts from capabilities that are NOT observed: $($unavailable -join ', '). A fact from an absent or blocked capability is a fact nobody produced."
+    } else {
+        "$($good.Count) fact(s), all from capabilities whose registry state is observed"
+    }
+    G 'observation' ($unavailable.Count -eq 0) $obsDetail
 
     # 4. independence -- about the FAMILY of instrument, not the tool id.
     #
@@ -560,8 +579,23 @@ function Get-Verdict {
     foreach ($c in $Registry.capabilities) {
         foreach ($d in @($c.does_not_prove)) { $limits += $d }
     }
-    G 'bounded_claim' ($Claim -ne '') ("claim is bounded by the registry's declared limits ($($limits.Count) across the registry)")
-    if (-not $Claim) { G 'bounded_claim_no_claim' $false 'no claim was proposed, so nothing can be bounded by any does_not_prove' }
+    # Gate 5 used to be `$Claim -ne ''` while counting the registry's does_not_prove entries
+    # into its message and comparing them to NOTHING. "This binary is completely safe, has no
+    # vulnerabilities of any kind" reached `confirmed`. So did a claim quoting the capability's
+    # own three limits verbatim and denying every one.
+    #
+    # An UNBOUNDED claim is now refused outright: it asserts more than any does_not_prove
+    # permits. This is a coarse first filter, not semantic entailment -- but it refuses the
+    # catastrophic claim instead of endorsing it.
+    $UNBOUNDED = '(?i)\b(completely|entirely|totally|absolutely|always)\b.*\b(safe|secure|no vulnerabilities|cannot be exploited|invulnerable)\b'
+    $isUnbounded = ($Claim -match $UNBOUNDED)
+    $hasLimits  = ($Claim -match '(?i)\bbut\b|\bhowever\b|\bexcept\b|\bdoes not prove\b|\blimitation\b')
+    $boundedOk = ($Claim -ne '') -and (-not $isUnbounded) -and $hasLimits
+    $bcDetail = if (-not $Claim) { 'no claim was proposed, so nothing can be bounded by any does_not_prove' }
+                elseif ($isUnbounded) { 'the claim is UNBOUNDED: it asserts complete safety, which no does_not_prove in this registry permits. An unbounded claim is refused, not endorsed.' }
+                elseif (-not $hasLimits) { "the claim states no limitation, so nothing bounds it against the registry's $($limits.Count) declared does_not_prove entries" }
+                else { 'the claim carries an explicit limitation and is bounded by the registry' }
+    G 'bounded_claim' $boundedOk $bcDetail
 
     # 6. uncertainty stated -- a verdict with no unknowns is not a verdict
     # 6. uncertainty stated -- a verdict with no unknowns is not a verdict
@@ -575,14 +609,32 @@ function Get-Verdict {
     #
     #    Discharged is supplied by the caller as the guards it claims WERE consulted. It
     #    is validated rather than trusted: each id must exist in the registry.
+    # Gate 7, discharged. This only checked that each named id EXISTS in the registry, so
+    # naming dynamic.device.frida (absent), native.il2cpp.symbols (absent) and
+    # native.ghidra.emulate (blocked) passed -- typing the list requires no work, and a guard
+    # that did not run was being counted as one that did.
+    #
+    # A guard can only be DISCHARGED if it could have run. Naming an absent or blocked
+    # capability is naming something that did not and could not answer.
     $discharged = @($script:vDischarged)
     $unknownIds = @($discharged | Where-Object { $d = $_; -not (@($Registry.capabilities | Where-Object { $_.id -eq $d }) | Select-Object -First 1) })
-    $findingsEmpty = ($good.Count -eq 0)
-    if ($discharged.Count -gt 0) {
-        G 'discharged' ($unknownIds.Count -eq 0) ("{0} guard(s) named as consulted{1}" -f $discharged.Count, $(if ($unknownIds.Count) { "; NOT IN REGISTRY: $($unknownIds -join ', ')" } else { '' }))
-    } else {
-        G 'discharged' (-not $findingsEmpty) 'no guards were named as consulted; that is only acceptable when there IS a finding, because "I found nothing" with no named guard is not an answer'
+    $unrunnable = @()
+    foreach ($d in $discharged) {
+        $c = $Registry.capabilities | Where-Object { $_.id -eq $d } | Select-Object -First 1
+        if ($c -and $c.state -ne 'observed') { $unrunnable += ("$d=$($c.state)") }
     }
+    $findingsEmpty = ($good.Count -eq 0)
+    $dischargedOk = ($unknownIds.Count -eq 0) -and ($unrunnable.Count -eq 0) -and (-not $findingsEmpty -or $discharged.Count -gt 0)
+    $dDetail = if ($unknownIds.Count) {
+        "not in the registry: $($unknownIds -join ', ')"
+    } elseif ($unrunnable.Count) {
+        "named guards that could NOT have run: $($unrunnable -join ', '). A guard that is absent or blocked did not answer, so it cannot discharge anything."
+    } elseif ($discharged.Count -eq 0) {
+        'no guards were named; acceptable only when there IS a finding, because "I found nothing" with no named guard is not an answer'
+    } else {
+        "$($discharged.Count) guard(s) named, all of them observed and able to have run"
+    }
+    G 'discharged' $dischargedOk $dDetail
 
     # Read back from the script scope the helper wrote to. Returning the LOCAL `$vGates`
     # -- which nothing ever appended to -- produced an EMPTY gate list, and an empty gate
@@ -666,9 +718,32 @@ function Invoke-Selftest {
             [ordered]@{ capability = 'native.ida.list_functions'; ok = $true; facts = @([ordered]@{ key = 'native.func.addr'; value = 1 }) },
             [ordered]@{ capability = 'native.ida.decompile'; ok = $true; facts = @([ordered]@{ key = 'native.dec.code'; value = 'x' }) }
         )
-        $v = Get-Verdict -Claim 'the check is in main' -QuestionType 'Q2.locate' -Evidence $ev -Registry (Get-Registry)
+        # The claim must now CARRY ITS OWN LIMITATION. bounded_claim refuses a claim that
+        # states none, so 'the check is in main' was refused -- which is the gate working.
+        $v = Get-Verdict -Claim 'the check is in main, but this says nothing about runtime behaviour and the decompilation is one analyser reconstruction' -QuestionType 'Q2.locate' -Evidence $ev -Registry (Get-Registry)
         $v.tier
     } 'confirmed'
+
+    # An UNBOUNDED claim must be refused outright. Before the bounded_claim fix this
+    # reached `confirmed` with two capabilities' worth of evidence behind it.
+    C 'bounded_claim: "completely safe, no vulnerabilities of any kind" is refused' {
+        $ev = @(
+            [ordered]@{ capability = 'native.ida.list_functions'; ok = $true; facts = @([ordered]@{ key = 'native.func.addr'; value = 1 }) },
+            [ordered]@{ capability = 'native.ida.decompile'; ok = $true; facts = @([ordered]@{ key = 'native.dec.code'; value = 'x' }) }
+        )
+        (Get-Verdict -Claim 'this binary is completely safe and has no vulnerabilities of any kind' -QuestionType 'Q2.locate' -Evidence $ev -Registry (Get-Registry)).tier
+    } 'unresolved'
+
+    # A guard that is ABSENT did not answer, so naming it discharges nothing. Before the
+    # fix, naming dynamic.device.frida / native.il2cpp.symbols / native.ghidra.emulate all
+    # passed, and typing that list requires no work.
+    C 'discharged: naming an ABSENT guard does not discharge anything' {
+        $ev = @(
+            [ordered]@{ capability = 'native.ida.list_functions'; ok = $true; facts = @([ordered]@{ key = 'native.func.addr'; value = 1 }) },
+            [ordered]@{ capability = 'native.ida.decompile'; ok = $true; facts = @([ordered]@{ key = 'native.dec.code'; value = 'x' }) }
+        )
+        (Get-Verdict -Claim 'nothing here is hidden' -QuestionType 'Q2.locate' -Evidence $ev -Registry (Get-Registry) -DischargedIn @('dynamic.device.frida')).tier
+    } 'unresolved'
 
     # discharged: the strongest rule in the corpus. "I found nothing" is an answer ONLY
     # when you can name the guards that would have found it.
