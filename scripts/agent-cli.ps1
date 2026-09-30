@@ -23,6 +23,8 @@ $catalog = @(
     @{ tool = 'crypto-lab'; script = 'crypto-lab.ps1'; cli = 'node tools/loop.mjs (issue -> classify -> verify matrix -> jsonwebtoken + PyJWT cross-check)'; gui = 'n/a (loopback issuer + 4 verifiers; analyzer is zero-dep)'; mcp = 'none; jsonwebtoken and PyJWT are oracles, not dependencies' }
     @{ tool = 'crackme'; script = 'crackme-corpus.ps1'; cli = 'python tools/loop.py (build -> decompile -> solve -> negative control, all five)'; gui = 'n/a (MSVC build + Ghidra headless + radare2 + ilspycmd)'; mcp = 'none; the binary is the judge, not a model' }
     @{ tool = 'forensics-lab'; script = 'forensics-lab.ps1'; cli = 'node tools/loop.mjs (synthetic image -> pslist/psscan/malfind/netscan -> triangulation -> ground truth -> 4 negative controls)'; gui = 'n/a (offline; no acquisition, no driver, no kernel access)'; mcp = 'none; real Volatility 3 is probed and its refusal recorded' }
+    @{ tool = 'fuzz-lab'; script = 'fuzz-lab.ps1'; cli = 'node tools/loop.mjs (self-authored mutation fuzzer + differential oracle over this tree own parsers; corpus -> campaign -> triage -> negative control -> regressions)'; gui = 'n/a (offline, no install: no AFL, no sanitizer, no native target)'; mcp = 'none; the deliberately flawed twin of each parser is the oracle' }
+    @{ tool = 'native-lab'; script = 'native-lab.ps1'; cli = 'node tools/loop.mjs (spawn idalib-mcp -> wait for session -> list_funcs -> decompile -> 3 negative controls -> isError-hazard control)'; gui = 'n/a; OWNER.md:13 makes idalib or idat -A the agent default, not the GUI on 13337'; mcp = 'ida-pro-mcp 2.0.0 over POST 127.0.0.1:8745 (66 tools); failures come back isError=false + {code:null,error}, so wrappers must test error' }
 )
 
 if (-not $Tool -or $Tool -in @('catalog', 'list', '-h', '--help', '/?')) {
@@ -47,6 +49,8 @@ $map = @{
     'web-reverse' = 'web-reverse-lab.ps1'
     'crypto-lab'  = 'crypto-lab.ps1'
     'forensics-lab' = 'forensics-lab.ps1'
+    'fuzz-lab'      = 'fuzz-lab.ps1'
+    'native-lab'    = 'native-lab.ps1'
 }
 $key = $Tool.ToLowerInvariant()
 if (-not $map.ContainsKey($key)) {
