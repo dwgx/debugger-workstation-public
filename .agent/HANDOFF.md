@@ -226,7 +226,7 @@ Structural fixes, not fourth patches:
 |---|---|
 | registry | **15 capabilities**, CLEAN · **18 validator rules** |
 | gate selftest | **8/8** |
-| mission selftest | **13/13** incl. N4 |
+| mission selftest | **13/13** incl. N4; **7** verdict gates |
 | ghidra fail-open regression | **4/4 LOOP CLOSED** |
 | fuzz lab | **24/24 LOOP CLOSED**, 740 s at budget 90 (floor 40) |
 | native-lab | **15/15 LOOP CLOSED**, ~2.4 s |
