@@ -104,8 +104,22 @@ foreach ($name in $probes.Keys) {
     # The lesson is the same one the Ghidra fail-open taught, in a different costume: my
     # instrument was wrong, not the subject. A smoke test that reports red for healthy
     # labs is worse than no smoke test, because it trains the reader to ignore it.
-    $hits = $out -split "`n" |
-            Select-String -Pattern 'JSON-SUMMARY|LOOP CLOSED|LANE CLOSED|ISOLATION HELD|CORPUS CLOSED|REGISTRY CLEAN|SELFTEST OK|eval-agent-contract: PASS|consistency OK'
+    # The scan pattern is DERIVED from each probe's own `expect`, plus a few generic
+    # verdict shapes.
+    #
+    # It used to be a hardcoded literal list, and that is the third time this harness has
+    # produced a wrong verdict about its own probes: first by taking only the LAST match so
+    # JSON-SUMMARY shadowed LOOP CLOSED, then two expectations that were simply wrong, and
+    # now by adding two probes whose `expect` values were never in the scan list -- so the
+    # harness reported "IL2CPP ABSENT" as a FAILURE while printing that exact string a few
+    # lines above it.
+    #
+    # A checklist and the thing it is a checklist for must not be able to drift apart.
+    $generic = @('JSON-SUMMARY', 'LOOP CLOSED', 'LANE CLOSED', 'ISOLATION HELD', 'CORPUS CLOSED',
+                 'REGISTRY CLEAN', 'SELFTEST OK')
+    $expectTokens = @($probes.Values | ForEach-Object { $_.expect } | Where-Object { $_ })
+    $pattern = (@($generic) + @($expectTokens) | Where-Object { $_ } | Sort-Object -Unique) -join '|'
+    $hits = $out -split "`n" | Select-String -Pattern $pattern
     $seen = @{}
     foreach ($h in $hits) { $seen[$h.ToString().Trim()] = $true }
     $allSummary = ($seen.Keys | Sort-Object) -join ' | '
