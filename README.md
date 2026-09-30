@@ -10,6 +10,12 @@ Any agent (Claude / Codex / Gemini / Cursor / Copilot) or human can clone this r
 
 After a job, agents score the slice (`skills/debugger-review`) and write `notes/` so the next session does not rediscover the same failure (Windows in-place `mcp`/`MCP`, Defender PUA, lazy MCP). See [docs/AGENT_EVOLUTION.md](docs/AGENT_EVOLUTION.md).
 
+> 📍 **Operating this station: start at [`.agent/HANDOFF.md`](.agent/HANDOFF.md).** It carries the
+> one rule everything else follows from, the four-command workflow, the capability table,
+> the traps in this repo's own tooling, and what is deliberately *not* claimed.
+> `.agent/RECOVERY-STATION.md` holds the measured detail behind it. Both are tracked on
+> purpose — they are the only artifacts that survive a lost machine.
+
 > ⚠️ **This repository ships no third-party tool binaries.** Tools are fetched from each official source via `manifests/` + `scripts/bootstrap.ps1`. See [DISCLAIMER.md](DISCLAIMER.md).
 
 ---
