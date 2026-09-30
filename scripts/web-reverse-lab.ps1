@@ -32,11 +32,13 @@ param(
     # Tool flags must come through here, not as bare --flags: PowerShell binds
     # `--out` to -OutVariable etc. before $Rest ever sees it. Verified failure:
     #   web-reverse-lab.ps1 capture --url ... --out X  ->  AmbiguousParameter 'out'
-    # Working:  web-reverse-lab.ps1 capture -NodeArgs '--url','http://127.0.0.1:8787/plain'
+    # Verified working, either form:
+    #   -NodeArgs '--url http://127.0.0.1:8787/obf --clicks 1'      (one string; -File safe)
+    #   -NodeArgs @('--url','http://127.0.0.1:8787/obf','--clicks','1')  (array; -Command/in-session)
     [string[]]$NodeArgs = @()
 )
 $ErrorActionPreference = 'Stop'
-$Rest = @($Rest) + @($NodeArgs)
+$Rest = @(@($Rest) + @($NodeArgs) | ForEach-Object { $_ -split '[,\s]+' } | Where-Object { $_ -ne '' })
 
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $LabRoot = Join-Path $RepoRoot 'web-reverse'
@@ -138,8 +140,9 @@ switch ($Action.ToLowerInvariant()) {
             action    = $key
             exitCode  = $code
             tool      = $map[$key]
+            nodeArgs  = @($Rest)
             artifacts = (Join-Path $env:TEMP 'web-reverse-captures')
-            note      = if ($code -eq 0) { 'transcript on stderr; artifacts under the artifacts path' } else { "tool exited $code -- read the stderr transcript" }
+            note      = if ($code -eq 0) { 'transcript on stderr; artifacts under the artifacts path' } else { "tool exited $code - read the stderr transcript" }
         } | ConvertTo-Json -Compress
         exit $code
     }

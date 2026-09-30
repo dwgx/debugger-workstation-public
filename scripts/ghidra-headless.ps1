@@ -12,7 +12,9 @@ param(
     [switch]$Http,
     [int]$Port = 8080,
     [int]$MaxFunctions = 0,
-    [int]$TimeoutMs = 600000
+    [int]$TimeoutMs = 600000,
+    [string]$PostScript = '',
+    [string[]]$PostArgs = @()
 )
 $ErrorActionPreference = 'Stop'
 $RepoRoot = Split-Path -Parent $PSScriptRoot
@@ -29,15 +31,16 @@ $scriptPath = Join-Path $PSScriptRoot 'ghidra'
 $projRoot = Join-Path $env:TEMP ('ghidra-proj-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Force -Path $projRoot | Out-Null
 $projName = 'agent'
-$scriptName = if ($Http) { 'HeadlessMcpHttp.java' } else { 'ExportDecompile.java' }
-$scriptArg = if ($Http) { "$Port" } else { $OutDir }
+$postScriptName = if ($Http) { 'HeadlessMcpHttp.java' } elseif ($PostScript) { $PostScript } else { 'ExportDecompile.java' }
+$postScriptArg = if ($Http) { "$Port" } elseif ($PostScript) { ($PostArgs -join ' ') } else { $OutDir }
 $argList = New-Object System.Collections.Generic.List[string]
 foreach ($a in @($projRoot, $projName, '-import', $Sample, '-overwrite', '-scriptPath', $scriptPath)) {
     [void]$argList.Add($a)
 }
 if ($NoAnalysis) { [void]$argList.Add('-noanalysis') }
-if (-not $Http) { [void]$argList.Add('-deleteProject') }
-foreach ($a in @('-postScript', $scriptName, $scriptArg)) { [void]$argList.Add($a) }
+if (-not $Http -and -not $PostScript) { [void]$argList.Add('-deleteProject') }
+foreach ($a in @('-postScript', $postScriptName, $postScriptArg)) { [void]$argList.Add($a) }
+if ($PostArgs.Count -gt 0) { foreach ($pa in $PostArgs) { [void]$argList.Add($pa) } }
 if (-not $Http -and $MaxFunctions -gt 0) { [void]$argList.Add("$MaxFunctions") }
 
 function Quote-Arg([string]$a) {

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Pinning mechanism #1 of 3 (declarative). This is the file a static pass must find and read:
+  a <pin-set> with <pin digest="sha256/..."> entries is certificate pinning expressed in
+  resources rather than code, and it is easy to miss because nothing in the DEX mentions it.
+
+  The digests are syntactically valid fixtures on a reserved .invalid host. They pin nothing
+  real and authenticate nothing.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">api.lab.invalid</domain>
+        <domain includeSubdomains="true">telemetry.lab.invalid</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+        <pin-set>
+            <pin digest="sha256/7gL4Y5kKz6bWf0m2H1pQ8sT3vX7yZ0A9dC5eR1uI4oP2lM6nJ8fG0hK3w=" />
+            <pin digest="sha256/2pX7mK9qR4tY1uI3oP5aS8dF0gH6jK2lZ9xC4vB7nM1qW3eR5tY7uI9oP2aS4=" />
+        </pin-set>
+    </domain-config>
+</network-security-config>
