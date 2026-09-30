@@ -66,8 +66,8 @@ $probes = [ordered]@{
     'managed-lab'         = @{ file = $Node; args = @('managed-lab/tools/loop.mjs');   expect = 'JSON-SUMMARY' }
     'mobile-lab'          = @{ file = $Node; args = @('mobile-lab/tools/loop.mjs');    expect = 'LOOP CLOSED' }
     'native-lab-ida'      = @{ file = $Node; args = @('native-lab/tools/loop.mjs');   expect = 'LOOP CLOSED' }
-    'agent-contract'      = @{ file = $Py;   args = @('scripts/eval-agent-contract.py'); expect = 'PASS' }
-    'backend-consistency' = @{ file = $Py;   args = @('scripts/check_backend_consistency.py'); expect = 'OK' }
+    'agent-contract'      = @{ file = $Py;   args = @('scripts/eval-agent-contract.py'); expect = 'eval-agent-contract: PASS' }
+    'backend-consistency' = @{ file = $Py;   args = @('scripts/check_backend_consistency.py'); expect = 'consistency OK' }
 }
 
 if ($Include) {
@@ -89,30 +89,46 @@ foreach ($name in $probes.Keys) {
     $sw = [Diagnostics.Stopwatch]::StartNew()
     $out = & $p.file @($p.args) 2>&1 | Out-String
     $rc = $LASTEXITCODE
-    $sw.Stop()
-
-    $summary = ($out -split "`n" |
-                Select-String -Pattern 'JSON-SUMMARY|LOOP CLOSED|LANE CLOSED|ISOLATION HELD|CORPUS CLOSED|REGISTRY CLEAN|SELFTEST OK' |
-                Select-Object -Last 1)
-    $summaryText = if ($summary) { $summary.ToString().Trim() } else { '' }
+    # Look for the verdict token on ANY line, and show the most specific one.
+    #
+    # Taking only the LAST matching line was a bug, and it reported four green labs
+    # as red. `JSON-SUMMARY {...}` is printed after `LOOP CLOSED`, so selecting the last
+    # hit meant a lab that had closed cleanly matched JSON-SUMMARY and failed the
+    # expectation for its own verdict line. Four of fifteen probes went red while every
+    # one of them had exited 0 with pass:N fail:0.
+    #
+    # The lesson is the same one the Ghidra fail-open taught, in a different costume: my
+    # instrument was wrong, not the subject. A smoke test that reports red for healthy
+    # labs is worse than no smoke test, because it trains the reader to ignore it.
+    $hits = $out -split "`n" |
+            Select-String -Pattern 'JSON-SUMMARY|LOOP CLOSED|LANE CLOSED|ISOLATION HELD|CORPUS CLOSED|REGISTRY CLEAN|SELFTEST OK|eval-agent-contract: PASS|consistency OK'
+    $seen = @{}
+    foreach ($h in $hits) { $seen[$h.ToString().Trim()] = $true }
+    $allSummary = ($seen.Keys | Sort-Object) -join ' | '
+    $matched = @($hits | Where-Object { $_.ToString() -like "*$($p.expect)*" }).Count -gt 0
 
     # Two independent things must hold: the process succeeded, AND the lab printed the
-    # line it is supposed to print. Requiring only the exit code is the mistake that
-    # made a Ghidra import failure look like a pass.
-    $ok = ($rc -eq 0) -and ($summaryText -like "*$($p.expect)*")
+    # line it claims to print. Requiring only the exit code is the mistake that made a
+    # Ghidra import failure look like a pass.
+    $ok = ($rc -eq 0) -and $matched
     if ($ok) { $pass++ } else { $fail++ }
+
+    $lastLine = (($out -split "`n" | Where-Object { $_.Trim() } | Select-Object -Last 1) -replace '\s+', ' ').Trim()
+    $tail = if ($lastLine.Length -gt 90) { $lastLine.Substring(0, 90) } else { $lastLine }
 
     $results += [ordered]@{
         ok       = $ok
         probe    = $name
         exit     = $rc
         seconds  = [math]::Round($sw.Elapsed.TotalSeconds, 1)
-        summary  = $summaryText
-        tail     = if ($summaryText) { '' } else { (($out -split "`n" | Where-Object { $_.Trim() } | Select-Object -Last 1) -replace '\s+', ' ').Trim().Substring(0, [Math]::Min(90, (($out -split "`n" | Where-Object { $_.Trim() } | Select-Object -Last 1) -replace '\s+', ' ').Trim().Length)) }
+        expected = $p.expect
+        matched  = $matched
+        summary  = $allSummary
+        tail     = if ($ok) { '' } else { $tail }
     }
 
     $tag = if ($ok) { 'PASS' } else { 'FAIL' }
-    Write-Host ("  {0}  {1,-22} {2,6}s  {3}" -f $tag, $name, [math]::Round($sw.Elapsed.TotalSeconds, 1), $summaryText)
+    Write-Host ("  {0}  {1,-22} {2,6}s  {3}" -f $tag, $name, [math]::Round($sw.Elapsed.TotalSeconds, 1), $allSummary)
 }
 
 Write-Host ''
