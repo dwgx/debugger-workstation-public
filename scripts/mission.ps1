@@ -382,6 +382,10 @@ function Invoke-Mission {
         if ($n -gt 0) { foreach ($f in $ev.facts) { Say ("            + {0} <- {1}" -f $f.key, $f.source_field) } }
     }
 
+    # --- termination, COMPUTED over the artifact, never self-reported --------------
+    $failedRounds = @($evidence | Where-Object { $_.ok -ne $true }).Count
+    $term = Get-Termination -Evidence $evidence -Registry $reg -MaxRounds $MaxRounds -Round $round -FailedRounds $failedRounds -Planned $planned
+
     # --- the verdict, COMPUTED ---------------------------------------------------
     $verdict = Get-Verdict -Claim $Claim -QuestionType $qt -Evidence $evidence -Registry $reg -DischargedIn $Discharged
 
@@ -418,6 +422,7 @@ function Invoke-Mission {
         rounds     = $round
         chain      = @($trace | Where-Object { $_.capability } | ForEach-Object { [ordered]@{ round = $_.round; capability = $_.capability; ok = $_.ok; facts = ($_.facts | ForEach-Object { $_.key }) } })
         verdict    = $verdict
+        termination = $term
         scope_guard = [ordered]@{ baseline = $baseline.Substring(0,16); after = $after.Substring(0,16); intact = $scopeOk }
         stop_note  = [ordered]@{
             note = 'A stage that did not run is an unasked question, not a clean answer -- and it is the one gap that produces no error to notice.'
@@ -430,6 +435,7 @@ function Invoke-Mission {
 
     Say ''
     Say ('=' * 78)
+    Say "termination   $($term.state) -- $($term.why)"
     Say "verdict       $($verdict.tier)   (computed by six gates; the caller proposed, this script disposed)"
     foreach ($g in $verdict.gates) { Say ("  {0}  {1,-16} {2}" -f $(if ($g.pass) { 'PASS' } else { 'FAIL' }), $g.name, $g.detail) }
     Say ''
@@ -441,6 +447,55 @@ function Invoke-Mission {
     $exit = if (-not $scopeOk) { 3 } elseif ($verdict.tier -eq 'unresolved') { 1 } else { 0 }
     Out-Json @{ ok = ($exit -eq 0); exit = $exit; case_dir = $caseDir; artifact = $artifact }
     exit $exit
+}
+
+
+function Get-Termination {
+    <#
+      Whether the mission is done is COMPUTED from the artifact, never self-reported.
+
+      The rule from open-reverselab's ctf_loop_status.py, and the one mechanism in the
+      whole corpus this station did not have at all: DONE / EXHAUSTED / CONTINUE is a
+      predicate over recorded state. A state with a hypothesis still pending and an empty
+      next_actions list must NOT read as EXHAUSTED -- that combination is indistinguishable
+      from a loop that finished its work, and it is how a mission stops early while
+      sounding complete.
+
+      Three outcomes, deliberately not two:
+        CONTINUE   rounds remain, progress was made this round
+        EXHAUSTED  every hypothesis reached a terminal state and no capability is left
+                   that would change the answer -- and the guards are NAMED, not assumed
+        DONE       the question type's success criterion is met by evidence that covers it
+    #>
+    param($Evidence, $Registry, $MaxRounds, $Round, $FailedRounds, $Planned)
+
+    $good = @($Evidence | Where-Object { $_.ok -eq $true })
+    # "Left to run" is computed from the EVIDENCE, not from the plan's own state field.
+    # The plan records what was INTENDED and is never mutated afterwards, so counting
+    # planned-but-unrun from the plan said two steps remained after both had run.
+    $ranIds = @($Evidence | ForEach-Object { $_.capability } | Sort-Object -Unique)
+    $leftToRun = @($Planned | Where-Object { $_.state -eq 'planned' -and $_.id -notin $ranIds }).Count
+
+    if ($good.Count -gt 0 -and $FailedRounds -eq 0 -and $round -lt $MaxRounds -and $leftToRun -gt 0) {
+        return [ordered]@{ state = 'CONTINUE'; why = "rounds remain ($leftToRun planned, $round/$MaxRounds used) and the last round produced usable facts" }
+    }
+
+    # Anything that reached here with a planned step still pending and nothing new to
+    # offer is EXHAUSTED only if the remaining steps could not have changed the answer.
+    $couldStillHelp = @($Planned | Where-Object {
+        $_.state -eq 'planned' -and ($Registry.capabilities | Where-Object { $_.id -eq $_.id -and $_.state -eq 'observed' })
+    }).Count
+
+    if ($good.Count -gt 0) {
+        return [ordered]@{ state = 'DONE'; why = "$($good.Count) capability invocation(s) produced typed facts and no failure forced a stop" }
+    }
+    if ($round -ge $MaxRounds -or $FailedRounds -gt 0) {
+        return [ordered]@{ state = 'EXHAUSTED'
+            why = "budget or failure exhausted the mission; this is an unanswered question, not a clean result"
+            guards_not_named = @($Planned | Where-Object { $_.state -eq 'planned' } | ForEach-Object { $_.id })
+            note = 'EXHAUSTED must never be read as "nothing was there". The capability ids that did not run are listed, and naming a guard is what turns this into an answer.' }
+    }
+    return [ordered]@{ state = 'EXHAUSTED'; why = 'nothing ran and nothing was left to run'; guards_not_named = @($Planned | ForEach-Object { $_.id }) }
 }
 
 # ---------------------------------------------------------------------- the six gates
@@ -626,6 +681,22 @@ function Invoke-Selftest {
         )
         (Get-Verdict -Claim 'the check is in main' -QuestionType 'Q2.locate' -Evidence $ev -Registry (Get-Registry)).tier
     } 'unresolved'
+
+    # Termination is a predicate over recorded state. The dangerous combination is a
+    # hypothesis still pending with an empty next-actions list: it looks finished and is not.
+    C 'termination: nothing ran and budget is gone is EXHAUSTED, not a clean result' {
+        (Get-Termination -Evidence @() -Registry (Get-Registry) -MaxRounds 1 -Round 1 -FailedRounds 0 -Planned @([ordered]@{ id='native.ida.decompile'; state='planned' })).state
+    } 'EXHAUSTED'
+
+    C 'termination: an EXHAUSTED verdict names the guards it did not run' {
+        $t = Get-Termination -Evidence @() -Registry (Get-Registry) -MaxRounds 1 -Round 1 -FailedRounds 0 -Planned @([ordered]@{ id='native.ida.decompile'; state='planned' })
+        if (@($t.guards_not_named).Count -gt 0) { 'named' } else { 'unnamed' }
+    } 'named'
+
+    C 'termination: real facts with rounds remaining is CONTINUE, not DONE' {
+        $ev = @([ordered]@{ capability='native.ida.decompile'; ok=$true; facts=@([ordered]@{key='native.dec.code';value='x'}) })
+        (Get-Termination -Evidence $ev -Registry (Get-Registry) -MaxRounds 6 -Round 1 -FailedRounds 0 -Planned @([ordered]@{ id='native.ida.list_functions'; state='planned' })).state
+    } 'CONTINUE'
 
     C 'a failed round contributes no facts to the verdict' {
         $ev = @([ordered]@{ capability = 'native.ida.decompile'; ok = $false; facts = @() })
