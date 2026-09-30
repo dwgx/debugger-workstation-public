@@ -178,9 +178,19 @@ def r8_reach_must_be_declared(reg, doc):
             out.append(f"R8 {c.get('id','?')}: reach implies {sorted(set(implied))} but "
                        f"reach does not declare {sorted(missing)}. Authority has to be "
                        f"declared as an effect, because a decorator tag can miss it.")
-        if reach.get("fs_write") and gate.get("escalation_class") == "none":
-            out.append(f"R8 {c.get('id','?')}: fs_write with escalation_class=none. Writing "
-                       f"outside the case directory is never a runtime self-decision.")
+        if reach.get("fs_write"):
+            # Writing is not automatically an escalation. A capability that writes ONLY
+            # into the mission's own case directory is the designed behaviour; writing
+            # anywhere else is not a runtime self-decision. The rule could not tell those
+            # apart, so every writing capability looked like a boundary violation.
+            scope = reach.get("write_scope")
+            if not scope:
+                out.append(f"R8 {c.get('id','?')}: fs_write with no write_scope. Declare WHICH "
+                           f"scope, so 'case_dir' and 'anywhere' stop looking alike.")
+            elif scope != "case_dir" and gate.get("escalation_class") == "none":
+                out.append(f"R8 {c.get('id','?')}: write_scope={scope!r} with "
+                           f"escalation_class=none. Writing outside the case directory is "
+                           f"never a runtime self-decision.")
     return out
 
 
@@ -208,6 +218,48 @@ def r9_batch_must_account(reg, doc):
             if env.get("success_when") is None:
                 out.append(f"R9 {c.get('id','?')}: envelope has no success_when. isError is "
                            f"not a verdict on this class of server.")
+    return out
+
+def r10_invoke_must_runnable(reg, doc):
+    """An `invoke` block is what makes a capability CALLABLE rather than merely probeable.
+
+    Without it nothing can hand an address to the next lab, which is the whole point of
+    typed facts. With a broken one the mission loop spawns a command that does not
+    exist or cannot succeed, and the mission reports an empty result as a finding. So:
+    argv must be an array (never a joined string -- the target path is attacker-influenced
+    by definition), the script it names must exist, and a success_when must be stated,
+    because "exit 0" is the exact signal that already lied to us once today.
+    """
+    out = []
+    for c in reg:
+        inv = c.get("invoke")
+        if not inv:
+            continue
+        cid = c.get("id", "?")
+        argv = inv.get("argv")
+        if not isinstance(argv, list) or not argv:
+            out.append(f"R10 {cid}: invoke.argv must be a non-empty array. A joined shell "
+                       f"string is the injection surface this exists to avoid.")
+            continue
+        if any(isinstance(a, str) and (" " in a and not a.startswith("{")) for a in argv[1:]):
+            out.append(f"R10 {cid}: an invoke argument looks like a joined command line.")
+        if not inv.get("runner"):
+            out.append(f"R10 {cid}: invoke has no runner.")
+        if not inv.get("success_when"):
+            out.append(f"R10 {cid}: invoke has no success_when. Exit 0 is not the signal -- "
+                       f"that is exactly how a failed Ghidra import looked like a pass.")
+        # The script must actually exist. This is the whole point: a declared entry that
+        # points at a missing file is a promise the loop will break at run time.
+        script = next((a for a in argv if isinstance(a, str) and a.endswith((".mjs", ".js", ".py"))), None)
+        if script and not pathlib.Path(script).exists():
+            out.append(f"R10 {cid}: invoke names {script!r}, which does not exist in this repo.")
+        # A declared chain must be real: whatever it consumes_fact, someone must produce it.
+        need = inv.get("consumes_fact")
+        if need:
+            produced = {(f.get("key")) for cc in reg for f in ((cc.get("produces") or {}).get("facts") or [])}
+            if need not in produced:
+                out.append(f"R10 {cid}: invoke.consumes_fact {need!r} is produced by no "
+                           f"capability in this registry, so the chain cannot fire.")
     return out
 
 def r7_ids(reg, doc):
@@ -239,7 +291,7 @@ def r_shape(reg, doc):
 
 RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r4_fact_types_agree, r5_control_must_fail, r6_reach_needs_escalation, r7_ids,
-         r8_reach_must_be_declared, r9_batch_must_account)
+         r8_reach_must_be_declared, r9_batch_must_account, r10_invoke_must_runnable)
 
 
 # ---------------------------------------------------------------------------- core
@@ -307,6 +359,15 @@ def selftest() -> int:
     case("R6 admin without escalation", lambda b: b[0]["requires"].__setitem__(
         "admin", True), "R6")
     case("R7 duplicate id", lambda b: b[1].__setitem__("id", "a.one"), "R7")
+    case("R10 invoke without success_when", lambda b: b[0].update(
+        invoke={"runner": "node", "argv": ["scripts/registry-verify.py"]}), "R10")
+    case("R10 invoke argv as a shell string", lambda b: b[0].update(
+        invoke={"runner": "sh", "argv": "node a.mjs b.mjs", "success_when": "ok"}), "R10")
+    case("R10 invoke naming a missing script", lambda b: b[0].update(
+        invoke={"runner": "node", "argv": ["scripts/does-not-exist.mjs"], "success_when": "ok"}), "R10")
+    case("R10 chain whose fact nobody produces", lambda b: b[0].update(
+        invoke={"runner": "node", "argv": ["scripts/registry-verify.py"],
+                "success_when": "ok", "consumes_fact": "nobody.produces.this"}), "R10")
     case("R8 net=any without declared reach", lambda b: b[0]["requires"].__setitem__(
         "net", "any"), "R8")
     case("R8 fs_write with escalation none", lambda b: b[0].update(

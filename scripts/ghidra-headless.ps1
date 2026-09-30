@@ -38,7 +38,15 @@ foreach ($a in @($projRoot, $projName, '-import', $Sample, '-overwrite', '-scrip
     [void]$argList.Add($a)
 }
 if ($NoAnalysis) { [void]$argList.Add('-noanalysis') }
-if (-not $Http -and -not $PostScript) { [void]$argList.Add('-deleteProject') }
+# -deleteProject on EVERY path except the HTTP server, which is still holding the project
+# open when this process returns.
+#
+# Measured 2026-09-30: the flag was only added on the no-PostScript/no-Http path, so 30
+# stale %TEMP%\ghidra-proj-* directories had already accumulated -- 26 empty and 4 holding
+# about 3.5 MB each, roughly 14 MB stranded on C:. A capability that writes outside its
+# own case directory has to be declared as such, and the right fix is to stop writing
+# there rather than to escalate around it.
+if (-not $Http) { [void]$argList.Add('-deleteProject') }
 foreach ($a in @('-postScript', $postScriptName, $postScriptArg)) { [void]$argList.Add($a) }
 if ($PostArgs.Count -gt 0) { foreach ($pa in $PostArgs) { [void]$argList.Add($pa) } }
 if (-not $Http -and $MaxFunctions -gt 0) { [void]$argList.Add("$MaxFunctions") }
@@ -98,6 +106,19 @@ $summary = Join-Path $OutDir 'summary.json'
 # exists, Ghidra got far enough to finish; if it does not, the run failed whatever
 # any exit code claims.
 $exitCode = $p.ExitCode
+
+# Clean up our own project directory once Ghidra has emptied it. Measured 2026-09-30:
+# -deleteProject now removes the contents on every non-HTTP path, but the directory
+# SHELL survives, so shells accumulated one per run. Only ever removes an EMPTY
+# directory -- if anything is still in there it is left alone, because a recursive
+# delete is not something this script should do unattended.
+#
+# This has to run BEFORE the exits below. Placed after them it was unreachable on the
+# success path, which is the only path that creates a project, so it fixed nothing.
+if (-not $Http) {
+    $left = @(Get-ChildItem -LiteralPath $projRoot -Recurse -File -ErrorAction SilentlyContinue).Count
+    if ($left -eq 0) { Remove-Item -LiteralPath $projRoot -Force -ErrorAction SilentlyContinue }
+}
 $haveSummary = Test-Path -LiteralPath $summary
 
 if ($haveSummary) {
@@ -115,3 +136,4 @@ if ($haveSummary) {
     note   = 'deliberately gated on the artifact, not the exit code; see the comment above'
 } | ConvertTo-Json -Compress
 exit 1
+

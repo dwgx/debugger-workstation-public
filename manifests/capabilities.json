@@ -1,7 +1,7 @@
 {
   "schema": "capabilities.v1",
   "generated": "2026-09-30",
-  "_comment": "Capability contracts, so an orchestrator can compose labs it can introspect. This is NOT an inventory -- manifests/tools.json records what is installed. A capability here states what it consumes, the typed facts it produces, what it requires, what it proves, what it does NOT prove, and a negative control that must fail. 'state: observed' means the probe below was actually run; the summary is what it printed. Verify with: python scripts/registry-verify.py",
+  "_comment": "Capability contracts, so an orchestrator can compose labs it can introspect. This is NOT an inventory -- manifests/tools.json records what is installed. A capability here states what it consumes, the typed facts it produces, what it requires, what it proves, what it does NOT prove, and a negative control that must fail. 'state: observed' means the probe below was actually run; the summary is what it printed. Verify with: python scripts/registry-verify.py. Orchestrate with: powershell -File scripts\\mission.ps1 -Action Run ...",
   "fact_types": {
     "address": "an address in the target's own address space, hex string, never reused across rebuilds",
     "string": "a text literal recovered from the target",
@@ -17,36 +17,90 @@
     {
       "id": "native.ida.decompile",
       "title": "Decompile native x86-64 code through IDA 9.2 headlessly",
-      "domains": ["native", "static-reversing"],
-      "question_types": ["Q2.locate", "Q3.behaviour", "Q7.origin"],
+      "domains": [
+        "native",
+        "static-reversing"
+      ],
+      "question_types": [
+        "Q2.locate",
+        "Q3.behaviour",
+        "Q7.origin"
+      ],
       "state": "observed",
       "consumes": {
         "inputs": [
-          {"name": "binary", "type": "path_ref", "required": true,
-           "note": "Owner-named or self-built. Provenance must be checkable."},
-          {"name": "function", "type": "address", "required": false,
-           "from": {"capability": "native.ida.list_functions", "field": "native.func.addr"}}
+          {
+            "name": "binary",
+            "type": "path_ref",
+            "required": true,
+            "note": "Owner-named or self-built. Provenance must be checkable."
+          },
+          {
+            "name": "function",
+            "type": "address",
+            "required": false,
+            "from": {
+              "capability": "native.ida.list_functions",
+              "field": "native.func.addr"
+            }
+          }
         ],
         "context": [],
         "prior": []
       },
       "produces": {
         "facts": [
-          {"key": "native.dec.code", "type": "string", "fields": ["addr", "language"]},
-          {"key": "native.dec.refs", "type": "structure",
-           "fields": ["addr", "name", "string"]}
+          {
+            "key": "native.dec.code",
+            "type": "string",
+            "fields": [
+              "addr",
+              "language"
+            ]
+          },
+          {
+            "key": "native.dec.refs",
+            "type": "structure",
+            "fields": [
+              "addr",
+              "name",
+              "string"
+            ]
+          }
         ],
-        "artifacts": [{"key": "native.dec.saved", "type": "path_ref", "glob": "*.c"}],
-        "invalidates_on": ["the target is rebuilt -- every address in this output is void"]
+        "artifacts": [
+          {
+            "key": "native.dec.saved",
+            "type": "path_ref",
+            "glob": "*.c"
+          }
+        ],
+        "invalidates_on": [
+          "the target is rebuilt -- every address in this output is void"
+        ]
       },
       "requires": {
-        "runtime": "idalib-mcp", "net": "none", "admin": false, "device": false,
-        "disk_mb": 300, "ram_mb": 2048, "wall_minutes": 1,
-        "tools": [{"name": "idalib-mcp", "probe": "D:/Software/Developer/Python314/Scripts/idalib-mcp.exe --help"}]
+        "runtime": "idalib-mcp",
+        "net": "none",
+        "admin": false,
+        "device": false,
+        "disk_mb": 300,
+        "ram_mb": 2048,
+        "wall_minutes": 1,
+        "tools": [
+          {
+            "name": "idalib-mcp",
+            "probe": "D:/Software/Developer/Python314/Scripts/idalib-mcp.exe --help"
+          }
+        ]
       },
       "reach": {
-        "fs_read": true, "fs_write": false, "net": false, "proc_spawn": true,
-        "exec_target": false, "db_write": false,
+        "fs_read": true,
+        "fs_write": false,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": false,
+        "db_write": false,
         "note": "decompile itself only reads. The PROCESS it runs in does not: idalib-mcp can write a 2.7 MB .i64 to an arbitrary path via idb_save, which its own --unsafe tagging does NOT cover. So the trust boundary is the server, not the tool."
       },
       "gate_must_not_delegate": [
@@ -66,6 +120,22 @@
         "rederive": "each_round",
         "why": "Observed live: a supervisor's idb_open ADOPTED another process's idalib worker through the shared discovery files, then lost the session on the very next call. A session id is not a durable handle."
       },
+      "invoke": {
+        "runner": "node",
+        "argv": [
+          "native-lab/tools/decompile.mjs",
+          "{target}",
+          "{input.function}"
+        ],
+        "stdout": "json",
+        "success_when": "parsed JSON has ok == true AND code is non-null AND error is absent",
+        "fact_map": {
+          "code": "native.dec.code",
+          "refs": "native.dec.refs"
+        },
+        "consumes_fact": "native.func.addr",
+        "note": "This is the consumer half of the station's first real typed chain: native.ida.list_functions produces native.func.addr, and this entry declares it consumes that key. The arrow between two labs stops being a diagram and becomes an addressable fact."
+      },
       "proves": [
         "that a named function's machine code decompiles to the C shown, on those exact bytes",
         "which strings and imports the recovered logic references"
@@ -75,8 +145,14 @@
         "anything about a binary whose provenance was not established",
         "anything dynamic: no runtime value, no breakpoint, no memory state"
       ],
-      "side_effects": ["spawns an idalib worker bound to 127.0.0.1:8745"],
-      "gate": {"lane": "debug", "requires_verdict": true, "escalation_class": "none"},
+      "side_effects": [
+        "spawns an idalib worker bound to 127.0.0.1:8745"
+      ],
+      "gate": {
+        "lane": "debug",
+        "requires_verdict": true,
+        "escalation_class": "none"
+      },
       "probe": {
         "command": "node native-lab/tools/loop.mjs",
         "expect": "LOOP CLOSED",
@@ -95,33 +171,71 @@
         "record": "docs/research/binary-mcp-map.md; native-lab/README.md"
       }
     },
-
     {
       "id": "native.ida.list_functions",
       "title": "Enumerate functions in a native binary",
-      "domains": ["native", "static-reversing"],
-      "question_types": ["Q1.identify", "Q2.locate"],
+      "domains": [
+        "native",
+        "static-reversing"
+      ],
+      "question_types": [
+        "Q1.identify",
+        "Q2.locate"
+      ],
       "state": "observed",
       "consumes": {
         "inputs": [
-          {"name": "binary", "type": "path_ref", "required": true},
-          {"name": "queries", "type": "structure[]", "required": true,
-           "note": "one round trip carries N queries; that batching is the reason to use this server at all"}
+          {
+            "name": "binary",
+            "type": "path_ref",
+            "required": true
+          },
+          {
+            "name": "queries",
+            "type": "structure[]",
+            "required": true,
+            "note": "one round trip carries N queries; that batching is the reason to use this server at all"
+          }
         ],
         "prior": []
       },
       "produces": {
-        "facts": [{"key": "native.func.addr", "type": "address", "fields": ["name", "size"]}],
-        "invalidates_on": ["the target is rebuilt"]
+        "facts": [
+          {
+            "key": "native.func.addr",
+            "type": "address",
+            "fields": [
+              "name",
+              "size"
+            ]
+          }
+        ],
+        "invalidates_on": [
+          "the target is rebuilt"
+        ]
       },
       "requires": {
-        "runtime": "idalib-mcp", "net": "none", "admin": false, "device": false,
-        "disk_mb": 300, "ram_mb": 2048, "wall_minutes": 1,
-        "tools": [{"name": "idalib-mcp", "probe": "idalib-mcp --help"}]
+        "runtime": "idalib-mcp",
+        "net": "none",
+        "admin": false,
+        "device": false,
+        "disk_mb": 300,
+        "ram_mb": 2048,
+        "wall_minutes": 1,
+        "tools": [
+          {
+            "name": "idalib-mcp",
+            "probe": "idalib-mcp --help"
+          }
+        ]
       },
       "reach": {
-        "fs_read": true, "fs_write": false, "net": false, "proc_spawn": true,
-        "exec_target": false, "db_write": false
+        "fs_read": true,
+        "fs_write": false,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": false,
+        "db_write": false
       },
       "envelope": {
         "success_when": "every requested query has a result object AND result.length == queries.length",
@@ -133,14 +247,37 @@
         },
         "why": "Measured, not read: normalize_dict_list silently DROPS non-dict elements in a mixed list (utils.py:704-706) -- 5 queries in, 4 results out, with no index, no echo and no dropped counter. An empty array becomes [{}] and returns one bogus failed item (utils.py:694-695). Past the 50,000-char response cap (rpc.py:20) the WHOLE result is replaced by a 10-item preview plus output_truncated and a download URL: measured 6,000 get_int requests came back as 10 items and 417,213 characters truncated. An orchestrator that asked for five facts and read four answers would otherwise have no signal that anything went missing."
       },
-      "session": {"bind": "sha256(object)", "rederive": "each_round",
-        "why": "a session id was observed adopted across processes via shared discovery files, then lost on the next call"},
-      "proves": ["which functions the analyser recovered, with their addresses and sizes"],
+      "invoke": {
+        "runner": "node",
+        "argv": [
+          "native-lab/tools/list-funcs.mjs",
+          "{target}",
+          "--json"
+        ],
+        "stdout": "json",
+        "success_when": "parsed JSON has ok == true AND count > 0",
+        "fact_map": {
+          "functions": "native.func.addr"
+        },
+        "note": "`probe` proves the capability runs; `invoke` is what makes it CALLABLE with a typed result. A capability with only a probe cannot take arguments, so nothing downstream can be handed an address. argv is an array and is never joined into a shell string -- the target path is attacker-influenced by definition."
+      },
+      "session": {
+        "bind": "sha256(object)",
+        "rederive": "each_round",
+        "why": "a session id was observed adopted across processes via shared discovery files, then lost on the next call"
+      },
+      "proves": [
+        "which functions the analyser recovered, with their addresses and sizes"
+      ],
       "does_not_prove": [
         "that the function list is complete -- inlined and unreachable code is routinely missed",
         "that a recovered boundary matches the author's intent"
       ],
-      "gate": {"lane": "debug", "requires_verdict": true, "escalation_class": "none"},
+      "gate": {
+        "lane": "debug",
+        "requires_verdict": true,
+        "escalation_class": "none"
+      },
       "probe": {
         "command": "node native-lab/tools/loop.mjs",
         "expect": "list_funcs enumerates functions",
@@ -154,38 +291,82 @@
         "expect_exit": 1,
         "why": "must refuse rather than answer from an unstated session"
       },
-      "provenance": {"source": "measured on this host 2026-09-30", "record": "native-lab/README.md"}
+      "provenance": {
+        "source": "measured on this host 2026-09-30",
+        "record": "native-lab/README.md"
+      }
     },
-
     {
       "id": "web.js.cdp",
       "title": "Drive and observe a page over the Chrome DevTools Protocol",
-      "domains": ["web", "js"],
-      "question_types": ["Q1.identify", "Q3.behaviour", "Q4.data"],
+      "domains": [
+        "web",
+        "js"
+      ],
+      "question_types": [
+        "Q1.identify",
+        "Q3.behaviour",
+        "Q4.data"
+      ],
       "state": "observed",
       "consumes": {
-        "inputs": [{"name": "url", "type": "string", "required": true,
-                    "note": "loopback origins only unless a gate verdict exists"}],
+        "inputs": [
+          {
+            "name": "url",
+            "type": "string",
+            "required": true,
+            "note": "loopback origins only unless a gate verdict exists"
+          }
+        ],
         "prior": []
       },
       "produces": {
-        "facts": [{"key": "web.dom.nodes", "type": "structure", "fields": ["selector", "text"]}],
-        "invalidates_on": ["the page navigates"]
+        "facts": [
+          {
+            "key": "web.dom.nodes",
+            "type": "structure",
+            "fields": [
+              "selector",
+              "text"
+            ]
+          }
+        ],
+        "invalidates_on": [
+          "the page navigates"
+        ]
       },
       "requires": {
-        "runtime": "node", "net": "none", "admin": false, "device": false,
-        "disk_mb": 10, "ram_mb": 512, "wall_minutes": 2,
-        "tools": [{"name": "chrome", "probe": "web-reverse/tools/chrome.mjs"}]
+        "runtime": "node",
+        "net": "none",
+        "admin": false,
+        "device": false,
+        "disk_mb": 10,
+        "ram_mb": 512,
+        "wall_minutes": 2,
+        "tools": [
+          {
+            "name": "chrome",
+            "probe": "web-reverse/tools/chrome.mjs"
+          }
+        ]
       },
-      "proves": ["what a loopback page rendered and returned at the time it was asked"],
+      "proves": [
+        "what a loopback page rendered and returned at the time it was asked"
+      ],
       "does_not_prove": [
         "anything about a host we have no verdict for",
         "that behaviour is stable -- the page was observed once, at one moment"
       ],
-      "gate": {"lane": "bounty", "requires_verdict": true, "escalation_class": "owner_word"},
+      "gate": {
+        "lane": "bounty",
+        "requires_verdict": true,
+        "escalation_class": "owner_word"
+      },
       "probe": {
         "command": "node web-reverse/tools/loop.mjs",
-        "expect": "6/6", "exit": 0, "last_run": "2026-09-30",
+        "expect": "6/6",
+        "exit": 0,
+        "last_run": "2026-09-30",
         "last_summary": "6 checks"
       },
       "negative_control": {
@@ -194,35 +375,75 @@
         "expect_exit": 1,
         "why": "the CA must not be trusted outside the lab instance; ISOLATION HELD is the passing state and a broken pin must not"
       },
-      "provenance": {"source": "measured on this host 2026-09-30", "record": "web-reverse/README.md"}
+      "provenance": {
+        "source": "measured on this host 2026-09-30",
+        "record": "web-reverse/README.md"
+      }
     },
-
     {
       "id": "crypto.jose.parse",
       "title": "Parse and verify JOSE/JWT structure without accepting it as valid",
-      "domains": ["crypto"],
-      "question_types": ["Q4.data", "Q6.crypto"],
+      "domains": [
+        "crypto"
+      ],
+      "question_types": [
+        "Q4.data",
+        "Q6.crypto"
+      ],
       "state": "observed",
       "consumes": {
-        "inputs": [{"name": "token", "type": "token", "required": true}],
+        "inputs": [
+          {
+            "name": "token",
+            "type": "token",
+            "required": true
+          }
+        ],
         "prior": []
       },
       "produces": {
-        "facts": [{"key": "crypto.jose.claims", "type": "structure", "fields": ["key", "value", "exp"]}],
-        "invalidates_on": ["the signing key rotates"]
+        "facts": [
+          {
+            "key": "crypto.jose.claims",
+            "type": "structure",
+            "fields": [
+              "key",
+              "value",
+              "exp"
+            ]
+          }
+        ],
+        "invalidates_on": [
+          "the signing key rotates"
+        ]
       },
-      "requires": {"runtime": "node", "net": "none", "admin": false, "device": false,
-                   "disk_mb": 5, "ram_mb": 256, "wall_minutes": 1, "tools": []},
-      "proves": ["the token's structure, claims and declared algorithm"],
+      "requires": {
+        "runtime": "node",
+        "net": "none",
+        "admin": false,
+        "device": false,
+        "disk_mb": 5,
+        "ram_mb": 256,
+        "wall_minutes": 1,
+        "tools": []
+      },
+      "proves": [
+        "the token's structure, claims and declared algorithm"
+      ],
       "does_not_prove": [
         "that a token is valid, unexpired, or unforgeable",
         "that a claimed algorithm matches the one the server enforces",
         "anything about a live credential -- nothing here consumes or stores one"
       ],
-      "gate": {"lane": "debug", "requires_verdict": false, "escalation_class": "none"},
+      "gate": {
+        "lane": "debug",
+        "requires_verdict": false,
+        "escalation_class": "none"
+      },
       "probe": {
         "command": "node crypto-lab/tools/loop.mjs",
-        "expect": "JSON-SUMMARY {\"total\":17,\"pass\":17,\"fail\":0}", "exit": 0,
+        "expect": "JSON-SUMMARY {\"total\":17,\"pass\":17,\"fail\":0}",
+        "exit": 0,
         "last_run": "2026-09-30",
         "last_summary": "17 checks"
       },
@@ -232,35 +453,78 @@
         "expect_exit": 1,
         "why": "a structurally valid token that must not be accepted as verified"
       },
-      "provenance": {"source": "measured on this host 2026-09-30", "record": "crypto-lab/README.md"}
+      "provenance": {
+        "source": "measured on this host 2026-09-30",
+        "record": "crypto-lab/README.md"
+      }
     },
-
     {
       "id": "net.pcap.analyse",
       "title": "Parse captures and infer protocol format and state machine",
-      "domains": ["network", "protocol"],
-      "question_types": ["Q3.behaviour", "Q4.data", "Q7.origin"],
+      "domains": [
+        "network",
+        "protocol"
+      ],
+      "question_types": [
+        "Q3.behaviour",
+        "Q4.data",
+        "Q7.origin"
+      ],
       "state": "observed",
       "consumes": {
-        "inputs": [{"name": "capture", "type": "pcap", "required": true,
-                    "note": "loopback or lab-origin only"}],
+        "inputs": [
+          {
+            "name": "capture",
+            "type": "pcap",
+            "required": true,
+            "note": "loopback or lab-origin only"
+          }
+        ],
         "prior": []
       },
       "produces": {
-        "facts": [{"key": "net.flow.summary", "type": "structure", "fields": ["src", "dst", "bytes"]}],
-        "invalidates_on": ["the capture file is re-cut"]
+        "facts": [
+          {
+            "key": "net.flow.summary",
+            "type": "structure",
+            "fields": [
+              "src",
+              "dst",
+              "bytes"
+            ]
+          }
+        ],
+        "invalidates_on": [
+          "the capture file is re-cut"
+        ]
       },
-      "requires": {"runtime": "node", "net": "none", "admin": false, "device": false,
-                   "disk_mb": 20, "ram_mb": 256, "wall_minutes": 1, "tools": []},
-      "proves": ["what the recorded flows contained, and how the analyser classified them"],
+      "requires": {
+        "runtime": "node",
+        "net": "none",
+        "admin": false,
+        "device": false,
+        "disk_mb": 20,
+        "ram_mb": 256,
+        "wall_minutes": 1,
+        "tools": []
+      },
+      "proves": [
+        "what the recorded flows contained, and how the analyser classified them"
+      ],
       "does_not_prove": [
         "that a session was legitimate -- capture records traffic, not authority",
         "anything about traffic we did not capture"
       ],
-      "gate": {"lane": "debug", "requires_verdict": true, "escalation_class": "owner_word"},
+      "gate": {
+        "lane": "debug",
+        "requires_verdict": true,
+        "escalation_class": "owner_word"
+      },
       "probe": {
         "command": "node net-reverse/tools/loop.mjs",
-        "expect": "LANE CLOSED", "exit": 0, "last_run": "2026-09-30",
+        "expect": "LANE CLOSED",
+        "exit": 0,
+        "last_run": "2026-09-30",
         "last_summary": "16 questions, request/response rewriting and isolation checks passed"
       },
       "negative_control": {
@@ -269,25 +533,59 @@
         "expect_exit": 1,
         "why": "isolation must fail loudly if the lab CA is trusted outside its instance"
       },
-      "provenance": {"source": "measured on this host 2026-09-30", "record": "net-reverse/README.md"}
+      "provenance": {
+        "source": "measured on this host 2026-09-30",
+        "record": "net-reverse/README.md"
+      }
     },
-
     {
       "id": "forensics.memory.artefact",
       "title": "Parse memory and host artefacts, and treat refusals as results",
-      "domains": ["forensics", "memory"],
-      "question_types": ["Q1.identify", "Q4.data", "Q7.origin"],
+      "domains": [
+        "forensics",
+        "memory"
+      ],
+      "question_types": [
+        "Q1.identify",
+        "Q4.data",
+        "Q7.origin"
+      ],
       "state": "observed",
       "consumes": {
-        "inputs": [{"name": "image", "type": "path_ref", "required": true}],
+        "inputs": [
+          {
+            "name": "image",
+            "type": "path_ref",
+            "required": true
+          }
+        ],
         "prior": []
       },
       "produces": {
-        "facts": [{"key": "forensics.artefact.rows", "type": "structure", "fields": ["offset", "field"]}],
-        "invalidates_on": ["the image is rebuilt"]
+        "facts": [
+          {
+            "key": "forensics.artefact.rows",
+            "type": "structure",
+            "fields": [
+              "offset",
+              "field"
+            ]
+          }
+        ],
+        "invalidates_on": [
+          "the image is rebuilt"
+        ]
       },
-      "requires": {"runtime": "node+python", "net": "none", "admin": false, "device": false,
-                   "disk_mb": 200, "ram_mb": 2048, "wall_minutes": 3, "tools": []},
+      "requires": {
+        "runtime": "node+python",
+        "net": "none",
+        "admin": false,
+        "device": false,
+        "disk_mb": 200,
+        "ram_mb": 2048,
+        "wall_minutes": 3,
+        "tools": []
+      },
       "proves": [
         "which artefacts the parsers recovered from the image",
         "that Volatility 3 refused the synthetic image, which is the point of the check"
@@ -296,10 +594,16 @@
         "that absence of an artefact means absence of the behaviour",
         "any conclusion resting on a single tool family -- corroboration needs a second capability"
       ],
-      "gate": {"lane": "debug", "requires_verdict": true, "escalation_class": "none"},
+      "gate": {
+        "lane": "debug",
+        "requires_verdict": true,
+        "escalation_class": "none"
+      },
       "probe": {
         "command": "node forensics-lab/tools/loop.mjs",
-        "expect": "LOOP CLOSED", "exit": 0, "last_run": "2026-09-30",
+        "expect": "LOOP CLOSED",
+        "exit": 0,
+        "last_run": "2026-09-30",
         "last_summary": "37 checks (74 PASS lines -- each check prints a verdict and its evidence)"
       },
       "negative_control": {
@@ -308,34 +612,74 @@
         "expect_exit": 1,
         "why": "the conclusion must degrade from confirmed to possible, proving the triangulation rule is live"
       },
-      "provenance": {"source": "measured on this host 2026-09-30", "record": "forensics-lab/README.md"}
+      "provenance": {
+        "source": "measured on this host 2026-09-30",
+        "record": "forensics-lab/README.md"
+      }
     },
-
     {
       "id": "managed.il.decompile",
       "title": "Decompile managed .NET assemblies and detect wrong-answer paths",
-      "domains": ["managed", "dotnet"],
-      "question_types": ["Q2.locate", "Q3.behaviour"],
+      "domains": [
+        "managed",
+        "dotnet"
+      ],
+      "question_types": [
+        "Q2.locate",
+        "Q3.behaviour"
+      ],
       "state": "observed",
       "consumes": {
-        "inputs": [{"name": "assembly", "type": "path_ref", "required": true}],
+        "inputs": [
+          {
+            "name": "assembly",
+            "type": "path_ref",
+            "required": true
+          }
+        ],
         "prior": []
       },
       "produces": {
-        "facts": [{"key": "managed.method.code", "type": "string", "fields": ["method", "technique"]}],
-        "invalidates_on": ["the assembly is rebuilt"]
+        "facts": [
+          {
+            "key": "managed.method.code",
+            "type": "string",
+            "fields": [
+              "method",
+              "technique"
+            ]
+          }
+        ],
+        "invalidates_on": [
+          "the assembly is rebuilt"
+        ]
       },
-      "requires": {"runtime": "node+dotnet", "net": "none", "admin": false, "device": false,
-                   "disk_mb": 100, "ram_mb": 1024, "wall_minutes": 2, "tools": []},
-      "proves": ["that each sample's answer was recovered from its own decompilation and confirmed against its output"],
+      "requires": {
+        "runtime": "node+dotnet",
+        "net": "none",
+        "admin": false,
+        "device": false,
+        "disk_mb": 100,
+        "ram_mb": 1024,
+        "wall_minutes": 2,
+        "tools": []
+      },
+      "proves": [
+        "that each sample's answer was recovered from its own decompilation and confirmed against its output"
+      ],
       "does_not_prove": [
         "that a recovery generalises beyond the sample it was recovered from",
         "that a confident answer is a correct one -- see the wrong-entry-state control"
       ],
-      "gate": {"lane": "debug", "requires_verdict": true, "escalation_class": "none"},
+      "gate": {
+        "lane": "debug",
+        "requires_verdict": true,
+        "escalation_class": "none"
+      },
       "probe": {
         "command": "node managed-lab/tools/loop.mjs",
-        "expect": "JSON-SUMMARY {\"total\":27,\"pass\":27,\"fail\":0}", "exit": 0,
+        "expect": "JSON-SUMMARY {\"total\":27,\"pass\":27,\"fail\":0}",
+        "exit": 0,
         "last_run": "2026-09-30",
         "last_summary": "27 checks (46 PASS lines -- count unique names, not rows)"
       },
@@ -345,35 +689,76 @@
         "expect_exit": 1,
         "why": "it produces a complete, confident, WRONG answer; the harness must reject it. This is the station's canonical failure mode."
       },
-      "provenance": {"source": "measured on this host 2026-09-30", "record": "managed-lab/README.md"}
+      "provenance": {
+        "source": "measured on this host 2026-09-30",
+        "record": "managed-lab/README.md"
+      }
     },
-
     {
       "id": "mobile.apk.static",
       "title": "Build and statically analyse a real signed APK",
-      "domains": ["mobile", "android"],
-      "question_types": ["Q1.identify", "Q2.locate"],
+      "domains": [
+        "mobile",
+        "android"
+      ],
+      "question_types": [
+        "Q1.identify",
+        "Q2.locate"
+      ],
       "state": "observed",
       "consumes": {
-        "inputs": [{"name": "apk", "type": "apk", "required": true}],
+        "inputs": [
+          {
+            "name": "apk",
+            "type": "apk",
+            "required": true
+          }
+        ],
         "prior": []
       },
       "produces": {
-        "facts": [{"key": "mobile.manifest.summary", "type": "structure", "fields": ["permission", "component"]}],
-        "invalidates_on": ["the APK is rebuilt or re-signed"]
+        "facts": [
+          {
+            "key": "mobile.manifest.summary",
+            "type": "structure",
+            "fields": [
+              "permission",
+              "component"
+            ]
+          }
+        ],
+        "invalidates_on": [
+          "the APK is rebuilt or re-signed"
+        ]
       },
-      "requires": {"runtime": "node+java", "net": "none", "admin": false, "device": false,
-                   "disk_mb": 500, "ram_mb": 2048, "wall_minutes": 5, "tools": []},
-      "proves": ["what the APK's manifest, DEX and native library contain as built"],
+      "requires": {
+        "runtime": "node+java",
+        "net": "none",
+        "admin": false,
+        "device": false,
+        "disk_mb": 500,
+        "ram_mb": 2048,
+        "wall_minutes": 5,
+        "tools": []
+      },
+      "proves": [
+        "what the APK's manifest, DEX and native library contain as built"
+      ],
       "does_not_prove": [
         "anything about runtime behaviour -- no device, so ART acceptance, on-device TLS and .so execution are NOT claimed",
         "packing or anti-emulator detection, which this lab does not implement yet",
         "Kotlin name recovery, which R8's retained metadata makes possible and we do not yet do"
       ],
-      "gate": {"lane": "debug", "requires_verdict": true, "escalation_class": "none"},
+      "gate": {
+        "lane": "debug",
+        "requires_verdict": true,
+        "escalation_class": "none"
+      },
       "probe": {
         "command": "node mobile-lab/tools/loop.mjs",
-        "expect": "LOOP CLOSED", "exit": 0, "last_run": "2026-09-30",
+        "expect": "LOOP CLOSED",
+        "exit": 0,
+        "last_run": "2026-09-30",
         "last_summary": "25 checks, including a 40-case Frida suite"
       },
       "negative_control": {
@@ -382,31 +767,74 @@
         "expect_exit": 1,
         "why": "one decoder agreeing with itself is not corroboration; pyelftools already caught a real sh_link bug this way"
       },
-      "provenance": {"source": "measured on this host 2026-09-30", "record": "mobile-lab/README.md"}
+      "provenance": {
+        "source": "measured on this host 2026-09-30",
+        "record": "mobile-lab/README.md"
+      }
     },
-
     {
       "id": "re.corpus.solve",
       "title": "Solve self-built crackmes and record the technique used",
-      "domains": ["native", "practice"],
-      "question_types": ["Q3.behaviour", "Q7.origin"],
+      "domains": [
+        "native",
+        "practice"
+      ],
+      "question_types": [
+        "Q3.behaviour",
+        "Q7.origin"
+      ],
       "state": "observed",
       "consumes": {
-        "inputs": [{"name": "binary", "type": "path_ref", "required": true}],
+        "inputs": [
+          {
+            "name": "binary",
+            "type": "path_ref",
+            "required": true
+          }
+        ],
         "prior": []
       },
       "produces": {
-        "facts": [{"key": "re.solve.answer", "type": "string", "fields": ["id", "technique"]}],
-        "invalidates_on": ["the corpus is rebuilt"]
+        "facts": [
+          {
+            "key": "re.solve.answer",
+            "type": "string",
+            "fields": [
+              "id",
+              "technique"
+            ]
+          }
+        ],
+        "invalidates_on": [
+          "the corpus is rebuilt"
+        ]
       },
-      "requires": {"runtime": "python+msvc", "net": "none", "admin": false, "device": false,
-                   "disk_mb": 50, "ram_mb": 512, "wall_minutes": 3, "tools": []},
-      "proves": ["that each crackme was solved, and by which named technique"],
-      "does_not_prove": ["that the technique transfers to a binary we did not build"],
-      "gate": {"lane": "debug", "requires_verdict": false, "escalation_class": "none"},
+      "requires": {
+        "runtime": "python+msvc",
+        "net": "none",
+        "admin": false,
+        "device": false,
+        "disk_mb": 50,
+        "ram_mb": 512,
+        "wall_minutes": 3,
+        "tools": []
+      },
+      "proves": [
+        "that each crackme was solved, and by which named technique"
+      ],
+      "does_not_prove": [
+        "that the technique transfers to a binary we did not build"
+      ],
+      "gate": {
+        "lane": "debug",
+        "requires_verdict": false,
+        "escalation_class": "none"
+      },
       "probe": {
         "command": "python crackme-corpus/tools/loop.py",
-        "expect": "CORPUS CLOSED", "exit": 0, "last_run": "2026-09-30",
+        "expect": "CORPUS CLOSED",
+        "exit": 0,
+        "last_run": "2026-09-30",
         "last_summary": "20 checks, 5 negative controls"
       },
       "negative_control": {
@@ -415,36 +843,74 @@
         "expect_exit": 1,
         "why": "a technique label must not be emitted for a sample it did not solve"
       },
-      "provenance": {"source": "measured on this host 2026-09-30", "record": "crackme-corpus/README.md"}
+      "provenance": {
+        "source": "measured on this host 2026-09-30",
+        "record": "crackme-corpus/README.md"
+      }
     },
-
     {
       "id": "dynamic.device.frida",
       "title": "Instrument a live Android device with Frida",
-      "domains": ["mobile", "dynamic"],
-      "question_types": ["Q3.behaviour", "Q4.data"],
+      "domains": [
+        "mobile",
+        "dynamic"
+      ],
+      "question_types": [
+        "Q3.behaviour",
+        "Q4.data"
+      ],
       "state": "absent",
       "consumes": {
-        "inputs": [{"name": "device", "type": "string", "required": true}],
+        "inputs": [
+          {
+            "name": "device",
+            "type": "string",
+            "required": true
+          }
+        ],
         "prior": []
       },
-      "produces": {"facts": [], "invalidates_on": []},
+      "produces": {
+        "facts": [],
+        "invalidates_on": []
+      },
       "requires": {
-        "runtime": "frida", "net": "none", "admin": true, "device": true,
-        "disk_mb": 0, "ram_mb": 0, "wall_minutes": 0,
-        "tools": [{"name": "adb", "probe": "adb devices", "expect": "no devices attached"}]
+        "runtime": "frida",
+        "net": "none",
+        "admin": true,
+        "device": true,
+        "disk_mb": 0,
+        "ram_mb": 0,
+        "wall_minutes": 0,
+        "tools": [
+          {
+            "name": "adb",
+            "probe": "adb devices",
+            "expect": "no devices attached"
+          }
+        ]
       },
       "reach": {
-        "fs_read": false, "fs_write": true, "net": false, "proc_spawn": true,
-        "exec_target": true, "db_write": false,
-        "note": "admin=true is declared as fs_write and proc_spawn rather than left implicit, because a decorator tag can miss an effect. Frida injects into a running process and writes to the device, so the effect is real even while the capability is absent."
+        "fs_read": false,
+        "fs_write": true,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": true,
+        "db_write": false,
+        "note": "admin=true is declared as fs_write and proc_spawn rather than left implicit, because a decorator tag can miss an effect. Frida injects into a running process and writes to the device, so the effect is real even while the capability is absent.",
+        "write_scope": "case_dir",
+        "write_scope_note": "writes only under the mission case directory; anything broader needs escalation"
       },
       "proves": [],
       "does_not_prove": [
         "that any on-device behaviour was observed -- there is no device on this host",
         "ART accepting our scripts, live on-device TLS interception, or .so disassembly"
       ],
-      "gate": {"lane": "debug", "requires_verdict": true, "escalation_class": "impossible"},
+      "gate": {
+        "lane": "debug",
+        "requires_verdict": true,
+        "escalation_class": "impossible"
+      },
       "probe": {
         "command": "adb devices",
         "expect": "no devices attached",
@@ -462,37 +928,73 @@
         "source": "measured 2026-09-30",
         "record": "docs/research/mobile-js-skill-map.md"
       }
-    }
-,
+    },
     {
       "id": "fuzz.differential.parse",
       "title": "Mutation-fuzz this repository's own parsers under a differential oracle",
-      "domains": ["native", "web", "crypto", "forensics", "practice"],
-      "question_types": ["Q1.identify", "Q5.vuln-shape"],
+      "domains": [
+        "native",
+        "web",
+        "crypto",
+        "forensics",
+        "practice"
+      ],
+      "question_types": [
+        "Q1.identify",
+        "Q5.vuln-shape"
+      ],
       "state": "observed",
       "consumes": {
         "inputs": [
-          {"name": "target", "type": "string", "required": true,
-           "note": "one of pcap | jose | forensic-pf | web-triage. All four parsers are ours."}
+          {
+            "name": "target",
+            "type": "string",
+            "required": true,
+            "note": "one of pcap | jose | forensic-pf | web-triage. All four parsers are ours."
+          }
         ],
         "context": [],
         "prior": []
       },
       "produces": {
         "facts": [
-          {"key": "fuzz.finding.outcome", "type": "verdict",
-           "fields": ["target", "class", "recipe_sha"]}
+          {
+            "key": "fuzz.finding.outcome",
+            "type": "verdict",
+            "fields": [
+              "target",
+              "class",
+              "recipe_sha"
+            ]
+          }
         ],
         "artifacts": [
-          {"key": "fuzz.repro.bytes", "type": "bytes_ref", "glob": "crashes/*.bin",
-           "note": "gitignored on purpose -- a reproducer is hostile input against the parsers we ship. The recipe is committed; replay re-derives the bytes and checks the hash."}
+          {
+            "key": "fuzz.repro.bytes",
+            "type": "bytes_ref",
+            "glob": "crashes/*.bin",
+            "note": "gitignored on purpose -- a reproducer is hostile input against the parsers we ship. The recipe is committed; replay re-derives the bytes and checks the hash."
+          }
         ],
-        "invalidates_on": ["a parser is fixed -- the finding moves to the regression guard"]
+        "invalidates_on": [
+          "a parser is fixed -- the finding moves to the regression guard"
+        ]
       },
       "requires": {
-        "runtime": "node", "net": "none", "admin": false, "device": false,
-        "disk_mb": 100, "ram_mb": 512, "wall_minutes": 12,
-        "tools": [{"name": "node", "probe": "node --version", "expect": "v24 or newer"}]
+        "runtime": "node",
+        "net": "none",
+        "admin": false,
+        "device": false,
+        "disk_mb": 100,
+        "ram_mb": 512,
+        "wall_minutes": 12,
+        "tools": [
+          {
+            "name": "node",
+            "probe": "node --version",
+            "expect": "v24 or newer"
+          }
+        ]
       },
       "proves": [
         "that four specific parsers in this tree survived or did not survive a mutation campaign, with the outcome of every input recorded",
@@ -505,8 +1007,14 @@
         "anything about tshark, Wireshark, jadx, Volatility or DiE -- installed third-party parsers are deliberately NOT targets, because a finding there is not a finding about this tree",
         "native memory safety -- there is no ASAN or UBSAN, and the 192 MB ceiling is a V8 heap cap, so a 1-byte out-of-bounds read inside a Buffer is invisible to it"
       ],
-      "side_effects": ["spawns roughly two child processes per input; about 11 min at the default budget of 60"],
-      "gate": {"lane": "debug", "requires_verdict": false, "escalation_class": "none"},
+      "side_effects": [
+        "spawns roughly two child processes per input; about 11 min at the default budget of 60"
+      ],
+      "gate": {
+        "lane": "debug",
+        "requires_verdict": false,
+        "escalation_class": "none"
+      },
       "probe": {
         "command": "node fuzz-lab/tools/loop.mjs --budget 12",
         "expect": "LOOP CLOSED",
@@ -523,6 +1031,243 @@
       "provenance": {
         "source": "measured on this host 2026-09-30; four real defects found and fixed in this tree",
         "record": "fuzz-lab/README.md"
+      }
+    },
+    {
+      "id": "native.ghidra.decompile",
+      "title": "Decompile a native binary with Ghidra headlessly, gated on its artifact",
+      "domains": [
+        "native",
+        "static-reversing"
+      ],
+      "question_types": [
+        "Q1.identify",
+        "Q2.locate"
+      ],
+      "state": "observed",
+      "consumes": {
+        "inputs": [
+          {
+            "name": "binary",
+            "type": "path_ref",
+            "required": true
+          },
+          {
+            "name": "outdir",
+            "type": "path_ref",
+            "required": false
+          }
+        ],
+        "prior": []
+      },
+      "produces": {
+        "facts": [
+          {
+            "key": "native.ghidra.summary",
+            "type": "structure",
+            "fields": [
+              "program",
+              "language",
+              "functions",
+              "decompiled"
+            ]
+          }
+        ],
+        "artifacts": [
+          {
+            "key": "native.ghidra.c",
+            "type": "path_ref",
+            "glob": "*.c"
+          }
+        ],
+        "invalidates_on": [
+          "the target is rebuilt",
+          "the Ghidra install is moved or upgraded"
+        ]
+      },
+      "requires": {
+        "runtime": "ghidra+java",
+        "net": "none",
+        "admin": false,
+        "device": false,
+        "disk_mb": 350,
+        "ram_mb": 1200,
+        "wall_minutes": 1,
+        "tools": [
+          {
+            "name": "analyzeHeadless",
+            "probe": "Static-Reversing/Ghidra/ghidra_12.1.3_PUBLIC/support/analyzeHeadless.bat"
+          }
+        ]
+      },
+      "proves": [
+        "that Ghidra recovered N functions and decompiled N of them for this binary",
+        "the program language and import name, read from the analysis itself"
+      ],
+      "does_not_prove": [
+        "that any specific function decompiled correctly -- the count is not a fidelity claim",
+        "nothing about runtime behaviour",
+        "nothing about a build other than the one analysed"
+      ],
+      "side_effects": [
+        "leaves a %TEMP%\\ghidra-proj-* directory behind on the PostScript path -- a measured leak of roughly 14 MB across 30 directories on this box",
+        "writes 512 .c files for a 512-function binary"
+      ],
+      "reach": {
+        "fs_read": true,
+        "fs_write": true,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": false,
+        "db_write": false,
+        "write_scope": "case_dir",
+        "write_scope_note": "writes the .c export and summary.json into the mission case directory only. The %TEMP%\\ghidra-proj-* leak was a measured bug (30 dirs, ~14 MB) and is fixed: -deleteProject is now passed on every path except the HTTP server, which still holds the project open when the process returns."
+      },
+      "envelope": {
+        "success_when": "summary.json EXISTS and its `ok` is true -- NEVER the process exit code",
+        "item_error_field": "ok",
+        "note": "This is the one capability whose success signal must never be the exit code. Measured 2026-09-30: `Start-Process -PassThru` with `WaitForExit(<int>)` leaves $p.ExitCode as $null, and PowerShell's `exit $null` is exit 0 -- so a failed import was a PASS. The wrapper now gates on summary.json alone; regression in scripts/ghidra-failopen-regress.ps1, 4/4."
+      },
+      "gate": {
+        "lane": "debug",
+        "requires_verdict": true,
+        "escalation_class": "none"
+      },
+      "probe": {
+        "command": "powershell -File scripts\\ghidra-failopen-regress.ps1",
+        "expect": "LOOP CLOSED",
+        "exit": 0,
+        "last_run": "2026-09-30",
+        "last_summary": "4/4; measured cost of one run on a 140.5 KB PE: 18.05 s wall, 1085.7 MB peak RAM, 673,090 B across 522 files"
+      },
+      "invoke": {
+        "runner": "powershell",
+        "argv": [
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          "scripts/ghidra-headless.ps1",
+          "-Sample",
+          "{target}",
+          "-OutDir",
+          "{outdir}"
+        ],
+        "stdout": "json",
+        "success_when": "summary.json exists and ok == true; the exit code is NOT the signal",
+        "fact_map": {
+          "summary": "native.ghidra.summary"
+        },
+        "note": "argv is an array and is never joined. The success test is declared in words because it cannot be reduced to an exit code -- see envelope.success_when."
+      },
+      "negative_control": {
+        "id": "native.ghidra.decompile.not_a_binary",
+        "command": "point the wrapper at a .txt file",
+        "expect_exit": 1,
+        "why": "must exit non-zero AND produce no summary.json. Measured before the fix: it exited 0. This is the fail-open, kept as a permanent control."
+      },
+      "provenance": {
+        "source": "measured on this host 2026-09-30",
+        "record": "scripts/ghidra-failopen.md; docs/research/ghidra-capability-spec.md"
+      }
+    },
+    {
+      "id": "native.crosscompare.ghidra",
+      "title": "Cross-binary function matching via Ghidra's own Version Tracking, headlessly",
+      "domains": [
+        "native",
+        "static-reversing"
+      ],
+      "question_types": [
+        "Q7.origin"
+      ],
+      "state": "observed",
+      "consumes": {
+        "inputs": [
+          {
+            "name": "source",
+            "type": "path_ref",
+            "required": true
+          },
+          {
+            "name": "dest",
+            "type": "path_ref",
+            "required": true
+          }
+        ],
+        "prior": []
+      },
+      "produces": {
+        "facts": [
+          {
+            "key": "native.diff.changed",
+            "type": "structure",
+            "fields": [
+              "func",
+              "change"
+            ]
+          }
+        ],
+        "invalidates_on": [
+          "either binary is rebuilt"
+        ]
+      },
+      "requires": {
+        "runtime": "ghidra+java",
+        "net": "none",
+        "admin": false,
+        "device": false,
+        "disk_mb": 400,
+        "ram_mb": 1200,
+        "wall_minutes": 1,
+        "tools": [
+          {
+            "name": "AutoVersionTrackingScript.java",
+            "probe": "Ghidra/Features/VersionTracking/ghidra_scripts/AutoVersionTrackingScript.java"
+          }
+        ]
+      },
+      "proves": [
+        "that Ghidra matched functions across two binaries and reported the differences"
+      ],
+      "does_not_prove": [
+        "that the matching is semantically correct -- correlators score similarity, they do not prove equivalence",
+        "anything about functions neither correlator could score"
+      ],
+      "side_effects": [
+        "needs both programs imported into ONE project first"
+      ],
+      "reach": {
+        "fs_read": true,
+        "fs_write": true,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": false,
+        "db_write": false,
+        "write_scope": "case_dir",
+        "write_scope_note": "both programs and the TSV live under the mission case directory"
+      },
+      "gate": {
+        "lane": "debug",
+        "requires_verdict": true,
+        "escalation_class": "none"
+      },
+      "probe": {
+        "command": "see scripts/ghidra-failopen.md reproduction section",
+        "expect": "Auto Version Tracking Command completed successfully with no apply markup errors",
+        "exit": 0,
+        "last_run": "2026-09-30",
+        "last_summary": "3 programs open in one headless process, 14 program correlators across two of them, 14-17 s, 2,889,483 B TSV"
+      },
+      "negative_control": {
+        "id": "native.crosscompare.same_binary",
+        "command": "run the tracker with the source and destination set to the SAME program",
+        "expect_exit": 1,
+        "why": "a binary compared against itself must report zero changes. Anything else means the correlator is scoring noise."
+      },
+      "provenance": {
+        "source": "measured on this host 2026-09-30",
+        "record": "docs/research/ghidra-capability-spec.md"
       }
     }
   ]
