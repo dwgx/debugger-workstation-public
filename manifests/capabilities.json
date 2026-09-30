@@ -1,0 +1,420 @@
+{
+  "schema": "capabilities.v1",
+  "generated": "2026-09-30",
+  "_comment": "Capability contracts, so an orchestrator can compose labs it can introspect. This is NOT an inventory -- manifests/tools.json records what is installed. A capability here states what it consumes, the typed facts it produces, what it requires, what it proves, what it does NOT prove, and a negative control that must fail. 'state: observed' means the probe below was actually run; the summary is what it printed. Verify with: python scripts/registry-verify.py",
+  "fact_types": {
+    "address": "an address in the target's own address space, hex string, never reused across rebuilds",
+    "string": "a text literal recovered from the target",
+    "structure": "a typed record: named fields, each with an offset and a type",
+    "bytes_ref": "a pointer to content-addressed bytes under E:\\missions\\ or a lab out dir; the bytes are not inlined",
+    "verdict": "an outcome class from a closed enumeration: confirmed | likely | speculative | unresolved | refused",
+    "path_ref": "a filesystem path to an artifact; never the artifact's contents",
+    "pcap": "a parsed packet-capture record set",
+    "apk": "a parsed Android package manifest or dex summary",
+    "token": "a parsed JOSE/JWT: header, claims, signature presence -- never a live credential"
+  },
+  "capabilities": [
+    {
+      "id": "native.ida.decompile",
+      "title": "Decompile native x86-64 code through IDA 9.2 headlessly",
+      "domains": ["native", "static-reversing"],
+      "question_types": ["Q2.locate", "Q3.behaviour", "Q7.origin"],
+      "state": "observed",
+      "consumes": {
+        "inputs": [
+          {"name": "binary", "type": "path_ref", "required": true,
+           "note": "Owner-named or self-built. Provenance must be checkable."},
+          {"name": "function", "type": "address", "required": false,
+           "from": {"capability": "native.ida.list_functions", "field": "native.func.addr"}}
+        ],
+        "context": [],
+        "prior": []
+      },
+      "produces": {
+        "facts": [
+          {"key": "native.dec.code", "type": "string", "fields": ["addr", "language"]},
+          {"key": "native.dec.refs", "type": "structure",
+           "fields": ["addr", "name", "string"]}
+        ],
+        "artifacts": [{"key": "native.dec.saved", "type": "path_ref", "glob": "*.c"}],
+        "invalidates_on": ["the target is rebuilt -- every address in this output is void"]
+      },
+      "requires": {
+        "runtime": "idalib-mcp", "net": "none", "admin": false, "device": false,
+        "disk_mb": 300, "ram_mb": 2048, "wall_minutes": 1,
+        "tools": [{"name": "idalib-mcp", "probe": "D:/Software/Developer/Python314/Scripts/idalib-mcp.exe --help"}]
+      },
+      "proves": [
+        "that a named function's machine code decompiles to the C shown, on those exact bytes",
+        "which strings and imports the recovered logic references"
+      ],
+      "does_not_prove": [
+        "that the decompilation is faithful -- it is one analyser's reconstruction",
+        "anything about a binary whose provenance was not established",
+        "anything dynamic: no runtime value, no breakpoint, no memory state"
+      ],
+      "side_effects": ["spawns an idalib worker bound to 127.0.0.1:8745"],
+      "gate": {"lane": "debug", "requires_verdict": true, "escalation_class": "none"},
+      "probe": {
+        "command": "node native-lab/tools/loop.mjs",
+        "expect": "LOOP CLOSED",
+        "exit": 0,
+        "last_run": "2026-09-30",
+        "last_summary": "JSON-SUMMARY {\"total\":15,\"pass\":15,\"fail\":0}"
+      },
+      "negative_control": {
+        "id": "native.ida.decompile.bogus_addr",
+        "command": "decompile addr=0xDEADBEEF on the open session",
+        "expect_exit": 1,
+        "why": "must yield code:null plus an error field, never code. Asserted by native-lab/tools/loop.mjs."
+      },
+      "provenance": {
+        "source": "measured on this host 2026-09-30",
+        "record": "docs/research/binary-mcp-map.md; native-lab/README.md"
+      }
+    },
+
+    {
+      "id": "native.ida.list_functions",
+      "title": "Enumerate functions in a native binary",
+      "domains": ["native", "static-reversing"],
+      "question_types": ["Q1.identify", "Q2.locate"],
+      "state": "observed",
+      "consumes": {
+        "inputs": [{"name": "binary", "type": "path_ref", "required": true}],
+        "prior": []
+      },
+      "produces": {
+        "facts": [{"key": "native.func.addr", "type": "address", "fields": ["name", "size"]}],
+        "invalidates_on": ["the target is rebuilt"]
+      },
+      "requires": {
+        "runtime": "idalib-mcp", "net": "none", "admin": false, "device": false,
+        "disk_mb": 300, "ram_mb": 2048, "wall_minutes": 1,
+        "tools": [{"name": "idalib-mcp", "probe": "idalib-mcp --help"}]
+      },
+      "proves": ["which functions the analyser recovered, with their addresses and sizes"],
+      "does_not_prove": [
+        "that the function list is complete -- inlined and unreachable code is routinely missed",
+        "that a recovered boundary matches the author's intent"
+      ],
+      "gate": {"lane": "debug", "requires_verdict": true, "escalation_class": "none"},
+      "probe": {
+        "command": "node native-lab/tools/loop.mjs",
+        "expect": "list_funcs enumerates functions",
+        "exit": 0,
+        "last_run": "2026-09-30",
+        "last_summary": "300 functions enumerated from c01-stringobf.exe"
+      },
+      "negative_control": {
+        "id": "native.ida.list_functions.no_session",
+        "command": "list_funcs with no database bound",
+        "expect_exit": 1,
+        "why": "must refuse rather than answer from an unstated session"
+      },
+      "provenance": {"source": "measured on this host 2026-09-30", "record": "native-lab/README.md"}
+    },
+
+    {
+      "id": "web.js.cdp",
+      "title": "Drive and observe a page over the Chrome DevTools Protocol",
+      "domains": ["web", "js"],
+      "question_types": ["Q1.identify", "Q3.behaviour", "Q4.data"],
+      "state": "observed",
+      "consumes": {
+        "inputs": [{"name": "url", "type": "string", "required": true,
+                    "note": "loopback origins only unless a gate verdict exists"}],
+        "prior": []
+      },
+      "produces": {
+        "facts": [{"key": "web.dom.nodes", "type": "structure", "fields": ["selector", "text"]}],
+        "invalidates_on": ["the page navigates"]
+      },
+      "requires": {
+        "runtime": "node", "net": "none", "admin": false, "device": false,
+        "disk_mb": 10, "ram_mb": 512, "wall_minutes": 2,
+        "tools": [{"name": "chrome", "probe": "web-reverse/tools/chrome.mjs"}]
+      },
+      "proves": ["what a loopback page rendered and returned at the time it was asked"],
+      "does_not_prove": [
+        "anything about a host we have no verdict for",
+        "that behaviour is stable -- the page was observed once, at one moment"
+      ],
+      "gate": {"lane": "bounty", "requires_verdict": true, "escalation_class": "owner_word"},
+      "probe": {
+        "command": "node web-reverse/tools/loop.mjs",
+        "expect": "6/6", "exit": 0, "last_run": "2026-09-30",
+        "last_summary": "6 checks"
+      },
+      "negative_control": {
+        "id": "web.js.cdp.trust",
+        "command": "node net-reverse/tools/trustcheck.mjs",
+        "expect_exit": 1,
+        "why": "the CA must not be trusted outside the lab instance; ISOLATION HELD is the passing state and a broken pin must not"
+      },
+      "provenance": {"source": "measured on this host 2026-09-30", "record": "web-reverse/README.md"}
+    },
+
+    {
+      "id": "crypto.jose.parse",
+      "title": "Parse and verify JOSE/JWT structure without accepting it as valid",
+      "domains": ["crypto"],
+      "question_types": ["Q4.data", "Q6.crypto"],
+      "state": "observed",
+      "consumes": {
+        "inputs": [{"name": "token", "type": "token", "required": true}],
+        "prior": []
+      },
+      "produces": {
+        "facts": [{"key": "crypto.jose.claims", "type": "structure", "fields": ["key", "value", "exp"]}],
+        "invalidates_on": ["the signing key rotates"]
+      },
+      "requires": {"runtime": "node", "net": "none", "admin": false, "device": false,
+                   "disk_mb": 5, "ram_mb": 256, "wall_minutes": 1, "tools": []},
+      "proves": ["the token's structure, claims and declared algorithm"],
+      "does_not_prove": [
+        "that a token is valid, unexpired, or unforgeable",
+        "that a claimed algorithm matches the one the server enforces",
+        "anything about a live credential -- nothing here consumes or stores one"
+      ],
+      "gate": {"lane": "debug", "requires_verdict": false, "escalation_class": "none"},
+      "probe": {
+        "command": "node crypto-lab/tools/loop.mjs",
+        "expect": "JSON-SUMMARY {\"total\":17,\"pass\":17,\"fail\":0}", "exit": 0,
+        "last_run": "2026-09-30",
+        "last_summary": "17 checks"
+      },
+      "negative_control": {
+        "id": "crypto.jose.alg_confusion",
+        "command": "oracle with an alg=none and a swapped-claims token",
+        "expect_exit": 1,
+        "why": "a structurally valid token that must not be accepted as verified"
+      },
+      "provenance": {"source": "measured on this host 2026-09-30", "record": "crypto-lab/README.md"}
+    },
+
+    {
+      "id": "net.pcap.analyse",
+      "title": "Parse captures and infer protocol format and state machine",
+      "domains": ["network", "protocol"],
+      "question_types": ["Q3.behaviour", "Q4.data", "Q7.origin"],
+      "state": "observed",
+      "consumes": {
+        "inputs": [{"name": "capture", "type": "pcap", "required": true,
+                    "note": "loopback or lab-origin only"}],
+        "prior": []
+      },
+      "produces": {
+        "facts": [{"key": "net.flow.summary", "type": "structure", "fields": ["src", "dst", "bytes"]}],
+        "invalidates_on": ["the capture file is re-cut"]
+      },
+      "requires": {"runtime": "node", "net": "none", "admin": false, "device": false,
+                   "disk_mb": 20, "ram_mb": 256, "wall_minutes": 1, "tools": []},
+      "proves": ["what the recorded flows contained, and how the analyser classified them"],
+      "does_not_prove": [
+        "that a session was legitimate -- capture records traffic, not authority",
+        "anything about traffic we did not capture"
+      ],
+      "gate": {"lane": "debug", "requires_verdict": true, "escalation_class": "owner_word"},
+      "probe": {
+        "command": "node net-reverse/tools/loop.mjs",
+        "expect": "LANE CLOSED", "exit": 0, "last_run": "2026-09-30",
+        "last_summary": "16 questions, request/response rewriting and isolation checks passed"
+      },
+      "negative_control": {
+        "id": "net.pcap.trust",
+        "command": "node net-reverse/tools/trustcheck.mjs",
+        "expect_exit": 1,
+        "why": "isolation must fail loudly if the lab CA is trusted outside its instance"
+      },
+      "provenance": {"source": "measured on this host 2026-09-30", "record": "net-reverse/README.md"}
+    },
+
+    {
+      "id": "forensics.memory.artefact",
+      "title": "Parse memory and host artefacts, and treat refusals as results",
+      "domains": ["forensics", "memory"],
+      "question_types": ["Q1.identify", "Q4.data", "Q7.origin"],
+      "state": "observed",
+      "consumes": {
+        "inputs": [{"name": "image", "type": "path_ref", "required": true}],
+        "prior": []
+      },
+      "produces": {
+        "facts": [{"key": "forensics.artefact.rows", "type": "structure", "fields": ["offset", "field"]}],
+        "invalidates_on": ["the image is rebuilt"]
+      },
+      "requires": {"runtime": "node+python", "net": "none", "admin": false, "device": false,
+                   "disk_mb": 200, "ram_mb": 2048, "wall_minutes": 3, "tools": []},
+      "proves": [
+        "which artefacts the parsers recovered from the image",
+        "that Volatility 3 refused the synthetic image, which is the point of the check"
+      ],
+      "does_not_prove": [
+        "that absence of an artefact means absence of the behaviour",
+        "any conclusion resting on a single tool family -- corroboration needs a second capability"
+      ],
+      "gate": {"lane": "debug", "requires_verdict": true, "escalation_class": "none"},
+      "probe": {
+        "command": "node forensics-lab/tools/loop.mjs",
+        "expect": "LOOP CLOSED", "exit": 0, "last_run": "2026-09-30",
+        "last_summary": "37 checks (74 PASS lines -- each check prints a verdict and its evidence)"
+      },
+      "negative_control": {
+        "id": "forensics.memory.triangulation",
+        "command": "drop SRUM from the image and re-run",
+        "expect_exit": 1,
+        "why": "the conclusion must degrade from confirmed to possible, proving the triangulation rule is live"
+      },
+      "provenance": {"source": "measured on this host 2026-09-30", "record": "forensics-lab/README.md"}
+    },
+
+    {
+      "id": "managed.il.decompile",
+      "title": "Decompile managed .NET assemblies and detect wrong-answer paths",
+      "domains": ["managed", "dotnet"],
+      "question_types": ["Q2.locate", "Q3.behaviour"],
+      "state": "observed",
+      "consumes": {
+        "inputs": [{"name": "assembly", "type": "path_ref", "required": true}],
+        "prior": []
+      },
+      "produces": {
+        "facts": [{"key": "managed.method.code", "type": "string", "fields": ["method", "technique"]}],
+        "invalidates_on": ["the assembly is rebuilt"]
+      },
+      "requires": {"runtime": "node+dotnet", "net": "none", "admin": false, "device": false,
+                   "disk_mb": 100, "ram_mb": 1024, "wall_minutes": 2, "tools": []},
+      "proves": ["that each sample's answer was recovered from its own decompilation and confirmed against its output"],
+      "does_not_prove": [
+        "that a recovery generalises beyond the sample it was recovered from",
+        "that a confident answer is a correct one -- see the wrong-entry-state control"
+      ],
+      "gate": {"lane": "debug", "requires_verdict": true, "escalation_class": "none"},
+      "probe": {
+        "command": "node managed-lab/tools/loop.mjs",
+        "expect": "JSON-SUMMARY {\"total\":27,\"pass\":27,\"fail\":0}", "exit": 0,
+        "last_run": "2026-09-30",
+        "last_summary": "27 checks (46 PASS lines -- count unique names, not rows)"
+      },
+      "negative_control": {
+        "id": "managed.il.wrong_entry_state",
+        "command": "m02's solver pointed at m01's assembly",
+        "expect_exit": 1,
+        "why": "it produces a complete, confident, WRONG answer; the harness must reject it. This is the station's canonical failure mode."
+      },
+      "provenance": {"source": "measured on this host 2026-09-30", "record": "managed-lab/README.md"}
+    },
+
+    {
+      "id": "mobile.apk.static",
+      "title": "Build and statically analyse a real signed APK",
+      "domains": ["mobile", "android"],
+      "question_types": ["Q1.identify", "Q2.locate"],
+      "state": "observed",
+      "consumes": {
+        "inputs": [{"name": "apk", "type": "apk", "required": true}],
+        "prior": []
+      },
+      "produces": {
+        "facts": [{"key": "mobile.manifest.summary", "type": "structure", "fields": ["permission", "component"]}],
+        "invalidates_on": ["the APK is rebuilt or re-signed"]
+      },
+      "requires": {"runtime": "node+java", "net": "none", "admin": false, "device": false,
+                   "disk_mb": 500, "ram_mb": 2048, "wall_minutes": 5, "tools": []},
+      "proves": ["what the APK's manifest, DEX and native library contain as built"],
+      "does_not_prove": [
+        "anything about runtime behaviour -- no device, so ART acceptance, on-device TLS and .so execution are NOT claimed",
+        "packing or anti-emulator detection, which this lab does not implement yet",
+        "Kotlin name recovery, which R8's retained metadata makes possible and we do not yet do"
+      ],
+      "gate": {"lane": "debug", "requires_verdict": true, "escalation_class": "none"},
+      "probe": {
+        "command": "node mobile-lab/tools/loop.mjs",
+        "expect": "LOOP CLOSED", "exit": 0, "last_run": "2026-09-30",
+        "last_summary": "25 checks, including a 40-case Frida suite"
+      },
+      "negative_control": {
+        "id": "mobile.apk.wrong_decoder",
+        "command": "cross-check AXML with a second independent decoder",
+        "expect_exit": 1,
+        "why": "one decoder agreeing with itself is not corroboration; pyelftools already caught a real sh_link bug this way"
+      },
+      "provenance": {"source": "measured on this host 2026-09-30", "record": "mobile-lab/README.md"}
+    },
+
+    {
+      "id": "re.corpus.solve",
+      "title": "Solve self-built crackmes and record the technique used",
+      "domains": ["native", "practice"],
+      "question_types": ["Q3.behaviour", "Q7.origin"],
+      "state": "observed",
+      "consumes": {
+        "inputs": [{"name": "binary", "type": "path_ref", "required": true}],
+        "prior": []
+      },
+      "produces": {
+        "facts": [{"key": "re.solve.answer", "type": "string", "fields": ["id", "technique"]}],
+        "invalidates_on": ["the corpus is rebuilt"]
+      },
+      "requires": {"runtime": "python+msvc", "net": "none", "admin": false, "device": false,
+                   "disk_mb": 50, "ram_mb": 512, "wall_minutes": 3, "tools": []},
+      "proves": ["that each crackme was solved, and by which named technique"],
+      "does_not_prove": ["that the technique transfers to a binary we did not build"],
+      "gate": {"lane": "debug", "requires_verdict": false, "escalation_class": "none"},
+      "probe": {
+        "command": "python crackme-corpus/tools/loop.py",
+        "expect": "CORPUS CLOSED", "exit": 0, "last_run": "2026-09-30",
+        "last_summary": "20 checks, 5 negative controls"
+      },
+      "negative_control": {
+        "id": "re.corpus.wrong_sample",
+        "command": "c01's solver pointed at c02's binary",
+        "expect_exit": 1,
+        "why": "a technique label must not be emitted for a sample it did not solve"
+      },
+      "provenance": {"source": "measured on this host 2026-09-30", "record": "crackme-corpus/README.md"}
+    },
+
+    {
+      "id": "dynamic.device.frida",
+      "title": "Instrument a live Android device with Frida",
+      "domains": ["mobile", "dynamic"],
+      "question_types": ["Q3.behaviour", "Q4.data"],
+      "state": "absent",
+      "consumes": {
+        "inputs": [{"name": "device", "type": "string", "required": true}],
+        "prior": []
+      },
+      "produces": {"facts": [], "invalidates_on": []},
+      "requires": {
+        "runtime": "frida", "net": "none", "admin": true, "device": true,
+        "disk_mb": 0, "ram_mb": 0, "wall_minutes": 0,
+        "tools": [{"name": "adb", "probe": "adb devices", "expect": "no devices attached"}]
+      },
+      "proves": [],
+      "does_not_prove": [
+        "that any on-device behaviour was observed -- there is no device on this host",
+        "ART accepting our scripts, live on-device TLS interception, or .so disassembly"
+      ],
+      "gate": {"lane": "debug", "requires_verdict": true, "escalation_class": "impossible"},
+      "probe": {
+        "command": "adb devices",
+        "expect": "no devices attached",
+        "exit": 0,
+        "last_run": "2026-09-30",
+        "last_summary": "adb is not on PATH; no device and no emulator is installed"
+      },
+      "negative_control": {
+        "id": "dynamic.device.frida.no_device",
+        "command": "any Frida attach while adb reports no device",
+        "expect_exit": 1,
+        "why": "must refuse rather than silently degrading to the logic-only suite and claiming the same coverage"
+      },
+      "provenance": {
+        "source": "measured 2026-09-30",
+        "record": "docs/research/mobile-js-skill-map.md"
+      }
+    }
+  ]
+}
