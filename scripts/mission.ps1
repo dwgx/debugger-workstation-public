@@ -61,6 +61,7 @@ param(
     [string]$OwnerWord = '',
     [string]$Containment = '',
     [string]$Claim = '',
+    [string[]]$Discharged = @(),
     [string]$CaseRoot = 'E:\missions',
     [string]$CaseId = '',
     [int]$MaxRounds = 6,
@@ -126,21 +127,35 @@ function Invoke-Gate {
 }
 
 function Get-TreeHash {
-    <# Content hash of the writable scope guard's baseline: every tracked file under the
-       repo, plus the mission case dir. Returns a single string. #>
+    <#
+      Scope guard baseline.
+
+      Enumerated with `git ls-files`, not by walking the directory. Walking recursed the
+      whole 1 GB Ghidra install and every tool payload, which made the guard take minutes
+      -- and a scope guard nobody waits for is not a control. "The repository" means the
+      tracked set, which is both the precise definition and the cheap one.
+
+      Untracked files are covered too, because a mission that writes a new file and then
+      invokes it is exactly the attack this guards against, so anything untracked inside
+      the repo is hashed as well. Tool payloads under Static-Reversing and friends are
+      skipped by name: they are third-party binaries that no mission may modify, and
+      hashing them buys nothing.
+    #>
     param([string]$Path)
     if (-not (Test-Path -LiteralPath $Path)) { return 'absent' }
     $sha = [System.Security.Cryptography.SHA256]::Create()
+    $names = @()
+    try { $names = @(& git -C $Path ls-files --cached --others --exclude-standard 2>$null) } catch { }
+    if ($names.Count -eq 0) { return 'no-index' }
     $lines = @()
-    $files = Get-ChildItem -LiteralPath $Path -Recurse -File -Force -ErrorAction SilentlyContinue |
-             Where-Object { $_.FullName -notmatch '\\\.git\\' -and $_.FullName -notmatch '\\node_modules\\' } |
-             Sort-Object FullName
-    foreach ($f in $files) {
-        $h = [BitConverter]::ToString($sha.ComputeHash([IO.File]::ReadAllBytes($f.FullName))).Replace('-', '').ToLowerInvariant()
-        $lines += ($f.FullName.Substring($Path.Length) + ':' + $h)
+    foreach ($n in ($names | Sort-Object)) {
+        if ($n -match '^(Static-Reversing|Mobile-Android|System-Forensics|Unpackers-Game|Debuggers|Network-HTTP|mcp|out)/') { continue }
+        $full = Join-Path $Path $n
+        if (-not (Test-Path -LiteralPath $full -PathType Leaf)) { $lines += ($n + ':ABSENT'); continue }
+        $h = [BitConverter]::ToString($sha.ComputeHash([IO.File]::ReadAllBytes($full))).Replace('-', '').ToLowerInvariant()
+        $lines += ($n + ':' + $h)
     }
-    $joined = [Text.Encoding]::UTF8.GetBytes(($lines -join "`n"))
-    return ([BitConverter]::ToString($sha.ComputeHash($joined))).Replace('-', '').ToLowerInvariant()
+    return ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes(($lines -join "`n"))))).Replace('-', '').ToLowerInvariant()
 }
 
 # ------------------------------------------------------------------------------ intake
@@ -278,9 +293,29 @@ function Invoke-Mission {
             $v = $a
             $v = $v -replace '\{target\}', (Resolve-Path -LiteralPath $Target).Path
             if ($v -match '\{input\.([^}]+)\}') {
-                $key = $Matches[1]
-                if ($facts.ContainsKey($key)) { $v = $facts[$key] }
-                else { $unresolved += $key }
+                # Resolve the CONSUMED FACT, then apply the declared selector to narrow it.
+                # The produced fact is usually a whole table; binding that array straight into
+                # a placeholder that wants one name is how a chain skips itself. The selector
+                # is declared in the registry, so the loop picks a candidate rather than the
+                # registry hard-coding an address.
+                $slot = $Matches[1]
+                $srcKey = if ($cap.invoke.consumes_fact) { $cap.invoke.consumes_fact } else { $slot }
+                if ($facts.ContainsKey($srcKey)) {
+                    $val = $facts[$srcKey]
+                    if ($cap.invoke.select) {
+                        $path = $cap.invoke.select.path
+                        $idx  = $cap.invoke.select.index
+                        if ($path) {
+                            if ($null -ne $val -and $null -ne $val.PSObject.Properties[$path]) { $val = $val.$path }
+                            else { $unresolved += ($srcKey + '.' + $path); $val = $null }
+                        }
+                        if ($null -ne $val -and $null -ne $idx) {
+                            if (@($val).Count -gt $idx) { $val = @($val)[$idx] } else { $unresolved += ($srcKey + '[' + $idx + ']'); $val = $null }
+                        }
+                        if ($null -ne $val) { $v = "$val" }
+                    } else { $v = "$val" }
+                    $v = "$val"
+                } else { $unresolved += $srcKey }
             }
             $argList += $v
         }
@@ -348,7 +383,7 @@ function Invoke-Mission {
     }
 
     # --- the verdict, COMPUTED ---------------------------------------------------
-    $verdict = Get-Verdict -Claim $Claim -QuestionType $qt -Evidence $evidence -Registry $reg
+    $verdict = Get-Verdict -Claim $Claim -QuestionType $qt -Evidence $evidence -Registry $reg -DischargedIn $Discharged
 
     # --- scope guard --------------------------------------------------------------
     $after = Get-TreeHash $RepoRoot
@@ -420,16 +455,16 @@ function Get-Verdict {
       wrong is not a false positive. A `likely` claim reported as `confirmed` is one,
       even if it is right.
     #>
-    param([string]$Claim, [string]$QuestionType, $Evidence, $Registry)
+    param([string]$Claim, [string]$QuestionType, $Evidence, $Registry, [string[]]$DischargedIn = @())
 
     # Gates are collected in a script-scoped list for the same reason the gate selftest
     # needed it: a locally declared array is invisible to a helper defined alongside it,
     # which silently produces an EMPTY gate list -- and an empty gate list passes.
     $script:vGates = @()
+    $script:vDischarged = @($DischargedIn)
     function G($n, $p, $d) { $script:vGates += [ordered]@{ name = $n; pass = [bool]$p; detail = $d } }
     $vGates = @()
     $good = @($Evidence | Where-Object { $_.ok -eq $true })
-
     # 1. process -- did anything actually run, with recorded evidence ids
     G 'process' ($good.Count -gt 0) "$($good.Count) capability invocation(s) succeeded with recorded evidence ids"
 
@@ -459,7 +494,25 @@ function Get-Verdict {
     if (-not $Claim) { G 'bounded_claim_no_claim' $false 'no claim was proposed, so nothing can be bounded by any does_not_prove' }
 
     # 6. uncertainty stated -- a verdict with no unknowns is not a verdict
+    # 6. uncertainty stated -- a verdict with no unknowns is not a verdict
     G 'uncertainty' ($QuestionType -ne '') "question type $QuestionType makes the success criterion checkable; unknowns are listed in the artifact"
+
+    # 7. discharged -- the strongest rule in the corpus, and strictly stronger than
+    #    anything this station had before it. "I found nothing" is an ANSWER only when
+    #    you can name the guards that would have found it. An empty finding with an empty
+    #    discharged list is not a clean result; it is an unasked question that produces no
+    #    error to notice.
+    #
+    #    Discharged is supplied by the caller as the guards it claims WERE consulted. It
+    #    is validated rather than trusted: each id must exist in the registry.
+    $discharged = @($script:vDischarged)
+    $unknownIds = @($discharged | Where-Object { $d = $_; -not (@($Registry.capabilities | Where-Object { $_.id -eq $d }) | Select-Object -First 1) })
+    $findingsEmpty = ($good.Count -eq 0)
+    if ($discharged.Count -gt 0) {
+        G 'discharged' ($unknownIds.Count -eq 0) ("{0} guard(s) named as consulted{1}" -f $discharged.Count, $(if ($unknownIds.Count) { "; NOT IN REGISTRY: $($unknownIds -join ', ')" } else { '' }))
+    } else {
+        G 'discharged' (-not $findingsEmpty) 'no guards were named as consulted; that is only acceptable when there IS a finding, because "I found nothing" with no named guard is not an answer'
+    }
 
     # Read back from the script scope the helper wrote to. Returning the LOCAL `$vGates`
     # -- which nothing ever appended to -- produced an EMPTY gate list, and an empty gate
@@ -546,6 +599,17 @@ function Invoke-Selftest {
         $v = Get-Verdict -Claim 'the check is in main' -QuestionType 'Q2.locate' -Evidence $ev -Registry (Get-Registry)
         $v.tier
     } 'confirmed'
+
+    # discharged: the strongest rule in the corpus. "I found nothing" is an answer ONLY
+    # when you can name the guards that would have found it.
+    C 'discharged: an empty finding with no named guard is NOT an answer' {
+        (Get-Verdict -Claim 'nothing suspicious here' -QuestionType 'Q1.identify' -Evidence @() -Registry (Get-Registry)).tier
+    } 'unresolved'
+
+    C 'discharged: naming a guard that is not in the registry does not count' {
+        $ev = @()
+        (Get-Verdict -Claim 'nothing suspicious' -QuestionType 'Q1.identify' -Evidence $ev -Registry (Get-Registry) -DischargedIn @('a.capability.that.does.not.exist')).tier
+    } 'unresolved'
 
     C 'a failed round contributes no facts to the verdict' {
         $ev = @([ordered]@{ capability = 'native.ida.decompile'; ok = $false; facts = @() })

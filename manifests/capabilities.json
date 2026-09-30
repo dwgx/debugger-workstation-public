@@ -133,8 +133,12 @@
           "code": "native.dec.code",
           "refs": "native.dec.refs"
         },
-        "consumes_fact": "native.func.addr",
-        "note": "This is the consumer half of the station's first real typed chain: native.ida.list_functions produces native.func.addr, and this entry declares it consumes that key. The arrow between two labs stops being a diagram and becomes an addressable fact."
+        "consumes_fact": "native.func.named",
+        "note": "This is the consumer half of the station's first real typed chain: native.ida.list_functions produces native.func.addr, and this entry declares it consumes that key. The arrow between two labs stops being a diagram and becomes an addressable fact.",
+        "select": {
+          "index": 0,
+          "note": "Takes the first recovered non-sub_ name. The first candidate is a hypothesis, not a conclusion: the verdict gates still require a second capability before anything is called confirmed."
+        }
       },
       "proves": [
         "that a named function's machine code decompiles to the C shown, on those exact bytes",
@@ -257,9 +261,11 @@
         "stdout": "json",
         "success_when": "parsed JSON has ok == true AND count > 0",
         "fact_map": {
-          "functions": "native.func.addr"
+          "functions": "native.func.addr",
+          "named": "native.func.named"
         },
-        "note": "`probe` proves the capability runs; `invoke` is what makes it CALLABLE with a typed result. A capability with only a probe cannot take arguments, so nothing downstream can be handed an address. argv is an array and is never joined into a shell string -- the target path is attacker-influenced by definition."
+        "note": "`probe` proves the capability runs; `invoke` is what makes it CALLABLE with a typed result. A capability with only a probe cannot take arguments, so nothing downstream can be handed an address. argv is an array and is never joined into a shell string -- the target path is attacker-influenced by definition.",
+        "fact_map_note": "`named` is a SIBLING of `functions` on the JSON root, not a field inside it. The first attempt mapped only `functions`, so a selector of `native.func.addr.named` could never resolve -- the chain skipped itself for a reason that looked like the loop's fault. Two typed facts, not one nested one."
       },
       "session": {
         "bind": "sha256(object)",
