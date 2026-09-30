@@ -63,7 +63,7 @@ Run from the repo root. Each is the registry's `probe.command`.
 | managed .NET | `node managed-lab/tools/loop.mjs` | `{"total":27,"pass":27,"fail":0}` |
 | mobile/Android | `node mobile-lab/tools/loop.mjs` | 25 checks incl. 40-case Frida suite |
 | **native / IDA** | `node native-lab/tools/loop.mjs` | **15/15 LOOP CLOSED, ~2.4 s** |
-| fuzzing (D11) | `node fuzz-lab/tools/loop.mjs` | LOOP CLOSED, 24/24 — **budget floor 40, default 90** |
+| fuzzing (D11) | `node fuzz-lab/tools/loop.mjs` | **LOOP CLOSED 24/24, 740 s at budget 90** — budget floor 40, default 90; 12 flawed-twin findings, 6/6 regressions holding |
 
 Full-station one-liner (read-only, ~3 min), from the repo root:
 
@@ -278,20 +278,26 @@ counts for three labs at once.
 
 ---
 
-## 12. Open question at compaction time
+## 12. A correction I had to make to this document
 
-`node fuzz-lab/tools/loop.mjs` at the **default budget 90** was still running past
-50 minutes when this was written, against **682 s** for budget 60. That is a real
-discrepancy and it is unexplained. Two plausible causes, neither yet checked:
+An earlier draft of this section recorded an "unexplained anomaly": that
+`node fuzz-lab/tools/loop.mjs` at the default budget 90 was still running past fifty
+minutes against a recorded 682 s for budget 60.
 
-- the triage cap is **3 per target/variant/outcome class**, and a larger budget produces
-  more findings in the same classes, so minimisation — not the campaign — dominates;
-- a `hang`-class finding near the 4 s ceiling is **unstable to minimise**, and the lab
-  records those as `MARGINAL` rather than loosening the check.
+**That was wrong, and it was my error rather than the lab's.** The run finished at
+**740.05 s — about 12.3 minutes — with LOOP CLOSED**: 24/24 assertions, 12 flawed-twin
+findings recorded, 6/6 regression guards holding, and the negative control satisfied by
+flawed-twin findings rather than by the reference parser crashing.
 
-**Do not assume the fuzz lab is broken, and do not assume it is fine.** Re-run it, or
-inspect `fuzz-lab/out/last-run.json`, and record which of the two it was. The budget-40
-floor and the `MARGINAL` note exist precisely so this stays visible instead of being
-smoothed over.
+The mistake was conflating my own elapsed waiting with the job's runtime. I read a
+still-running status several times over a long span and treated the span as the run
+time. It is the same failure mode as everything else in this session's notes — **the
+observer, not the observed, was the thing that needed fixing** — and it is recorded here
+rather than deleted so the next reader does not repeat it.
 
-The lab's own claim was measured at budget 60: **24/24 assertions, LOOP CLOSED**.
+Budget 90 at ~12 min and budget 60 at ~11 min are consistent. There is no anomaly.
+
+For the record, the two things that are genuinely budget-sensitive, both real and both
+already handled: the triage cap is 3 per target/variant/outcome class, and `hang`-class
+findings near the 4 s ceiling are unstable to minimise, so the lab records them as
+`MARGINAL` instead of loosening the check.
