@@ -301,3 +301,55 @@ For the record, the two things that are genuinely budget-sensitive, both real an
 already handled: the triage cap is 3 per target/variant/outcome class, and `hang`-class
 findings near the 4 s ceiling are unstable to minimise, so the lab records them as
 `MARGINAL` instead of loosening the check.
+
+---
+
+## 13. The mission layer (added 2026-09-30, after section 2)
+
+This is the piece the Owner's original request was actually about, and it did not exist
+when sections 2 and 3 were written.
+
+| Piece | Command | Result |
+|---|---|---|
+| **Orchestrator** | `powershell -File scripts\mission.ps1 -Action Run -Target <bin> -Question "..." -QuestionType Q2.locate -Provenance "..." -OwnerWord "..." -Containment station_under_named_process_rule -Claim "..."` | **DONE / confirmed / scope INTACT** |
+| Orchestrator selftest | `-Action Selftest` | **13/13**, incl. N4 |
+| Gate | `powershell -File scripts\gate.ps1 -Action Selftest` | **8/8** |
+| Registry | `python scripts/registry-verify.py` | **13 capabilities** |
+| Validator | `python scripts/registry-verify.py --selftest` | **18 rules** |
+
+The acceptance case is our own `c01-stringobf.exe`, chosen because provenance is checkable
+by file and because it needs exactly the chain:
+
+```
+round 1  native.ida.list_functions  ->  native.func.addr, native.func.named
+round 2  native.ida.decompile       ->  native.dec.code, native.dec.refs
+```
+
+Seven verdict gates, and the model never writes the verdict — it proposes a claim and the
+loop disposes of it: process, reachability, observation, independence, bounded claim,
+uncertainty, and **discharged** ("I found nothing" is an answer only when you can name
+the guards that would have found it).
+
+**Independence is about the instrument FAMILY.** `{ghidra.decompile, ida.decompile}` is
+refused as corroboration: two decompilers share the blind spots that come from
+reconstructing machine code into C.
+
+Termination is computed from the artifact in three states. **DONE is distinguished from
+EXHAUSTED**, and an EXHAUSTED mission names the guards it did not run and says in its own
+text that it must never be read as "nothing was there".
+
+### The two traps in this file worth remembering
+
+- **`probe` proves a capability runs; `invoke` is what makes it CALLABLE.** A capability
+  with only a probe cannot take arguments, so nothing downstream can be handed an address.
+- **The plan records what was INTENDED and is never mutated.** Anything that counts "left
+  to run" from the plan's own state field will claim work remains after it has finished;
+  count from the evidence instead.
+
+### Scope guard
+
+Enumerated with `git ls-files --cached --others --exclude-standard` — 50 ms. The first
+version walked the directory, recursed the 1 GB Ghidra install, and took minutes. **A
+scope guard nobody waits for is not a control.** Third-party tool payloads are skipped by
+name; untracked files are hashed, because a mission that writes a new tool and then
+invokes it is exactly the attack it guards against.
