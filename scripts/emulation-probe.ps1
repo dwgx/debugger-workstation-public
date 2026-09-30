@@ -1,0 +1,78 @@
+#Requires -Version 5.1
+<#
+.SYNOPSIS
+  Probe for Ghidra p-code emulation, and report honestly whether it works.
+
+.DESCRIPTION
+  Ghidra ships ghidra.app.emulator (EmulatorHelper, DefaultEmulator) and nothing in this
+  repo used it. Emulation would turn a dynamic question -- "what does this decode to?" --
+  into a static one, with no debugger, no process and no device.
+
+  MEASURED 2026-09-30, and the answer is BLOCKED:
+
+    * The API is reachable. EmulatorHelper and DefaultEmulator were instantiated against
+      our own c01-stringobf, the harness compiled, and it ran 15 p-code steps.
+    * The CONTROLLED-INPUT setup does not take. The scratch stack is not mapped, so the
+      writes that carry the arguments and the return address did not land; the function
+      returned to PC=0 and the output buffer was 48 bytes of zero.
+    * Ground truth was NOT recovered. The corpus records FLAG{c01_string_table_xor} for
+      c01, and the harness returned no decoded string.
+
+  A finding that outranks the blocker: javac reports EmulatorHelper and DefaultEmulator
+  as DEPRECATED AND MARKED FOR REMOVAL. Fixing the setup would mean building a durable
+  capability on a surface Ghidra intends to delete, so that needs deciding before the
+  work, not after.
+
+  Recorded as state=blocked in manifests/capabilities.json rather than claimed.
+#>
+[CmdletBinding()]
+param([int]$BudgetMs = 300000)
+
+$ErrorActionPreference = 'Continue'
+$RepoRoot = Split-Path -Parent $PSScriptRoot
+Set-Location $RepoRoot
+
+$ah  = Join-Path $RepoRoot 'Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\support\analyzeHeadless.bat'
+$bin = Join-Path $RepoRoot 'crackme-corpus\out\c01-stringobf.exe'
+$out = Join-Path $env:TEMP 'emu-probe-out'
+$proj = Join-Path $env:TEMP ('emu-probe-' + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Force -Path $out, $proj | Out-Null
+
+# c01's main() calls sub_140001000(&unk_140017330, 18, 11, 90, Str2)
+& $ah $proj agent -import $bin -overwrite `
+    -scriptPath (Join-Path $RepoRoot 'scripts\ghidra') `
+    -postScript EmulateDecode.java 0x140001000 0x140017330 18 11 90 0x140030000 `
+                'FLAG{c01_string_table_xor}' 200000 $out 2>&1 | Out-Null
+
+$art = Join-Path $out 'emulation.json'
+$result = $null
+if (Test-Path $art) { try { $result = Get-Content $art -Raw | ConvertFrom-Json } catch { } }
+
+Write-Host ('=' * 78)
+if ($result -and $result.verdict -eq 'MATCHES_GROUND_TRUTH') {
+    Write-Host ("PCODE EMULATION WORKS: recovered '" + $result.decoded + "' in " + $result.steps + " steps")
+    Write-Host 'JSON-SUMMARY {"total":1,"pass":1,"fail":0}'
+    exit 0
+}
+
+Write-Host 'PCODE EMULATION BLOCKED -- recorded, not claimed.'
+if ($result) {
+    Write-Host ("  steps executed   : " + $result.steps)
+    Write-Host ("  decoded          : " + $(if ($result.decoded) { $result.decoded } else { 'null' }))
+    Write-Host ("  expected         : " + $result.expected)
+    Write-Host ("  output non-zero  : " + $result.output_non_zero)
+    Write-Host ("  error            : " + $result.error)
+} else {
+    Write-Host '  the harness produced no artifact at all'
+}
+Write-Host ''
+Write-Host '  The API is reachable and ran. What does not work is the controlled-input'
+Write-Host '  setup: the scratch stack is not mapped, so the argument and return-address'
+Write-Host '  writes did not land. That is our bug, not a Ghidra limitation.'
+Write-Host ''
+Write-Host '  DEPRECATION, and this outranks the blocker: javac reports EmulatorHelper and'
+Write-Host '  DefaultEmulator as deprecated and marked for removal. Before fixing the'
+Write-Host '  setup, decide whether to build on an API Ghidra intends to delete.'
+Write-Host ('=' * 78)
+Write-Host 'JSON-SUMMARY {"total":1,"pass":0,"fail":1}'
+exit 0

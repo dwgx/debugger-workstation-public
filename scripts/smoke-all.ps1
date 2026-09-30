@@ -59,6 +59,7 @@ $probes = [ordered]@{
     'mission-selftest'   = @{ file = $PSExe; args = @('-NoProfile','-ExecutionPolicy','Bypass','-File','scripts/mission.ps1','-Action','Selftest'); expect = 'MISSION SELFTEST OK' }
     'ghidra-failopen'     = @{ file = $PSExe; args = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'scripts/ghidra-failopen-regress.ps1'); expect = 'LOOP CLOSED' }
     'il2cpp-probe'       = @{ file = $PSExe; args = @('-NoProfile','-ExecutionPolicy','Bypass','-File','scripts/il2cpp-probe.ps1'); expect = 'IL2CPP ABSENT' }
+    'emulation-probe'    = @{ file = $PSExe; args = @('-NoProfile','-ExecutionPolicy','Bypass','-File','scripts/emulation-probe.ps1'); expect = 'PCODE EMULATION BLOCKED' }
     'web-reverse'         = @{ file = $Node; args = @('web-reverse/tools/loop.mjs');  expect = 'LOOP CLOSED' }
     'web-reverse-ast'     = @{ file = $Node; args = @('web-reverse/tools/loop2.mjs'); expect = 'LOOP CLOSED' }
     'crypto-lab'          = @{ file = $Node; args = @('crypto-lab/tools/loop.mjs');   expect = 'JSON-SUMMARY' }
