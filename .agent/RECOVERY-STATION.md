@@ -275,3 +275,23 @@ Re-measure before trusting any figure above — a recovery document that inflate
 numbers is worse than one that omits them. That happened twice in this session: a station
 commit count claimed 17 when the real figure was 16, and `PASS` lines were read as check
 counts for three labs at once.
+
+---
+
+## 12. Open question at compaction time
+
+`node fuzz-lab/tools/loop.mjs` at the **default budget 90** was still running past
+50 minutes when this was written, against **682 s** for budget 60. That is a real
+discrepancy and it is unexplained. Two plausible causes, neither yet checked:
+
+- the triage cap is **3 per target/variant/outcome class**, and a larger budget produces
+  more findings in the same classes, so minimisation — not the campaign — dominates;
+- a `hang`-class finding near the 4 s ceiling is **unstable to minimise**, and the lab
+  records those as `MARGINAL` rather than loosening the check.
+
+**Do not assume the fuzz lab is broken, and do not assume it is fine.** Re-run it, or
+inspect `fuzz-lab/out/last-run.json`, and record which of the two it was. The budget-40
+floor and the `MARGINAL` note exist precisely so this stays visible instead of being
+smoothed over.
+
+The lab's own claim was measured at budget 60: **24/24 assertions, LOOP CLOSED**.
