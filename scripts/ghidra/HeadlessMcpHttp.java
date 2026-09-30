@@ -607,7 +607,13 @@ public class HeadlessMcpHttp extends GhidraScript {
 				return out;
 			}
 			int n = 0;
-			for (PcodeOp op : res.getHighFunction().getPcodeOps()) {
+			// Ghidra 12 API drift. HighFunction.getPcodeOps() returns
+			// Iterator<PcodeOpAST>, not PcodeOp[] -- it moved up to PcodeSyntaxTree and
+			// changed shape. A for-each over it does not compile, which is why this whole
+			// file never ran. It also means the /pcode tool silently did not exist.
+			java.util.Iterator<ghidra.program.model.pcode.PcodeOpAST> ops = res.getHighFunction().getPcodeOps();
+			while (ops.hasNext()) {
+				PcodeOp op = ops.next();
 				String where = op.getSeqnum() != null ? String.valueOf(op.getSeqnum().getTarget()) : "entry";
 				out.add(where + "  " + op.getMnemonic() + "  " + op.toString());
 				n++;
@@ -700,7 +706,8 @@ public class HeadlessMcpHttp extends GhidraScript {
 	}
 
 	private int pointerSize() {
-		return currentProgram.getPointerSize();
+		// Program.getPointerSize() was removed in Ghidra 12.x; it is getDefaultPointerSize().
+		return currentProgram.getDefaultPointerSize();
 	}
 
 	/**

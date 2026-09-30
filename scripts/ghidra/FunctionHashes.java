@@ -27,7 +27,19 @@ import java.security.MessageDigest;
 
 public class FunctionHashes extends GhidraScript {
 
-	private static String bodyHash(AddressSetView body) {
+	/**
+	 * NOT static. This method reads {@code currentProgram}, an instance field of
+	 * GhidraScript, so a static method cannot see it. javac said so on every headless run:
+	 *
+	 *   FunctionHashes.java:37: error: non-static variable currentProgram cannot be
+	 *   referenced from a static context
+	 *
+	 * The file had never been executed, so the error had never stopped anything. It is
+	 * still worth fixing rather than deleting, because Ghidra compiles the WHOLE
+	 * scriptPath directory on every run -- one broken file puts its errors into the output
+	 * of every headless invocation, including the ones that matter.
+	 */
+	private String bodyHash(AddressSetView body) {
 		try {
 			long n = body.getNumAddresses();
 			if (n <= 0 || n > 4L * 1024 * 1024) {
@@ -35,7 +47,11 @@ public class FunctionHashes extends GhidraScript {
 			}
 			byte[] buf = new byte[(int) n];
 			currentProgram.getMemory().getBytes(body.getMinAddress(), buf);
-			byte[] d = MessageDigest.getInstance("MD5").digest(buf);
+			// SHA-256 truncated to 8 bytes, not MD5. The header calls this a content
+			// address rather than a similarity score, which is right -- but MD5 collisions
+			// are trivial to construct, so two different functions could share an address
+			// and a diff would call them unchanged. SHA-256 costs nothing here.
+			byte[] d = MessageDigest.getInstance("SHA-256").digest(buf);
 			StringBuilder sb = new StringBuilder();
 			for (int i = 0; i < 8; i++) {
 				sb.append(String.format("%02x", d[i]));
