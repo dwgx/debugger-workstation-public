@@ -1,0 +1,256 @@
+# RECOVERY — reverse workstation (`D:\Software\Tool\WorkStation\debugger`)
+
+Written 2026-09-30 before a context compaction. Everything below was **measured**, not
+remembered. Where a number is quoted it carries the command that produced it, because a
+recovery document written from memory inherits every assumption the session already got
+wrong — and this session got two of them wrong in writing.
+
+---
+
+## 0. Count the evidence, not the lines
+
+**Counting `PASS` lines does not count checks.** Each check prints a verdict *and* its
+evidence, and some labs also print per-case rows:
+
+| Lab | PASS lines | actual checks |
+|---|---|---|
+| forensics-lab | 74 | **37** |
+| managed-lab | 46 | **27** |
+| crypto-lab | 29 | **17** |
+
+Counting unique check names, or reading the lab's own `JSON-SUMMARY` line. A bad ruler
+"corrects" correct numbers — that happened during this session before it was caught.
+
+**Rule 1 of this repo:** a check that always passes is not evidence.
+**Rule 2:** a `rejected` outcome is not a correctness claim.
+**Rule 3:** a capability with no runnable command is a claim, not a capability.
+
+---
+
+## 1. What was wrong in my own writing, and is now fixed
+
+Both were **asserted limitations nobody re-checked**. This pattern has now bitten twice
+in one session; treat any "the tool cannot do X" as unverified until someone has run it.
+
+1. **"This box has no IDA Pro."** False. IDA Professional **9.2** is installed and
+   licensed (`idapro.hexlic` present) at `D:\Software\Tool\Debugger\IDA Professional 9.2`,
+   junctioned as `Static-Reversing\IDA`. `ida-pro-mcp` **v2.0.0** (mrexodia) plus Hex-Rays
+   `idapro` 0.0.10 are installed. The false claim had propagated into
+   `manifests/tools.json`, the upgrade plan, and a briefing to four research agents.
+2. **"Ghidra 12 cannot open a sibling program headlessly."** False, per
+   `scripts/ghidra/DiffPrograms.java:6-12`. `AutoVersionTrackingScript.java` does exactly
+   that — verified by running it with three programs open in one process, all 14
+   correlators, 14–17 s, no apply markup errors.
+
+---
+
+## 2. Verified state
+
+Run from the repo root. Each is the registry's `probe.command`.
+
+| Capability | Command | Result |
+|---|---|---|
+| registry selftest | `python scripts/registry-verify.py --selftest` | **14/14 rules fire** |
+| registry validate | `python scripts/registry-verify.py` | **11 capabilities, CLEAN** |
+| ghidra fail-open | `powershell -File scripts\ghidra-failopen-regress.ps1` | **4/4 LOOP CLOSED** |
+| web/JS | `node web-reverse/tools/loop.mjs` | LOOP CLOSED |
+| web AST deobf | `node web-reverse/tools/loop2.mjs` | all checks incl. negative controls |
+| crypto/JWT | `node crypto-lab/tools/loop.mjs` | `{"total":17,"pass":17,"fail":0}` |
+| network/protocol | `node net-reverse/tools/loop.mjs` | LANE CLOSED |
+| isolation | `node net-reverse/tools/trustcheck.mjs` | ISOLATION HELD |
+| crackme corpus | `python crackme-corpus/tools/loop.py` | 20 checks, 5 negative controls |
+| forensics/memory | `node forensics-lab/tools/loop.mjs` | **37** checks |
+| managed .NET | `node managed-lab/tools/loop.mjs` | `{"total":27,"pass":27,"fail":0}` |
+| mobile/Android | `node mobile-lab/tools/loop.mjs` | 25 checks incl. 40-case Frida suite |
+| **native / IDA** | `node native-lab/tools/loop.mjs` | **15/15 LOOP CLOSED, ~2.4 s** |
+| fuzzing (D11) | `node fuzz-lab/tools/loop.mjs` | LOOP CLOSED, 24/24 — **budget floor 40, default 90** |
+
+Full-station one-liner (read-only, ~5 min):
+`bash %USERPROFILE%/AppData/Local/Temp/smoke-all.sh` — or rebuild it from §2; the
+table is the contract, the script is a convenience.
+
+---
+
+## 3. The four defects the fuzzer found in our own parsers
+
+All fixed, all under regression guard. `fuzz-lab` targets parsers **this repo wrote**,
+so every finding was a real robustness bug and never a third-party target.
+
+| Where | Class | Fix |
+|---|---|---|
+| `forensics-lab/tools/triage.mjs` `parsePrefetch` | uncaught over-read | bounds from the record layout; truncation **reported**, not thrown |
+| `crypto-lab/tools/analyze.mjs` `EMAIL_VALUE_RE` | ReDoS, quadratic | anchored + bounded runs. 400k: 54.0 s → **11 ms** |
+| `web-reverse/static/lib/triage.mjs` `tableAccessorCalls` | ReDoS | 300k: 22 s → **1 ms** |
+| `web-reverse/static/lib/triage.mjs` `TRANSPILER_HINTS[nullish-lowering]` | ReDoS | 200k: 8.7 s → **18 ms** |
+
+The fourth is the one that justifies the lab: it is on no list, in a different function
+in the same file, and was found only because the fuzzer appends 400 000 copies of a random
+character and waits to see whether anything comes back. A neighbouring hint with the
+**same regex shape** was deliberately **left alone** because it measured 0 ms — fixing by
+shape would have been wrong.
+
+**Sharpest argument for a differential oracle over a crash counter:** the pcap twin's
+defect is *silent*. `Buffer.subarray` clamps, so the flawed reader returns a 4-byte frame
+while **reporting** `capturedLength 1000`. Nothing throws. An analyst reading that report
+would believe they had a kilobyte of traffic, and a crash-counting fuzzer sees nothing.
+
+---
+
+## 4. Traps in our own tooling — all measured, all fixed
+
+| Trap | Consequence | State |
+|---|---|---|
+| `Start-Process -PassThru` + `WaitForExit(<int>)` | `$p.ExitCode` is **`$null`**; `exit $null` is **exit 0** | fixed in `ghidra-headless.ps1`; gate on the artifact |
+| MCP `POST` vs `GET` | GET `/mcp` returns 405 — protocol, not fault | documented |
+| `ida-pro-mcp` failure reporting | `isError:false`, `code:null`, `error:"..."` | **test the `error` field**, require non-null `code` |
+| orphaned `idalib` worker holds 8745 | loop attaches to a server it did not start | `portFree()` refuses; verified with a decoy listener |
+| IDA lists no session until analysis ends | early poll returns `[]`, looks like failure-to-open | `waitForSession()` |
+| `proc.kill('SIGKILL')` on Windows | libuv assertion | use `taskkill /T /F` |
+| fuzz-lab budget below 40 | hang-class twin unreachable → false "SURVIVED" | floor guard refuses in 0.1 s |
+
+---
+
+## 5. Security findings on `ida-pro-mcp` — the server is not a boundary
+
+**`--unsafe` is a speed bump and was reversed live on this host.** On a worker started
+*without* it, one unauthenticated loopback POST made `py_eval` callable and it returned 2:
+
+```
+POST /config   apply_profile=1&profile_text=py_eval
+```
+
+- `http.py:93` snapshots `ORIGINAL_TOOLS` at import, **before** `idalib_server.py:285-289`
+  deletes the unsafe tools; `http.py:442-446` rebuilds `tools.methods` from that snapshot
+- `_check_api_request` (`mcp.py:303-328`) accepts any request with no `Origin` header →
+  **no token needed**
+- persisted into the IDB netnode `$ ida_mcp.enabled_tools` (`http.py:447`) → **the policy
+  travels inside the sample's `.i64`**
+- `idb_open`/`idb_list` are `protected` from `--profile` (`idalib_server.py:57-60`), and the
+  supervisor never applies `--profile` to its own registry
+  (`idalib_supervisor.py:1498-1499`) → a "read-only" profile still grants arbitrary-path reads
+- **`idb_save` is NOT tagged unsafe** and writes 2.7 MB to an arbitrary path
+- `X-IDA-MCP-External-Base` rewrites the download URL → measured `http://attacker.invalid:9999/…`
+
+**Never** pass `--unsafe`, **never** send `POST /config`, **never** trust `--profile`. The
+gate enforces authority; the server's flags do not. Recorded as `gate_must_not_delegate`.
+
+**Batches drop items silently** (measured): `normalize_dict_list` drops non-dict elements
+(`utils.py:704-706`) — 5 queries in, 4 results out, no index, no echo; empty array becomes
+`[{}]` (`utils.py:694-695`); past a 50,000-char cap the whole result is replaced by a
+10-item preview (`rpc.py:20`) — measured 6,000 `get_int` → 10 items. So the contract is
+`len(result) == len(queries)`. **A short result is a failure, not a smaller answer.**
+
+**Sessions are not durable handles:** a supervisor's `idb_open` adopted *another process's*
+worker via shared discovery files, then lost the session on the next call. Bind to
+`sha256(object)`, re-derive each round.
+
+---
+
+## 6. The registry and its validator
+
+`manifests/capabilities.json` (11 entries) is a **contract**; `manifests/tools.json` stays
+an **inventory**. Conflating them is how a machine-readable file makes unverified claims.
+
+14 rules, each exercised by `--selftest` against a registry built to violate it:
+
+```
+R1 empty registry fails          R8 reach declared as an effect, not a tag
+R2 observed needs a probe        R9 batch consumed => envelope.batch declared
+R3 proves + does_not_prove      R-shape required fields, valid state
+R4 fact type agreement          R5 control present and expects non-zero
+R6 reach needs escalation       R7 ids unique
+```
+
+`R3` binds **claims, not absences**: an `absent` entry must prove nothing but must still
+declare `does_not_prove`. Two selftest cases pin that — one asserting the rule stays
+silent, one asserting it still catches a stripped absent entry — so the relaxation cannot
+quietly widen into a hole. That refinement came from the validator firing on my own data,
+which is the second reason to run validators on real registries rather than fixtures.
+
+---
+
+## 7. Environment (measured — do not assume)
+
+- **IDA Pro 9.2** installed + licensed; `idalib-mcp.exe` at
+  `D:\Software\Developer\Python314\Scripts\`; MCP over **POST** `127.0.0.1:8745/mcp`,
+  **66 tools**. Agent default is `idalib` or `idat -A`, **not** GUI 13337
+  (`OWNER.md:13`); `AGENTS.md:123` — do not add a second IDA server.
+- **Ghidra 12.1.3** (12.1.2 also present). One headless run of a 140.5 KB PE:
+  **18.05 s wall, 1,085.7 MB peak RAM, 673 KB across 522 files**; project dir 3.6–4.5 MB.
+  12.1.2 doing the same job: 29 s cold. Projects go to `%TEMP%` (**C:**), not `E:`.
+- **~30 stranded `%TEMP%\ghidra-proj-*` dirs, ~14 MB** — `ghidra-headless.ps1:41` only adds
+  `-deleteProject` on the no-PostScript/no-Http path.
+- `E:` ≈ 14.5 GB free. The VHDX is dynamic and **never returns bytes** — budget by peak
+  cumulative pull, not current usage.
+- **No gcc anywhere.** MSVC 2022 is the C toolchain. Docker stopped; do not start it.
+- No Android device, no `adb`. The emulator is ~1.7 GB and needs a Windows optional
+  feature + reboot — **an Owner decision**, never taken unilaterally.
+
+---
+
+## 8. Stop lines (unchanged)
+
+Never `certutil -addstore`, never Reqable's one-click CA, never the Windows system proxy —
+the lab CA lives as files on `E:` and is trusted by a per-instance Chrome SPKI pin.
+No `docker compose up` from `<project>`. No scanning github.com/HackerOne. No HackerOne
+submit. No exploit PoCs, samples, captures, keys or unpacked binaries in either repo. No
+anti-cheat or DRM circumvention. No third-party anti-bot bypass. No untrusted sample on the
+host instead of an isolated VM. Running an untrusted sample on the host is a STOP.
+
+**Self-authored targets only for fuzzing.** `tshark`, `Wireshark`, `jadx`, `Volatility` and
+`DiE` are installed third-party parsers and are deliberately **not** targets — a finding
+there is not a finding about this tree.
+
+---
+
+## 9. Next actions, in order
+
+1. **Read `proc://` for `bg_204` / `bg_205`** — the default-budget fuzz run and the
+   full-station smoke. Confirm both closed before trusting §2.
+2. Fold the four research deliverables into committed wiki. They are in
+   `.agent/research/` (git-excluded) and need copying into a tracked location:
+   `agent-craft-principles.md`, `ghidra-capability-spec.md`, `ida-mcp-source-study.md`.
+3. **Build `scripts/mission.ps1`** — the orchestration layer. Design is complete in
+   `.agent/research/orchestration-design.md` (495 lines, shipped with negative controls
+   N1–N4, N4 being the station's own known failure mode aimed at the new code). One
+   command proves it on `crackme-corpus/out/c01-stringobf.exe`.
+4. Add Ghidra registry entries, gating on `ok:true` plus the named artifact and **never**
+   on `expect_exit` — the fail-open above makes that unsafe.
+5. Apply the strongest un-implemented principle from `agent-craft-principles.md`:
+   **"I found nothing" is an answer only when you can name the guards that would have
+   found it** (`discharged[]`). It is strictly stronger than anything here now.
+
+---
+
+## 10. How to research here
+
+The browser at `:9333` is **shared with other sessions and GitHub-rate-limited**. Three
+distinct failures cost real time and none were visible from the symptom:
+
+1. `evaluate_script` ran against a tab that had drifted to another site, so every
+   cross-origin fetch returned nothing — **identical to "no results"**.
+2. GitHub returned **429** with an error page that parsed as zero result rows. *A parser
+   that cannot tell "no rows" from "error page" will lie about the world.*
+3. `gh search repos "ida%20pro%20mcp"` returns `[]`; plain spaces work.
+
+**Use the authenticated `gh` CLI.** `web_search` is expected dead.
+
+```bash
+gh search repos "QUERY" --limit 10 --json fullName,stargazersCount,description,updatedAt \
+   --sort stars --order desc          # plain spaces, not %20
+gh api repos/OWNER/REPO/contents/PATH
+gh repo clone OWNER/REPO -- --depth 1  # into %LOCALAPPDATA%\Temp\re-research\<name>\
+```
+
+---
+
+## 11. Repos
+
+| Repo | Branch | Commits | Remote |
+|---|---|---|---|
+| `<private-tree>` | `master` | 16 | `<private-tree>` PRIVATE |
+| `debugger-workstation` | `main` | 13+ | `github.com/dwgx/debugger-workstation` PRIVATE |
+
+`.agent/` is local control plane, excluded via `.git/info/exclude`. Re-measure before
+trusting the commit counts — a recovery document that inflates its own numbers is worse
+than one that omits them.
