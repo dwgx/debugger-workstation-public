@@ -1,0 +1,13 @@
+{
+  "name": "crypto-lab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "JWT / token-analysis lab for the debugger-workstation. Loopback only. The analyzer itself is zero-dependency; jsonwebtoken is installed solely as an independent cross-check oracle.",
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "jsonwebtoken": "9.0.3"
+  }
+}

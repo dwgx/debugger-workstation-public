@@ -1,0 +1,9 @@
+# crypto-lab local state. Nothing here is source.
+node_modules/
+.venv/
+keys/
+*.pem
+*.key
+*.crt
+*.csr
+oracle-lock.json

@@ -1,0 +1,4 @@
+# crypto-lab python oracle -- independent second implementation for cross-checking.
+# Installed into crypto-lab/.venv (gitignored), never into another tree.
+PyJWT==2.15.1
+cryptography==50.0.1

@@ -132,3 +132,13 @@ notes/2026-09-01-full-tool-download.md
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# --- Lab build output (2026-09-30) ---
+# Compiled challenges and decompiler output. The charter forbids exporting
+# decompiled C into git: it is derived from binaries, machine-generated, and
+# it would bury the real sources. Sources live in challenges/*/src; technique
+# notes and known answers are committed by hand, everything under out/ is not.
+/crackme-corpus/out/
+*.obj
+*.pdb
+*.ilk
