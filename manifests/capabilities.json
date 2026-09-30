@@ -771,12 +771,15 @@
         "tools": []
       },
       "proves": [
-        "what the APK's manifest, DEX and native library contain as built"
+        "what the APK's manifest, DEX and native library contain as built",
+        "whether the APK carries packer signatures, emulator/root check signals, or Kotlin @DebugMetadata, with every hit citing its DEX string index"
       ],
       "does_not_prove": [
         "anything about runtime behaviour -- no device, so ART acceptance, on-device TLS and .so execution are NOT claimed",
-        "packing or anti-emulator detection, which this lab does not implement yet",
-        "Kotlin name recovery, which R8's retained metadata makes possible and we do not yet do"
+        "that any detected emulator or root check FIRES, or what it would return -- these are signal LISTS read out of the DEX, and only firing needs a device",
+        "that a bare weak signal is a check at all: 'su' occurs in ordinary text and 'sdk' matched the literal 'sdk=' on this lab's own clean APK, so the *_present flags are counted from the strong buckets only",
+        "any bypass of any detected check -- none is shipped, by design",
+        "a Kotlin RENAME: the metadata census is recovered, the encoded_array is not decoded"
       ],
       "gate": {
         "lane": "debug",
@@ -788,7 +791,7 @@
         "expect": "LOOP CLOSED",
         "exit": 0,
         "last_run": "2026-09-30",
-        "last_summary": "25 checks, including a 40-case Frida suite"
+        "last_summary": "31 checks including 6 indicator controls: silence on our own clean APK, fire on a synthetic packer DEX, fire on load-bearing root/emulator paths, and weak-signal separation"
       },
       "negative_control": {
         "id": "mobile.apk.wrong_decoder",

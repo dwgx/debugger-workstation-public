@@ -114,7 +114,7 @@ if (!built) {
  * ------------------------------------------------------------------ */
 let analysis = null;
 try {
-  analysis = analyzeApk(APK);
+  analysis = await analyzeApk(APK);
   const m = analysis.manifest;
   record('manifest: package, sdk, debuggable parsed from binary AXML',
     m.package === 'com.lab.mobilelab' && m.minSdkVersion === 24 && m.targetSdkVersion === 34,
@@ -319,6 +319,83 @@ const negatives = [];
       && readTracerPid('TracerPid:\t0\n').state === 'clean',
     detail: `instrumented=${dirty.findings.length} finding(s), clean=${clean.findings.length}`,
   });
+
+  /* (d2) indicator detectors: three controls, because a detector that fires on
+     everything proves nothing and one that fires on nothing proves less. */
+  {
+    const { parseDex } = await import('./analyze.mjs');
+    const { detectPacking, detectEnvironmentChecks, recoverKotlinMetadata } = await import('./indicators.mjs');
+    const { entryData } = await import('../lab/build/zip.mjs');
+    const { readZip } = await import('../lab/build/zip.mjs');
+
+    const apkBuf = fs.readFileSync(APK);
+    const zipEntries = readZip(apkBuf).map(e => e.name);
+    const byName = Object.fromEntries(readZip(apkBuf).map(e => [e.name, e]));
+    const dex = parseDex(entryData(byName['classes.dex']));
+
+    /* Control 1: our own clean APK must NOT look packed. A detector that cannot stay
+       quiet on a known-clean artifact is a detector that reports whatever it is fed. */
+    const pk = detectPacking(dex, zipEntries);
+    negatives.push({
+      label: 'NEGATIVE: packing detector is silent on our own clean APK',
+      pass: pk.verdict === 'no_indicator',
+      detail: `verdict=${pk.verdict}, observed=${pk.observed.length}, inferred=${pk.inferred.length}`,
+    });
+
+    /* Control 2: a synthetic DEX carrying one packer signature must be FOUND. A detector
+       that returns clean for an artifact that visibly contains a packer is worse than none,
+       because it is trusted. */
+    const fakePack = { ...dex, strings: [...dex.strings, 'com/secneo/apkwrapper/AppWrapper', 'Lcom/qihoo/util/StubApplication;'] };
+    const pk2 = detectPacking(fakePack, zipEntries);
+    negatives.push({
+      label: 'NEGATIVE: packing detector FIRES on a DEX that carries a packer signature',
+      pass: pk2.verdict === 'packed' && pk2.observed.length >= 2,
+      detail: `verdict=${pk2.verdict}, packers=${pk2.observed.map(o => o.packer).join(',')}`,
+    });
+
+    /* Control 3: the weak-signal split. A bare "su" must never be presented the same
+       way as an absolute-path su, because "su" occurs in innocent text constantly. */
+    const fakeRoot = { ...dex, strings: [...dex.strings, '/system/xbin/su', 'com/topjohnwu/magisk', 'a casual mention of su'] };
+    const env = detectEnvironmentChecks(fakeRoot);
+    negatives.push({
+      label: 'NEGATIVE: root detector separates weak substrings from load-bearing paths',
+      pass: env.root_checks_present === true
+        && env.root_hits.some(h => h.signal === '/system/xbin/su')
+        && env.root_hits_weak.some(h => h.signal === 'su'),
+      detail: `strong=${env.root_hits.map(h => h.signal).join(',')} | weak=${env.root_hits_weak.map(h => h.signal).join(',')}`,
+    });
+
+    /* Control 3b: THE control this detector was missing, and the one that found the bug.
+       Our own clean APK must report BOTH flags false. The first version counted weak
+       substrings, so a bare "su" in an XML element name and the literal "sdk=" produced
+       emulator_checks_present and root_checks_present on an app that contains neither.
+       A detector that cries wolf on a known-clean artifact is worse than no detector. */
+    const envClean = detectEnvironmentChecks(dex);
+    negatives.push({
+      label: 'NEGATIVE: environment detector is SILENT on our own clean APK',
+      pass: envClean.emulator_checks_present === false && envClean.root_checks_present === false,
+      detail: `emulator=${envClean.emulator_checks_present} (strong=${envClean.emulator_hits.length} weak=${envClean.emulator_hits_weak.length}), root=${envClean.root_checks_present} (strong=${envClean.root_hits.length} weak=${envClean.root_hits_weak.length})`,
+    });
+
+    /* And it must still FIRE on a DEX that genuinely carries the load-bearing paths. */
+    const envFake = detectEnvironmentChecks({
+      ...dex,
+      strings: [...dex.strings, '/system/xbin/su', '/dev/socket/qemud', 'ro.kernel.qemu'],
+    });
+    negatives.push({
+      label: 'NEGATIVE: environment detector FIRES on load-bearing paths',
+      pass: envFake.root_checks_present === true && envFake.emulator_checks_present === true,
+      detail: `root=${envFake.root_checks_present} emulator=${envFake.emulator_checks_present}`,
+    });
+
+    /* Control 4: Kotlin metadata is reported as RECOVERABLE or not, never as a rename. */
+    const kotlin = recoverKotlinMetadata(dex);
+    negatives.push({
+      label: 'NEGATIVE: Kotlin report never claims a rename it did not perform',
+      pass: kotlin.does_not_prove.some(d => /not decoded names/i.test(d)),
+      detail: `present=${kotlin.kotlin_metadata_present} recovery_possible=${kotlin.recovery_possible}`,
+    });
+  }
 
   /* (e) redaction must actually remove the value */
   const { redactConstant } = await import('../frida/lib/logic.mjs');

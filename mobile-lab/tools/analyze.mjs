@@ -360,7 +360,7 @@ function collectComponents(roots) {
   return out;
 }
 
-export function analyzeApk(apkPath) {
+export async function analyzeApk(apkPath) {
   const buf = fs.readFileSync(apkPath);
   const entries = readZip(buf);
   const byName = Object.fromEntries(entries.map(e => [e.name, e]));
@@ -452,6 +452,16 @@ export function analyzeApk(apkPath) {
   /* ---------- 3. dex ---------- */
   const dexBuf = read('classes.dex');
   if (!dexBuf) throw new Error('APK has no classes.dex');
+
+  /* ---------- packing / environment checks / Kotlin metadata ----------
+     Added 2026-09-30. All three are STATIC: a signal list is static analysis, and only
+     FIRING a check needs a device. Nothing here executes the app, so nothing here may be
+     read as a statement about runtime behaviour. Every hit cites its string. */
+  {
+    const { detectAll } = await import('./indicators.mjs');
+    report.indicators = detectAll(parseDex(dexBuf), entries.map(e => e.name));
+  }
+
   const dex = parseDex(dexBuf);
   report.dex = {
     version: dex.version, bytes: dexBuf.length,
@@ -660,7 +670,11 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
 
   let r;
   try {
-    r = analyzeApk(file);
+    // awaited: analyzeApk became async when the indicator detectors were added, and an
+    // un-awaited call hands the rest of the CLI a Promise. The symptom was a TypeError
+    // deep inside the --expect block reading `resolved` of undefined, which points at the
+    // expect table rather than at the real cause.
+    r = await analyzeApk(file);
   } catch (e) {
     console.error(`analyze: ${e.message}`);
     process.exit(3);
