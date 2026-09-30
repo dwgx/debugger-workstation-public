@@ -148,6 +148,68 @@ def r6_reach_needs_escalation(reg, doc):
     return out
 
 
+
+def r8_reach_must_be_declared(reg, doc):
+    """A capability must declare its reach as an EFFECT, not as a decorator tag.
+
+    Found the hard way: ida-pro-mcp tags `py_eval` and the 22 dbg_* tools as unsafe,
+    but does NOT tag `idb_save`, which writes a 2.7 MB file to an arbitrary path. An
+    analyst reading the tags would call the static analyser read-only. So a registry
+    entry that can write, execute, spawn or reach the network must say so in `reach`,
+    and writing outside the case directory needs an escalation class."""
+    out = []
+    EFFECTS = ("fs_write", "net", "proc_spawn", "exec_target", "db_write")
+    for c in reg:
+        req = c.get("requires") or {}
+        reach = c.get("reach") or {}
+        gate = c.get("gate") or {}
+        implied = []
+        if req.get("net") == "any":
+            implied.append("net")
+        if req.get("admin"):
+            implied.append("fs_write")
+        for eff in EFFECTS:
+            if reach.get(eff):
+                implied.append(eff)
+        if not implied:
+            continue
+        missing = [e for e in set(implied) if not reach.get(e)]
+        if missing:
+            out.append(f"R8 {c.get('id','?')}: reach implies {sorted(set(implied))} but "
+                       f"reach does not declare {sorted(missing)}. Authority has to be "
+                       f"declared as an effect, because a decorator tag can miss it.")
+        if reach.get("fs_write") and gate.get("escalation_class") == "none":
+            out.append(f"R8 {c.get('id','?')}: fs_write with escalation_class=none. Writing "
+                       f"outside the case directory is never a runtime self-decision.")
+    return out
+
+
+def r9_batch_must_account(reg, doc):
+    """If a capability consumes a batch, it must declare how items are accounted.
+
+    Measured on ida-pro-mcp: `normalize_dict_list` silently DROPS non-dict elements
+    in a mixed list (utils.py:704-706) -- 5 queries in, 4 results out, with no index,
+    no echo and no dropped counter -- and an empty array becomes [{}], returning one
+    bogus failed item. An orchestrator that asked for five facts and read four
+    answers would have no signal that anything went missing."""
+    out = []
+    for c in reg:
+        inputs = (c.get("consumes") or {}).get("inputs") or []
+        batches = [i for i in inputs if str(i.get("type", "")).endswith("[]")]
+        env = c.get("envelope") or {}
+        if batches and env.get("batch") is None:
+            out.append(f"R9 {c.get('id','?')}: consumes a batch ({batches[0].get('name')}) "
+                       f"but declares no envelope.batch policy. Say how a short result is "
+                       f"detected, because this class of API drops items silently.")
+        if env.get("batch") is not None:
+            for f in ("max_items", "aggregate"):
+                if f not in env["batch"]:
+                    out.append(f"R9 {c.get('id','?')}: envelope.batch is missing {f}.")
+            if env.get("success_when") is None:
+                out.append(f"R9 {c.get('id','?')}: envelope has no success_when. isError is "
+                           f"not a verdict on this class of server.")
+    return out
+
 def r7_ids(reg, doc):
     out, seen = [], set()
     for c in reg:
@@ -176,7 +238,8 @@ def r_shape(reg, doc):
 
 
 RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
-         r4_fact_types_agree, r5_control_must_fail, r6_reach_needs_escalation, r7_ids)
+         r4_fact_types_agree, r5_control_must_fail, r6_reach_needs_escalation, r7_ids,
+         r8_reach_must_be_declared, r9_batch_must_account)
 
 
 # ---------------------------------------------------------------------------- core
@@ -244,6 +307,15 @@ def selftest() -> int:
     case("R6 admin without escalation", lambda b: b[0]["requires"].__setitem__(
         "admin", True), "R6")
     case("R7 duplicate id", lambda b: b[1].__setitem__("id", "a.one"), "R7")
+    case("R8 net=any without declared reach", lambda b: b[0]["requires"].__setitem__(
+        "net", "any"), "R8")
+    case("R8 fs_write with escalation none", lambda b: b[0].update(
+        reach={"fs_write": True, "net": True}), "R8")
+    case("R9 batch consumed with no envelope", lambda b: b[0]["consumes"].__setitem__(
+        "inputs", [{"name": "batch", "type": "string[]", "required": False}]), "R9")
+    case("R9 envelope batch missing aggregate", lambda b: b[0].update(
+        envelope={"success_when": "code != null and error is empty",
+                  "batch": {"max_items": 100}}), "R9")
 
     width = max(len(n) for n, _, _ in cases)
     failed = 0

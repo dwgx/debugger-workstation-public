@@ -84,15 +84,34 @@ if (-not $p.WaitForExit($TimeoutMs)) {
     exit 1
 }
 $summary = Join-Path $OutDir 'summary.json'
-if (Test-Path -LiteralPath $summary) {
+
+# ExitCode is $null here, not 0. `Start-Process -PassThru` plus `WaitForExit(<int>)`
+# hits a .NET handle-caching quirk: the handle is never fully populated, so the
+# property reads $null -- and PowerShell's `exit $null` is exit 0. That turns a
+# failed import into a PASS as far as any caller checking the exit code is
+# concerned. Measured 2026-09-30 on a .txt input: analyzeHeadless itself exits 1,
+# and this wrapper reported {"ok":false,"exit":null} while exiting 0.
+#
+# The first attempt also required `exit -eq 0`, and that was wrong in the other
+# direction: ExitCode is $null on the SUCCESS path too, so every run failed. The only
+# honest signal is the artifact the run was supposed to write. If summary.json
+# exists, Ghidra got far enough to finish; if it does not, the run failed whatever
+# any exit code claims.
+$exitCode = $p.ExitCode
+$haveSummary = Test-Path -LiteralPath $summary
+
+if ($haveSummary) {
     Get-Content -LiteralPath $summary -Raw
-    exit $p.ExitCode
+    exit 0
 }
+
 @{
-    ok     = ($p.ExitCode -eq 0)
+    ok     = $false
     tool   = 'ghidra'
-    exit   = $p.ExitCode
+    reason = 'no summary.json -- the analysis did not produce its named artifact'
+    exit   = $exitCode
     outdir = $OutDir
     log    = $outLog
+    note   = 'deliberately gated on the artifact, not the exit code; see the comment above'
 } | ConvertTo-Json -Compress
-exit $p.ExitCode
+exit 1

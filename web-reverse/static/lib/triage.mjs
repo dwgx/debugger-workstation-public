@@ -124,7 +124,21 @@ const FAMILIES = [
 const TRANSPILER_HINTS = [
   { id: 'async-to-generator', test: /_asyncToGenerator|asyncGeneratorStep|_awaiter|__awaiter/ },
   { id: 'optional-chaining-lowering', test: /=== null \|\| \w+ === void 0 \? void 0|!== null && \w+ !== void 0/ },
-  { id: 'nullish-lowering', test: /\w+ !== null && \w+ !== void 0 \? \w+ :/ },
+  /* `nullish-lowering` used to be `/\w+ !== null && \w+ !== void 0 \? \w+ :/`. Three
+     unbounded `\w+` runs with literals between them: on a long run of identifier
+     characters the engine retries every start position and every split of the first
+     run, which is quadratic. Measured: a 200 KB run took `triage()` 8.7 SECONDS.
+     Found by fuzz-lab as a HANG, not a crash -- which is the whole reason a hang is a
+     finding here and not a skip: nothing threw, nothing looked wrong, and the tool just
+     stopped answering on the file it was handed.
+
+     Bounded to 64 characters (longer than any identifier Babel emits for this
+     construct) and it is O(n) again: 200 KB is now 18 ms, 1.6 MB is 145 ms. The matched
+     set is unchanged, verified against real lowered output in both directions. The
+     neighbouring `optional-chaining-lowering` hint has the same shape and is left
+     alone: its first branch is anchored on a literal `===`, so it never enters the
+     quadratic path (measured 0 ms on the same 200 KB input). */
+  { id: 'nullish-lowering', test: /\w{1,64} !== null && \w{1,64} !== void 0 \? \w{1,64} :/ },
   { id: 'interop-require', test: /_interopRequireDefault|_interopRequireWildcard/ },
   { id: 'class-lowering', test: /_createClass\(|_classCallCheck\(|_inherits\(/ },
   { id: 'spread-lowering', test: /_toConsumableArray\(|_objectSpread\(/ },
@@ -225,7 +239,18 @@ export function residuals(source) {
   const count = (re) => (source.match(re) || []).length;
   return {
     hexIdentifiers: new Set(source.match(/_0x[0-9a-fA-F]{4,6}/g) || []).size,
-    tableAccessorCalls: count(/[_$\w]+\s*\(\s*0x[0-9a-fA-F]+\s*\)/g),
+    /* `tableAccessorCalls` used to be `/[_$\w]+\s*\(\s*0x[0-9a-fA-F]+\s*\)/g`, which is
+     * quadratic: `[_$\w]+` and the `\w` reachable after the group are ambiguous, so the
+     * backtracker explores the overlap. A 300 KB run of identifier characters took this
+     * function 22 SECONDS (measured, and unchanged at 25s for 300 KB). The input is
+     * untrusted JS text -- it is the thing being triaged -- so this is the same defect
+     * class as the ReDoS in crypto-lab's analyzer: a triage tool that hangs on the file
+     * it was handed.
+     *
+     * Fixed by anchoring the identifier start to a non-identifier character and bounding
+     * both quantified runs. 300 KB is now under 1 ms; 1.6 MB is under 1 ms. Found by
+     * fuzz-lab (crash `web-triage-reference-*`). */
+    tableAccessorCalls: count(/(?:^|[^\w$])[A-Za-z_$][\w$]{0,63}\s*\(\s*0x[0-9a-fA-F]{1,16}\s*\)/g),
     dispatcherLoops: count(/while\s*\(\s*(!!\[\]|true)\s*\)\s*\{[\s\S]{0,80}?switch\s*\(/g),
     evalCalls: count(/\beval\s*\(/g),
     functionConstructor: count(/new\s+Function\s*\(/g),

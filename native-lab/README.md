@@ -49,10 +49,77 @@ PASS  CONTROL: isError is FALSE on that failure   isError=false while error is s
                                                   — an isError-only wrapper logs a success
 ```
 
-That check is a control on the control. If a future version of the server starts
-setting `isError` correctly, this check fails loudly and every wrapper in the repo has
-to be re-examined — which is the point. **Any wrapper around this MCP must test the
-`error` field and require non-null `code`.**
+## Threat model — the server is not a security boundary
+
+`--unsafe` looks like a safety switch. **It is a speed bump, and it was reversed
+live on this host.**
+
+On a worker started *without* `--unsafe` — `py_eval` absent from `tools/list` — one
+unauthenticated loopback form POST was enough to make it callable:
+
+```
+POST /config   apply_profile=1&profile_text=py_eval     ->  py_eval returned 2
+```
+
+The mechanism, from the installed source:
+
+- `http.py:93` snapshots `ORIGINAL_TOOLS` **at import time**, i.e. *before*
+  `idalib_server.py:285-289` deletes the unsafe tools;
+- `http.py:442-446` rebuilds `tools.methods` from that stale snapshot;
+- `_check_api_request` (`mcp.py:303-328`) accepts any request carrying no `Origin`
+  header, so **no token is required**;
+- the result is persisted into the IDB netnode `$ ida_mcp.enabled_tools`
+  (`http.py:447`), so **the policy travels inside the sample's `.i64`**.
+
+Two more holes in the same story: `idb_open` / `idb_list` are `protected` from
+`--profile` (`idalib_server.py:57-60`), and the supervisor never applies `--profile` to
+its own registry (`idalib_supervisor.py:1498-1499` only forwards it to workers) — so a
+profile described as "read-only" still grants arbitrary-path file access.
+
+And the tag list itself is incomplete: 25 tools are marked unsafe, but **`idb_save`
+is not**, and it writes a 2.7 MB file to an arbitrary path. For a static mission that
+is a bigger hole than anything the tag covers. A related header,
+`X-IDA-MCP-External-Base`, rewrites the download URL the agent is told to fetch —
+measured `http://attacker.invalid:9999/output/….json`.
+
+**Consequences for anything built on this server:**
+
+1. Never pass `--unsafe`. Never send `POST /config`. Never trust `--profile`.
+2. Our gate enforces authority; the server's flags do not. `gate_must_not_delegate`
+   in the registry names the three mechanisms explicitly.
+3. Treat reach as a declared effect, not a decorator tag — which is why the registry
+   carries a `reach` field and `registry-verify.py` rule R8 fails when an entry's
+   `requires` implies an effect the entry does not declare.
+
+### Batches drop items silently
+
+The batching is the reason to use this server, and it lies by omission. Measured, not
+read:
+
+- `normalize_dict_list` **silently drops** non-dict elements in a mixed list
+  (`utils.py:704-706`) — 5 queries in, 4 results out, no index, no echo, no counter.
+- An empty array becomes `[{}]` and returns one bogus failed item
+  (`utils.py:694-695`).
+- Past a 50,000-char cap (`rpc.py:20`) the whole result is replaced by a 10-item
+  preview plus a truncation marker and a download URL. Measured: 6,000 `get_int`
+  requests came back as 10 items and 417,213 characters truncated.
+
+So the batch contract in the registry is `len(result) == len(queries)`. **A short
+result is a failure, not a smaller answer.** Rule R9 fails any entry that consumes a
+batch without saying how a short result is detected.
+
+### Sessions are not durable handles
+
+Observed live: a supervisor's `idb_open` adopted *another process's* `idalib` worker
+through the shared discovery files, then lost the session on the very next call. Bind a
+session to `sha256(object)` and re-derive it every round. This lab's `portFree()` guard
+is the same instinct applied to the port.
+## What the loop asserts, and why the assertion is the point
+
+The `isError` check above is a control on the control. If a future version of the
+server starts setting `isError` correctly, that check fails loudly and every wrapper in
+the repo has to be re-examined — which is the point. **Any wrapper around this MCP must
+test the `error` field and require non-null `code`.**
 
 ## Two controls that exist because they caught something
 

@@ -411,22 +411,62 @@ export function parseSrum(file) {
   return { source: 'SRUM', format: 'tsv, app/filetime/net_sent/net_recv/cpu_ms', file: path.basename(file), count: rows.length, rows };
 }
 
+/* The record layout is fixed-offset, so every field is a read at a constant offset and
+ * every one of those offsets is a place the file can stop short. `Math.min(n, 64)` caps
+ * the COUNT but not the FILE: a 20-byte file with the right 4-byte magic passed the old
+ * `length < 16` guard and then died in `readUInt32LE(72)` with a RangeError. Found by
+ * fuzz-lab (crash `forensic-pf-reference-*`), and the failure mode was the wrong kind:
+ * an uncaught exception, not a refusal.
+ *
+ * So the guard is derived from the layout rather than guessed, and truncation is
+ * REPORTED rather than thrown -- which is the same rule the rest of this file follows:
+ * a corrupt artefact must produce a finding about the artefact, never a dead tool. */
+const PF_NAME = 60, PF_TIMES = 8, PF_MAX_ENTRIES = 64;
+const PF_COUNT_OFF = 12 + PF_NAME;          // 72
+const PF_TABLE_OFF = 16 + PF_NAME;          // 76
+
 export function parsePrefetch(file) {
   const b = fs.readFileSync(file);
+  const base = { source: 'PF', format: 'binary MAM-like', file: path.basename(file) };
   if (b.length < 16 || b.readUInt32LE(0) !== S.SIG.prefetch) {
-    return { source: 'PF', format: 'binary MAM-like', file: path.basename(file), error: 'not a prefetch record', exe: null, runs: 0, runTimes: [] };
+    return { ...base, error: 'not a prefetch record', exe: null, runs: 0, runTimes: [] };
   }
   const version = b.readUInt32LE(4);
   const runs = b.readUInt32LE(8);
-  const NAME = 60, TIMES = 8, ENTRIES = 8;
-  const exe = b.subarray(12, 12 + NAME).toString('ascii').replace(/\0.*$/, '');
-  const n = b.readUInt32LE(12 + NAME);
+  const exe = b.subarray(12, 12 + PF_NAME).toString('ascii').replace(/\0.*$/, '');
+
+  /* The name field is NUL-padded to 60 bytes, so a short read truncates the name rather
+   * than failing -- correct, and worth saying, because it is the one field whose bounds
+   * are handled by `subarray` clamping. */
+  const truncated = [];
+  if (b.length < PF_COUNT_OFF + 4) {
+    truncated.push(`file is ${b.length} bytes: the entry count at ${PF_COUNT_OFF} is absent`);
+    return { ...base, version, exe, runs, runTimes: [], truncated: true, truncation: truncated.join('; ') };
+  }
+  const n = b.readUInt32LE(PF_COUNT_OFF);
+
+  /* The table is what is actually missing in a truncated file, so report how much of it
+   * is real. `available` is derived from the file length, not from `n`, which is the
+   * field an attacker controls. */
+  const available = Math.max(0, Math.floor((b.length - PF_TABLE_OFF) / PF_TIMES));
+  const wanted = Math.min(n, PF_MAX_ENTRIES);
+  const usable = Math.min(wanted, available);
+  if (usable < wanted) {
+    truncated.push(`entry table declares ${wanted} slots but only ${usable} fit in ${b.length} bytes`);
+  }
   const runTimes = [];
-  for (let i = 0; i < Math.min(n, 64); i++) {
-    const ft = b.readBigUInt64LE(16 + NAME + i * TIMES);
+  for (let i = 0; i < usable; i++) {
+    const ft = b.readBigUInt64LE(PF_TABLE_OFF + i * PF_TIMES);
     if (ft) runTimes.push(ftToIso(ft));
   }
-  return { source: 'PF', format: 'binary MAM-like (magic, version, runCount, 60B name, 8x8B run table)', file: path.basename(file), version, exe, runs, runTimes };
+  return {
+    ...base,
+    format: 'binary MAM-like (magic, version, runCount, 60B name, 8x8B run table)',
+    version, exe, runs, runTimes,
+    entriesDeclared: n,
+    truncated: truncated.length > 0,
+    truncation: truncated.join('; ') || null,
+  };
 }
 
 /* ------------------------------------------------------------------ run */

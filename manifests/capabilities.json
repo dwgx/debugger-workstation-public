@@ -44,6 +44,28 @@
         "disk_mb": 300, "ram_mb": 2048, "wall_minutes": 1,
         "tools": [{"name": "idalib-mcp", "probe": "D:/Software/Developer/Python314/Scripts/idalib-mcp.exe --help"}]
       },
+      "reach": {
+        "fs_read": true, "fs_write": false, "net": false, "proc_spawn": true,
+        "exec_target": false, "db_write": false,
+        "note": "decompile itself only reads. The PROCESS it runs in does not: idalib-mcp can write a 2.7 MB .i64 to an arbitrary path via idb_save, which its own --unsafe tagging does NOT cover. So the trust boundary is the server, not the tool."
+      },
+      "gate_must_not_delegate": [
+        "server flag --unsafe",
+        "server flag --profile",
+        "http:POST /config"
+      ],
+      "gate_must_not_delegate_why": "Measured on this host, not read: on a worker started WITHOUT --unsafe (py_eval absent from tools/list), one unauthenticated loopback form POST -- POST /config with apply_profile=1&profile_text=py_eval -- made py_eval callable and it returned 2. http.py:93 snapshots ORIGINAL_TOOLS at import time, BEFORE idalib_server.py:285-289 deletes the unsafe tools, and http.py:442-446 rebuilds tools.methods from that stale snapshot; _check_api_request (mcp.py:303-328) accepts any request carrying no Origin header, so no token is needed. The result is persisted into the IDB netnode $ ida_mcp.enabled_tools (http.py:447), so the policy travels inside the sample's .i64. Two further holes: idb_open/idb_list are `protected` from --profile (idalib_server.py:57-60), and the supervisor never applies --profile to its own registry (idalib_supervisor.py:1498-1499 only forwards it to workers), so a 'read-only' profile still grants arbitrary-path file access. Our gate enforces this; the server's own flags do not.",
+      "envelope": {
+        "success_when": "body.code is non-null AND body.error is absent",
+        "item_error_field": "error",
+        "response_cap_chars": 48000,
+        "on_cap": "refuse and re-page"
+      },
+      "session": {
+        "bind": "sha256(object)",
+        "rederive": "each_round",
+        "why": "Observed live: a supervisor's idb_open ADOPTED another process's idalib worker through the shared discovery files, then lost the session on the very next call. A session id is not a durable handle."
+      },
       "proves": [
         "that a named function's machine code decompiles to the C shown, on those exact bytes",
         "which strings and imports the recovered logic references"
@@ -81,7 +103,11 @@
       "question_types": ["Q1.identify", "Q2.locate"],
       "state": "observed",
       "consumes": {
-        "inputs": [{"name": "binary", "type": "path_ref", "required": true}],
+        "inputs": [
+          {"name": "binary", "type": "path_ref", "required": true},
+          {"name": "queries", "type": "structure[]", "required": true,
+           "note": "one round trip carries N queries; that batching is the reason to use this server at all"}
+        ],
         "prior": []
       },
       "produces": {
@@ -93,6 +119,22 @@
         "disk_mb": 300, "ram_mb": 2048, "wall_minutes": 1,
         "tools": [{"name": "idalib-mcp", "probe": "idalib-mcp --help"}]
       },
+      "reach": {
+        "fs_read": true, "fs_write": false, "net": false, "proc_spawn": true,
+        "exec_target": false, "db_write": false
+      },
+      "envelope": {
+        "success_when": "every requested query has a result object AND result.length == queries.length",
+        "item_error_field": "error",
+        "batch": {
+          "max_items": 6000,
+          "aggregate": "require len(result) == len(queries); a short result is a FAILURE, not a smaller answer",
+          "response_cap_chars": 48000
+        },
+        "why": "Measured, not read: normalize_dict_list silently DROPS non-dict elements in a mixed list (utils.py:704-706) -- 5 queries in, 4 results out, with no index, no echo and no dropped counter. An empty array becomes [{}] and returns one bogus failed item (utils.py:694-695). Past the 50,000-char response cap (rpc.py:20) the WHOLE result is replaced by a 10-item preview plus output_truncated and a download URL: measured 6,000 get_int requests came back as 10 items and 417,213 characters truncated. An orchestrator that asked for five facts and read four answers would otherwise have no signal that anything went missing."
+      },
+      "session": {"bind": "sha256(object)", "rederive": "each_round",
+        "why": "a session id was observed adopted across processes via shared discovery files, then lost on the next call"},
       "proves": ["which functions the analyser recovered, with their addresses and sizes"],
       "does_not_prove": [
         "that the function list is complete -- inlined and unreachable code is routinely missed",
@@ -392,6 +434,11 @@
         "disk_mb": 0, "ram_mb": 0, "wall_minutes": 0,
         "tools": [{"name": "adb", "probe": "adb devices", "expect": "no devices attached"}]
       },
+      "reach": {
+        "fs_read": false, "fs_write": true, "net": false, "proc_spawn": true,
+        "exec_target": true, "db_write": false,
+        "note": "admin=true is declared as fs_write and proc_spawn rather than left implicit, because a decorator tag can miss an effect. Frida injects into a running process and writes to the device, so the effect is real even while the capability is absent."
+      },
       "proves": [],
       "does_not_prove": [
         "that any on-device behaviour was observed -- there is no device on this host",
@@ -414,6 +461,68 @@
       "provenance": {
         "source": "measured 2026-09-30",
         "record": "docs/research/mobile-js-skill-map.md"
+      }
+    }
+,
+    {
+      "id": "fuzz.differential.parse",
+      "title": "Mutation-fuzz this repository's own parsers under a differential oracle",
+      "domains": ["native", "web", "crypto", "forensics", "practice"],
+      "question_types": ["Q1.identify", "Q5.vuln-shape"],
+      "state": "observed",
+      "consumes": {
+        "inputs": [
+          {"name": "target", "type": "string", "required": true,
+           "note": "one of pcap | jose | forensic-pf | web-triage. All four parsers are ours."}
+        ],
+        "context": [],
+        "prior": []
+      },
+      "produces": {
+        "facts": [
+          {"key": "fuzz.finding.outcome", "type": "verdict",
+           "fields": ["target", "class", "recipe_sha"]}
+        ],
+        "artifacts": [
+          {"key": "fuzz.repro.bytes", "type": "bytes_ref", "glob": "crashes/*.bin",
+           "note": "gitignored on purpose -- a reproducer is hostile input against the parsers we ship. The recipe is committed; replay re-derives the bytes and checks the hash."}
+        ],
+        "invalidates_on": ["a parser is fixed -- the finding moves to the regression guard"]
+      },
+      "requires": {
+        "runtime": "node", "net": "none", "admin": false, "device": false,
+        "disk_mb": 100, "ram_mb": 512, "wall_minutes": 12,
+        "tools": [{"name": "node", "probe": "node --version", "expect": "v24 or newer"}]
+      },
+      "proves": [
+        "that four specific parsers in this tree survived or did not survive a mutation campaign, with the outcome of every input recorded",
+        "that the harness can distinguish a parser that DECLARES its refusals from one that crashes -- rejected is handled, uncaught is a finding",
+        "that each recorded finding reproduces from its recipe alone, after minimisation"
+      ],
+      "does_not_prove": [
+        "that a `rejected` outcome is CORRECT -- the lab proves the parser returned a decision, not the right one, and a parser rejecting everything would pass every reference assertion",
+        "anything about a parser outside the four-target set, or about coverage beyond the 27-seed corpus",
+        "anything about tshark, Wireshark, jadx, Volatility or DiE -- installed third-party parsers are deliberately NOT targets, because a finding there is not a finding about this tree",
+        "native memory safety -- there is no ASAN or UBSAN, and the 192 MB ceiling is a V8 heap cap, so a 1-byte out-of-bounds read inside a Buffer is invisible to it"
+      ],
+      "side_effects": ["spawns roughly two child processes per input; about 11 min at the default budget of 60"],
+      "gate": {"lane": "debug", "requires_verdict": false, "escalation_class": "none"},
+      "probe": {
+        "command": "node fuzz-lab/tools/loop.mjs --budget 12",
+        "expect": "LOOP CLOSED",
+        "exit": 0,
+        "last_run": "2026-09-30",
+        "last_summary": "24/24 assertions, 480 inputs, 1 live reference finding, 12 flawed-twin findings, 6/6 regressions holding"
+      },
+      "negative_control": {
+        "id": "fuzz.differential.flawed_twin",
+        "command": "run the campaign against each target's deliberately flawed twin",
+        "expect_exit": 1,
+        "why": "a run in which any flawed twin SURVIVES fails. Each twin has exactly one guard removed, in the way an analyst actually makes the mistake. The pcap twin's defect is silent -- Buffer.subarray clamps, so it reports capturedLength 1000 while returning 4 bytes, which a crash-counting fuzzer cannot see. That is the whole argument for a differential oracle over a crash counter."
+      },
+      "provenance": {
+        "source": "measured on this host 2026-09-30; four real defects found and fixed in this tree",
+        "record": "fuzz-lab/README.md"
       }
     }
   ]
