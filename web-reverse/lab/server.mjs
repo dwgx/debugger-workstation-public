@@ -19,6 +19,7 @@
  */
 import http from 'node:http';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
@@ -113,6 +114,17 @@ const PAGES = {
   '/js/sha256-pure.js': ['pages/sha256-pure.js', 'application/javascript; charset=utf-8']
 };
 
+/* /obf-gen — the generated obfuscator.io variant from web-reverse/static/gen-obf.mjs.
+   It lives outside the repo on purpose: obfuscator output is regenerated machine
+   state, not source. Same client, same key, same gate as /plain, so the toolchain
+   can be graded against a known answer on the same target the runtime loop uses. */
+export const GEN_PAGE = process.env.WEB_REVERSE_GEN_PAGE
+  || path.join(os.tmpdir(), 'web-reverse-captures', 'static', 'obf-gen.html');
+
+/* Read at request time so a caller that generates into its own directory can point
+   the server there after it has started (tools/loop2.mjs does exactly that). */
+const genPagePath = () => process.env.WEB_REVERSE_GEN_PAGE || GEN_PAGE;
+
 function send(res, code, body, type = 'application/json; charset=utf-8') {
   res.writeHead(code, { 'content-type': type, 'cache-control': 'no-store' });
   res.end(body);
@@ -151,6 +163,23 @@ export function createServer({ log = () => {} } = {}) {
       } catch (e) {
         send(res, 500, JSON.stringify({ ok: false, error: String(e.message) }));
         log(`${stamp()} ${line} 500 missing-page`);
+      }
+      return;
+    }
+
+    if (req.method === 'GET' && url.pathname === '/obf-gen') {
+      const file = genPagePath();
+      try {
+        send(res, 200, fs.readFileSync(file), 'text/html; charset=utf-8');
+        log(`${stamp()} ${line} 200 generated page`);
+      } catch {
+        send(res, 404, JSON.stringify({
+          ok: false,
+          error: 'generated-page-missing',
+          hint: 'node web-reverse/static/gen-obf.mjs  (or set WEB_REVERSE_GEN_PAGE)',
+          path: file
+        }));
+        log(`${stamp()} ${line} 404 generated-page-missing`);
       }
       return;
     }
@@ -261,7 +290,7 @@ if (isMain) {
   server.listen(port, host, () => {
     console.log(`web-reverse lab target  http://${host}:${port}`);
     console.log(`  keyId(sha256(key)[0:16]) = ${keyId()}   (assert this after recovering the key)`);
-    console.log(`  pages: / , /plain , /obf , /fingerprint`);
+    console.log(`  pages: / , /plain , /obf , /fingerprint , /obf-gen (generated, ${fs.existsSync(genPagePath()) ? 'present' : 'missing — run static/gen-obf.mjs'})`);
     console.log(`  api:   POST /api/submit (signed) , POST /api/fingerprint , GET /api/health`);
     console.log('  loopback-only. Nothing leaves this machine.');
   });

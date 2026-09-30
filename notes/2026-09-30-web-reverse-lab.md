@@ -63,8 +63,10 @@ Files: `web-reverse/` (lab, tools, README, antibot.md), `scripts/web-reverse-lab
   hand-driving a browser; the loop proves the toolchain is intact in ~4 s.
 - `recover.mjs` understands the one obfuscator family we wrote. Real-world bundles, VM
   protectors, and `Debugger.setBreakpoint`-based tracing are **not** covered yet.
-- Passing `--flags` through `agent-cli.ps1 -> web-reverse-lab.ps1` is not reliable; call the
-  `.mjs` tools directly for non-default flags.
+- Passing tool flags through `agent-cli.ps1 -> web-reverse-lab.ps1` needs `-NodeArgs`
+  (`-NodeArgs '--url http://127.0.0.1:8787/obf --clicks 2'`); bare `--flags` are eaten by the
+  PowerShell binder (`--out` -> ambiguous with `-OutVariable`). The wrapper now echoes the
+  effective `nodeArgs` so this cannot fail silently. Direct `.mjs` calls always work.
 - If a target challenges an authorized automated client, write it up as interference
   (`web-reverse/antibot.md`) — do not reach for evasion, it is a stop line.
 

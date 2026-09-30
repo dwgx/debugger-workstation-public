@@ -4,6 +4,7 @@ Newest first. Protocol: `docs/AGENT_EVOLUTION.md`. Do not commit sample hashes, 
 
 | Date | File | Status | Topic |
 |---|---|---|---|
+| 2026-09-30 | [2026-09-30-crypto-lab.md](2026-09-30-crypto-lab.md) | verified | D9 JWT/token lane: analyzer + 4 buggy verifiers + jsonwebtoken/PyJWT cross-check |
 | 2026-09-30 | [2026-09-30-web-reverse-lab.md](2026-09-30-web-reverse-lab.md) | verified | Web/JS reverse loop: CDP capture -> key recovery -> out-of-browser replay |
 | 2026-09-20 | [2026-09-20-agent-cli.md](2026-09-20-agent-cli.md) | verified | Agent CLI wrappers; CE/VT/MobSF fail-closed |
 | 2026-09-20 | [2026-09-20-mcp-pin-lt2.md](2026-09-20-mcp-pin-lt2.md) | verified | mcp-pin-lt2 |

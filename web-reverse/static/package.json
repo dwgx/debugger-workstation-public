@@ -1,0 +1,29 @@
+{
+  "name": "web-reverse-static",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Static JS AST deobfuscation toolchain for the web-reverse lab. Dependencies are isolated here; the CDP runtime loop in web-reverse/tools stays zero-dependency.",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "selftest": "node selftest.mjs",
+    "gen": "node gen-obf.mjs",
+    "deobf": "node deobf.mjs"
+  },
+  "dependencies": {
+    "@ast-grep/cli": "0.45.3",
+    "@babel/core": "7.29.7",
+    "@babel/generator": "7.29.7",
+    "@babel/parser": "7.29.9",
+    "@babel/traverse": "7.29.7",
+    "@babel/types": "7.29.7",
+    "@wakaru/cli": "1.12.0",
+    "acorn": "8.18.0",
+    "javascript-obfuscator": "5.8.0",
+    "meriyah": "7.3.3",
+    "recast": "0.24.0",
+    "webcrack": "2.16.0"
+  }
+}

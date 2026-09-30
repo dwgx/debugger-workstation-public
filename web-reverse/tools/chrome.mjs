@@ -33,6 +33,25 @@ export function labProfileDir(tag = 'lab') {
   return dir;
 }
 
+/* Windows keeps handles on a just-killed browser's profile for a moment, so a single
+   rm() races and silently leaves the directory behind (observed: 3 strays after a few
+   runs). Retry briefly, and report it instead of pretending the profile is gone. */
+async function removeProfile(dir, attempts = 8) {
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      await fs.promises.rm(dir, { recursive: true, force: true });
+      return true;
+    } catch (e) {
+      if (i === attempts) {
+        console.error(`note: could not remove disposable profile ${dir} (${e.code || e.message}) — it is in %TEMP%`);
+        return false;
+      }
+      await new Promise(r => setTimeout(r, 150 * i));
+    }
+  }
+  return false;
+}
+
 /**
  * Spawn a disposable browser and wait for its DevTools endpoint.
  * @returns {Promise<{proc, wsUrl, httpBase, profileDir, browserPath, close}>}
@@ -75,7 +94,7 @@ export async function launchChrome({
       close: async () => {
         try { proc.kill(); } catch { /* already dead */ }
         if (!keepProfile) {
-          try { await fs.promises.rm(profileDir, { recursive: true, force: true, maxRetries: 5 }); } catch { /* %TEMP% is disposable */ }
+          await removeProfile(profileDir);
         }
       }
     };
@@ -97,7 +116,7 @@ export async function launchChrome({
   const close = async () => {
     try { proc.kill(); } catch { /* already dead */ }
     if (!keepProfile) {
-      try { await fs.promises.rm(profileDir, { recursive: true, force: true, maxRetries: 5 }); } catch { /* chrome may still hold a handle; %TEMP% is disposable */ }
+      await removeProfile(profileDir);
     }
   };
   return { proc, wsUrl, httpBase, profileDir, browserPath, close };
