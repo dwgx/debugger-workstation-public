@@ -142,3 +142,9 @@ desktop.ini
 *.obj
 *.pdb
 *.ilk
+
+# Generated lab payload. Self-authored (lab/payload/d12payload.c) and rebuilt
+# deterministically by the loop every run, so committing the binary would only
+# add a stale copy. Sources are tracked; build outputs are not.
+forensics-lab/lab/payload/*.dll
+forensics-lab/lab/payload/*.exe

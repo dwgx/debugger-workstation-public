@@ -1,0 +1,12 @@
+# forensics-lab local state. Nothing here is source.
+#
+# The compiled payload is a build product of lab/payload/d12payload.c. It is self-authored
+# and reproducible with `lab/payload/build.bat`, but a binary does not belong in git, and
+# the root .gitignore already excludes *.dll. Listed here so the reason is local to the lab
+# rather than inherited by accident.
+lab/payload/*.dll
+lab/payload/*.obj
+lab/payload/*.exp
+lab/payload/*.lib
+lab/payload/*.pdb
+lab/payload/*.ilk
