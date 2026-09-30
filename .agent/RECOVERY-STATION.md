@@ -65,9 +65,20 @@ Run from the repo root. Each is the registry's `probe.command`.
 | **native / IDA** | `node native-lab/tools/loop.mjs` | **15/15 LOOP CLOSED, ~2.4 s** |
 | fuzzing (D11) | `node fuzz-lab/tools/loop.mjs` | LOOP CLOSED, 24/24 — **budget floor 40, default 90** |
 
-Full-station one-liner (read-only, ~5 min):
-`bash %USERPROFILE%/AppData/Local/Temp/smoke-all.sh` — or rebuild it from §2; the
-table is the contract, the script is a convenience.
+Full-station one-liner (read-only, ~3 min), from the repo root:
+
+```powershell
+powershell -File scripts\smoke-all.ps1
+```
+
+It requires **both** that each probe exits 0 **and** that the lab printed the line it is
+supposed to print. Exit code alone is the mistake that made a failed Ghidra import look
+like a pass, so the smoke test refuses to make that mistake twice.
+
+It is PowerShell, not bash, after two failed bash attempts: `bash` on this box resolves
+to `C:\Windows\system32\bash.exe`, which is **WSL2** — its root is a Linux filesystem and
+`D:` is not present at all. A bash version reported 15/15 failures that had nothing to do
+with any lab.
 
 ---
 
