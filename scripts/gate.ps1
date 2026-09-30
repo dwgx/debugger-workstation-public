@@ -239,7 +239,49 @@ function Test-Grant {
                  why = 'the invocable set is a monotonic subset of the grant; widening it is an escalation, not a lookup' }
     }
 
-    return @{ ok = $true; exit = 0; case_id = $grant.case_id; target = $grant.target; allowed = $allowed }
+    # --- CRITICAL FIX, adversarial audit 2026-09-30 -------------------------
+    #
+    # The grant was protected by an UNKEYED SHA-256 over a file the mission loop itself
+    # writes. That is not a boundary: anyone can widen `allowed` and recompute the hash,
+    # because the algorithm is right here in this file. Demonstrated -- `allowed` was
+    # widened to add `RULE.THE.WORLD`, the hash recomputed to the byte, and
+    # `Check -Capability RULE.THE.WORLD` returned ok:true. The selftest only proved an edit
+    # WITHOUT recomputing is caught, which is the one thing an attacker would not do.
+    #
+    # THE FIX IS NOT A SECRET. A secret is a new thing to leak, rotate and store. The fix
+    # is that the registry -- manifests\capabilities.json, which is in git -- is the
+    # authority, and grant.json is only a convenience. Anything `allowed` claims that the
+    # registry does not grant for this lane is DROPPED, and a capability outside that set is
+    # refused. E:\missions\ is outside git; the registry is not. Forging a grant now means
+    # forging the registry, which is a committed diff an Owner can see.
+    $reg = Get-Content -LiteralPath (Get-RegistryPath $Registry) -Raw | ConvertFrom-Json
+    $lane = $grant.lane
+    $registryAllows = @($reg.capabilities | Where-Object {
+        $_.gate -and $_.gate.lane -eq $lane -and $_.gate.requires_verdict
+    } | ForEach-Object { $_.id })
+    $forged = @($allowed | Where-Object { $registryAllows -notcontains $_ })
+    if ($forged.Count -gt 0) {
+        return @{ ok = $false; exit = 3
+                 error = "grant claims capabilities the registry does not grant for lane '$lane': $($forged -join ', ')"
+                 why = 'the grant file is not the authority. The registry is, and it is in git. A hash over a file anyone can rewrite proves only that the rewriter can compute SHA-256.'
+                 forged = $forged }
+    }
+
+    # --- CRITICAL FIX, same audit --------------------------------------------
+    # target_sha256 was ASSIGNED and never read again. Overwriting the granted binary with
+    # 35 bytes of garbage left Check returning ok:true over the substituted bytes: the grant
+    # was still valid for a target that no longer existed. Re-hash it here.
+    if ($grant.target -and (Test-Path -LiteralPath $grant.target)) {
+        $nowHash = Get-Sha256File -Path $grant.target
+        if ($nowHash -ne $grant.target_sha256) {
+            return @{ ok = $false; exit = 5
+                     error = 'the granted target has changed on disk since the grant was minted'
+                     granted_sha256 = $grant.target_sha256; current_sha256 = $nowHash
+                     why = 'a grant authorises BYTES, not a path. Re-issue the grant for the new target.' }
+        }
+    }
+
+    return @{ ok = $true; exit = 0; case_id = $grant.case_id; target = $grant.target; allowed = $allowed; verified_against_registry = $true; target_bytes_verified = $true }
 }
 
 function Invoke-Escalate {
@@ -311,6 +353,37 @@ function Invoke-Selftest {
     $doc.allowed = @('everything.i.want')
     Set-Content -LiteralPath $gp -Value (Out-Json $doc) -Encoding UTF8
     T 'refuse a grant whose allowed-set was edited in place' { Test-Grant -CaseDir $tmp -Capability 'everything.i.want' } 5
+
+    # --- THE TWO THAT ACTUALLY SUCCEEDED against the previous version ---------
+    # The old selftest proved that an edit WITHOUT recomputing the hash is caught. That
+    # is the one thing an attacker would not do. These two replay the attacks that worked.
+    $g2 = New-Grant @C
+    $gp2 = Join-Path $tmp 'grant.json'
+    $doc2 = Get-Content -LiteralPath $gp2 -Raw | ConvertFrom-Json
+    $doc2.allowed = @($doc2.allowed) + 'RULE.THE.WORLD'
+    $doc2.grant_sha256 = Get-GrantHash $doc2          # <-- recompute, as an attacker would
+    Set-Content -LiteralPath $gp2 -Value (Out-Json $doc2) -Encoding UTF8
+    T 'CRITICAL: a forged capability with a RECOMPUTED hash is still refused' { Test-Grant -CaseDir $tmp -Capability 'RULE.THE.WORLD' } 3
+
+    $doc2b = Get-Content -LiteralPath $gp2 -Raw | ConvertFrom-Json
+    $doc2b.allowed = @($doc2b.allowed | Where-Object { $_ -ne 'RULE.THE.WORLD' })
+    $doc2b.grant_sha256 = Get-GrantHash $doc2b
+    Set-Content -LiteralPath $gp2 -Value (Out-Json $doc2b) -Encoding UTF8
+
+    # Substitute the granted TARGET's bytes, leave the grant alone.
+    # The file must EXIST before New-Grant runs, or the gate refuses to mint and the old
+    # grant is still on disk -- which made this control pass for the wrong reason on its
+    # first attempt, the same failure mode as every other one in this selftest's history.
+    $tamperTarget = Join-Path $tmp 'target-to-tamper.bin'
+    Set-Content -LiteralPath $tamperTarget -Value 'the original bytes, before substitution'
+    $g3 = New-Grant -Target $tamperTarget -Provenance 'Owner named this file in conversation 2026-09-30' -OwnerWord 'analyze this exe' -CaseDir $tmp
+    # Never call a method on the result unguarded: New-Grant returns a hashtable WITHOUT a
+    # `raw` key on success and one WITH it on refusal, and under $ErrorActionPreference='Stop'
+    # a null .raw took the whole selftest down before a single control printed.
+    $g3code = if ($g3 -is [array]) { $g3[0].code } else { $g3.code }
+    if ($g3code -ne 0) { Write-Host ("  NOTE: tamper-case grant was not minted (exit " + $g3code + "); the control below would be vacuous") }
+    Set-Content -LiteralPath $tamperTarget -Value ('X' * 35)     # substituted with garbage
+    T 'CRITICAL: a grant over REPLACED target bytes is refused' { Test-Grant -CaseDir $tmp } 5
 
     Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
 
