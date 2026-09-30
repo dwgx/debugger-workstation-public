@@ -55,6 +55,7 @@ foreach ($b in @($Node, $Py, $PSExe)) {
 $probes = [ordered]@{
     'registry-selftest'   = @{ file = $Py;  args = @('scripts/registry-verify.py', '--selftest'); expect = 'SELFTEST OK' }
     'registry-validate'   = @{ file = $Py;  args = @('scripts/registry-verify.py');               expect = 'REGISTRY CLEAN' }
+    'gate-selftest'      = @{ file = $PSExe; args = @('-NoProfile','-ExecutionPolicy','Bypass','-File','scripts/gate.ps1','-Action','Selftest'); expect = 'GATE SELFTEST OK' }
     'ghidra-failopen'     = @{ file = $PSExe; args = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'scripts/ghidra-failopen-regress.ps1'); expect = 'LOOP CLOSED' }
     'web-reverse'         = @{ file = $Node; args = @('web-reverse/tools/loop.mjs');  expect = 'LOOP CLOSED' }
     'web-reverse-ast'     = @{ file = $Node; args = @('web-reverse/tools/loop2.mjs'); expect = 'LOOP CLOSED' }
