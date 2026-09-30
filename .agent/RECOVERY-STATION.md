@@ -259,9 +259,19 @@ gh repo clone OWNER/REPO -- --depth 1  # into %LOCALAPPDATA%\Temp\re-research\<n
 
 | Repo | Branch | Commits | Remote |
 |---|---|---|---|
-| `<private-tree>` | `master` | 16 | `<private-tree>` PRIVATE |
-| `debugger-workstation` | `main` | 13+ | `github.com/dwgx/debugger-workstation` PRIVATE |
+| `<private-tree>` | `master` | **16** | `<private-tree>` PRIVATE |
+| `debugger-workstation` | `main` | **26** | `github.com/dwgx/debugger-workstation` PRIVATE |
 
-`.agent/` is local control plane, excluded via `.git/info/exclude`. Re-measure before
-trusting the commit counts — a recovery document that inflates its own numbers is worse
-than one that omits them.
+Both trees clean and both remotes pushed at time of writing.
+
+`.agent/RECOVERY-STATION.md` is **tracked** here on purpose, unlike in the <private-tree> repo.
+That repo treats `.agent/` as per-session control plane and excludes it via
+`.git/info/exclude`; here this document is the only thing that survives a lost machine,
+and an untracked recovery document is a recovery document that decays. `.agent/research/`
+**is** excluded, because `docs/research/` holds the canonical copy and two copies of
+eight reports is two things that drift apart.
+
+Re-measure before trusting any figure above — a recovery document that inflates its own
+numbers is worse than one that omits them. That happened twice in this session: a station
+commit count claimed 17 when the real figure was 16, and `PASS` lines were read as check
+counts for three labs at once.
