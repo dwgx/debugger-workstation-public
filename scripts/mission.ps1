@@ -436,7 +436,7 @@ function Invoke-Mission {
     Say ''
     Say ('=' * 78)
     Say "termination   $($term.state) -- $($term.why)"
-    Say "verdict       $($verdict.tier)   (computed by six gates; the caller proposed, this script disposed)"
+    Say "verdict       $($verdict.tier)   (computed by seven gates; the caller proposed, this script disposed)"
     foreach ($g in $verdict.gates) { Say ("  {0}  {1,-16} {2}" -f $(if ($g.pass) { 'PASS' } else { 'FAIL' }), $g.name, $g.detail) }
     Say ''
     Say "evidence chain: $(@($artifact.chain).Count) step(s), $round round(s)"
@@ -532,20 +532,28 @@ function Get-Verdict {
     #    results cannot be the terminal answer, so a claim resting on those is downgraded.
     G 'observation' ($chain -ge 1) 'facts recorded against the original binary; no runtime instrumentation was available on this host, so proves_on_original is true by construction'
 
-    # 4. independence -- two DIFFERENT capabilities. Independence is about the instrument,
-    #    not the binary: two decompilers agreeing is one opinion held twice.
-    # Independence is about the FAMILY of instrument, not the tool id. Two decompilers
-    # agreeing is one opinion held twice -- REx-skill: "An ensemble of readers shares the
-    # decompiler's blind spots." {ghidra.decompile, ida.decompile} is therefore REFUSED as
-    # corroboration, even though they are two capabilities and two stars on GitHub.
+    # 4. independence -- about the FAMILY of instrument, not the tool id.
+    #
+    #    Two capabilities from two tools is not two opinions. Ghidra's decompiler and
+    #    IDA's decompiler are the same family, and two decompilers agreeing is one
+    #    opinion held twice -- they share the blind spots that come from reconstructing
+    #    machine code into C. REx-skill: "An ensemble of readers shares the decompiler's
+    #    blind spots." {ghidra.decompile, ida.decompile} is therefore REFUSED as
+    #    corroboration, even though they are two capabilities and two stars on GitHub.
+    #
+    #    ONE gate, not two. The previous version emitted both `independence` and
+    #    `independence_insufficient` failing for the same fact, so the artifact showed a
+    #    failure count higher than the number of things that were actually wrong.
     $famOf = @{}
     foreach ($c in $Registry.capabilities) { if ($c.evidence_source) { $famOf[$c.id] = $c.evidence_source } }
     $distinct = @($good | ForEach-Object { $_.capability } | Sort-Object -Unique)
     $families = @($good | ForEach-Object { $famOf[$_.capability] } | Where-Object { $_ } | Sort-Object -Unique)
-    G 'independence' ($families.Count -ge 2) ("$($distinct.Count) capabilities across $($families.Count) evidence famil(y/ies): " + ($families -join ', '))
-    if ($families.Count -lt 2) {
-        G 'independence_insufficient' $false ("every fact came from ONE instrument family (" + (($families + @('unclassified')) -join ',') + "). Independence is about the family of instrument, not the tool: two decompilers agreeing is one opinion held twice.")
+    $independenceDetail = if ($families.Count -ge 2) {
+        "$($distinct.Count) capabilities across $($families.Count) evidence families: $($families -join ', ')"
+    } else {
+        "every fact came from ONE instrument family (" + (($families + @('unclassified')) -join ',') + "). Independence is about the family of instrument, not the tool: two decompilers agreeing is one opinion held twice."
     }
+    G 'independence' ($families.Count -ge 2) $independenceDetail
 
     # 5. bounded claim -- no wider than the least-covering does_not_prove allows
     $limits = @()
