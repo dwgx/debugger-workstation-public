@@ -11,7 +11,7 @@
       "Q7.origin": "what changed between these two builds"
     },
     "baseline": {
-      "capability_count": 20,
+      "capability_count": 21,
       "note": "The validator pins this count. A capability may only leave capabilities[] by appearing in retired[] with a reason, because deleting an island used to make the registry validate CLEANER rather than louder."
     },
     "retired": [],
@@ -2478,6 +2478,122 @@
       "evidence_source": "binary-similarity",
       "evidence_source_note": "The SAME family as native.crosscompare.ghidra and nothing else. Deliberately a different family from every decompiler: it compares two implementations by content address rather than reconstructing either. That is what makes it the arsenal's only genuinely-different-family instrument on the native axis -- but it is honest about the limit, because it answers Q7.origin (what changed between two builds) and NOT Q2.locate (where is the code in this one). Registering it does not move the acceptance mission off unresolved, and the note exists to stop that being claimed.",
       "root_reason": "Genuine root, and structurally so: it is handed two paths and compares them. Nothing else in this registry produces a SECOND build of a program -- the labs build binaries, but building is not comparing, and a mission that has run one builder still has no second artefact to diff against. It therefore consumes an input no upstream capability emits, which is exactly why it declares no typed edge and why the omission is a decision rather than an oversight."
+    },
+    {
+      "id": "native.pe.packer",
+      "title": "Refuse a non-PE and report DiE's packer verdict, so 'not packed' can mean something before anything is decompiled",
+      "domains": [
+        "native",
+        "practice"
+      ],
+      "question_types": [
+        "Q1.identify"
+      ],
+      "state": "observed",
+      "scope_note": "READ-ONLY on the target file. It reads the DOS magic itself and only then invokes diec.exe, which writes nothing. Corpus binaries only.",
+      "composition_note": "WHY IT IS ENFORCING AN ORDER, NOT ADDING A TOOL. skills/debugger-workstation/references/triage.md already sequences this correctly -- line 10 runs diec.exe first, line 19 says 'entropy high / UPX / Themida | unpack first ... Do not decompile the stub', and line 25 only reaches Ghidra when there is 'PE native, no packer'. The ordering was right and the CHECK WAS NOT. Running the documented command against a file that is not a PE returns 'Total 5.26547: not packed' and exit 0: a markdown file was scored as a clean unpacked binary. So the step that was supposed to send a wrong file back actually waved it through, and a triage gate that always passes is worse than no gate at all. The fix is not a new instrument, it is making the existing instruction refuse.",
+      "consumes": {
+        "inputs": [
+          {
+            "name": "target",
+            "type": "path_ref",
+            "required": true,
+            "note": "a file that must be a Windows PE. Measured: crackme-corpus/out/c01-stringobf.exe, 143,872 bytes, DOS magic 4D5A."
+          }
+        ],
+        "prior": []
+      },
+      "produces": {
+        "facts": [
+          {
+            "key": "pe.packed",
+            "type": "verdict",
+            "note": "boolean derived from DIE'S OWN VERDICT STRING, never from a numeric threshold. Measured on c01-stringobf.exe: die_verdict 'not packed', die_score 6.15091, packed false. The score is reported as evidence and nothing branches on it -- see does_not_prove."
+          },
+          {
+            "key": "pe.die_score",
+            "type": "structure",
+            "note": "Die's own Total score plus its verdict text. Evidence, not a decision input. Measured 6.15091 / 'not packed'."
+          },
+          {
+            "key": "pe.magic",
+            "type": "structure",
+            "note": "the first two bytes, read here rather than by Die. Measured on the corpus binary 4D5A; measured on README.md 2320, which is what triggers the refusal."
+          }
+        ]
+      },
+      "requires": {
+        "runtime": "powershell",
+        "net": "none",
+        "admin": false,
+        "device": false,
+        "disk_mb": 0,
+        "ram_mb": 128,
+        "wall_minutes": 1,
+        "tools": [
+          {
+            "name": "diec",
+            "probe": "Test-Path 'Static-Reversing\\die_win64_portable_3.21_x64\\die\\diec.exe'",
+            "expect": "True"
+          }
+        ],
+        "install_note": "Detect It Easy 3.21 portable is already under Static-Reversing. No install, no disk cost. One run measured at ~13.5 s cold including engine start."
+      },
+      "reach": {
+        "fs_read": true,
+        "fs_write": false,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": false,
+        "db_write": false
+      },
+      "proves": [
+        "THAT A FILE WHICH IS NOT A PE IS REFUSED BEFORE ANY INSTRUMENT IS ASKED. Measured: README.md returns {ok:false, exit:2, first_bytes:'2320', error:'not a PE ... Die would have scored this anyway and said not packed'}, TRUE_EXIT=2. The same file through raw diec.exe returns 'Total 5.26547: not packed' with exit 0.",
+        "THAT A REAL PE PASSES THE SAME GATE AND COMES BACK CLEAN: c01-stringobf.exe returns ok:true, die_verdict 'not packed', die_score 6.15091, packed false, TRUE_EXIT=0.",
+        "that the ordering in triage.md -- identify, then check for a packer, and only then decompile -- now has a command behind it that can actually stop the flow."
+      ],
+      "does_not_prove": [
+        "THAT THE BINARY IS PROVEN UNPACKED. 'not packed' means no packer SIGNATURE matched. A custom, modified or novel packer matches nothing, and the absence of a signature is not the absence of a packer. This is a green light to look, never proof, and no score improves it.",
+        "THAT DIE'S SCORE MEANS ANYTHING AS A THRESHOLD. MEASURED, AND THIS IS THE LESSON. The first draft computed packed as ($score -ge 5.0) with a hand-picked threshold, and the first probe proved it wrong: the binary is emphatically not packed, Die says so, and it scores 6.15091 -- so the threshold reported packed:true and would have blocked EVERY decompilation in the arsenal. The score is now advisory and nothing branches on it. A confident number with no denominator behind it is the same defect as a scanner scoring our own router 100/100 CRITICAL.",
+        "THAT A PACKED BINARY WOULD BE CAUGHT HERE. NOT DEMONSTRATED, and stated rather than implied: no packer is available on this host to build a packed control -- there is no UPX anywhere, and the corpus holds no packed binary. So the positive branch has never run. The refusal branch has, twice. Until a packed target exists this capability has a measured negative result and an unmeasured positive one.",
+        "THAT A CLEAN RESULT PERMITS SKIPPING THE REST OF TRIAGE. It is one gate in a sequence, not a replacement for the entropy and section signals triage.md also lists."
+      ],
+      "gate": {
+        "lane": "debug",
+        "requires_verdict": true,
+        "escalation_class": "none"
+      },
+      "gate_must_not_delegate": [
+        "triage-packer.ps1 against any binary this repository did not author",
+        "treating a low Die score as proof the binary is unpacked",
+        "treating packed:false as permission to skip triage.md's remaining checks",
+        "raising PackedAtOrAbove to force a particular answer: the parameter is retained only so the mistake is visible in the source, and nothing branches on it"
+      ],
+      "gate_must_not_delegate_why": "Measured or read, not assumed. (1) The target side is a red line, not a policy knob. (2) The signature-absence limit is in Die's own semantics and is the whole reason the caveat is on the record rather than implied. (3) triage.md lists entropy and section shape as separate signals; collapsing them into one boolean would discard evidence. (4) The threshold parameter is the trap that already caught this author once -- it is kept visible so the next reader sees where the wrong number went instead of finding a clean-looking gate that silently blocks everything.",
+      "probe": {
+        "command": "powershell -NoProfile -ExecutionPolicy Bypass -File headless-lab\\tools\\triage-packer.ps1 -Target crackme-corpus\\out\\c01-stringobf.exe",
+        "expect": "\"packed\": false",
+        "expect_exit": 0,
+        "last_run": "2026-10-02",
+        "run_log": "ok:true exit:0 target c01-stringobf.exe size 143872 die_score 6.15091 die_verdict 'not packed' packed false score_is_advisory true. Control: README.md -> ok:false exit:2 first_bytes '2320', TRUE_EXIT=2. Raw diec.exe on the same README.md returns 'Total 5.26547: not packed' with exit 0, which is the defect this wrapper exists to fix.",
+        "prepare": "cd 'D:\\Software\\Tool\\WorkStation\\debugger'",
+        "expect_note": "expect is the CONTRACT on the derived boolean, not on the score. Asserting the score would re-introduce the threshold mistake -- a higher score does not mean more packed, as this very binary demonstrates at 6.15091 while unpacked."
+      },
+      "negative_control": {
+        "id": "native.pe.packer.non_pe_refused",
+        "command": "powershell -NoProfile -ExecutionPolicy Bypass -File headless-lab\\tools\\triage-packer.ps1 -Target README.md",
+        "expect_exit": 2,
+        "expect_output": "not a PE: first two bytes are 2320",
+        "expect_output_note": "THE CONTROL IS THE REFUSAL, and it is the one this capability most needs. The defect being fixed is an instrument that returns a confident clean verdict for input it cannot read, so the control must fail loudly instead. Measured: TRUE_EXIT=2 with ok:false and the offending bytes named, against TRUE_EXIT=0 with die_verdict 'not packed' for the same file one layer down. The point is that the refusal is DISTINGUISHABLE from a clean result -- an operator who gets ok:false knows the check did not run, which is the opposite of what raw diec.exe told them.",
+        "measured": "README.md: {ok:false, exit:2, error:\"not a PE: first two bytes are 2320, expected 4D5A ('MZ'). Die would have scored this anyway and said 'not packed'.\", first_bytes:'2320', size:7354}, TRUE_EXIT=2. Raw diec.exe -e README.md: 'Total 5.26547: not packed', exit 0."
+      },
+      "provenance": {
+        "source": "measured on this station 2026-10-02 by the agent that added this entry and wrote headless-lab/tools/triage-packer.ps1 the same hour",
+        "record": "skills/debugger-workstation/references/triage.md"
+      },
+      "evidence_source": "structural-parser",
+      "evidence_source_note": "Deliberately NOT static-analysis, and the choice is worth stating. The schema reserves that value so it cannot be silently re-used and says no capability should carry it, because on this estate it existed solely to relabel one idalib-mcp capability and thereby manufacture a second family. Writing a paragraph explaining why a misleading label was acceptable would have been the same escape wearing a footnote. The honest member of the closed set is structural-parser -- a self-describing container decoded without executing it -- which is where packer identification genuinely sits: Die reads the PE container and its section names and matches signatures over them. It shares that family with native.pe.container and crypto.jose.parse, and those are DIFFERENT INSTRUMENTS, so R18 is satisfied and correctly so. Two instruments in one family is not two opinions about a decompilation either, so this entry adds no corroboration to the independence gate and is not offered as any.",
+      "root_reason": "Genuine root. It is handed a path and answers a question about that file's container before anything else is allowed to run -- nothing upstream produces a packer verdict, and nothing downstream may trust one that was not produced here. It declares no typed edge for the same reason native.pe.container does not: it consumes an input no other capability emits, so the absence of an edge is a decision rather than an oversight."
     }
   ]
 }
