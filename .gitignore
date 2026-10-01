@@ -160,3 +160,11 @@ headless-lab/**/obj/
 
 # .agent/research duplicates docs/research -- the tracked copy is canonical.
 .agent/research/
+
+# mission.ps1 -Action Ablate writes a full mutated COPY of itself beside the original,
+# because that copy must live in $PSScriptRoot to resolve manifests\ (mission.ps1:2103).
+# Its `finally` deletes the copy on every normal exit, but a KILLED run -- which a context
+# compaction is -- leaves a 2,200-line scaffold sitting in a tracked source directory, and a
+# `git add -A` then commits it as though it were source. Measured: that is exactly what
+# happened here. These files are never inputs and never evidence.
+scripts/mission-ablate-*.ps1
