@@ -25,11 +25,11 @@ the decision layer over these findings.
 
 | File | What it establishes |
 |---|---|
-| `review-2026-10-02.md` | The integrity review, led by the **ablation** discipline that found all of it: six of seven verdict gates could be deleted with all 15 controls green, `gate.ps1` had 8 of 11 authority attacks exploited, and `registry-verify.py`'s R8 cannot fire for any of its five effects. Records the parent's after-state: 24 gate controls, 34 mission controls, ablation at 7 load-bearing, C1 refused in five gates at once, forged identity → exit 5. Names the three open items rather than dropping them. |
+| `review-2026-10-02.md` | The integrity review, led by the **ablation** discipline that found all of it: six of seven verdict gates could be deleted with all 15 controls green, `gate.ps1` had 8 of 11 authority attacks exploited, and `registry-verify.py`'s R8 could not fire for any of its five effects (`implied` was built from `reach`, so `missing` was empty by construction). Carries **both** halves for every figure — the before-measurement and the re-measurement. **Re-measured 2026-10-02 at `e246427`**: 24 gate controls, **51** mission controls, 46 validator cases over **19** rule functions, 16 capabilities, 5 typed edges, ablation at 7 verdict gates + 6 routing rules, all load-bearing. C1 refused in five gates at once; forged identity → exit 5; **a one-byte registry edit now invalidates every outstanding grant**. Records **§9**, the registry-driven routing that replaced the hardcoded table (`Q5`/`Q6` refuse with exit 2), and names the **three** open items — 13 of 16 negative controls still prose, the LYING-CLEAN fixture not re-run, the gate attacks not re-run — rather than dropping them. |
 | `cost-matrix.md` | 15 probes measured with wall time, peak tree RSS and disk delta per row, and the three-tier routing rule they imply. **Refutes** the handoff's contention claim as an arithmetic identity (103.47 s concurrent against a 161.93 s serial sum, all passing) and substitutes the real hazards: peak RSS at 3.4 GB / 61 procs, and fixed ports 8791/8745 where a second concurrent lab **exits 1 on `EADDRINUSE` rather than running slowly**. Flags `fuzz-lab --budget 40`'s 33.10 s–1071.37 s spread and its one exit-9 run as an unexplained failure mode. |
-| `composition-plan.md` | The arsenal's stated core gap — *the gap is not coverage, it is composition* — as its own document. 15 capabilities, **1 declared edge, 0 triples, 14 roots and 14 leaves**, and that one edge is the one the loop does not bind. `Q3`/`Q4`/`Q6` route nothing and **`Q6` exits 0 having run nothing**. Eight ranked registry patches, marked by whether they are worth landing before `mission.ps1` changes. |
+| `composition-plan.md` | The arsenal's stated core gap — *the gap is not coverage, it is composition* — as its own document. As measured on 2026-10-02 morning: 15 capabilities, **1 declared edge, 0 triples, 14 roots and 14 leaves**, and that one edge is the one the loop does not bind; `Q3`/`Q4`/`Q6` route nothing and **`Q6` exits 0 having run nothing**. Eight ranked registry patches, marked by whether they are worth landing before `mission.ps1` changes. **§9 of `review-2026-10-02.md` records what landed since**: 16 capabilities, **5** typed edges, routing derived from the registry, and the **refuted shortfall** — the plan asked for 7 edges, got 4, and the other three are recorded as *refusals* because they are module imports returning untyped values. |
 | `ecosystem-2026-10-02.md` | 25 MCP servers against one yardstick — *does the gate survive someone who is not us rewriting it* — of which **only two pass**; 3 repos with **no licence at all**, the highest-starred at 2,039. 40 tools cost-ranked behind the single fact that **there is no LLVM on this machine and one 374 MB install gates four rows**. 33 skill repos, including the **four already vendored in our own `mcp/` tree**. |
-| `dynamic-pairings.md` | 23 pairings, each with the typed fact that links step N to N+1: 3 expressible today, 11 need only a fact key, 9 need a capability. Leads with the finding that **the Android Frida entry is correctly absent but a Windows-local Frida capability is real and unregistered**, which turns four static→dynamic pairings from documents into three lines of glue. Carries `DebugSymbol.fromName('main') → 0` as the reason RVA-plus-module-base transfer is mandatory, not stylistic. |
+| `dynamic-pairings.md` | 23 pairings, each with the typed fact that links step N to N+1: 3 expressible today, 11 need only a fact key, 9 need a capability. Leads with the finding that **the Android Frida entry is correctly absent but a Windows-local Frida capability is real**, which turned four static→dynamic pairings from documents into three lines of glue — and it has since been **registered as `dynamic.win.frida`, `state: observed`**. Carries `DebugSymbol.fromName('main') → 0` as the reason RVA-plus-module-base transfer is mandatory, not stylistic, and records that `frida-ps -ai` **hangs 300 s** rather than refusing, so it is neither a probe nor a control. |
 
 ---
 
@@ -44,6 +44,24 @@ Every figure in the 2026-10-02 round carries the command that produced it and th
 was measured, because a recorded number decays — and three capacity figures have already
 gone stale in this project. Where a source report is `[UNVERIFIED]` or self-contradicting,
 that qualifier is carried through rather than smoothed over.
+
+**Reconciled 2026-10-02 at `HEAD` = `e246427`.** Every figure in the table above was
+re-measured from the repo root by running the command, and where a fix has since superseded
+a finding the document says so **in place** rather than deleting the original. Five suites,
+all run for this reconciliation:
+
+```
+python scripts/registry-verify.py                     -> capabilities: 16   REGISTRY CLEAN
+python scripts/registry-verify.py --selftest          -> SELFTEST OK: 46 cases
+powershell -File scripts/gate.ps1   -Action Selftest  -> 24 refusals and grants
+powershell -File scripts/mission.ps1 -Action Selftest  -> 51 controls
+powershell -File scripts/mission.ps1 -Action Ablate    -> 7 + 6 load-bearing, 0 unproved
+```
+
+**The number that moved furthest inside a single day:** `mission.ps1`'s selftest was
+recorded as 15 controls, then as 34, and is **51** — because the registry-driven routing
+rewrite added ten routing controls to the same suite. A recorded count decays; only a
+command is evidence.
 
 Everything here is evidence for a decision. Nothing here is a capability until it
 has a runnable command on record.

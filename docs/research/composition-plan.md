@@ -175,8 +175,22 @@ Three consequences, each a control that cannot fire:
   cases).
 
 And the registry validates clean today — `capabilities: 15`, `REGISTRY CLEAN`, exit 0
-(`w1-composition.md:151-155`). Re-verified today: 15 capabilities, one `from` block.
+(`w1-composition.md:151-155`). Re-verified on the morning of 2026-10-02: 15 capabilities,
+one `from` block.
 **Clean, and blind to composition. That is the whole finding.**
+
+> **Reconciled 2026-10-02 (`python scripts/registry-verify.py`, from the repo root).** The
+> registry now holds **`capabilities: 16`, `REGISTRY CLEAN`, exit 0**, and
+> `grep -c '"from"' manifests/capabilities.json` → **`5`**. **Every blind spot in §2.4 now
+> has a named rule that fires on it** — R11 (`r11_edge_target_exists`) fails an edge to a
+> capability that does not exist and an edge to a field its producer never emits; R13 closes
+> the `question_types` enum; R14 (`r14_no_island_capability`) fails an `observed` producer
+> with no edge and no `root_reason`, and pins the capability count; R4 now type-checks the
+> `from` field rather than only present inputs; R10's `consumes_fact` / `from.field`
+> misalignment is checked. Each has at least one selftest case (46 total, 2026-10-02).
+> **R10's CWD bug is also fixed**, so the "2 violations from `rt/`, 0 from `rt/rtroot/`"
+> asymmetry below no longer describes the tree. The finding is superseded; it is kept
+> because it is the record of how the rules came to exist.
 
 ---
 
