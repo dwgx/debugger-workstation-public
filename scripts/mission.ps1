@@ -816,8 +816,39 @@ function Invoke-Mission {
                         # Skipped when `element_path` is present: that key indexes THEN reads a
                         # property, and letting the plain index run first would consume the
                         # index and leave an object where a property was wanted.
-                        if ($null -ne $val -and $null -ne $idx -and $null -eq $cap.invoke.select.element_path) {
+                        # Positional index is skipped whenever by_name is present: a name lookup
+                        # is either satisfied or it is not, and falling back to a position after
+                        # a failed name lookup is precisely the silent-wrong-answer path.
+                        if ($null -ne $val -and $null -ne $idx -and
+                            $null -eq $cap.invoke.select.element_path -and
+                            $null -eq $cap.invoke.select.by_name) {
                             if (@($val).Count -gt $idx) { $val = @($val)[$idx] } else { $unresolved += ($srcKey + '[' + $idx + ']'); $val = $null }
+                        }
+                        # `by_name` -- find the element whose `name` property equals a value,
+                        # then read `element_path` off it. This exists because POSITIONAL
+                        # selection is a silent-wrong-answer machine, and the first `confirmed`
+                        # this arsenal produced rested on exactly that: select.index=1 was
+                        # verified by hand to be `main` on one binary, but nothing in the chain
+                        # checked it. On a binary whose functions enumerate differently the two
+                        # instruments would still have agreed -- about the wrong function, at
+                        # full confidence, every gate green.
+                        #
+                        # A name lookup fails LOUDLY: if no element carries that name the round is
+                        # skipped and named, rather than falling through to "whatever is at that
+                        # position". A gate that picks the wrong thing is worse than one that
+                        # refuses.
+                        if ($null -ne $val -and $null -ne $cap.invoke.select.by_name) {
+                            $want = "$($cap.invoke.select.by_name)"
+                            $found = $null
+                            foreach ($el in @($val)) {
+                                if ($null -ne $el -and $null -ne $el.PSObject.Properties['name'] -and "$($el.name)" -eq $want) { $found = $el; break }
+                            }
+                            if ($null -eq $found) {
+                                $unresolved += ($srcKey + "[name='" + $want + "']")
+                                $val = $null
+                            } else {
+                                $val = if ($cap.invoke.select.element_path) { $found.($cap.invoke.select.element_path) } else { $found }
+                            }
                         }
                         # `element_path` -- index into a LIST, then pull one property off the
                         # element. Needed because `select.path` runs BEFORE `select.index`
@@ -829,7 +860,10 @@ function Invoke-Mission {
                         # and its round failed while the command itself worked perfectly by
                         # hand. A distinct key rather than a reordering of `path`, because
                         # reordering would change what every existing capability means.
-                        if ($null -ne $val -and $null -ne $idx -and $null -ne $cap.invoke.select.element_path) {
+                        # Also skipped when by_name handled it: that key already applied
+                        # element_path to the element it found.
+                        if ($null -ne $val -and $null -ne $idx -and $null -ne $cap.invoke.select.element_path -and
+                            $null -eq $cap.invoke.select.by_name) {
                             $ep = $cap.invoke.select.element_path
                             if (@($val).Count -gt $idx) {
                                 $el = @($val)[$idx]
