@@ -11,7 +11,7 @@
       "Q7.origin": "what changed between these two builds"
     },
     "baseline": {
-      "capability_count": 19,
+      "capability_count": 20,
       "note": "The validator pins this count. A capability may only leave capabilities[] by appearing in retired[] with a reason, because deleting an island used to make the registry validate CLEANER rather than louder."
     },
     "retired": [],
@@ -2346,6 +2346,138 @@
       "evidence_source": "structural-parser",
       "evidence_source_note": "The SAME family as crypto.jose.parse and mobile.apk.static: a self-describing container decoded without executing it. That sameness is deliberate and it is also the honest limit -- adding this entry did NOT give Q2.locate a second family, because Q2.locate is answered by decompilers and no structural parser locates code. What it did give is an independent confirmation of the ASLR dependency that both frida entries rest on, at zero install cost. A family is a property of the INSTRUMENT; this is a different instrument, and it is honest about not answering the question the acceptance mission asks.",
       "root_reason": "Genuine root, and structurally necessary: it is handed a path to a file and reads it. No other capability here PRODUCES a PE on disk -- the labs build binaries, but building is not parsing, and a mission that has not run a builder still receives paths. It therefore consumes an input nothing upstream emits, which is exactly why it declares no typed edge, and why the omission is a decision rather than an oversight."
+    },
+    {
+      "id": "native.function.match",
+      "title": "Match functions between two Windows PEs by content hash, each imported into its OWN Ghidra project, so no shared-project precondition exists",
+      "domains": [
+        "native",
+        "practice"
+      ],
+      "question_types": [
+        "Q7.origin"
+      ],
+      "state": "observed",
+      "scope_note": "READ-ONLY, and it writes nothing outside a %TEMP% scratch directory it deletes. Both inputs are Windows PEs on this disk; the wrapper imports each into a throwaway Ghidra project, runs scripts/ghidra/FunctionHashes.java, joins the two hash tables, and removes the scratch. Measured against two self-authored corpus binaries.",
+      "composition_note": "WHY IT IS NOT THE OBVIOUS THING. The registered native.crosscompare.ghidra already carries evidence_source binary-similarity, but it has NO invoke block: Ghidra's own AutoVersionTrackingScript needs three arguments plus a GhidraValuesMap startup project holding both programs at once, and no registry field can express that precondition -- so the arsenal's ONLY route to genuine independence on the native axis was probeable but not callable. This entry removes the precondition instead of modelling it. Each binary gets its own project, so there is no shared session to describe, and the join happens in PowerShell on a content hash. That is what makes it reachable by the planner.",
+      "consumes": {
+        "inputs": [
+          {
+            "name": "source",
+            "type": "path_ref",
+            "required": true,
+            "note": "first Windows PE. Measured: crackme-corpus/out/c01-stringobf.exe."
+          },
+          {
+            "name": "dest",
+            "type": "path_ref",
+            "required": true,
+            "note": "second Windows PE. Measured: c03_antidebug.exe for the negative control, c01_stringobf.exe for the identity control."
+          }
+        ],
+        "prior": []
+      },
+      "produces": {
+        "facts": [
+          {
+            "key": "fn.matched_count",
+            "type": "structure",
+            "note": "integer count plus a match_rate percentage. Measured identity control 511/511 = 100.0%; measured negative control 192/511 = 37.6% across two different corpus programs."
+          },
+          {
+            "key": "fn.pair",
+            "type": "structure",
+            "note": "one entry per matched function: {hash, size, source_name, dest_name, renamed}. `renamed` is the flag worth keeping, because it separates a pure rename from a changed body."
+          },
+          {
+            "key": "fn.identical_inputs",
+            "type": "structure",
+            "note": "boolean, true when the two paths resolve to the same file. Present so an identity run cannot be mistaken for a real comparison."
+          }
+        ]
+      },
+      "requires": {
+        "runtime": "powershell",
+        "net": "none",
+        "admin": false,
+        "device": false,
+        "disk_mb": 0,
+        "ram_mb": 1024,
+        "wall_minutes": 2,
+        "tools": [
+          {
+            "name": "java",
+            "probe": "java -version",
+            "expect": "21.0.12.1"
+          },
+          {
+            "name": "ghidra-headless",
+            "probe": "Test-Path 'Static-Reversing\\Ghidra\\ghidra_12.1.3_PUBLIC\\support\\analyzeHeadless.bat'",
+            "expect": "True"
+          }
+        ],
+        "install_note": "Both already present: Temurin 21.0.12.1 and Ghidra 12.1.3 under Static-Reversing. No install, no disk cost. Two headless runs measured at ~16 s each, so a full comparison is ~30-50 s end to end."
+      },
+      "reach": {
+        "fs_read": true,
+        "fs_write": true,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": false,
+        "db_write": false,
+        "containment": "station_under_named_process_rule",
+        "containment_note": "It writes, but only into a %TEMP% scratch directory it creates and then deletes, so reach.fs_write is declared honestly rather than left false. No network, no target execution: the binaries are read by Ghidra's importer and never run. Measured cleanup confirmed -- the scratch is removed on both the success and the refusal path.",
+        "write_scope": "temp_dir_only",
+        "write_scope_note": "Declared because writing is not automatically an escalation, and the honest answer here is a scratch directory it creates and deletes. Measured: the wrapper builds %TEMP%\\fnmatch-<8 hex>, imports into it, and removes it on BOTH the success path and the refusal path -- verified by the refusal run leaving nothing behind. The distinction matters because 'case_dir' and 'anywhere' must not look alike: this writes neither into a mission case directory nor anywhere on the repository."
+      },
+      "proves": [
+        "THAT THE BINARY-SIMILARITY FAMILY IS NOW CALLABLE, which native.crosscompare.ghidra is not. Measured: the wrapper returns ok:true with 511 parsed function hashes per side, from two independent headless Ghidra imports.",
+        "THAT IT DISCRIMINATES, by two controls that disagree by 62 points. Identity control -- the same content under two filenames -- matched 511 of 511, 100.0 percent. Negative control -- c01-stringobf.exe against c03_antidebug.exe -- matched 192 of 511, 37.6 percent. A matcher that returned 100 percent for both would be a matcher that proves nothing, and this one does not.",
+        "that a genuine non-decompiler instrument exists on the native axis and runs headlessly with no shared project, no startup file and no session state."
+      ],
+      "does_not_prove": [
+        "THAT SIMILAR FUNCTIONS MATCH. This is a CONTENT HASH over the function body, not a similarity score. Identical bytes hash identically. A function that was merely recompiled, reordered, or rebuilt at a different optimisation level WILL NOT MATCH, and the tool will call it different. **A miss means NOT-PROVEN-IDENTICAL, never different-code.** Ghidra's DiffPrograms reports names as well as hashes precisely so a caller can tell renamed from changed; this one does not, and that is a real limitation.",
+        "THAT THE ACCEPTANCE MISSION CAN NOW CONFIRM. evidence_source stays binary-similarity, so this is a different FAMILY from decompiler -- but the Q2.locate acceptance claim is about locating code in ONE binary, and matching functions across TWO binaries answers Q7.origin instead. The independence gate is untouched by this entry and must not be cited as if it moved.",
+        "THAT 37.6 PERCENT IS A THRESHOLD. It is one measurement between two specific self-authored programs and is dominated by shared CRT and runtime functions. It is not a calibrated cutoff and must not be compared across unrelated pairs.",
+        "ANYTHING ABOUT A THIRD-PARTY BINARY. Corpus binaries only, per the standing rule that an untrusted sample on the host is a stop."
+      ],
+      "gate": {
+        "lane": "debug",
+        "requires_verdict": true,
+        "escalation_class": "owner_word",
+        "escalation_why": "Measured, and the validator was right to force this. The wrapper writes a scratch Ghidra project to %TEMP%, which is OUTSIDE the mission case directory, and the rule is that writing outside the case dir is never a runtime self-decision. It is therefore an Owner-authorised escalation rather than 'none': a grant naming this capability must carry a checkable Owner word, which is exactly what gate.ps1 already mints and what it verifies. The scratch is deleted on both paths, so nothing persists -- but 'deleted afterwards' does not make an out-of-case write a self-authorised one, and downgrading it to keep a cleaner-looking entry would be the wrong trade."
+      },
+      "gate_must_not_delegate": [
+        "match-functions.ps1 against any binary this repository did not author",
+        "reading a match miss as evidence that code CHANGED -- it is only evidence that it is not byte-identical",
+        "using match_rate as a pass/fail threshold across unrelated binary pairs",
+        "-KeepProjects against a path outside %TEMP%"
+      ],
+      "gate_must_not_delegate_why": "Measured or read, not assumed. (1) The target side is a red line, not a policy knob. (2) The hash is over bytes, so a recompile moves every hash -- treating a miss as a semantic difference would invent findings, which is the failure mode this whole project exists to prevent. (3) match_rate is dominated by shared runtime code and was measured on exactly one pair, so a threshold built from it would be a number with no denominator. (4) -KeepProjects leaves Ghidra project state on disk outside the scratch area, which is how a stale project later gets correlated against the wrong binary.",
+      "probe": {
+        "command": "powershell -NoProfile -ExecutionPolicy Bypass -File headless-lab\\tools\\match-functions.ps1 -Source crackme-corpus\\out\\c01-stringobf.exe -Dest crackme-corpus\\out\\c03_antidebug.exe",
+        "expect": "\"match_rate\": 37.6",
+        "expect_exit": 0,
+        "last_run": "2026-10-02",
+        "run_log": "identity control (same content, two filenames): ok=true src_fns 511 dst_fns 511 matched 511 rate 100%, ~30 s. negative control (c01-stringobf.exe vs c03_antidebug.exe): src_fns 511 dst_fns 515 matched 192 rate 37.6%, ~48 s. refusal: a non-PE file returns {ok:false, exit:2, 'Ghidra produced no function-hash table for at least one input'} and TRUE_EXIT=2; a missing path returns TRUE_EXIT=1.",
+        "prepare": "cd 'D:\\Software\\Tool\\WorkStation\\debugger'",
+        "expect_note": "The probe asserts the NEGATIVE control's rate on purpose. Asserting the identity control would be asserting 100 percent, which a broken matcher also returns -- the two together are what make the number mean something. Read match_rate only alongside source_functions and matched."
+      },
+      "negative_control": {
+        "id": "native.function.match.non_pe_refused",
+        "command": "Set-Content -Path $env:TEMP\\nope.bin -Value 'not a pe' -NoNewline; powershell -NoProfile -ExecutionPolicy Bypass -File headless-lab\\tools\\match-functions.ps1 -Source $env:TEMP\\nope.bin -Dest crackme-corpus\\out\\c01-stringobf.exe",
+        "expect_exit": 2,
+        "expect_output": "Ghidra produced no function-hash table for at least one input",
+        "expect_output_note": "THE CONTROL IS THE REFUSAL, and it is the one that matters here. Handed a file that is not a PE the wrapper must REFUSE LOUDLY rather than report zero matches, because 'zero matches' is a legitimate answer for two real binaries and must never be the same output as 'I could not read either of them'. Measured: TRUE_EXIT=2 with ok:false, against TRUE_EXIT=1 for a path that does not exist at all, and TRUE_EXIT=0 for a real comparison. Three inputs, three different exit codes, and the middle one is distinguishable from the honest empty answer. This project already recorded a failure where a correct refusal inside a loop was swallowed into a success exit -- mission.ps1:861 -- so a refusal that cannot be told apart from a result is not a refusal.",
+        "measured": "non-PE file: {ok:false, exit:2, error:'Ghidra produced no function-hash table for at least one input'}, TRUE_EXIT=2. Missing file: TRUE_EXIT=1. Real pair: TRUE_EXIT=0."
+      },
+      "provenance": {
+        "source": "measured on this station 2026-10-02 by the agent that added this entry and wrote headless-lab/tools/match-functions.ps1 the same hour",
+        "record": "docs/research/pairing-two-decompilers.md"
+      },
+      "evidence_source": "binary-similarity",
+      "evidence_source_note": "The SAME family as native.crosscompare.ghidra and nothing else. Deliberately a different family from every decompiler: it compares two implementations by content address rather than reconstructing either. That is what makes it the arsenal's only genuinely-different-family instrument on the native axis -- but it is honest about the limit, because it answers Q7.origin (what changed between two builds) and NOT Q2.locate (where is the code in this one). Registering it does not move the acceptance mission off unresolved, and the note exists to stop that being claimed.",
+      "root_reason": "Genuine root, and structurally so: it is handed two paths and compares them. Nothing else in this registry produces a SECOND build of a program -- the labs build binaries, but building is not comparing, and a mission that has run one builder still has no second artefact to diff against. It therefore consumes an input no upstream capability emits, which is exactly why it declares no typed edge and why the omission is a decision rather than an oversight."
     }
   ]
 }
