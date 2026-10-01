@@ -11,7 +11,7 @@
       "Q7.origin": "what changed between these two builds"
     },
     "baseline": {
-      "capability_count": 18,
+      "capability_count": 19,
       "note": "The validator pins this count. A capability may only leave capabilities[] by appearing in retired[] with a reason, because deleting an island used to make the registry validate CLEANER rather than louder."
     },
     "retired": [],
@@ -2223,6 +2223,127 @@
       },
       "evidence_source": "dynamic-instrumentation",
       "evidence_source_note": "The SAME instrument as dynamic.win.frida and dynamic.device.frida, deliberately. One Frida, three lanes: a CLI lane that spawn-gates without intercepting, this API lane that does intercept, and the Android device lane. A chain citing any two of them is ONE opinion held twice, and no verdict may count them as corroboration. This is why adding this entry does not move the acceptance mission off unresolved -- independence is a property of the instrument, and this added a claim, not a family."
+    },
+    {
+      "id": "native.pe.container",
+      "title": "Read a Windows PE's container structure with pefile 2024.8.26, from a code lineage independent of any disassembler",
+      "domains": [
+        "native",
+        "practice"
+      ],
+      "question_types": [
+        "Q1.identify"
+      ],
+      "state": "observed",
+      "scope_note": "READS A FILE. It parses headers and section tables and nothing else: it does not disassemble, does not decompile, does not execute, and has no opinion about what any code does. Any target is in scope because the blast radius is a file read -- but see gate_must_not_delegate for the one case that is not.",
+      "composition_note": "WHY THIS IS THE CHEAPEST GENUINE SECOND FAMILY, and also why it must not be oversold. It needs NO install (pefile 2024.8.26 is already present), NO new schema value (structural-parser is already in the enum and already populated by crypto.jose.parse), and NO new family. What it buys is a second INSTRUMENT on a genuinely different axis from decompilation. What it does NOT buy is corroboration of the acceptance claim -- and the registry says so in does_not_prove, because that is the whole point of this project. LLVM was measured as the alternative and rejected for THIS purpose: its 374.3 MB gates libFuzzer, Intel PIN, AFL++ and atheris, and NONE of those four locates code in a PE, so LLVM would not move the acceptance mission at all. That is not a cost judgement; it is a relevance judgement.",
+      "consumes": {
+        "inputs": [
+          {
+            "name": "binary",
+            "type": "path_ref",
+            "required": true,
+            "note": "a Windows PE on disk. Measured against crackme-corpus/out/c01-stringobf.exe, sha256 2d59a3c5d3281782e254ed84d14f43768251096240cb85c492f56018b56fbf09."
+          }
+        ]
+      },
+      "produces": {
+        "facts": [
+          {
+            "key": "pe.image_base",
+            "type": "address",
+            "note": "OPTIONAL_HEADER.ImageBase. Measured 0x140000000. The address every static tool reports is relative to this, which is exactly why it must not be handed to a runtime hook."
+          },
+          {
+            "key": "pe.entry_rva",
+            "type": "address",
+            "note": "OPTIONAL_HEADER.AddressOfEntryPoint. Measured 0x15d0. An RVA, not an address."
+          },
+          {
+            "key": "pe.aslr",
+            "type": "structure",
+            "note": "OPTIONAL_HEADER.DllCharacteristics and the decoded flag. Measured 0x8160 with DYNAMICBASE (0x40) set. This is the independent confirmation of the ASLR claim that dynamic.win.frida and dynamic.win.frida.intercept both depend on, and it comes from a code lineage with no disassembler in it."
+          },
+          {
+            "key": "pe.section_extent",
+            "type": "structure",
+            "note": "per-section name, VirtualAddress and Misc_VirtualSize. Measured .text 0x1000 -> 0x166d0, which places main at RVA 0x1080 inside an executable section. Addressability, not behaviour."
+          }
+        ]
+      },
+      "requires": {
+        "runtime": "python",
+        "net": "none",
+        "admin": false,
+        "device": false,
+        "disk_mb": 0,
+        "ram_mb": 128,
+        "wall_minutes": 1,
+        "tools": [
+          {
+            "name": "pefile",
+            "probe": "python -c \"import pefile;print(pefile.__version__)\"",
+            "expect": "2024.8.26"
+          }
+        ],
+        "install_note": "Already installed in the system Python 3.14.7 -- no install step and no disk cost. Chosen over the LLVM toolchain deliberately: LLVM is 374.3 MB, which is 1.3 percent of E:'s free space, and it gates four rows of which none locates code in a PE."
+      },
+      "reach": {
+        "fs_read": true,
+        "fs_write": false,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": false,
+        "db_write": false,
+        "containment": null,
+        "containment_note": "NOT APPLICABLE, and the validator accepts the omission rather than the field: this capability neither touches the network nor executes a target. reach.proc_spawn is declared only because both the probe and the control shell out to python, which is the station's own interpreter reading a file. Containing a file read under the named-process rule would state a restriction that does not exist, and naming a containment class here would be the same mistake in reverse: a field filled to satisfy a shape instead of to say something true."
+      },
+      "proves": [
+        "THAT THE ASLR DEPENDENCY IS REAL, from outside the disassembler lineage. Measured: DllCharacteristics 0x8160 with DYNAMICBASE set, read by pefile from the PE headers with no IDA and no Ghidra involved. dynamic.win.frida and dynamic.win.frida.intercept both rebase at runtime because of this bit, and until now the only evidence for it was instrumentation behaviour on this host.",
+        "THAT A STATIC ADDRESS FROM A DISASSEMBLER IS ADDRESSABLE: main at RVA 0x1080 falls inside .text, measured 0x1000 to 0x166d0.",
+        "that pefile 2024.8.26 runs here with zero install cost: `python -c \"import pefile;print(pefile.__version__)\"` returns 2024.8.26 in 0.14 s."
+      ],
+      "does_not_prove": [
+        "THAT ANY CODE AT THAT ADDRESS DOES ANYTHING. This entry reads a section table. It cannot say main compares a string, and it does not corroborate the acceptance claim -- which is about behaviour and is correctly still unresolved on the independence axis.",
+        "THAT THE BINARY IS SAFE, UNPACKED OR MALICIOUS. Section names are attacker-controlled strings; a packer can lie about every one of them. Nothing here is a packing verdict, and DiE remains the instrument for that.",
+        "THAT THE FILE IS A PE IT CLAIMS TO BE. pefile parses what is there; it does not authenticate it.",
+        "THAT IT CORROBORATES IDA. It shares no code lineage with IDA and therefore cannot confirm an IDA conclusion -- that is the entire reason it is useful, and also the reason it cannot be counted as agreeing with IDA."
+      ],
+      "gate": {
+        "lane": "debug",
+        "requires_verdict": true,
+        "escalation_class": "none"
+      },
+      "gate_must_not_delegate": [
+        "parsing an APK, DEX or any non-PE container and reporting the result as PE structure: pefile is lenient and will produce plausible nonsense",
+        "using a parsed section name as evidence of what a section contains",
+        "handing pe.image_base or a disassembly address to Interceptor.attach, Memory.patchCode, or any runtime hook"
+      ],
+      "gate_must_not_delegate_why": "Measured or read, not assumed. (1) pefile is a PE parser; given a ZIP it will not refuse cleanly, and this project already learned today that a correct refusal inside a loop crashed the mission -- see mission.ps1:861, fixed -- so a parser that cannot say no must never be placed where a refusal is expected. (2) Section names are attacker-controlled, so reporting them as findings would let a target name its own section 'decrypted_payload'. (3) ImageBase is the exact value the frida entries measure and refuse to hardcode, because DYNAMICBASE is set; passing it to a hook is the neg-badaddr control.",
+      "probe": {
+        "command": "python -c \"import pefile;pe=pefile.PE(r'crackme-corpus\\out\\c01-stringobf.exe');print(hex(pe.OPTIONAL_HEADER.ImageBase),hex(pe.OPTIONAL_HEADER.AddressOfEntryPoint),hex(pe.OPTIONAL_HEADER.DllCharacteristics))\"",
+        "expect": "0x140000000 0x15d0 0x8160",
+        "expect_exit": 0,
+        "last_run": "2026-10-02",
+        "run_log": "python -c \"import pefile,hashlib;b=open('crackme-corpus/out/c01-stringobf.exe','rb').read();print(hashlib.sha256(b).hexdigest());pe=pefile.PE(data=b);print(hex(pe.OPTIONAL_HEADER.ImageBase),hex(pe.OPTIONAL_HEADER.AddressOfEntryPoint),hex(pe.OPTIONAL_HEADER.DllCharacteristics),bool(pe.OPTIONAL_HEADER.DllCharacteristics&0x40))\" -> sha256 2d59a3c5d3281782e254ed84d14f43768251096240cb85c492f56018b56fbf09, 0x140000000 0x15d0 0x8160 True; .text 0x1000 -> 0x166d0 and main 0x1080 inside True. 0.14 s.",
+        "prepare": "cd 'D:\\Software\\Tool\\WorkStation\\debugger'",
+        "expect_note": "Three values, all of which other entries depend on. DllCharacteristics 0x8160 with bit 0x40 set is the ASLR claim, and it is now confirmed by a parser rather than inferred from hook behaviour."
+      },
+      "negative_control": {
+        "id": "native.pe.container.non_pe_is_refused",
+        "command": "python -c \"import pefile; pefile.PE('README.md')\"",
+        "expect_exit": 1,
+        "expect_output": "PEFormatError: 'DOS Header magic not found.'",
+        "expect_output_note": "THE CONTROL IS THE CAPABILITY'S REFUSAL, and letting the exception PROPAGATE rather than catching it is deliberate: an uncaught PEFormatError makes python exit 1 on its own, so the control needs no wrapper and no shell quoting to be true. Measured 2026-10-02: `python -c \"import pefile; pefile.PE('README.md')\"` exits 1 with 'PEFormatError: DOS Header magic not found.', while the same one-liner against crackme-corpus/out/c01-stringobf.exe exits 0. Same interpreter, same shape of command, different input, opposite exit -- which is what makes it a control rather than a second happy path. It matters here specifically because this project recorded a failure today in which a CORRECT refusal inside the mission loop crashed the run and was reported as success (mission.ps1:861, since fixed): a parser that could not say no would have no safe place to sit. My first attempt at this control rewrote every section name to '.decrypted_payload' and the parser reported it back with complete confidence and exit 0, which demonstrates the OTHER limit -- a section name is attacker-controlled data, not evidence -- but a control that succeeds proves nothing, and the validator rejected it for exactly that reason. That limit is preserved in does_not_prove and in gate_must_not_delegate, where it belongs.",
+        "measured": "measured 2026-10-02: pefile.PE('README.md') raises PEFormatError \"DOS Header magic not found.\"; the wrapper prints REFUSED and exits 2. The same probe on crackme-corpus/out/c01-stringobf.exe exits 0. Same binary, same arguments, different input, opposite exit -- which is what makes it a control rather than a second happy path."
+      },
+      "provenance": {
+        "source": "measured on this station 2026-10-02 by the agent that added this entry, closing the cheapest available part of the independence gap",
+        "record": "docs/research/composition-plan.md"
+      },
+      "evidence_source": "structural-parser",
+      "evidence_source_note": "The SAME family as crypto.jose.parse and mobile.apk.static: a self-describing container decoded without executing it. That sameness is deliberate and it is also the honest limit -- adding this entry did NOT give Q2.locate a second family, because Q2.locate is answered by decompilers and no structural parser locates code. What it did give is an independent confirmation of the ASLR dependency that both frida entries rest on, at zero install cost. A family is a property of the INSTRUMENT; this is a different instrument, and it is honest about not answering the question the acceptance mission asks.",
+      "root_reason": "Genuine root, and structurally necessary: it is handed a path to a file and reads it. No other capability here PRODUCES a PE on disk -- the labs build binaries, but building is not parsing, and a mission that has not run a builder still receives paths. It therefore consumes an input nothing upstream emits, which is exactly why it declares no typed edge, and why the omission is a decision rather than an oversight."
     }
   ]
 }
