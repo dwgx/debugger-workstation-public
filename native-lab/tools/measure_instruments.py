@@ -69,6 +69,22 @@ def main():
     rows.append(timed("capstone (disassemble main, RVA mapped)",
                       [sys.executable, "-c", code2]))
 
+    # 5 and 6 -- the two wrappers written on 2026-10-02. Added here rather than measured ad hoc
+    # so this table stays the ONE place instrument cost is quoted from.
+    triage = REPO / "headless-lab" / "tools" / "triage-packer.ps1"
+    if triage.exists():
+        rows.append(timed("native.pe.packer (DiE unpack gate)",
+                          ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
+                           "-File", str(triage), "-Target", str(TARGET)]))
+
+    matcher = REPO / "headless-lab" / "tools" / "match-functions.ps1"
+    other = REPO / "crackme-corpus" / "out" / "c03_antidebug.exe"
+    if matcher.exists() and other.exists():
+        rows.append(timed("native.function.match (two Ghidra imports)",
+                          ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
+                           "-File", str(matcher), "-Source", str(TARGET),
+                           "-Dest", str(other)]))
+
     # 3. IDA Pro through the station's own client.
     client = REPO / "native-lab" / "tools" / "list-funcs.mjs"
     if client.exists():
