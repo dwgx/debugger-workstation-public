@@ -2021,13 +2021,6 @@ function Invoke-Selftest {
 
     # THE registry-driven control. Both halves asserted on purpose: the refusal alone
     # would also be satisfied by a router that refuses everything.
-    C 'route: the question type comes from the registry, and undeclaring one empties its route' {
-        $live = @(Get-Route -Registry (Get-Registry) -QuestionType 'Q6.crypto').steps.Count
-        $m = Get-Registry
-        foreach ($c in $m.capabilities) { if ($c.id -eq 'crypto.jose.parse') { $c.question_types = @('Q4.data') } }
-        $mut = @(Get-Route -Registry $m -QuestionType 'Q6.crypto').steps.Count
-        "live=$(if ($live) { 'routed' } else { 'empty' }) undeclared=$(if ($mut) { 'routed' } else { 'empty' })"
-    } 'live=routed undeclared=empty'
 
     C 'route: an absent or blocked capability is NEVER routed, on any question type' {
         # The state filter, asserted over the whole registry rather than over one route: a
@@ -2049,13 +2042,39 @@ function Invoke-Selftest {
         "routed-while-unavailable=$($bad.Count) $(if ($bad.Count) { $bad -join ',' })"
     } 'routed-while-unavailable=0 '
 
-    C 'route: a question type whose only capability is absent refuses and names it' {
+    C 'route: the question type comes from the registry, and undeclaring one empties its route' {
+        # EVERY capability declaring Q6.crypto is undeclared, not just crypto.jose.parse. Same
+        # staleness as the case below: the test asserted that Q6 held exactly one instrument,
+        # which stopped being true when native.pe.authenticode declared Q6 as well. **A test that
+        # pins the SIZE of the registry is a test that will fail every time the arsenal grows**,
+        # and it fails for a reason that has nothing to do with the routing it is named for.
+        $live = @(Get-Route -Registry (Get-Registry) -QuestionType 'Q6.crypto').steps.Count
         $m = Get-Registry
-        foreach ($c in $m.capabilities) { if ($c.id -eq 'crypto.jose.parse') { $c.state = 'absent' } }
+        $n = 0
+        foreach ($c in $m.capabilities) {
+            if (@($c.question_types) -contains 'Q6.crypto') { $c.question_types = @('Q4.data'); $n++ }
+        }
+        $mut = @(Get-Route -Registry $m -QuestionType 'Q6.crypto').steps.Count
+        "live=$(if ($live) { 'routed' } else { 'empty' }) undeclared=$(if ($mut) { 'routed' } else { 'empty' }) (n=$n)"
+    } 'live=routed undeclared=empty (n=2)'
+
+    C 'route: a question type whose only capability is absent refuses and names it' {
+        # EVERY capability declaring Q6.crypto is made absent, not just crypto.jose.parse.
+        # The first version named one, which was correct while Q6 had exactly one instrument and
+        # went stale the moment native.pe.authenticode declared Q6 too -- it then found one
+        # routable step and failed. **The test asserted an accident of the registry's size, not
+        # the behaviour it is named for.** The behaviour under test is "a question type with no
+        # available capability refuses and names what it wanted", which is about the ROUTE and
+        # holds for any question type.
+        $m = Get-Registry
+        $n = 0
+        foreach ($c in $m.capabilities) {
+            if (@($c.question_types) -contains 'Q6.crypto') { $c.state = 'absent'; $n++ }
+        }
         $r = Get-Route -Registry $m -QuestionType 'Q6.crypto'
         $msg = Get-RouteRefusal -Route $r
-        "steps=$(@($r.steps).Count) names=$($msg -match 'crypto\.jose\.parse') exit-would-be=2"
-    } 'steps=0 names=True exit-would-be=2'
+        "steps=$(@($r.steps).Count) names=$($msg -match 'jose\.parse') exit-would-be=2 (n=$n)"
+    } 'steps=0 names=True exit-would-be=2 (n=2)'
 
     C 'route: a hard edge puts its producer ahead of the consumer, and says which fact' {
         # Q3.behaviour names `native.ida.decompile`; that capability's runner binds

@@ -11,7 +11,7 @@
       "Q7.origin": "what changed between these two builds"
     },
     "baseline": {
-      "capability_count": 22,
+      "capability_count": 23,
       "note": "The validator pins this count. A capability may only leave capabilities[] by appearing in retired[] with a reason, because deleting an island used to make the registry validate CLEANER rather than louder."
     },
     "retired": [],
@@ -2747,6 +2747,123 @@
           "note": "SELECTED BY NAME, NOT BY POSITION. The first version of this entry used index 1, which I verified by hand was `main` on this binary -- and nothing in the chain checked it. Two instruments agreeing about an address they were both handed by position corroborates the bytes at that address, not the claim. select.by_name fails loudly instead: if no function carries that name the round is SKIPPED and named, rather than falling through to whatever sits at index 1. A gate that picks the wrong thing is worse than one that refuses. The remaining limit is honest: `main` is a registry-side hypothesis about which function the claim is about. It is checked against the analyser's own recovered name, which is the strongest available check without a semantic claim-to-function binding, and that binding is not built."
         }
       }
+    },
+    {
+      "id": "native.pe.authenticode",
+      "title": "Report whether a Windows PE carries an Authenticode certificate table, and decode its WIN_CERTIFICATE header -- without verifying anything",
+      "domains": [
+        "native",
+        "practice"
+      ],
+      "question_types": [
+        "Q1.identify",
+        "Q6.crypto"
+      ],
+      "state": "observed",
+      "scope_note": "READ-ONLY on the target. Reads IMAGE_DIRECTORY_ENTRY_SECURITY from the PE optional header and, if present, the WIN_CERTIFICATE header it points at. It never executes a target and never contacts a network: no revocation checking, no chain building, no OCSP, no CRL.",
+      "composition_note": "WHY IT IS THE CHEAPEST REAL EXPANSION OF THE THINNEST AXIS. Coverage measured 2026-10-02 across the seven question types showed Q6 -- 'what token/signature/key handling is this' -- resting on ONE instrument, crypto.jose.parse, which is JOSE/JWT only. For a Windows PE the signature handling lives in the same optional header native.pe.packer and native.pe.container already read, so this costs no new dependency, no install and no disk. The trap it encodes is the one that makes this non-obvious: IMAGE_DIRECTORY_ENTRY_SECURITY's VirtualAddress is a FILE OFFSET, not an RVA, unlike every other data directory. Mapping it through the section table produces a plausible address in the wrong place.",
+      "consumes": {
+        "inputs": [
+          {
+            "name": "binary",
+            "type": "path_ref",
+            "required": true,
+            "note": "a Windows PE. Measured: crackme-corpus/out/c01-stringobf.exe."
+          }
+        ],
+        "prior": []
+      },
+      "produces": {
+        "facts": [
+          {
+            "key": "pe.signed",
+            "type": "verdict",
+            "note": "boolean: is a WIN_CERTIFICATE table present. Measured false for all seven corpus binaries (SECURITY VA=0x0 size=0) and true for a self-authored fixture. THIS IS NOT A TRUST VERDICT -- see does_not_prove."
+          },
+          {
+            "key": "pe.cert_header",
+            "type": "structure",
+            "note": "the decoded WIN_CERTIFICATE: {header_offset, dwLength, wRevision, revision_is_2_0, wCertificateType, type_is_pkcs_signed_data, blob_offset, blob_len, blob_sha256_prefix, blob_ascii_head}. Measured on the fixture: offset 143872, dwLength 48, revision 0x200, type 0x2, blob reading back the authored ASCII."
+          },
+          {
+            "key": "pe.security_dir",
+            "type": "structure",
+            "note": "the raw directory entry: {security_offset, security_size}, explicitly labelled as a FILE OFFSET. This is the fact a caller would get wrong by treating it as an RVA."
+          }
+        ]
+      },
+      "requires": {
+        "runtime": "python",
+        "net": "none",
+        "admin": false,
+        "device": false,
+        "disk_mb": 0,
+        "ram_mb": 128,
+        "wall_minutes": 1,
+        "tools": [
+          {
+            "name": "pefile",
+            "probe": "python -c \"import pefile;print(pefile.__version__)\"",
+            "expect": "2024.8.26"
+          }
+        ],
+        "install_note": "Already installed. No install, no disk cost. Runs in ~0.15 s."
+      },
+      "reach": {
+        "fs_read": true,
+        "fs_write": false,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": false,
+        "db_write": false,
+        "proc_spawn_note": "Declared because the probe and both controls invoke `python headless-lab/tools/authenticode.py` as a child process. Nothing else spawns, exec_target stays false, and no network is touched -- which is the property that matters here, since real revocation checking would need one."
+      },
+      "proves": [
+        "THAT A CERTIFICATE TABLE IS PRESENT OR ABSENT, on a self-authored fixture and on a real binary. Measured: the fixture returns signed:true with security_offset 143872, dwLength 48, wRevision 0x200, wCertificateType 0x2, and its blob reading back the authored ASCII marker; every corpus binary returns signed:false with an empty directory. Two inputs, opposite answers, from the same code -- which is the only thing that makes 'unsigned' mean anything.",
+        "THAT THE WIN_CERTIFICATE HEADER DECODES, and that the FILE-OFFSET semantics of IMAGE_DIRECTORY_ENTRY_SECURITY are handled as such rather than as an RVA. That distinction is the whole reason this is an entry rather than four lines in triage.md."
+      ],
+      "does_not_prove": [
+        "THAT THE BINARY IS TRUSTED, OR THAT ITS SIGNATURE IS VALID. NOTHING IS VERIFIED. No chain is built, no certificate is parsed, no hash is recomputed over the image, no revocation is checked, no timestamp is examined. `signed: true` means exactly 'there is a WIN_CERTIFICATE here'. A binary whose image was modified after signing still reads signed:true here, and the self-authored fixture reads signed:true with no key and no signature at all. Any trust decision needs a tool that actually verifies, and this is not one.",
+        "THAT AN ABSENCE MEANS UNSIGNED BY CHOICE. A repacked or tampered binary can have its certificate table stripped, which reads identically to one that was never signed. Absence is not provenance.",
+        "THAT THE PKCS#7 BLOB IS WELL FORMED. It is located and hashed, not parsed. The blob_sha256_prefix is an identity, not a validation.",
+        "ANYTHING ABOUT A THIRD-PARTY BINARY. Corpus targets only."
+      ],
+      "gate": {
+        "lane": "debug",
+        "requires_verdict": true,
+        "escalation_class": "none"
+      },
+      "gate_must_not_delegate": [
+        "authenticode.py against any binary this repository did not author",
+        "reporting pe.signed as a trust or integrity result, or as evidence a binary is unmodified",
+        "treating pe.signed:false as evidence a binary was never signed rather than possibly stripped",
+        "running --make-control over a real signed binary to 'see what it looks like': it rewrites the directory entry and would produce a fixture claiming to be signed by nothing"
+      ],
+      "gate_must_not_delegate_why": "Measured or read. (1) The target side is a red line. (2) The verifies-nothing limitation is the single largest in this registry, and a caller who reads signed:true as integrity is worse off than one with no tool at all -- that is why the caveat travels in every payload as well as here. (3) A stripped certificate table is indistinguishable from a never-signed one without external provenance. (4) The fixture generator APPENDS to the file and REWRITES the directory entry, so pointed at a real signed binary it produces something that claims to be signed by nothing, which is the most dangerous artefact this tool can make.",
+      "probe": {
+        "command": "python headless-lab\\tools\\authenticode.py crackme-corpus\\out\\c01-stringobf.exe",
+        "expect": "\"signed\": false",
+        "expect_exit": 0,
+        "last_run": "2026-10-02",
+        "run_log": "crackme-corpus/out/c01-stringobf.exe: security_va_is_a 'FILE OFFSET (not an RVA)', security_offset 0, security_size 0, signed false, reason 'no certificate table: IMAGE_DIRECTORY_ENTRY_SECURITY is empty'. exit 0. All seven corpus binaries measured identical. Self-authored fixture: security_offset 143872, signed true, dwLength 48, revision_is_2_0 true, type_is_pkcs_signed_data true, blob_ascii_head 'ARSENAL-FIXTURE-NOT-A-REAL-SIGNATURE'. non-PE README.md: exit 1.",
+        "prepare": "cd 'D:\\Software\\Tool\\WorkStation\\debugger'",
+        "expect_note": "expect asserts ABSENCE, which is the honest reading for this corpus and the opposite of what the negative control asserts. A gate whose positive case had to be asserted would be asserting a result this corpus cannot produce; the two-sided control is what carries the meaning."
+      },
+      "negative_control": {
+        "id": "native.pe.authenticode.certificate_table_past_eof_refused",
+        "command": "python headless-lab\\tools\\authenticode.py crackme-corpus\\out\\c01-stringobf.exe --make-control \"%TEMP%\\signed-fixture.exe\"; python -c \"import sys;d=open(r'%TEMP%\\signed-fixture.exe','rb').read();open(r'%TEMP%\\truncated-fixture.exe','wb').write(d[:len(d)-60])\"; python headless-lab\\tools\\authenticode.py \"%TEMP%\\truncated-fixture.exe\"",
+        "expect_exit": 2,
+        "expect_output": "runs past the end of",
+        "expect_output_note": "TWO controls, because one is not enough and the second had to be built. (1) THE POSITIVE CASE, built because every corpus binary is unsigned -- all seven measured SECURITY VA=0x0 size=0 -- so without a fixture this entry could only ever report 'not signed' and would be an always-green check. The fixture is self-authored: an 8-byte WIN_CERTIFICATE header plus an ASCII marker, appended outside the sections with the data directory pointed at it. Measured signed:true, dwLength 48, wRevision 0x200, wCertificateType 0x2, blob reading back the authored string byte for byte. **It proves the PARSER fires and proves nothing about signatures; it is deliberately not a valid signature -- there is no key and none.** (2) THE FAILING CASE, which is the one the validator insisted on and the more valuable of the two: truncate the fixture so the directory still points at offset 143872 while the file is now 143860 bytes. A parser that trusted the directory entry would read past the end and either raise an opaque IndexError or return garbage; this one refuses with exit 2 and names both the offset and the real file size. **A signature surface is attacker-controlled data pointing into an attacker-controlled file, so 'the pointer is inside the file' is a boundary, not a formality.** Getting the directory entry written took two silent bugs worth recording: the offset was first computed arithmetically and landed 24 bytes into the optional header, leaving SECURITY at zero so the fixture read back unsigned with no error anywhere; and while correcting it the struct.pack_into call was deleted outright, so the certificate was appended and the entry never written. **A tool that builds a fixture it then cannot detect is exactly what these controls exist to catch, and both bugs produced precisely that.**",
+        "measured": "fixture: signed true, security_offset 143872, dwLength 48, revision_is_2_0 true, type_is_pkcs_signed_data true, exit 0. truncated to 143860 bytes with the directory still at 143872: {ok:false, exit:2, error:'certificate table at file offset 0x23200 runs past the end of a 143860-byte file; the directory is pointing outside the file'}, TRUE_EXIT=2. real corpus PE: signed false, exit 0. README.md: exit 1."
+      },
+      "provenance": {
+        "source": "measured on this station 2026-10-02 by the agent that added this entry, chosen from a measured coverage gap rather than a guessed one",
+        "record": "docs/research/arsenal-inventory.md"
+      },
+      "evidence_source": "structural-parser",
+      "evidence_source_note": "The SAME family as native.pe.container and crypto.jose.parse, and deliberately so: a self-describing container decoded without executing it. A certificate table is exactly that. Recorded explicitly so nobody reads this as a second opinion on a decompilation -- it is not, and adding it changes nothing about the independence gate, which already confirms on capstone plus IDA.",
+      "root_reason": "Genuine root. It is handed a path and answers a question about that file's signature surface before anything else is allowed to act on it. Nothing upstream produces a trust or signature fact, and nothing downstream may treat one as given. It declares no typed edge for the same reason native.pe.container and native.pe.packer do not: it consumes an input no other capability emits."
     }
   ]
 }
