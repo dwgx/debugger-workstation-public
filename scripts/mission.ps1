@@ -853,9 +853,15 @@ function Invoke-Mission {
         try { $parsed = $raw | ConvertFrom-Json } catch { $parsed = $null }
         $declaredOk = ($rc -eq 0) -and ($null -ne $parsed)
         if ($cap.invoke.stdout -eq 'json') {
-            if ($cap.invoke.fact_map) {
+            if ($cap.invoke.fact_map -and $null -ne $parsed) {
                 # Each mapped key must be present and non-null. A missing key is a failure,
                 # not a smaller answer -- this class of API drops items silently.
+                # The null guard is load-bearing, not defensive: :853 sets $parsed = $null
+                # whenever the tool's output is not JSON, which it does legitimately --
+                # mobile.apk.static's analyze.mjs correctly EXITS 3 on a non-ZIP target --
+                # and then :861 dereferenced $parsed.PSObject and threw "Cannot index into
+                # a null array", killing the whole mission on round 3 with exit 0 and no
+                # verdict. A correct refusal was being swallowed into a successful run.
                 foreach ($k in $cap.invoke.fact_map.PSObject.Properties) {
                     $src = $k.Name; $dst = $k.Value
                     if ($null -ne $parsed.PSObject.Properties[$src]) {
