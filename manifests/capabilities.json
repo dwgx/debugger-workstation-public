@@ -2346,7 +2346,23 @@
       },
       "evidence_source": "structural-parser",
       "evidence_source_note": "The SAME family as crypto.jose.parse and mobile.apk.static: a self-describing container decoded without executing it. That sameness is deliberate and it is also the honest limit -- adding this entry did NOT give Q2.locate a second family, because Q2.locate is answered by decompilers and no structural parser locates code. What it did give is an independent confirmation of the ASLR dependency that both frida entries rest on, at zero install cost. A family is a property of the INSTRUMENT; this is a different instrument, and it is honest about not answering the question the acceptance mission asks.",
-      "root_reason": "Genuine root, and structurally necessary: it is handed a path to a file and reads it. No other capability here PRODUCES a PE on disk -- the labs build binaries, but building is not parsing, and a mission that has not run a builder still receives paths. It therefore consumes an input nothing upstream emits, which is exactly why it declares no typed edge, and why the omission is a decision rather than an oversight."
+      "root_reason": "Genuine root, and structurally necessary: it is handed a path to a file and reads it. No other capability here PRODUCES a PE on disk -- the labs build binaries, but building is not parsing, and a mission that has not run a builder still receives paths. It therefore consumes an input nothing upstream emits, which is exactly why it declares no typed edge, and why the omission is a decision rather than an oversight.",
+      "invoke": {
+        "runner": "python",
+        "argv": [
+          "native-lab/tools/pe_probe.py",
+          "{target}"
+        ],
+        "stdout": "json",
+        "success_when": "parsed JSON has ok == true AND image_base is non-null AND aslr is present",
+        "fact_map": {
+          "image_base": "pe.image_base",
+          "entry_rva": "pe.entry_rva",
+          "aslr": "pe.aslr",
+          "sections": "pe.section_extent"
+        },
+        "note": "Added 2026-10-02 to raise the arsenal's CALLABLE RATIO, measured that day at 8 of 23 capabilities -- most of the registry could be probed by a human and could not enter a mission at all. This one is callable first because pe.aslr is the fact BOTH frida entries obey when they rebase at runtime, and until now nothing in a chain could carry the evidence for the rule. native-lab/tools/pe_probe.py writes PURE JSON to stdout and stays silent on stderr, because mission.ps1 runs a capability as `& $runner @argList 2>&1 | Out-String` and MERGES the two -- a tool that decorates stderr corrupts the JSON it declared, which is how native.disasm.capstone failed its first round while working perfectly by hand."
+      }
     },
     {
       "id": "native.function.match",
