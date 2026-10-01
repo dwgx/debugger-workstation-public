@@ -6,10 +6,14 @@
 
 .DESCRIPTION
   Nine labs that each run standalone are islands. This is the layer that composes them:
-  it picks capabilities whose `consumes` are satisfied, runs each one in isolation behind
-  the gate, records the facts it produced, and feeds those facts forward.
+  it reads the REGISTRY to decide which capabilities answer the question, runs each one in
+  isolation behind the gate, records the facts it produced, and feeds those facts forward.
+  The route is derived, never tabulated: a capability is eligible because the registry says
+  it is `observed` and lists this question type in its own `question_types`, and a
+  capability whose runner binds another capability's fact is preceded by whatever produces
+  it. `Get-Route` is that derivation and its docstring is its specification.
 
-  Four properties do the real work, and each one exists because its absence was a
+  Five properties do the real work, and each one exists because its absence was a
   specific, observed failure mode:
 
   1. INTAKE HALTS. Object, question type and containment must all be stated. A missing
@@ -28,14 +32,22 @@
      did not run is an unasked question, not a clean answer -- and it is the one gap that
      produces no error to notice.
 
+  5. A QUESTION NOTHING CAN SERVE IS REFUSED, NOT PLANNED EMPTY. `-Action Plan` for
+     Q3.behaviour, Q4.data and Q6.crypto used to print `0 step(s)` and exit 0: a mission
+     that ran nothing and reported success. An empty route, or a route in which not one
+     step is invocable, is a refusal with a non-zero exit that NAMES the capability that
+     would have served the question. See `Get-RouteRefusal`.
 .PARAMETER Action
   Run      execute a mission end to end
-  Plan     write the plan and exit without running a single tool
-  Selftest prove the orchestrator is not decorative (controls N1-N4)
-  Ablate   rewrite each of the seven gates to `$true` in a temporary copy and prove the
-           suite notices. A gate that can be deleted without turning the suite red is not
-           a gate, it is a sentence in a comment. This is the control that keeps the
-           other seven from rotting back into that.
+  Plan     print the route the registry gives this question type and exit without running
+           a single tool. A route that cannot run anything is a REFUSAL (exit 2), not a plan.
+  Selftest prove the orchestrator is not decorative (controls N1-N4 and the routing controls)
+  Ablate   rewrite each of the seven gates to `$true` in a temporary copy, then rewrite each
+           of the six routing rules, and prove the suite notices either way. A gate that can
+           be deleted without turning the suite red is not a gate, it is a sentence in a
+           comment. This is the control that keeps the other seven from rotting back into
+           that, and it is now also what keeps the route derived from the registry.
+
 
 .EXAMPLE
   powershell -File scripts\mission.ps1 -Action Run `
@@ -48,7 +60,9 @@
 
 .NOTES
   Exit codes: 0 = mission closed with a computed verdict · 1 = open/unresolved (a valid
-  outcome, not a crash) · 2 = refused at intake, nothing ran · 3 = scope violation ·
+  outcome, not a crash) · 2 = refused at intake or at planning -- nothing ran, either
+  because the intake is incomplete or because no capability can serve the question type, in
+  which case the refusal NAMES the missing one · 3 = scope violation ·
   4 = provenance not declared by the Owner · 5 = grant tampered or missing ·
   6 = the caller tried to supply its own capability registry.
 
@@ -102,14 +116,421 @@ function Get-Registry {
 }
 
 
-$QUESTION_TYPES = @{
-    'Q1.identify'  = @{ needs = @('native.ida.list_functions'); text = 'what is this file, is it packed, what is its shape' }
-    'Q2.locate'    = @{ needs = @('native.ida.list_functions', 'native.ida.decompile'); text = 'where is the code that does X' }
-    'Q3.behaviour' = @{ needs = @(); text = 'what does it actually do at runtime -- needs a device or a debugger' }
-    'Q4.data'      = @{ needs = @(); text = 'what is in this capture / image / dump' }
-    'Q5.vuln-shape'= @{ needs = @('native.ida.list_functions', 'native.ida.decompile'); text = 'where does it trust something it should not' }
-    'Q6.crypto'    = @{ needs = @(); text = 'what token/signature/key handling is this' }
-    'Q7.origin'    = @{ needs = @('native.ida.list_functions'); text = 'what changed between these two builds' }
+# ----------------------------------------------------------------------------- the route
+#
+# WHICH capabilities a question type runs used to be the hardcoded seven-entry hashtable
+# below, keyed to a private `needs` list that no rule in this repository could check. The
+# registry has declared `question_types` per capability all along; `grep question_types
+# scripts/` matched one local variable, so nothing reconciled the two and nothing read the
+# field. Measured consequences (`docs/research/composition-plan.md:194-202`): Q3, Q4 and
+# Q6 planned zero steps and exited 0, and Q5 and Q7 routed capabilities the registry does
+# not assign them at all.
+#
+# The direction taken here is that THE REGISTRY WINS. It is the instrument's own
+# calibration -- `Get-Registry` refuses a caller-supplied substitute for exactly that
+# reason -- so a second routing table in the orchestrator can only ever disagree with it,
+# and the disagreement is invisible. Where the two used to conflict, the declaration is
+# kept and the route follows it: Q5.vuln-shape is a fuzzing question, and answering it by
+# decompiling function 0 was this file disagreeing with the registry rather than a route.
+# Where following the registry leaves a question with nothing to run, the answer is the
+# refusal below, which names the gap instead of hiding it.
+
+function Get-CapabilityFacts {
+    <#
+      The fact keys ONE capability publishes: `produces.facts[].key`, plus every value of
+      `invoke.fact_map` (the same source `Get-RegistryFacts` reads for the verdict gates,
+      so the planner and the verdict can never disagree about what a capability produces).
+    #>
+    param($Capability)
+    if (-not $Capability) { return @() }
+    $keys = @()
+    foreach ($f in @($Capability.produces.facts)) { if ($f.key) { $keys += "$($f.key)" } }
+    if ($Capability.invoke -and $Capability.invoke.fact_map) {
+        foreach ($p in $Capability.invoke.fact_map.PSObject.Properties) { if ($p.Value) { $keys += "$($p.Value)" } }
+    }
+    return @($keys | Sort-Object -Unique)
+}
+
+function Get-ArgvSlots {
+    <#
+      Every `{input.x}` placeholder in a capability's own `invoke.argv`, paired with the
+      FACT KEY the substitution loop will look up for it: `invoke.consumes_fact` when the
+      entry declares one, the slot name otherwise. That is verbatim what the loop computes
+      (the `$srcKey` line in `Invoke-Mission`), so predicting it here cannot drift from it.
+    #>
+    param($Capability)
+    if (-not ($Capability -and $Capability.invoke -and $Capability.invoke.argv)) { return @() }
+    $src = "$($Capability.invoke.consumes_fact)"
+    $slots = @()
+    foreach ($a in @($Capability.invoke.argv)) {
+        if ("$a" -match '\{input\.([^}]+)\}') {
+            $name = $Matches[1]
+            $slots += [ordered]@{ slot = $name; source = $(if ($src) { $src } else { $name }) }
+        }
+    }
+    return @($slots)
+}
+
+function Get-CapabilityEdges {
+    <#
+      One capability's declared consumed facts, each classified HARD or SOFT. This
+      classification is the whole of "honour declared edges", and it is DERIVED from
+      fields the registry already carries rather than authored here:
+
+        HARD  the capability's own runner binds the fact -- either the edge's `from.field`
+              is the entry's `invoke.consumes_fact`, or the edge's input name appears as a
+              `{input.<name>}` placeholder in `invoke.argv`. A HARD edge is a fact the loop
+              WILL try to substitute, and it makes the round record `skipped_no_consumer`
+              when the fact is missing. So a HARD edge has to be satisfied by an earlier
+              round, and the planner now guarantees that BEFORE a tool runs instead of
+              discovering it afterwards as a recorded skip -- which reads safe and is not.
+        SOFT  a declared refinement the runner does not bind. The registry marks these
+              `required: false`, and they never pull a producer into the mission and never
+              drop the consumer; the plan lists them and whether the mission happens to
+              satisfy them.
+
+      A capability that genuinely does not need a fact says so IN THE REGISTRY, by leaving
+      the fact unbound in its own argv. There is no code path here that can decide a fact
+      is unnecessary: that judgement belongs to whoever measured the tool.
+    #>
+    param($Capability)
+    if (-not $Capability) { return @() }
+    $slotNames = @(Get-ArgvSlots $Capability | ForEach-Object { $_.slot })
+    $consumesFact = "$($Capability.invoke.consumes_fact)"
+    $edges = @()
+    foreach ($i in @($Capability.consumes.inputs)) {
+        if (-not ($i.from -and $i.from.field -and $i.from.capability)) { continue }
+        $bound = (($consumesFact -eq "$($i.from.field)") -or ($slotNames -contains "$($i.name)"))
+        $edges += [ordered]@{
+            input    = "$($i.name)"
+            fact     = "$($i.from.field)"
+            producer = "$($i.from.capability)"
+            required = [bool]$i.required
+            hard     = [bool]$bound
+        }
+    }
+    return @($edges)
+}
+
+function Get-Route {
+    <#
+      The capabilities a question type runs, DERIVED from the registry. Six rules, in this
+      order, each one registry data and each one separately ablated by `-Action Ablate`:
+
+        1. STATE.  Eligible only if the registry `state` is `observed`. `absent` and
+           `blocked` are never planned and never pulled in as a producer, and each is
+           recorded in `unavailable` BY NAME with its state -- so "nothing was planned" and
+           "nothing could ever be planned" read differently. This is the same filter
+           `gate.ps1`'s `Get-GrantableIds` applies when minting; applying it here too is
+           what stops an absent capability reaching the plan at all.
+
+        2. QUESTION TYPE.  The eligible capability must list this question type in its own
+           `question_types`. The registry states which questions each capability answers.
+
+        3. UNPRODUCIBLE REQUIRED INPUT.  An input the registry itself marks `unproduced`
+           has no producer anywhere, so the capability cannot run however it is selected.
+           Dropped, and named.
+
+        4. HARD-EDGE CLOSURE.  A capability whose runner binds another capability's fact
+           pulls that producer into the mission, whatever question type the producer
+           declares for ITSELF -- a producer is present because an edge needs it, and the
+           step says so in `selected_by`. Iterated to a fixpoint, so a producer with its
+           own hard edge brings its own producer. This is the composition the hardcoded
+           table could not express: Q3.behaviour and Q7.origin both reach
+           `native.ida.list_functions` this way even though that capability declares only
+           Q1 and Q2.
+
+        5. UNMET HARD EDGE.  A capability is DROPPED when a fact its runner binds is
+           produced by nothing in the mission. Planning it anyway is the silent failure
+           this function replaces.
+
+        6. NO PRODUCER PULLED IN FOR A REFINEMENT.  Rule 4 fires on hard edges only. A
+           soft edge is a refinement: a mission that fuzzes parsers does not thereby owe
+           itself a JOSE parse, and the plan lists the refinement as unmet rather than
+           inventing the work.
+
+      ORDER, and the tie-break, stated because an unexplainable tie-break is a different
+      kind of silent behaviour: a capability runs AFTER whatever produces a fact its runner
+      binds (the registry's `consumes.inputs[].from`, never the order somebody typed), and
+      every remaining tie is broken by the capability's index in the registry's own
+      `capabilities` array. An index in a sequence is a total order, so two equally
+      eligible capabilities are never ordered by anything a reader cannot see, and the
+      index travels on every step as `registry_index`. A CYCLE among declared edges --
+      possible only in a registry that declares one -- is broken at that same index and
+      reported in `cycles`, never looped on.
+    #>
+    param($Registry, [string]$QuestionType)
+
+    $all = @($Registry.capabilities)
+    $byId = @{}; $idx = @{}
+    for ($i = 0; $i -lt $all.Count; $i++) { $byId["$($all[$i].id)"] = $all[$i]; $idx["$($all[$i].id)"] = $i }
+
+    $selected = @()
+    $unavailable = @()
+    $dropped = @()
+    $emitted = @{}
+    $cycles = @()
+
+    # Why a capability cannot be planned at all, whatever selects it. Rules 1 and 3.
+    # `return $null` is the routable answer and emits nothing, so the caller's test is a
+    # plain truthiness check -- and a capability that IS routable returns no string at all.
+    function Get-Blocker($capDef) {
+        if (-not $capDef) { return 'not in the registry' }
+        # ABLATE-ANCHOR state-filter
+        $stateOk = ("$($capDef.state)" -eq 'observed')
+        if (-not $stateOk) {
+            return "state=$($capDef.state). An absent or blocked capability is a claim, not a capability: its probe never ran, so no mission may plan it and no edge may pull it in as a producer."
+        }
+        $bad = @($capDef.consumes.inputs | Where-Object { $_.unproduced -and $_.required })
+        # ABLATE-ANCHOR unproduced-input
+        $unproduced = @($bad | ForEach-Object { $_.name })
+        if ($unproduced.Count -gt 0) {
+            return "required input(s) $($unproduced -join ', ') are declared unproduced by the registry itself, so nothing in this repository can supply them: $($bad[0].unproduced.reason)"
+        }
+        return $null
+    }
+
+    # --- rules 1 and 2: the declared candidates --------------------------------
+    foreach ($c in $all) {
+        # ABLATE-ANCHOR question-type-filter
+        $declares = (@($c.question_types) -contains $QuestionType)
+        if (-not $declares) { continue }
+        $blocker = Get-Blocker $c
+        if ($blocker) {
+            # `reason` is present on BOTH lists so a caller never has to know which list a
+            # capability fell out of in order to say what went wrong with it.
+            $tag = if ("$($c.state)" -ne 'observed') { "state=$($c.state)" } else { 'unproduced_required_input' }
+            $unavailable += [ordered]@{ id = $c.id; state = "$($c.state)"; reason = $tag; detail = $blocker }
+            continue
+        }
+        $selected += [ordered]@{
+            id = $c.id; selected_by = 'declared'; registry_index = $idx["$($c.id)"]
+            why = "the registry lists $QuestionType in this capability's own question_types, and its state is observed"
+        }
+    }
+
+    # --- rule 4: close over hard edges, to a fixpoint ---------------------------
+    # `$have` is the membership test and it only ever grows, which is what makes this
+    # terminate. It is NOT `$emitted` (that is the ordering pass's own set) and it is not
+    # "is the producer in $selected yet": the first version of this loop asked the latter
+    # only through `$grew`, appended the same producer again on every pass, and Q2.locate
+    # hung for five minutes growing a list that could never reach a fixpoint. A closure
+    # that does not terminate is not a slow route, it is a hung mission.
+    $have = @{}
+    foreach ($x in $selected) { $have[$x.id] = $true }
+    $grew = $true
+    while ($grew) {
+        $grew = $false
+        foreach ($s in @($selected)) {
+            $hard = @(Get-CapabilityEdges $byId[$s.id] | Where-Object { $_.hard })
+            $absent = @($hard | Where-Object { $byId.ContainsKey($_.producer) -and -not $have.ContainsKey($_.producer) } |
+                        ForEach-Object { $_.producer } | Sort-Object -Unique)
+            # ABLATE-ANCHOR edge-closure
+            $pull = @($absent)
+            foreach ($p in $pull) {
+                $blocker = Get-Blocker $byId[$p]
+                if ($blocker) { $have[$p] = $true; continue }   # an absent/blocked producer is never pulled in, and is not retried
+                $have[$p] = $true
+                $edge = @($hard | Where-Object { $_.producer -eq $p })[0]
+                $selected += [ordered]@{
+                    id = $p; selected_by = "producer:$($s.id)"; registry_index = $idx[$p]
+                    why = "present because $($s.id) binds $($edge.fact) in its own invoke.argv; this capability publishes it, and the registry assigns it to other question types only"
+                }
+                $grew = $true
+            }
+        }
+    }
+
+    # --- rule 5: a hard edge nothing in this mission produces -------------------
+    $produced = @{}
+    foreach ($s in $selected) { foreach ($k in @(Get-CapabilityFacts $byId[$s.id])) { $produced[$k] = $true } }
+    $keep = @()
+    foreach ($s in $selected) {
+        $hard = @(Get-CapabilityEdges $byId[$s.id] | Where-Object { $_.hard })
+        # ABLATE-ANCHOR unmet-hard-edge
+        $unmetHard = @($hard | Where-Object { -not $produced.ContainsKey($_.fact) })
+        if ($unmetHard.Count -gt 0) {
+            $e = $unmetHard[0]
+            $dropped += [ordered]@{ id = $s.id; reason = 'unmet_hard_edge'
+                why = "its runner binds $($e.fact) from input '$($e.input)' and nothing in this mission produces that fact; the declared producer is $($e.producer), which this route could not admit" }
+            continue
+        }
+        $keep += $s
+    }
+    $selected = $keep
+
+    # A producer whose consumer was just dropped is doing unrequested work. Prune to a
+    # fixpoint, and say so on the step that survives.
+    $pruned = $true
+    while ($pruned) {
+        $pruned = $false
+        $live = @($selected | ForEach-Object { $_.id })
+        foreach ($s in @($selected)) {
+            if ("$($s.selected_by)" -notlike 'producer:*') { continue }
+            $consumer = "$($s.selected_by)".Substring(9)
+            if ($live -notcontains $consumer) {
+                $selected = @($selected | Where-Object { $_.id -ne $s.id })
+                $pruned = $true
+            }
+        }
+    }
+
+    # --- ORDER: a consumer after its producer, ties by registry index -----------
+    # Recursive depth-first over registry order, so a chain reads as a chain: the producer
+    # is emitted immediately before the capability that binds it. A capability is marked
+    # emitted BEFORE its producers are visited, which is what makes this terminate on a
+    # registry that declares a cycle -- and the cycle is reported, not swallowed.
+    $onStack = @{}
+    $cycles = New-Object System.Collections.ArrayList
+    function Get-Order($ids) {
+        $out = @()
+        foreach ($id in $ids) {
+            if ($emitted.ContainsKey($id)) {
+                if ($onStack.ContainsKey($id)) { $cycles.Add($id) }
+                continue
+            }
+            $emitted[$id] = $true
+            $onStack[$id] = $true
+            $deps = @(Get-CapabilityEdges $byId[$id] | Where-Object { $_.hard -and $byId.ContainsKey($_.producer) } |
+                      ForEach-Object { $_.producer } | Sort-Object -Unique)
+            foreach ($p in $deps) { $out += Get-Order @($p) }
+            $onStack.Remove($id)
+            $out += $id
+        }
+        return @($out)
+    }
+    $order = Get-Order @($selected | ForEach-Object { $_.id } | Sort-Object { $idx[$_] })
+    $ordered = @()
+    foreach ($id in $order) {
+        $s = @($selected | Where-Object { $_.id -eq $id })[0]
+        if (-not $s) { continue }
+        $c = $byId[$id]
+        $edges = @(Get-CapabilityEdges $c)
+        $ordered += [ordered]@{
+            id = $s.id; selected_by = $s.selected_by; registry_index = $idx[$id]; why = $s.why
+            required_by = @($edges | Where-Object { $_.hard } | ForEach-Object {
+                [ordered]@{ input = $_.input; fact = $_.fact; from = $_.producer } })
+            optional_inputs = @($edges | Where-Object { -not $_.hard } | ForEach-Object {
+                [ordered]@{ input = $_.input; fact = $_.fact; from = $_.producer
+                            satisfied = $produced.ContainsKey($_.fact) } })
+            produces = @(Get-CapabilityFacts $c)
+        }
+    }
+
+
+    return [ordered]@{
+        question_type = $QuestionType
+        source = 'manifests/capabilities.json -- this file declares no capability list of its own'
+        ordering = 'a capability runs after whatever produces a fact its own invoke.argv binds; every remaining tie is broken by the capability index in the registry capabilities array, carried on each step as registry_index'
+        rules = @('state must be observed', 'question_types must list this question',
+                  'a required input the registry marks unproduced blocks the capability',
+                  'a hard edge pulls its producer in, whatever question type that producer declares',
+                  'a hard edge nothing produces drops the capability',
+                  'a refinement edge pulls nothing in')
+        steps = @($ordered)
+        unavailable = @($unavailable)
+        dropped = @($dropped)
+        cycles = @($cycles)
+    }
+}
+
+function Resolve-PlanSteps {
+    <#
+      The route annotated with what this mission can actually DO about each step: does the
+      registry declare an `invoke` block, is the id inside the grant, and can every `{input.x}`
+      slot be filled from a fact some earlier step produces. A step that cannot run is
+      RECORDED with its reason and never absorbed -- "a stage that did not run is an unasked
+      question" -- and the reasons stay distinguishable, because "nothing could serve this
+      question" and "nothing you are permitted to run" are different failures with
+      different fixes.
+    #>
+    param($Route, [string[]]$Allowed, $Registry)
+
+    $produced = @{}
+    foreach ($s in $Route.steps) {
+        $c = $Registry.capabilities | Where-Object { $_.id -eq $s.id } | Select-Object -First 1
+        foreach ($k in @(Get-CapabilityFacts $c)) { $produced[$k] = $true }
+    }
+
+    $out = @()
+    foreach ($s in $Route.steps) {
+        $c = $Registry.capabilities | Where-Object { $_.id -eq $s.id } | Select-Object -First 1
+        $slots = @(Get-ArgvSlots $c)
+        # ABLATE-ANCHOR argv-slot
+        $unresolvedSlots = @($slots | Where-Object { -not $produced.ContainsKey($_.source) })
+        $state = 'planned'
+        $why = $s.why
+        if (-not $c.invoke) {
+            $state = 'skipped_no_invoke'
+            $why = 'the registry declares no invoke block, so the loop cannot call it with arguments'
+        } elseif ($Allowed -notcontains $s.id) {
+            $state = 'skipped_not_in_grant'
+            $why = 'inside the registry, and outside this grant'
+        } elseif ($unresolvedSlots.Count -gt 0) {
+            $state = 'skipped_unmet_input'
+            $why = ("its invoke.argv binds " +
+                    (($unresolvedSlots | ForEach-Object { '{input.' + $_.slot + '}' }) -join ', ') +
+                    ', which resolves to fact ' +
+                    (($unresolvedSlots | ForEach-Object { "'" + $_.source + "'" }) -join ', ') +
+                    ' -- and nothing in this mission produces that, so the round would record skipped_no_consumer')
+        }
+        $out += [ordered]@{
+            id = $s.id; state = $state; why = $why
+            selected_by = $s.selected_by; registry_index = $s.registry_index
+            # `consumes` and `produces` keep the shape plan.json@1 already had, so
+            # anything that read them still reads them; the edge detail is additive.
+            consumes = $(if ($c.invoke) { $c.invoke.consumes_fact } else { $null })
+            produces = $(if ($c.invoke) { $c.invoke.fact_map } else { $null })
+            produces_fact_keys = @(Get-CapabilityFacts $c)
+            required_by = @($s.required_by)
+            optional_inputs = @($s.optional_inputs)
+        }
+    }
+    return @($out)
+}
+
+function Get-RouteRefusal {
+    <#
+      The message a plan must REFUSE with, or $null when the plan is real. Two distinct
+      refusals, because they have different fixes and merging them is how "0 steps, exit 0"
+      happened:
+
+        (a) the registry routes NOTHING for this question type -- every declared capability
+            is `absent`, `blocked`, or dropped. The detail names them.
+        (b) the registry routes something and not one step of it is INVOCABLE -- no
+            `invoke` block, or outside the grant. The detail names each one and its reason.
+
+      Measured before this existed: `-Action Plan -QuestionType Q6.crypto` printed
+      `plan 0 step(s)` and exited 0. That is the worst answer available -- it reads as
+      success having run nothing -- so it is now impossible from either direction.
+    #>
+    param($Route, $Steps)
+
+    $nRouted = @($Route.steps).Count
+    $nBlocked = @($Route.unavailable).Count
+    $nDropped = @($Route.dropped).Count
+
+    if ($nRouted -eq 0) {
+        # The name is the whole point of this refusal. It is collected from both lists
+        # because "every declared capability is absent" and "every declared capability was
+        # dropped for an unmet edge" are different gaps and name different capabilities.
+        $named = @(@($Route.unavailable) + @($Route.dropped) | ForEach-Object {
+            $tag = if ($_.reason) { $_.reason } else { "state=$($_.state)" }
+            "$($_.id) [$tag]" })
+        return ("no capability in manifests/capabilities.json can serve '" + $Route.question_type + "': " +
+                "the registry declares $nBlocked for it that cannot run at all, and $nDropped dropped from the route, " +
+                "leaving nothing. Named: " +
+                ($(if ($named.Count) { $named -join '; ' } else { 'nothing declares that question type at all' })) +
+                '. Nothing ran and nothing will. This is a refusal, not an empty answer.')
+    }
+    if ($null -ne $Steps -and @(@($Steps) | Where-Object { $_.state -eq 'planned' }).Count -eq 0) {
+        $detail = @($Steps | ForEach-Object { "$($_.id) [$($_.state)]: $($_.why)" })
+        return ("the registry routes " + $Route.question_type + " to $nRouted capability/capabilities " +
+                'and not one of them is invocable under this grant: ' + ($detail -join '; ') +
+                '. A plan that can run nothing is not a plan, and an exit 0 having run nothing reads as success. ' +
+                'Fix the named gap in the registry.')
+    }
+    return $null
 }
 
 # Refusals are thrown, not exited. `exit` inside a function terminates the whole process,
@@ -190,10 +611,20 @@ function Invoke-Intake {
     if (-not $qt) {
         if ($Question) { $qt = 'Q2.locate' } else { Refuse 2 'no question stated' 'Refusing to guess what "analyze" means.' }
     }
-    if (-not $QUESTION_TYPES.ContainsKey($qt)) {
-        Refuse 2 "unknown question type '$qt'" ("known: " + (($QUESTION_TYPES.Keys | Sort-Object) -join ', '))
+
+    # The CLOSED ENUMERATION of question types is the registry's, not this file's. It was
+    # a seven-key hashtable here, which is a second place to forget a question type and a
+    # second place to disagree with `manifests/capabilities.json` about what one is; the
+    # registry now owns the list AND the one-line description each type carries.
+    $known = @()
+    if ($reg.schema.question_types) { $known = @($reg.schema.question_types.PSObject.Properties.Name) }
+    if ($known.Count -eq 0) {
+        Refuse 2 'the registry declares no question types' ("manifests/capabilities.json has no schema.question_types, so there is no question to route. Known types: none.")
     }
-    if (-not $Question) { $Question = $QUESTION_TYPES[$qt].text }
+    if ($known -notcontains $qt) {
+        Refuse 2 "unknown question type '$qt'" ("the registry declares: " + (($known | Sort-Object) -join ', '))
+    }
+    $qtext = "$($reg.schema.question_types.PSObject.Properties[$qt].Value)"
 
     if (-not $Containment) {
         Refuse 2 'containment unstated or unnameable' 'l2-gate.md S13. Refuse to guess.'
@@ -202,7 +633,11 @@ function Invoke-Intake {
         Refuse 2 "unnamed containment '$Containment'" 'known: station_under_named_process_rule | loopback_capture | isolated_vm'
     }
 
-    return @{ registry = $reg; question_type = $qt }
+    # The default question text is RETURNED, not assigned to `$Question` here. Assigning it
+    # in this function created a function-local that shadowed the script-scope parameter, so
+    # the banner printed `question [Q1.identify]` with nothing after it and no error
+    # anywhere: the default had been computed and thrown away on every single mission.
+    return @{ registry = $reg; question_type = $qt; question_text = $qtext }
 }
 
 # -------------------------------------------------------------------------------- run
@@ -211,6 +646,7 @@ function Invoke-Mission {
     $intake = Invoke-Intake
     $reg = $intake.registry
     $qt = $intake.question_type
+    if (-not $Question) { $Question = $intake.question_text }
 
     $case = if ($CaseId) { $CaseId } else {
         $t = [IO.Path]::GetFileNameWithoutExtension($Target)
@@ -227,12 +663,28 @@ function Invoke-Mission {
     Say "  case dir      $caseDir"
     Say ('=' * 78)
 
-    # --- the grant. Minted by gate.ps1 and by nothing else. -------------------
-    # -Containment is passed because gate.ps1 -Action New now REQUIRES it with no
-    # default; without it the mint exits 3 and the whole -Action Run entry point is
-    # dead. No new validation is needed here: Invoke-Intake already reduced $Containment
-    # to exactly the three literals the gate accepts (mission.ps1, the `if ($Containment
-    # -notin @(...))` check) before this line runs.
+    # --- the ROUTE, from the registry, before a grant exists ---------------------
+    # Computed before the mint on purpose. An unservable question type is refused with
+    # nothing spawned at all, rather than after a grant has been written for a mission that
+    # was never going to run anything. `Get-RouteRefusal` also has a second, grant-aware
+    # arm, called again below: a route that exists and cannot be invoked is a different
+    # failure with a different fix, and the two must not be reported as one.
+    $route = Get-Route -Registry $reg -QuestionType $qt
+    $empty = Get-RouteRefusal -Route $route
+    if ($empty) { Refuse 2 "question type '$qt' has no routable capability" $empty }
+
+    # --- the grant, then the plan, on disk, before any tool runs -----------------
+    # The grant is minted by gate.ps1 and by nothing else. -Containment is passed because
+    # gate.ps1 -Action New now REQUIRES it with no default; without it the mint exits 3 and
+    # the whole -Action Run entry point is dead. No new validation is needed here:
+    # Invoke-Intake already reduced $Containment to exactly the three literals the gate
+    # accepts before this line runs.
+    #
+    # The route was computed BEFORE the mint, so the grant's only remaining job is to say
+    # which of the routed steps this particular mission is permitted to run. Every step,
+    # in the order the registry implies, each carrying WHY it is in this mission. A step
+    # that cannot run is recorded with its reason and never absorbed: a stage that did not
+    # run is an unasked question, not a clean answer.
     $g = Invoke-Gate 'New' @{ '-Target' = $Target; '-Provenance' = $Provenance; '-OwnerWord' = $OwnerWord; '-CaseDir' = $caseDir; '-Containment' = $Containment }
     if ($g.code -ne 0) {
         if ($g.code -eq 4) { Refuse 4 'provenance not declared by the Owner' 'No subprocess was spawned. The control held.' }
@@ -240,25 +692,33 @@ function Invoke-Mission {
     }
     $grant = $g.obj.grant
     Say "  grant         $($grant.grant_sha256.Substring(0,16))…  $($g.obj.allowed_count) capabilities allowed"
+    $planned = @(Resolve-PlanSteps -Route $route -Allowed @($grant.allowed) -Registry $reg)
+    $runnable = @($planned | Where-Object { $_.state -eq 'planned' }).Count
 
-    # --- the plan, on disk, before any tool runs --------------------------------
-    $wanted = $QUESTION_TYPES[$qt].needs
-    $planned = @()
-    foreach ($id in $wanted) {
-        $c = $reg.capabilities | Where-Object { $_.id -eq $id }
-        if (-not $c) { continue }
-        if (-not $c.invoke) {
-            # Declared in the plan, deliberately NOT runnable. Recording it as skipped is
-            # the whole point: a stage that did not run must be visible, never absorbed.
-            $planned += [ordered]@{ id = $id; state = 'skipped_no_invoke'; why = 'the registry declares no invoke block, so the loop cannot call it with arguments' }
-            continue
+    Say "  route         $runnable of $(@($route.steps).Count) routed capability/capabilities are invocable under this grant"
+    foreach ($p in $planned) {
+        # A planned step is annotated with the EDGE it will consume, because that edge is
+        # why it is in this mission and what an earlier round has to produce for it. A step
+        # that will not run is annotated with WHY it will not run, because that string is
+        # the difference between a mission and a gap.
+        $detail = $p.why
+        if ($p.state -eq 'planned') {
+            $detail = $p.selected_by
+            if (@($p.required_by).Count) {
+                $detail += ' <- ' + ((@($p.required_by) | ForEach-Object { "$($_.fact) from $($_.from)" }) -join ', ')
+            } elseif (@($p.optional_inputs).Count) {
+                $detail += ' (refinement unmet: ' + ((@($p.optional_inputs) | ForEach-Object { "$($_.fact)" }) -join ', ') + ')'
+            }
         }
-        if ($grant.allowed -notcontains $id) {
-            $planned += [ordered]@{ id = $id; state = 'skipped_not_in_grant'; why = 'inside the registry but outside this grant' }
-            continue
-        }
-        $planned += [ordered]@{ id = $id; state = 'planned'; consumes = $c.invoke.consumes_fact; produces = $c.invoke.fact_map }
+        Say ("    {0,-30} {1,-21} {2}" -f $p.id, $p.state, $detail)
     }
+    if (@($route.unavailable).Count) {
+        Say ("  never routed  " + ((@($route.unavailable) | ForEach-Object { "$($_.id) (state=$($_.state))" }) -join ', '))
+    }
+    if (@($route.dropped).Count) {
+        Say ("  dropped       " + ((@($route.dropped) | ForEach-Object { "$($_.id) [$($_.reason)]" }) -join ', '))
+    }
+    Say "  order         $($route.ordering)"
 
     $plan = [ordered]@{
         schema       = 'mission/plan@1'
@@ -269,12 +729,31 @@ function Invoke-Mission {
         containment  = $Containment
         provenance   = [ordered]@{ text = $Provenance; declared_by_owner = [bool]$OwnerWord }
         gate         = [ordered]@{ grant_sha256 = $grant.grant_sha256; allowed = $grant.allowed }
+        route        = [ordered]@{
+            source = $route.source
+            rules = $route.rules
+            ordering = $route.ordering
+            unavailable = $route.unavailable
+            dropped = $route.dropped
+            cycles = $route.cycles
+        }
         capabilities = $planned
         budget       = [ordered]@{ max_rounds = $MaxRounds }
         proposed_claim = $Claim
     }
     Set-Content -LiteralPath (Join-Path $caseDir 'plan.json') -Value (Out-Json $plan) -Encoding UTF8
-    Say "  plan          $($planned.Count) step(s), $($planned.Count) written before any tool ran"
+    Say "  plan          $runnable step(s) to run, $($planned.Count) written before any tool ran"
+
+    # A plan with nothing runnable in it is written to disk FIRST and refused second, so
+    # the artifact the operator needs to fix the gap survives the refusal. Exit 0 here
+    # would read as success having run nothing, which is the answer this file exists to
+    # refuse: three question types used to produce exactly it.
+    $blocked = Get-RouteRefusal -Route $route -Steps $planned
+    if ($blocked) {
+        Say ''
+        Say "  REFUSED: nothing in the route for $qt is invocable. See $caseDir\plan.json"
+        Refuse 2 "nothing in the route for '$qt' is invocable" $blocked
+    }
 
     if ($Action -eq 'Plan') {
         Say ''
@@ -1410,6 +1889,167 @@ function Invoke-Selftest {
         "$($v.tier) process=$(@($v.gates | Where-Object { $_.name -eq 'process' })[0].pass)"
     } 'unresolved process=False'
 
+    # ------------------------------------------------------------------------------
+    # THE ROUTING CONTROLS.
+    #
+    # Capability selection used to be a hardcoded seven-entry hashtable in this file
+    # (`$QUESTION_TYPES[$qt].needs`), and the registry's `question_types` field was read
+    # by exactly one line of code -- a scope filter on evidence already produced, which is
+    # a safety check and not a router. Measured on the pre-fix file: Q3.behaviour, Q4.data
+    # and Q6.crypto planned ZERO steps and exited 0, and Q5 and Q7 routed capabilities the
+    # registry does not assign them. So the controls below do not assert a routing table
+    # (this file no longer has one, and a control that pins a table would make the table
+    # the thing under test again). They assert the PROPERTIES the derivation has to have,
+    # and every one of them is a property of the REGISTRY, not of this file: most of them
+    # would survive a legitimate registry edit and would catch a code edit that stops
+    # reading the registry.
+    #
+    # Each of the six mechanisms carries an `# ABLATE-ANCHOR` line in the source, and
+    # `-Action Ablate` rewrites each anchor in turn. A control that a rewrite cannot
+    # redden is a control that is not measuring the mechanism it names.
+
+    C 'route: every question type the registry declares either routes, or refuses by NAME' {
+        # The exit-0-having-run-nothing failure has two shapes: a route that is empty, and a
+        # route whose steps cannot run. Neither may be silent, so the assertion is on the
+        # NAMES, not on a count: a question type with no route must still say which
+        # capability is missing.
+        $reg = Get-Registry
+        $silent = @()
+        foreach ($p in $reg.schema.question_types.PSObject.Properties) {
+            $r = Get-Route -Registry $reg -QuestionType $p.Name
+            if (@($r.steps).Count -gt 0) { continue }
+            $msg = Get-RouteRefusal -Route $r
+            if (-not $msg) { $silent += "$($p.Name):no-refusal-at-all"; continue }
+            if ($msg -notmatch '([a-z][\w]*\.[\w]+\.[\w]+)') { $silent += "$($p.Name):refusal-names-nothing" }
+        }
+        "silent=$($silent.Count) $(if ($silent.Count) { $silent -join ',' })"
+    } 'silent=0 '
+
+    C 'route: Q6.crypto routes the capability the registry assigns it, by name' {
+        $ids = @((Get-Route -Registry (Get-Registry) -QuestionType 'Q6.crypto').steps | ForEach-Object { $_.id })
+        if ($ids -contains 'crypto.jose.parse') { 'routed' } else { "NOT ROUTED: $($ids -join ',')" }
+    } 'routed'
+
+    # THE registry-driven control. Both halves asserted on purpose: the refusal alone
+    # would also be satisfied by a router that refuses everything.
+    C 'route: the question type comes from the registry, and undeclaring one empties its route' {
+        $live = @(Get-Route -Registry (Get-Registry) -QuestionType 'Q6.crypto').steps.Count
+        $m = Get-Registry
+        foreach ($c in $m.capabilities) { if ($c.id -eq 'crypto.jose.parse') { $c.question_types = @('Q4.data') } }
+        $mut = @(Get-Route -Registry $m -QuestionType 'Q6.crypto').steps.Count
+        "live=$(if ($live) { 'routed' } else { 'empty' }) undeclared=$(if ($mut) { 'routed' } else { 'empty' })"
+    } 'live=routed undeclared=empty'
+
+    C 'route: an absent or blocked capability is NEVER routed, on any question type' {
+        # The state filter, asserted over the whole registry rather than over one route: a
+        # router that honoured `state` for Q3 and ignored it for Q4 would pass a
+        # single-route test. This is the defect that put three such capabilities into
+        # every grant earlier today, so it is worth a sweep.
+        $reg = Get-Registry
+        $bad = @()
+        foreach ($c in $reg.capabilities) {
+            if ("$($c.state)" -eq 'observed') { continue }
+            foreach ($q in @($c.question_types)) {
+                $ids = @((Get-Route -Registry $reg -QuestionType $q).steps | ForEach-Object { $_.id })
+                if ($ids -contains $c.id) { $bad += "$($c.id)@$q" }
+            }
+        }
+        # The count of unavailable capabilities is NOT asserted: the registry is allowed to
+        # gain or lose `absent` entries, and a control that breaks when it does is a control
+        # that will be "fixed" by weakening it. Only the violations are asserted.
+        "routed-while-unavailable=$($bad.Count) $(if ($bad.Count) { $bad -join ',' })"
+    } 'routed-while-unavailable=0 '
+
+    C 'route: a question type whose only capability is absent refuses and names it' {
+        $m = Get-Registry
+        foreach ($c in $m.capabilities) { if ($c.id -eq 'crypto.jose.parse') { $c.state = 'absent' } }
+        $r = Get-Route -Registry $m -QuestionType 'Q6.crypto'
+        $msg = Get-RouteRefusal -Route $r
+        "steps=$(@($r.steps).Count) names=$($msg -match 'crypto\.jose\.parse') exit-would-be=2"
+    } 'steps=0 names=True exit-would-be=2'
+
+    C 'route: a hard edge puts its producer ahead of the consumer, and says which fact' {
+        # Q3.behaviour names `native.ida.decompile`; that capability's runner binds
+        # `native.func.named`, which ONLY `native.ida.list_functions` publishes -- and
+        # list_functions does NOT declare Q3 for itself, so it can only be in this mission
+        # because an edge pulled it in. The hardcoded table could not do this: it had
+        # `needs = @()` for Q3.behaviour, and typed `list_functions, decompile` by hand for
+        # the two question types that happened to have entries. Both halves are asserted:
+        # the order, and the fact that the producer was not there by declaration.
+        $reg = Get-Registry
+        $lfDecl = @($reg.capabilities | Where-Object { $_.id -eq 'native.ida.list_functions' })[0].question_types
+        $r = Get-Route -Registry $reg -QuestionType 'Q3.behaviour'
+        $ids = @($r.steps | ForEach-Object { $_.id })
+        $lf = [array]::IndexOf($ids, 'native.ida.list_functions')
+        $dc = [array]::IndexOf($ids, 'native.ida.decompile')
+        $sel = @($r.steps | Where-Object { $_.id -eq 'native.ida.list_functions' })[0].selected_by
+        "producer-first=$(($lf -ge 0) -and ($dc -gt $lf)) via-edge=$(("$sel" -like 'producer:*') -and (@($lfDecl) -notcontains 'Q3.behaviour'))"
+    } 'producer-first=True via-edge=True'
+
+    C 'route: a capability whose runner binds a fact nothing produces is DROPPED, not planned' {
+        # Force the producer out of the host. The consumer then has a hard edge with no
+        # possible producer, and planning it anyway is the silent failure rule 5 exists to
+        # prevent: the round would discover it at run time and record skipped_no_consumer,
+        # which looks safe and is not.
+        $m = Get-Registry
+        foreach ($c in $m.capabilities) { if ($c.id -eq 'native.ida.list_functions') { $c.state = 'absent' } }
+        $r = Get-Route -Registry $m -QuestionType 'Q2.locate'
+        $ids = @($r.steps | ForEach-Object { $_.id })
+        "routed=$($ids -contains 'native.ida.decompile') reason=$(@($r.dropped | Where-Object { $_.id -eq 'native.ida.decompile' })[0].reason)"
+    } 'routed=False reason=unmet_hard_edge'
+
+    C 'route: an input the registry marks unproduced blocks the capability that needs it' {
+        $m = Get-Registry
+        foreach ($c in $m.capabilities) {
+            if ($c.id -eq 'net.pcap.analyse') {
+                $marker = [pscustomobject]@{ status = 'blocked'; reason = 'a control put it here' }
+                $c.consumes.inputs[0] | Add-Member -NotePropertyName unproduced -NotePropertyValue $marker -Force
+            }
+        }
+        $r = Get-Route -Registry $m -QuestionType 'Q4.data'
+        $ids = @($r.steps | ForEach-Object { $_.id })
+        $why = @(@($r.unavailable) + @($r.dropped) | Where-Object { $_.id -eq 'net.pcap.analyse' })[0].reason
+        "routed=$($ids -contains 'net.pcap.analyse') reason=$why"
+    } 'routed=False reason=unproduced_required_input'
+
+    C 'route: an argv slot nothing produces is VISIBLE in the plan, not run and not hidden' {
+        # The prediction is the loop's own: `Get-ArgvSlots` resolves `{input.x}` exactly the
+        # way the substitution loop does, so a capability whose runner binds a fact no
+        # earlier step publishes is skipped in the PLAN rather than discovered mid-run.
+        # `native.ghidra.decompile` binds `{input.outdir}` and no capability publishes a
+        # fact called `outdir`, so it cannot run -- and that is stated, not absorbed.
+        $reg = Get-Registry
+        $r = Get-Route -Registry $reg -QuestionType 'Q2.locate'
+        $allowAll = @($reg.capabilities | ForEach-Object { $_.id })   # grant must not be the reason
+        $steps = @(Resolve-PlanSteps -Route $r -Allowed $allowAll -Registry $reg)
+        $gh = @($steps | Where-Object { $_.id -eq 'native.ghidra.decompile' })[0]
+        "state=$($gh.state) reason-stated=$("$($gh.why)" -match 'outdir')"
+    } 'state=skipped_unmet_input reason-stated=True'
+
+    C 'route: a capability is in the mission for a STATED reason, and the order is stable' {
+        $reg = Get-Registry
+        $bad = @()
+        foreach ($p in $reg.schema.question_types.PSObject.Properties) {
+            $r = Get-Route -Registry $reg -QuestionType $p.Name
+            foreach ($s in $r.steps) {
+                $c = $reg.capabilities | Where-Object { $_.id -eq $s.id } | Select-Object -First 1
+                if (-not $c) { $bad += "$($s.id):not-in-registry"; continue }
+                if ("$($c.state)" -ne 'observed') { $bad += "$($s.id):$($c.state)"; continue }
+                if (-not "$($s.why)") { $bad += "$($s.id):no-reason"; continue }
+                if (("$($s.selected_by)" -eq 'declared') -and (@($c.question_types) -notcontains $p.Name)) {
+                    $bad += "$($s.id):undeclared-but-placed-as-declared"
+                }
+                if ($null -eq $s.registry_index) { $bad += "$($s.id):no-tiebreak-index" }
+            }
+        }
+        # Determinism: the same registry, routed twice, must give the same order twice.
+        $a = @((Get-Route -Registry $reg -QuestionType 'Q4.data').steps | ForEach-Object { $_.id }) -join ','
+        $b = @((Get-Route -Registry (Get-Registry) -QuestionType 'Q4.data').steps | ForEach-Object { $_.id }) -join ','
+        if ($a -ne $b) { $bad += 'order-not-stable' }
+        "unsound=$($bad.Count) $(if ($bad.Count) { $bad -join ',' })"
+    } 'unsound=0 '
+
+
     Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
 
     $mCases = $script:mCases
@@ -1433,30 +2073,60 @@ function Invoke-Selftest {
 
 function Invoke-Ablate {
     <#
-      Is every one of the seven gates load-bearing, or are six of them a sentence in a
-      comment that happens to look like a gate?
+      Two passes, because this file now has two kinds of removable decision, and both were
+      found by this instrument:
 
-      Measured 2026-10-02, on the version that had 15 controls: rewriting any six of the
-      seven `G '<name>' <expr>` expressions to `$true` left the whole suite green. This
-      function is the instrument that found it, and it is kept so it cannot be undone
-      quietly: it does the same seven rewrites, one at a time, on a temporary copy.
+      PASS 1 -- the seven verdict gates. Measured 2026-10-02, on the version that had 15
+      controls: rewriting any six of the seven `G '<name>' <expr>` expressions to `$true`
+      left the whole suite green. Six of seven gates were a sentence in a comment. This
+      function is what found it and is kept so it cannot be undone quietly.
+
+      PASS 2 -- the six routing rules. Capability selection used to be a hardcoded
+      seven-entry hashtable, which ablation could not touch at all: there was no mechanism
+      to remove, only a table to read, and a table is not a mechanism. The route is six
+      decisions, each with exactly one assignment line, so each can be neutralised and the
+      suite asked whether it noticed. A routing rule that can be deleted without turning
+      the suite red is a sentence in a comment, exactly as a gate is -- and the whole point
+      of this change is that the route is derived rather than typed, so "derived" has to
+      be measured rather than asserted in a comment.
 
       Three things keep this from being a check that always passes:
         1. A PRISTINE copy is run first. If the suite is already red, "load-bearing" means
-           nothing, so this refuses rather than reporting seven meaningless verdicts.
-        2. The rewrite is matched on the `G '<name>'` CALL SITE, not a line number, and
-           a rewrite that matches nothing is an ERROR, not a pass. A silently-unapplied
-           rewrite would report the gate as untested for the wrong reason.
+           nothing, so this refuses rather than reporting meaningless verdicts.
+        2. Every rewrite is matched on the mechanism's OWN ASSIGNMENT, not a line number,
+           and a rewrite that matches nothing -- or matches twice -- is an ERROR, not a
+           pass. A silently-unapplied rewrite would report a rule as untested for the
+           wrong reason, which is the failure mode this instrument exists to prevent.
         3. The copy is deleted in a `finally`, so an exception cannot leave one behind.
 
       The copy lives BESIDE the script, not in %TEMP%: `$RepoRoot` is derived from
       `$PSScriptRoot`, so a copy anywhere else cannot find manifests\capabilities.json and
-      every control would fail for an environmental reason instead of the gate's.
+      every control would fail for an environmental reason instead of the rule's.
     #>
+
+    # Each entry neutralises ONE mechanism, in the way that removes the decision without
+    # removing the code around it: a read becomes `always true`, a check becomes `no
+    # findings`. The replacement strings are single-quoted so `$1` stays a regex
+    # back-reference -- in a double-quoted string PowerShell would eat it as a variable.
+    $routing = @(
+        @{ name = 'qtype-read';   rx = '(?m)^(\s*)\$declares\s*=.*$';        to = '$1$declares = $true'
+           what = 'the question_types membership read: every capability would declare every question type' },
+        @{ name = 'state-read';   rx = '(?m)^(\s*)\$stateOk\s*=.*$';          to = '$1$stateOk = $true'
+          what = 'the state filter: absent and blocked would become routable' },
+        @{ name = 'unproduced';   rx = '(?m)^(\s*)\$unproduced\s*=.*$';      to = '$1$unproduced = @()'
+          what = 'the unproduced-required-input check' },
+        @{ name = 'edge-closure'; rx = '(?m)^(\s*)\$pull\s*=.*$';            to = '$1$pull = @()'
+          what = 'hard-edge closure: no producer would ever be pulled into a mission' },
+        @{ name = 'unmet-edge';   rx = '(?m)^(\s*)\$unmetHard\s*=.*$';       to = '$1$unmetHard = @()'
+          what = 'the unmet-hard-edge drop' },
+        @{ name = 'argv-slot';    rx = '(?m)^(\s*)\$unresolvedSlots\s*=.*$'; to = '$1$unresolvedSlots = @()'
+          what = 'the argv-slot check: a capability with an unfillable placeholder would be planned' }
+    )
     $names = @('process', 'reachability', 'observation', 'independence', 'bounded_claim', 'uncertainty', 'discharged')
     $src = Get-Content -LiteralPath $PSCommandPath -Raw
     $copy = Join-Path $PSScriptRoot ('mission-ablate-{0}.ps1' -f [guid]::NewGuid().ToString('N').Substring(0, 8))
     $loadBearing = 0; $unproved = 0; $errs = 0
+    $rLoad = 0; $rUnproved = 0; $rErrs = 0
 
     try {
         Set-Content -LiteralPath $copy -Value $src -NoNewline -Encoding UTF8
@@ -1488,13 +2158,42 @@ function Invoke-Ablate {
                 $unproved++
             }
         }
+
+        # --- pass 2: the routing rules -------------------------------------------
+        Write-Host ''
+        Write-Host '  routing rules -- each rule neutralised in turn, and the controls it reddened named:'
+        foreach ($m in $routing) {
+            $hits = [regex]::Matches($src, $m.rx)
+            if ($hits.Count -ne 1) {
+                Write-Host ("  {0,-14} ERROR: matched {1} assignment(s) of that variable; expected exactly 1" -f $m.name, $hits.Count)
+                $rErrs++
+                continue
+            }
+            $patched = [regex]::Replace($src, $m.rx, $m.to)
+            Set-Content -LiteralPath $copy -Value $patched -NoNewline -Encoding UTF8
+            $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $copy -Action Selftest 2>&1 | Out-String
+            if ($LASTEXITCODE -ne 0) {
+                # The red controls are the evidence, so they are printed: a row that says
+                # only "load-bearing" cannot be told apart from a row that reddened for an
+                # unrelated reason, which is the same weakness this instrument was built
+                # to eliminate in the gate pass.
+                $red = @($out -split "`r?`n" | Where-Object { $_ -match '^\s*FAIL\s' } |
+                         ForEach-Object { ((($_ -replace '^\s*FAIL\s+', '') -split '\s{2,}')[0]) })
+                Write-Host ("  {0,-14} load-bearing  {1} control(s) reddened: {2}" -f $m.name, $red.Count, ($red -join ' | '))
+                $rLoad++
+            } else {
+                Write-Host ("  {0,-14} NOT TESTED (suite stayed green)  -- {1}" -f $m.name, $m.what)
+                $rUnproved++
+            }
+        }
     } finally {
         Remove-Item -LiteralPath $copy -Force -ErrorAction SilentlyContinue
     }
 
     Write-Host ''
     Write-Host ("ABLATE: {0} load-bearing, {1} unproved, {2} rewrite error(s)." -f $loadBearing, $unproved, $errs)
-    if ($loadBearing -eq $names.Count -and $errs -eq 0) { return 0 }
+    Write-Host ("ROUTING ABLATE: {0} load-bearing, {1} unproved, {2} rewrite error(s)." -f $rLoad, $rUnproved, $rErrs)
+    if ($loadBearing -eq $names.Count -and $errs -eq 0 -and $rLoad -eq $routing.Count -and $rErrs -eq 0) { return 0 }
     return 3
 }
 

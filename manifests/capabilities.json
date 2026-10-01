@@ -11,7 +11,7 @@
       "Q7.origin": "what changed between these two builds"
     },
     "baseline": {
-      "capability_count": 15,
+      "capability_count": 16,
       "note": "The validator pins this count. A capability may only leave capabilities[] by appearing in retired[] with a reason, because deleting an island used to make the registry validate CLEANER rather than louder."
     },
     "retired": [],
@@ -1183,6 +1183,152 @@
       },
       "evidence_source": "dynamic-instrumentation",
       "evidence_source_note": "runtime instrumentation; absent on this host"
+    },
+    {
+      "id": "dynamic.win.frida",
+      "title": "Spawn-gate and read a self-built Windows PE with Frida 17.17.0 on this station",
+      "domains": [
+        "native",
+        "dynamic",
+        "practice"
+      ],
+      "question_types": [
+        "Q3.behaviour"
+      ],
+      "state": "observed",
+      "scope_note": "SELF-BUILT TARGETS ONLY. Every number in this entry came from crackme-corpus/out/c01-stringobf.exe, which this repository authored, copied to %TEMP% before being executed. This entry does not authorise running a third-party or untrusted sample on this station: that is the isolated_vm lane, or a stop. dynamic.device.frida is NOT superseded by this entry and was not edited; that entry is the Android device lane of the same instrument and is correctly absent.",
+      "composition_note": "WHY THERE IS NO `invoke` BLOCK, measured rather than assumed. An invoke is what makes a capability CALLABLE, so its absence is real and a planner is right to mark this entry not-runnable rather than route it as if it were. I tried to write one and the validator refused all three honest shapes, against a copy of this registry with the block spliced in: (A) an argv carrying the instrumentation itself (`Interceptor.attach(t,{onEnter:function(){...}})`) fails R16 -- the braces of a JavaScript object literal are read as a `{placeholder}`, so it reports `placeholder {console.log('HIT');} in invoke.argv has no substitution source`; (B) an argv carrying spaced JavaScript fails R10 as `an invoke argument looks like a joined command line`; (C) the clean shape, `-l <file>.js`, fails R10 with `invoke names 'mobile-lab/frida/hook.js', which does not exist in this repo` -- and writing that hook script is not in this entry's write scope. So the edge `native.ida.list_functions --(native.func.addr)--> dynamic.win.frida` is declared and true but currently SOFT: nothing binds the fact into a command line because there is no command line. The one-line fix is an owner action outside this file: add a hook script under mobile-lab/, then declare `runner: frida` with argv `['<venv>\\Scripts\\frida.exe','-f','{target}','-q','-t','6','-l','mobile-lab/frida/hook.js']` and `consumes_fact: native.func.addr`. Until then the loop cannot execute this composition, and saying so here is cheaper than letting a plan imply otherwise.",
+      "consumes": {
+        "inputs": [
+          {
+            "name": "target",
+            "type": "path_ref",
+            "required": true,
+            "note": "a Windows PE this repository built, copied out of the repo before it runs. The probe uses a %TEMP% copy, never the repo binary in place."
+          },
+          {
+            "name": "function",
+            "type": "address",
+            "required": false,
+            "from": {
+              "capability": "native.ida.list_functions",
+              "field": "native.func.addr"
+            },
+            "note": "the IMAGE-space address the static analyser reports, consumed as the RVA SOURCE and nothing more. It cannot be handed to Interceptor.attach as it stands: fact_types.address says 'an address in the target's own address space', and a static VA is an address in the IMAGE's address space. This capability rebases it against runtime.module.base. The negative control is what makes that distinction measured rather than pedantic."
+          }
+        ],
+        "prior": []
+      },
+      "produces": {
+        "facts": [
+          {
+            "key": "runtime.module.base",
+            "type": "address",
+            "note": "the image base of the attached process as the process actually mapped it, read from Process.mainModule.base. Measured in four runs of one session: 0x7ff6732f0000, 0x7ff6d22d0000, 0x7ff642d00000, 0x7ff7c3a30000 -- four different bases for one binary, against PE ImageBase 0x140000000 with DllCharacteristics 0x8160 (DYNAMICBASE=True). It is per-process and per-run, never reusable."
+          },
+          {
+            "key": "runtime.export.addr",
+            "type": "address",
+            "note": "a module export resolved to its live address inside the target. Measured: Module.getGlobalExportByName('printf') = 0x7ffcf0e5d280 in the injected process. This is the one address source that works without any static analysis, because an export name is in the loaded image."
+          },
+          {
+            "key": "runtime.hook.addr",
+            "type": "address",
+            "note": "an RVA plus runtime.module.base, summed: the value handed to Interceptor.attach. Measured: 0x1080 + 0x7ff7c3a30000 = 0x7ff7c3a31080, accepted by Interceptor.attach with no error. This fact says the address is ATTACHABLE; it does not say a callback fired, and does_not_prove says so explicitly."
+          }
+        ],
+        "invalidates_on": [
+          "the process exits or is re-spawned: the image base is re-randomised every run, so a runtime.* address is valid for exactly one process lifetime"
+        ]
+      },
+      "requires": {
+        "runtime": "frida",
+        "net": "none",
+        "admin": false,
+        "device": false,
+        "disk_mb": 0,
+        "ram_mb": 256,
+        "wall_minutes": 1,
+        "tools": [
+          {
+            "name": "frida",
+            "probe": "& 'D:\\Software\\Tool\\WorkStation\\debugger\\Mobile-Android\\objection\\.venv\\Scripts\\frida.exe' --version",
+            "expect": "17.17.0"
+          },
+          {
+            "name": "frida-ps",
+            "probe": "& 'D:\\Software\\Tool\\WorkStation\\debugger\\Mobile-Android\\objection\\.venv\\Scripts\\frida-ps.exe' --version",
+            "expect": "17.17.0"
+          }
+        ],
+        "install_note": "Frida is NOT on PATH and is NOT in the system Python. It lives only in the objection virtualenv at Mobile-Android\\objection\\.venv\\Scripts\\. A probe written as bare `frida ...` is a probe that fails on this station, which is why both tool probes spell the full path."
+      },
+      "reach": {
+        "fs_read": true,
+        "fs_write": false,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": true,
+        "db_write": false,
+        "containment": "station_under_named_process_rule",
+        "containment_note": "The honest class, and chosen for the measurement rather than for the validator. This capability spawns a process on THIS station and injects into it, so the blast radius is this host: one named, self-built PE, under the station's named-process rule. isolated_vm would be false here -- there is no VM on the path of anything measured in this entry -- and picking it to make a check pass is the exact failure mode this registry is under repair for. The class that WOULD be right for a third-party sample is isolated_vm, and running one here is a stop, not a containment choice.",
+        "note": "exec_target is true because the capability RUNS the binary, which is why containment is pinned at all. fs_write is false for the registered probe: it reads the PE and the process image and writes nothing to disk. That is a statement about the probe command below, not a general promise about every Frida script."
+      },
+      "proves": [
+        "that Frida 17.17.0 is installed on this station and can spawn-gate and inject into a self-built Windows PE: `Spawned ... Resuming main thread!`, `Process terminated`, exit 0, against c01-stringobf.exe sha256 2d59a3c5d3281782e254ed84d14f43768251096240cb85c492f56018b56fbf09",
+        "the runtime image base of the attached process, and that it is NOT the PE ImageBase: 0x7ff7c3a30000 measured against ImageBase 0x140000000, and it moved between every run of the same binary in one session (0x7ff6732f0000, 0x7ff6d22d0000, 0x7ff642d00000, 0x7ff7c3a30000)",
+        "that a module export resolves to a live address inside the target: printf = 0x7ffcf0e5d280",
+        "that a SYMBOL NAME DOES NOT RESOLVE on this class of target: DebugSymbol.fromName('main') returned 0 on a statically linked MSVC binary, while the export name resolved fine in the same script and the same run",
+        "that module_base + RVA lands on real, attachable code: base+0x1080 = 0x7ff7c3a31080, and Interceptor.attach accepted it with no error (the first 16 bytes there were read in a companion run, not in the probe: 48 89 54 24 10 89 4c 24 08 48 81 ec 98 00 00 00, the /Od prologue of a function taking (rcx,rdx))",
+        "that the SAME RVA handed over unrebased does not quietly misbehave, it faults -- see the negative control"
+      ],
+      "does_not_prove": [
+        "THAT ANY INTERCEPTION HAPPENED. The probe attaches an Interceptor and no onEnter callback fired, and this entry does not claim it did. Measured reason: on Windows the `frida -f` CLI resumes the main thread BEFORE the injected script is loaded -- the target's own `usage:` line appears ahead of the first line of the script, and a companion hook on ExitProcess did not fire either. Interception WAS measured separately, through the Python API ordering spawn -> attach -> create_script -> load -> resume, where onEnter did fire and wrote a witness file naming the same address. That ordering is NOT the command registered here, so it is recorded and not claimed: the probe proves the instrument reached the process and resolved addresses, not that it caught a call.",
+        "that this reaches past this station. It is host-process instrumentation of Windows-local PEs and nothing else. It covers no part of the Android device lane, and dynamic.device.frida remains the (absent) entry that says so.",
+        "that a symbol name can be used to find code. DebugSymbol.fromName('main') returned 0, so a hook address on this class of target must be an RVA plus the runtime module base -- never a symbol name, and never the static VA.",
+        "anything whatsoever about a third-party or untrusted binary. Every measurement here is against a binary this repository authored; this entry does not widen that, and does not authorise it.",
+        "that the device lane works. `frida-ps -ai` HANGS on this station for 300 s and never returns, because there is no device. A hang is not a refusal, so it is deliberately neither the probe nor the negative control.",
+        "anything about what the target's code MEANS. This entry proves the instrument reached a process, resolved exports, and refused a wrong address. Reading the logic is what the static entries are for."
+      ],
+      "gate": {
+        "lane": "debug",
+        "requires_verdict": true,
+        "escalation_class": "none"
+      },
+      "gate_must_not_delegate": [
+        "frida -f on any binary this repository did not author",
+        "frida -U, frida-remote, frida-ps -ai: any remote or device session",
+        "frida -p <pid> / -n <name>: attaching to a process this station did not spawn",
+        "Interceptor.replace, Memory.patchCode: altering the target's code or memory rather than observing it"
+      ],
+      "gate_must_not_delegate_why": "Measured, not read. (1) This host ASLRs the image (DllCharacteristics 0x8160, DYNAMICBASE=True), so an address handed over without rebasing does not silently hook the wrong thing -- it faults, which is exactly what the negative control shows and exactly why the rebasing rule is a boundary rather than a style preference. (2) `frida-ps -ai` on a device-less host does not fail, it HANGS for 300 s and never returns, so a lane that is supposed to refuse must never be entered through that command: a hang is not a refusal. (3) The target side is a red line, not a policy knob -- an untrusted sample run on this host is a STOP, and the measured reach here is exactly one named, self-built process under station_under_named_process_rule. (4) The CLI's own resume-before-load ordering is an instrument defect, and it is the dangerous kind: it makes a probe look like a working hook when no callback fired. That is the instrument being wrong, not the subject, and no verdict may lean on this entry until the ordering is under the analyst's control.",
+      "probe": {
+        "command": "& 'D:\\Software\\Tool\\WorkStation\\debugger\\Mobile-Android\\objection\\.venv\\Scripts\\frida.exe' -f \"$env:TEMP\\fridaprobe\\target.exe\" -q -t 6 -e 'var m=Process.mainModule;console.log(`FRIDA_WIN module_base=${m.base}`);console.log(`FRIDA_WIN symbol_main=${DebugSymbol.fromName(`main`)}`);console.log(`FRIDA_WIN export_printf=${Module.getGlobalExportByName(`printf`)}`);console.log(`FRIDA_WIN rebased_main=${m.base.add(0x1080)}`);Interceptor.attach(m.base.add(0x1080),{onEnter:function(){console.log(`FRIDA_WIN HIT main`);}});'",
+        "expect": "FRIDA_WIN symbol_main=0",
+        "exit": 0,
+        "prepare": "New-Item -ItemType Directory -Force -Path \"$env:TEMP\\fridaprobe\" | Out-Null; Copy-Item 'D:\\Software\\Tool\\WorkStation\\debugger\\crackme-corpus\\out\\c01-stringobf.exe' \"$env:TEMP\\fridaprobe\\target.exe\" -Force",
+        "prepare_note": "The probe needs a target. It is the estate's own self-built crackme, copied to %TEMP% and never run from the repo directory. Run `prepare` first, or the probe fails for a reason that has nothing to do with Frida. The JavaScript uses backtick template literals on purpose: it is passed inside PowerShell single quotes, and embedded double quotes are stripped by the native argument builder, which turns this probe into a SyntaxError on the first attempt (measured).",
+        "last_run": "2026-10-02",
+        "last_summary": "target_sha256=2d59a3c5d3281782e254ed84d14f43768251096240cb85c492f56018b56fbf09 | Spawned `%USERPROFILE%\\AppData\\Local\\Temp\\fridaprobe\\target.exe`. Resuming main thread! | usage: ... <password> | FRIDA_WIN module_base=0x7ff7c3a30000 | FRIDA_WIN symbol_main=0 | FRIDA_WIN export_printf=0x7ffcf0e5d280 | FRIDA_WIN rebased_main=0x7ff7c3a31080 | Process terminated | PROBE EXIT=0 | NOTE: no `FRIDA_WIN HIT main` line was printed -- no callback fired, and does_not_prove says so.",
+        "evidence_binding": {
+          "status": "unverified",
+          "reason": "Honest state, not a gap papered over. The probe WAS run on this station by the agent that added this entry, from a clean %TEMP%\\fridaprobe each time, and the console output above is copied verbatim from a run of the command now sitting in this file rather than summarised from another session's transcript. What is NOT retained: no stdout log file, no hash of the run itself, nothing on disk that re-derives the numbers -- only the sha256 of the TARGET binary (2d59a3c5...), which pins what was probed and not what the probe printed. R17 accepts exactly this marker and no softer one, so the day a run writes its own output to a retained path this has to be replaced rather than left."
+        }
+      },
+      "negative_control": {
+        "id": "dynamic.win.frida.static_va_unrebased",
+        "command": "& 'D:\\Software\\Tool\\WorkStation\\debugger\\Mobile-Android\\objection\\.venv\\Scripts\\frida.exe' -f \"$env:TEMP\\fridaprobe\\target.exe\" -q -t 6 -e 'var m=Process.mainModule;console.log(`NEG_CTL module_base=${m.base}`);console.log(`NEG_CTL handing the STATIC va 0x140001080 straight to Interceptor.attach`);Interceptor.attach(ptr(`0x140001080`),{onEnter:function(){}});'",
+        "expect_exit": 1,
+        "expect_output": "Error: access violation accessing 0x140001080",
+        "expect_output_note": "expect_exit is the contract; this line is corroboration. It is written to frida's ERROR stream, so capture it with 2>&1 -- run unpiped, the line can be interleaved away while the exit code stays 1. Measured stable over four consecutive runs: exit 1 every time, line present every time when stderr was captured.",
+        "why": "It must fail, and it must fail for its OWN reason. Measured, same binary, same run, seconds after the probe: `Error: access violation accessing 0x140001080`, exit 1. The reason is the address SPACE, not a typo: 0x140001080 is the genuine image-space address of main (PE ImageBase 0x140000000 + rva 0x1080, rva 0x1080 lying inside .text whose VA is 0x1000 with virtual size 0x156d0, and IDA recovering main there with size 0x17e), so it is unmapped only because DYNAMICBASE moved the image to 0x7ff7c3a30000. The probe, one command earlier, attached cleanly at base+0x1080. Two other obvious controls were rejected rather than shipped: an obviously bogus address such as 0xDEADBEEF would fault too, but it cannot tell 'you failed to rebase' from 'any bad address faults', so it would pass for an unrelated reason; and `frida-ps -ai` does not fail at all, it hangs, so it is not a control."
+      },
+      "provenance": {
+        "source": "measured on this station 2026-10-02, by the agent that added this entry rather than copied from another session's transcript",
+        "record": "docs/research/dynamic-pairings.md"
+      },
+      "evidence_source": "dynamic-instrumentation",
+      "evidence_source_note": "Frida injects into and observes a live process. Same family as dynamic.device.frida on purpose: that entry is the Android lane of the SAME instrument and is correctly absent, this one is the Windows-local lane and is observed. One instrument, two lanes -- so a chain that cites both is not two independent opinions, and no verdict may count them as corroboration."
     },
     {
       "id": "fuzz.differential.parse",
