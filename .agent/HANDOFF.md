@@ -1,6 +1,23 @@
 # HANDOFF — reverse workstation
 
-**Read this first. Then `.agent/RECOVERY-STATION.md` for measured detail.**
+**刚发生的事 (2026-10-02):** a deep review with concurrent subagents found this repo's own
+verification layer was not verifying itself. The headline — **C1**, the "complete, confident,
+wrong answer" this harness exists to reject — still reached `tier=confirmed` with every fact
+invented, no tool run, both capabilities IDA Pro and four guards named that never ran. Under
+it: `gate.ps1` accepted a grant whose Owner word and provenance were blanked with the
+attacker-recomputed public hash (eight exploited holes); the registry validator's R8 could
+never fire for any of its five effects; the registry declared **one** composition edge, and
+capability selection was a hardcoded table that never read the registry at all. All
+reproduced first, all fixed, all covered by a control that reddens when its mechanism is
+removed. Commits `f1d23de`, `5ec8878`, `4e381f0`.
+
+**下一步:** the gate and the verdict layer are now honest, and that exposed the real gap —
+**the only end-to-end mission chain is one instrument, IDA Pro, held twice, so it cannot
+corroborate itself and `Q2.locate` correctly returns `unresolved`.** Do not weaken
+`independence` to change that. Two workers are in flight: board `W10-RECONCILE` (this file's
+`docs/research/` figures) — wait, do not duplicate. Full record with every measured number
+and the dead ends not to re-walk: **`.agent/detail-2026-10-02-deep-review.md`**. What
+follows below is the 2026-09-30 record; §9 is the only part kept current.
 
 Written 2026-09-30 at the end of a long session. Every number below was produced by a
 command in this repo. Nothing here is remembered.
@@ -224,17 +241,20 @@ Structural fixes, not fourth patches:
 
 | | |
 |---|---|
-| registry | **15 capabilities**, CLEAN · **11 validator rules, 18 selftest cases** |
-| gate selftest | **10** refusals and grants |
-| mission selftest | **15/15** incl. N4; **7** verdict gates |
+| registry | **16 capabilities**, CLEAN · **19 validator rules, 46 selftest cases** |
+| gate selftest | **24** refusals and grants |
+| mission selftest | **51** controls incl. N4; **7** verdict gates; **6** routing rules |
+| ablation | `-Action Ablate` → **7 verdict + 6 routing load-bearing, 0 unproved** |
 | ghidra fail-open regression | **4/4 LOOP CLOSED** |
 | fuzz lab | **24/24 LOOP CLOSED**, 740 s at budget 90 (floor 40) |
 | native-lab | **15/15 LOOP CLOSED**, ~2.4 s |
-| fast smoke subset | **5/5 in 33 s**; the full aggregate contends on three Ghidra-consuming probes and is killed by timeout |
+| full aggregate smoke | **pass=19 fail=0**, ~270 s. The old "contends on three Ghidra probes and is killed by timeout" is **REFUTED** — concurrent run 103.47 s vs 161.93 s serial, all passing. The real hazard is **fixed loopback ports**: two `crypto-lab` runs both bind 8791 and one dies `EADDRINUSE`; two `native-lab` runs both bind 8745 and the loser exits 1 |
 | research | `docs/research/` — 8 reports, 5,634 lines. Measured 2026-10-02 with `(Get-ChildItem docs\research -Filter *.md \| Where-Object Name -ne README.md \| Get-Content).Count`, summed per file |
 | `E:` | **28.01 GiB free of 33.67 GiB** (measured 2026-10-02, `Get-Volume -DriveLetter E`). The VHDX **never returns bytes**; budget by peak cumulative pull |
 
-Both trees clean. `<private-tree>` 18 commits, station 47.
+Both trees clean at the time of the 2026-10-02 review commit. `<private-tree>` 18 commits,
+station 49 — **re-measure with `git rev-list --count HEAD` in each**; the station moved
+three times after this line was last written.
 
 ---
 
