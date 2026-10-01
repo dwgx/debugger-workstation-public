@@ -1251,7 +1251,7 @@
           {
             "key": "runtime.module.base",
             "type": "address",
-            "note": "the image base of the attached process as the process actually mapped it, read from Process.mainModule.base. Measured in four runs of one session: 0x7ff6732f0000, 0x7ff6d22d0000, 0x7ff642d00000, 0x7ff7c3a30000 -- four different bases for one binary, against PE ImageBase 0x140000000 with DllCharacteristics 0x8160 (DYNAMICBASE=True). It is per-process and per-run, never reusable."
+            "note": "the image base of the attached process as the process actually mapped it, read from Process.mainModule.base. This note originally read 'four different bases for one binary ... per-process and per-run, never reusable', and that was OVERSTATED: re-measured 2026-10-02, five consecutive runs of the same binary under the same name all returned 0x7ff666bb0000, while an earlier run the same day returned 0x7ff79e010000. So the honest statement is that it is stable within a session and differs between them, against PE ImageBase 0x140000000 with DllCharacteristics 0x8160 (DYNAMICBASE=True). The rule that follows is unchanged and still load-bearing -- read it at runtime, never hardcode it -- but the reason is that nothing about it is guaranteed, not that it demonstrably moves every single run. Overstating a measurement to make a rule sound stronger is the error this registry exists to prevent, in either direction."
           },
           {
             "key": "runtime.export.addr",
@@ -2125,7 +2125,7 @@
               "capability": "native.ida.list_functions",
               "field": "native.func.addr"
             },
-            "note": "consumed as the RVA SOURCE only. It cannot be handed to Interceptor.attach as it stands: this host ASLRs the image, so the recipe parses the entry RVA out of the PE headers and adds it to the RUNTIME module base read from the attached process. Four separate runs produced four different bases."
+            "note": "consumed as the RVA SOURCE only. It cannot be handed to Interceptor.attach as it stands: this host ASLRs the image, so the recipe parses the entry RVA out of the PE headers and adds it to the RUNTIME module base read from the attached process. MEASURED, and correcting an overstatement: the base did NOT vary across five consecutive runs on 2026-10-02 (0x7ff666bb0000 every time), though it differed from the value observed earlier the same day (0x7ff79e010000). So the honest statement is that it varies ACROSS sessions and is not safe to hardcode, not that it differs every run -- a phrasing this entry previously carried and a worker corrected. The rebasing rule is unaffected and still load-bearing: the neg-badaddr control faults every time, because handing over the static VA is wrong regardless of whether the base happens to be repeatable."
           }
         ]
       },
@@ -2134,7 +2134,7 @@
           {
             "key": "runtime.module.base",
             "type": "address",
-            "note": "the image base as the process actually mapped it. Measured on 2026-10-02: 0x7ff79e010000 for target.exe, 0x7ff726b20000 for c01-stringobf.exe under a different name -- per-process and per-run, never reusable."
+            "note": "the image base as the process actually mapped it. Measured 2026-10-02: 0x7ff666bb0000 across five consecutive runs of target.exe, and 0x7ff79e010000 earlier the same day, and 0x7ff726b20000 for the same binary under a different filename. Stable within a session, different between them. It is therefore never safe to hardcode, which is the property that matters -- the reason to rebase is not that the base moves every run but that nothing about it is guaranteed to hold."
           },
           {
             "key": "runtime.hook.hit",
