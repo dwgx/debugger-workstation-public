@@ -813,8 +813,29 @@ function Invoke-Mission {
                             if ($null -ne $val -and $null -ne $val.PSObject.Properties[$path]) { $val = $val.$path }
                             else { $unresolved += ($srcKey + '.' + $path); $val = $null }
                         }
-                        if ($null -ne $val -and $null -ne $idx) {
+                        # Skipped when `element_path` is present: that key indexes THEN reads a
+                        # property, and letting the plain index run first would consume the
+                        # index and leave an object where a property was wanted.
+                        if ($null -ne $val -and $null -ne $idx -and $null -eq $cap.invoke.select.element_path) {
                             if (@($val).Count -gt $idx) { $val = @($val)[$idx] } else { $unresolved += ($srcKey + '[' + $idx + ']'); $val = $null }
+                        }
+                        # `element_path` -- index into a LIST, then pull one property off the
+                        # element. Needed because `select.path` runs BEFORE `select.index`
+                        # and a list has no `.addr`, while an index alone yields the whole
+                        # object. Measured: native.ida.list_functions fact_maps
+                        # native.func.addr to `functions`, which is a list of
+                        # {addr, name, size} objects -- neither existing key could reach the
+                        # address, so native.disasm.capstone was handed the stringified list
+                        # and its round failed while the command itself worked perfectly by
+                        # hand. A distinct key rather than a reordering of `path`, because
+                        # reordering would change what every existing capability means.
+                        if ($null -ne $val -and $null -ne $idx -and $null -ne $cap.invoke.select.element_path) {
+                            $ep = $cap.invoke.select.element_path
+                            if (@($val).Count -gt $idx) {
+                                $el = @($val)[$idx]
+                                if ($null -ne $el -and $null -ne $el.PSObject.Properties[$ep]) { $val = $el.$ep }
+                                else { $unresolved += ($srcKey + '[' + $idx + '].' + $ep); $val = $null }
+                            } else { $unresolved += ($srcKey + '[' + $idx + ']'); $val = $null }
                         }
                         if ($null -ne $val) { $v = "$val" }
                     } else { $v = "$val" }
@@ -1062,10 +1083,38 @@ function Test-EvidenceIds {
         if ("$($e.round)" -ne '' -and [int]$e.round -ne $num) { $problems += "evidence id '$id' does not encode the round $($e.round) it records"; continue }
         $seen[$id] = $num
     }
+    # Contiguity, over ALL recorded evidence rather than only the good ones. Measured: this
+    # previously tested the GOOD ids and demanded they run e1..eN with no holes, which is wrong
+    # -- a round that legitimately FAILS must leave a hole in the good set, because that hole
+    # is the record of it. It fired on the first two-family mission: rounds e1, e2, e4 were
+    # good, e3 was a round that correctly refused a non-ZIP target, and the gate reported the
+    # refusal itself as a fabricated id. A gate that blocks a correct result is as broken as
+    # one that waves a wrong one through.
+    #
+    # The forgery this was written to catch -- a caller writing "e7" onto a two-round mission --
+    # is still caught, and caught MORE tightly: the good ids must be a SUBSET of the ids that
+    # actually correspond to a recorded round, and no good id may exceed the number of rounds
+    # that ran. An id with no recorded round behind it cannot pass.
+    $allNums = @($Evidence | ForEach-Object { if ("$($_.id)" -match '^e(\d+)$') { [int]$Matches[1] } } | Sort-Object -Unique)
+    $maxRound = if ($allNums.Count) { $allNums[-1] } else { 0 }
     $good = @($Evidence | Where-Object { $_.ok -eq $true })
-    $nums = @($good | ForEach-Object { if ("$($_.id)" -match '^e(\d+)$') { [int]$Matches[1] } } | Sort-Object)
-    for ($i = 0; $i -lt $nums.Count; $i++) {
-        if ($nums[$i] -ne ($i + 1)) { $problems += "good evidence ids are not contiguous from e1 (got $(($nums | ForEach-Object { 'e' + $_ }) -join ', ')): an id that resolves to no recorded round is a fabricated id"; break }
+    $nums = @($good | ForEach-Object { if ("$($_.id)" -match '^e(\d+)$') { [int]$Matches[1] } } | Sort-Object -Unique)
+    # The rule, stated so it cannot be satisfied circularly: EVERY id at or below a good one
+    # must have a round behind it. My first attempt compared good ids against the set of ALL
+    # recorded ids, which is circular -- a forged id is itself an entry in $Evidence, so it
+    # always looked present. The estate's own selftest caught it: "a FABRICATED evidence id
+    # that resolves to no round fails process alone" came back confirmed. Requiring 1..g to be
+    # present catches it, because a forged e7 on a two-round mission has no e3..e6 behind it,
+    # while a good e4 on a four-round mission is fine even when e3 legitimately failed.
+    foreach ($g in $nums) {
+        for ($k = 1; $k -le $g; $k++) {
+            if ($allNums -notcontains $k) {
+                $problems += ("good evidence id 'e{0}' requires round e{1} to have run, and no " +
+                               "such round is recorded: an id that resolves to no round is a fabricated id" -f $g, $k)
+                break
+            }
+        }
+        if ($problems.Count) { break }
     }
     return $problems
 }

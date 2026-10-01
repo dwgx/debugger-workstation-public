@@ -53,26 +53,57 @@ def refuse(code: int, msg: str, **extra):
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("binary")
-    ap.add_argument("--rva", type=lambda s: int(s, 0), required=True)
-    ap.add_argument("--count", type=int, default=48)
+    ap.add_argument("--rva", type=lambda s: int(s, 0), default=None,
+                    help="relative virtual address, e.g. 0x1080")
+    ap.add_argument("--addr", type=lambda s: int(s, 0), default=None,
+                    help="image-space address as produced by a static analyser, e.g. 0x140001080. "
+                         "Converted to an RVA HERE, never in the caller's argv.")
+    ap.add_argument("--hex", default=None,
+                    help="address as a hex STRING, e.g. '0x140001080'. This is the form the "
+                         "registry's typed facts use, so the orchestrator can pass one through "
+                         "unchanged instead of string-formatting a number into a command.")
+    ap.add_argument("--count", type=int, default=48,
+                    help="how many instructions to decode. This truncates arbitrarily, so the "
+                        "count says NOTHING about the function's extent.")
+    ap.add_argument("--verbose", action="store_true",
+                    help="also print the human-readable RIP-REL table to STDERR. Off by "
+                         "default: the orchestrator merges stderr into stdout, so any stderr "
+                         "decoration corrupts the JSON this tool declares it emits.")
     ap.add_argument("--force", action="store_true",
                     help="disassemble even in a non-executable section (packed or self-modifying code)")
     ap.add_argument("--json-out", default=None)
     args = ap.parse_args()
+
+    # Exactly one address form, so a caller cannot accidentally pass both and have one silently
+    # win. Measured need: the registry's typed fact is a hex STRING like "0x140001080", so the
+    # orchestrator must be able to hand it over unchanged rather than string-formatting a number
+    # into a command line -- R10 exists precisely to refuse commands assembled that way.
+    given = [v for v in (args.rva, args.addr, args.hex) if v is not None]
+    if len(given) != 1:
+        ap.error("give exactly one of --rva, --addr, --hex")
 
     try:
         pe = pefile.PE(args.binary)
     except pefile.PEFormatError as e:
         refuse(1, f"not a PE: {e}")
 
+    base = pe.OPTIONAL_HEADER.ImageBase
+
+    # THE CONVERSION, done here and nowhere else. IDA reports an image-space address and this
+    # tool works in RVAs; the difference is ImageBase, which is 0x140000000 for this corpus
+    # binary and is NOT constant across binaries. Putting the subtraction in the caller's argv
+    # would make the command depend on a number the caller had to parse out of the target.
+    rva = args.rva if args.rva is not None else (
+        int(args.hex, 0) if args.hex is not None else args.addr) - base
+    args.rva = rva
+
     # Resolve the RVA through the section table. This is the step whose absence produced a
     # silent zero-instruction run in the first draft of this script.
     try:
-        off = pe.get_offset_from_rva(args.rva)
+        off = pe.get_offset_from_rva(rva)
     except Exception as e:
-        refuse(1, f"RVA 0x{args.rva:x} is not mapped by any section: {e}")
+        refuse(1, f"RVA 0x{rva:x} is not mapped by any section: {e}")
 
-    base = pe.OPTIONAL_HEADER.ImageBase
     data = pe.__data__[off:off + 0x200]
 
     md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
@@ -162,10 +193,24 @@ def main() -> int:
     if args.json_out:
         with open(args.json_out, "w", encoding="utf-8") as fh:
             fh.write(text)
-    print(json.dumps({k: out[k] for k in ("ok", "rva", "file_offset", "count")}))
-    for op in operands:
-        print(f"  RIP-REL {op.get('text',''):<44} -> {op.get('target','?')} "
-              f"width={op.get('width','?'):<6} byte={op.get('byte','?')} dword={op.get('dword','?')}")
+    # STDOUT MUST BE PURE JSON, and this tool broke that contract until the mission proved it.
+    # It declared stdout:json and then printed a compact summary line followed by
+    # human-readable RIP-REL lines, so ConvertFrom-Json failed on the mixed stream. The command
+    # ran perfectly by hand with exit 0 while the mission recorded the round ok:false -- a tool
+    # that is fine interactively and unusable to a machine, which is the exact shape of failure
+    # this project exists to catch. The human table now goes to stderr, where a person can
+    # still read it and stdout stays parseable.
+    print(text)
+    # Nothing goes to stderr unless asked. mission.ps1:833 runs a capability as
+    # `& $runner @argList 2>&1 | Out-String` -- it MERGES stderr into stdout -- so a tool that
+    # decorates stderr corrupts the very JSON it declared. The first fix moved this table to
+    # stderr and the round STILL failed, which is how the merge was found. A tool whose invoke
+    # says stdout:json must be silent on stderr by default; the table is opt-in.
+    if args.verbose:
+        for op in operands:
+            print(f"  RIP-REL {op.get('text',''):<44} -> {op.get('target','?')} "
+                  f"width={op.get('width','?'):<6} byte={op.get('byte','?')} dword={op.get('dword','?')}",
+                  file=sys.stderr)
     return 0
 
 
