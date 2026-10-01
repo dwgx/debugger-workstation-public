@@ -1591,11 +1591,16 @@ None of these were applied — this assignment is read-only against the repo.
 
 ## 5. Registry-entry id list (the answer to the brief's last question)
 
-> **PROPOSAL, superseded by `manifests/capabilities.json`.** The shipped registry holds
-> **15 entries** (`python scripts/registry-verify.py` → `capabilities: 15`, CLEAN). Of the
-> nine ids proposed below, `native.ghidra.emulate` shipped (as `blocked`); the other eight
-> — `native.diff.ghidra.vt`, `native.symhash.ghidra`, `ghidra.resident.http` and the rest
-> — are **not** in the shipped registry. Kept as the research record.
+> **PROPOSAL, superseded by `manifests/capabilities.json`.** The shipped registry held
+> **15 entries** when this document was written (`python scripts/registry-verify.py` →
+> `capabilities: 15`, CLEAN) and holds **16 at `HEAD` = `e246427`** (re-verified 2026-10-02:
+> `capabilities: 16`, `REGISTRY CLEAN`, exit 0). The sixteenth is **`dynamic.win.frida`** —
+> Windows-local Frida, added by commit `4e381f0`; it is not a Ghidra entry and does not
+> change anything below. *(A sibling added a 17th, `ops.skill.security`, to the working tree
+> during the 2026-10-02 reconciliation; the committed count is 16.)* Of the nine ids proposed
+> below, `native.ghidra.emulate` shipped (as `blocked`); the other eight —
+> `native.diff.ghidra.vt`, `native.symhash.ghidra`, `ghidra.resident.http` and the rest —
+> are **not** in the shipped registry. Kept as the research record.
 
 ```
 native.triage.ghidra          observed

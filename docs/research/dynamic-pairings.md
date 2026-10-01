@@ -93,6 +93,107 @@ Owner-authored, self-built crackme** — which is exactly the case the estate pe
 capability entry must say so in its `does_not_prove`, and this dossier does not propose
 widening it.
 
+### 1.3a What happened next — the entry shipped, and it does **not** claim what §1.2 shows
+
+**Reconciled 2026-10-02.** `dynamic.win.frida` is registered, `state: observed`, commit
+`4e381f0`. `python scripts/registry-verify.py` → `REGISTRY CLEAN`, exit 0, and the entry is
+in the mission route (`mission.ps1 -Action Plan -QuestionType Q3.behaviour` lists
+`dynamic.win.frida skipped_no_invoke` among 7 routed capabilities). The recommendation above
+was followed exactly: **`dynamic.device.frida` was not mutated** and is still `absent`.
+
+**And here is the part worth reading twice, because it is the dossier's own standard applied
+against itself.** §1.2 above quotes a transcript in which `HIT main via module-relative
+offset` *did* print. **The registered probe does not reproduce that**, and the entry says so
+in its own `does_not_prove`:
+
+> **THAT ANY INTERCEPTION HAPPENED.** The probe attaches an `Interceptor` and **no `onEnter`
+> callback fired**, and this entry does not claim it did. Measured reason: on Windows the
+> `frida -f` CLI **resumes the main thread BEFORE the injected script is loaded** — the
+> target's own `usage:` line appears ahead of the first line of the script, and a companion
+> hook on `ExitProcess` did not fire either. Interception *was* measured separately, through
+> the Python API ordering `spawn → attach → create_script → load → resume`, where `onEnter`
+> did fire and wrote a witness file naming the same address. **That ordering is not the
+> command registered here, so it is recorded and not claimed.**
+>
+> … that the device lane works. `frida-ps -ai` **HANGS on this station for 300 s and never
+> returns**, because there is no device. **A hang is not a refusal**, so it is deliberately
+> neither the probe nor the negative control.
+>
+> — `manifests/capabilities.json`, `dynamic.win.frida.does_not_prove`
+
+**So the two measurements in this document are both true, and they are about different
+things.** The dossier keeps both rather than picking the flattering one:
+
+| | what fired | what it proves |
+|---|---|---|
+| §1.2's transcript (`w1-debugpairing.md:755-768`) | `onEnter` **did** fire, via `-l script.js` with the Python API ordering | interception is achievable on this host **with that ordering** |
+| the registered `probe.command` | `onEnter` did **not** fire — the CLI resumes the main thread before the script loads | the registered command proves the instrument reached the process and resolved addresses; **not** that it caught a call |
+
+An entry that quoted §1.2's transcript and shipped the CLI command would be claiming a result
+its own runnable command does not produce — which is the North Star violation inverted:
+shipping a command that cannot demonstrate the claim attached to it. The fix is not a better
+command, it is **a `does_not_prove` that names the gap**, and that is what shipped.
+
+**`frida-ps -ai` hangs 300 s rather than refusing** (carried from §1.2's parent measurement,
+and confirmed by the entry's own `does_not_prove`). Both facts are on the record because the
+survey's transcript said `No installed applications.` and the parent's run did not return at
+all — **the same command failing two different ways, and the hang being the more dangerous
+one**, since a hang produces no exit code to assert on.
+
+### 1.3b The gap was then *closed*, by a sibling entry rather than an edit
+
+**Reconciled 2026-10-02, commit `96e718c` — after §1.3a was written.** The refusal above was
+true but incomplete: a refusal names the gap, and **a refusal plus a capability that closes
+it is the whole job.** That capability now exists.
+
+**`dynamic.win.frida.intercept`**, `state: observed`, `evidence_source:
+dynamic-instrumentation`, `question_types: ["Q3.behaviour"]`, backed by a real tool —
+`native-lab/tools/frida_spawn_gate.py`.
+
+| | `dynamic.win.frida` (the CLI entry) | `dynamic.win.frida.intercept` (the API entry) |
+|---|---|---|
+| probe | `frida.exe -f … -q -t 6 -e …` | `frida_spawn_gate.py <target> positive` → `verdict=INTERCEPT-PROVEN` |
+| ordering | `resume` then `load` — **the script lands too late** | `spawn(suspended) → load → resume → HIT` |
+| `onEnter` fired? | **no** | **yes** — `runtime.hook.hit`, HIT at `0x7ff79e0115d0`, tid 44248, **hit count 1** |
+| claims | spawn-gating + export resolution | **interception** |
+
+**The third fact is the one worth keeping.** `instrument.ordering` is a *produced* fact, not
+a comment, and its own note says why:
+
+> *"the emitted event order `spawn(suspended) → load → resume → HIT`. **This is the
+> load-bearing fact of the whole entry and it is printed so it can be read rather than
+> inferred from a tool's internals.** The CLI emits the opposite order and cannot intercept
+> as a result."*
+
+**A measurement that is printed beats a measurement that is in a tool's source**, because the
+next person can read the ordering off the output instead of re-deriving it — which is exactly
+how §1.2 and §1.3a disagreed about whether the CLI intercepts.
+
+**And `hit count 1` is recorded on purpose.** The note: *"ONE hit is the interpretable number:
+a hook firing thousands of times would still prove interception and still be useless."* A
+capability that measured only "did it fire" would pass on a hook in a hot loop.
+
+**Its negative control refuses before the risky stage**, which is the shape §4's S5 asks for:
+`dynamic.win.frida.intercept.rebase_and_address_failures`, `expect_exit: 3`,
+`expect_output: "attach never attempted: attach_error=None"`. The output names *which stage*
+refused, so the control cannot pass for a reason other than the invariant it names.
+
+**Why a sibling and not an edit** — the entry's own `composition_note`, quoted because it is
+the rule this dossier is arguing for:
+
+> *"WHY A SIBLING RATHER THAN AN EDIT. Editing `dynamic.win.frida` to claim interception
+> would make the entry describe something its registered probe does not do. The charter's
+> rule is that a capability states what its probe proves; **a capability whose probe cannot
+> show the claim is a claim wearing a capability's clothes.** So the CLI entry keeps its
+> narrower, true `does_not_prove` and this entry carries the…"*
+>
+> — `manifests/capabilities.json`, `dynamic.win.frida.intercept.composition_note`
+>
+**Both entries are `evidence_source: dynamic-instrumentation` — the same family, on purpose.**
+They are one instrument in two orderings. **A verdict may not count them as corroboration**
+(`R18` enforces the family rule, and the `frida` selftest case *"R18 one instrument wearing
+> two families"* is what catches the mistake).
+
 ---
 
 ## 2. The measurement that makes RVA transfer mandatory
@@ -143,15 +244,41 @@ runtime module base**, never a symbol name and never a static VA.
 |---|---|---|
 | IDA emits the function | `{'addr': '0x140001080', 'name': 'main', 'size': '0x17e'}` | `native-lab/tools/list-funcs.mjs` — *"496 functions in c01-stringobf.exe"* |
 | PE `ImageBase` | `0x140000000`; `DllCharacteristics: 0x8160`, `DYNAMICBASE(ASLR): True` | `pefile` |
-| runtime module base | `0x7ff611800000` — **differs every run** | `frida` |
+| runtime module base | **four different values in one session**: `0x7ff6732f0000`, `0x7ff6d22d0000`, `0x7ff642d00000`, `0x7ff7c3a30000` | `frida` — recorded in `runtime.module.base`'s own `note` |
+
+**The base moves every single run.** The single value `0x7ff611800000` recorded by the survey
+is not stale, it is *one sample*, and treating it as the base is the same class of error as
+treating the static VA as hookable. This is why the registry gives `runtime.module.base` an
+`invalidates_on` clause — *"the process exits or is re-spawned: the image base is
+re-randomised every run, so a `runtime.*` address is valid for exactly one process
+lifetime."*
 
 **The typed link, which is therefore a pair and not a single fact**
-(`w1-debugpairing.md:138-146`):
+(`w1-debugpairing.md:138-146`) — **and which shipped**:
 
-> **`native.func.rva`** (new fact key, type `address` — offset from `native.func.addr`, or a
-> new subtype `offset`) **+ `runtime.module.base`** (new fact key, type `address`) → sum →
-> **`dynamic.hook.addr`** (new fact key, type `address`, the value handed to
-> `Interceptor.attach`)
+> **`native.func.rva`** (fact key, type `address`) **+ `runtime.module.base`** (fact key,
+> type `address`) → sum → **`dynamic.hook.addr`** (fact key, type `address`, the value handed
+> to `Interceptor.attach`)
+>
+> **Reconciled 2026-10-02: two of those three shipped, and the one that did not is the
+> interesting one.** Walking every `produces.facts[].key` in the registry
+> (`python` over `manifests/capabilities.json`) gives `runtime.module.base`,
+> `runtime.export.addr` and `runtime.hook.addr` — and **no `native.func.rva`**. The RVA was
+> not published as a fact; it is **derived at rebasing time** from the static
+> `native.func.addr` minus the PE `ImageBase`.
+
+**The fifth typed edge, and the note that makes it safe.** `dynamic.win.frida` consumes
+`native.ida.list_functions`'s `native.func.addr` as its **RVA source and nothing more** —
+which is the fifth typed edge in the registry. The input's own `note` says it in as many
+words: *"It cannot be handed to `Interceptor.attach` as it stands: `fact_types.address` says
+an address in the target's own address space, and a static VA is an address in the IMAGE's
+address space. This capability rebases it against `runtime.module.base`. The negative control
+is what makes that distinction measured rather than pedantic."*
+
+**One address source that works with no static analysis at all**, now a declared fact:
+`Module.getGlobalExportByName('printf')` = `0x7ffcf0e5d280`. An export name is in the loaded
+image, so it resolves where a debug symbol does not. That is `runtime.export.addr`, and it
+is the fastest path from "I have a PE" to "I have a live address" on this host.
 
 ---
 
@@ -641,13 +768,25 @@ Carried from `w1-debugpairing.md:1197-1221` without softening.
 - **From the parent's 2026-10-02 measurement:** an `onEnter` **callback firing** is
   `[UNVERIFIED]`. The spawn-gate, the global-export resolution and the module-relative hook
   are measured; the callback's own firing has not been reproduced by the parent.
+  → **Reconciled 2026-10-02: this is now settled in the *negative*, and that is the finding.**
+  The registered probe's `onEnter` does **not** fire, and the reason is measured rather than
+  unknown: the `frida -f` CLI resumes the main thread before the script loads (§1.3a). The
+  capability entry does not claim interception. `[UNVERIFIED]` → **`[NEGATIVE, MEASURED]`**.
+- **The module base is not one value.** Four different bases across four runs of one binary
+  in one session (§2). The survey's single `0x7ff611800000` is **one sample**, not the base.
+- `[UNVERIFIED]` **`native.func.rva` was never shipped.** It is derived at rebasing time from
+  the static `native.func.addr` minus the PE `ImageBase`; walking every
+  `produces.facts[].key` on 2026-10-02 finds `runtime.module.base`,
+  `runtime.export.addr` and `runtime.hook.addr` and **no** `native.func.rva`.
 
 **What I verified myself, 2026-10-02, and vouch for:** the registry's `address` fact-type
 definition quoted in §2 (re-read from `manifests/capabilities.json`); that only 4 of the 10
 declared fact types are ever produced; that `dynamic.device.frida` is `absent` with
 `escalation_class: impossible`; and the `E:` free figure (28.01 GiB) in `cost-matrix.md` §6.2.
 **Everything in §1's measurements and §3's `[MEASURED]` tags is the surveying agent's, cited
-to its transcript, and I did not re-run any of them.**
+to its transcript, and I did not re-run any of them** — with the additions above, which come
+from reading the shipped registry entry and from the registry validator, both re-run
+2026-10-02 (`python scripts/registry-verify.py` → `REGISTRY CLEAN`, exit 0).
 
 ---
 
@@ -686,14 +825,33 @@ Get-NetTCPConnection -LocalPort 8443 -State Listen     # expect 0 listeners toda
 
 ## 8. The one sentence
 
-The registry's only declared producer→consumer edge is
-`native.ida.list_functions` → `native.ida.decompile`, and every pairing in this report is
+**As written on 2026-10-02 morning:** the registry's only declared producer→consumer edge
+was `native.ida.list_functions` → `native.ida.decompile`, and every pairing in this report was
 downstream of a missing edge between **a decompiled address** and **a place where execution
-can be observed** — an edge that needs three facts we do not have (`runtime.module.base`,
-`native.func.rva`, and one capability that runs something); **we have the something installed
-and it was run against our own crackme today** — `DebugSymbol.fromName('main')` returns `0`,
-so the runtime does not know our symbols and RVA-plus-module-base transfer is mandatory
-rather than stylistic; and **LLVM is the single gate on four more pairings**, with no MSVC
-substitute for any of them. Two installs — LLVM, and one throwaway emulation venv — turn
-most of this survey from prose into runnable capabilities. **Neither is a registry change.
-Both are Owner decisions.**
+can be observed** — an edge needing three facts we did not have (`runtime.module.base`,
+`native.func.rva`, and one capability that runs something). We had the something installed
+and it had been run against our own crackme that day. `DebugSymbol.fromName('main')` returns
+`0`, so the runtime does not know our symbols and RVA-plus-module-base transfer is mandatory
+rather than stylistic.
+
+**Reconciled 2026-10-02, at `HEAD` = `e246427`.** That missing edge **exists**: it is
+`dynamic.win.frida` consuming `native.ida.list_functions`'s `native.func.addr` as its RVA
+source — the **fifth** declared edge (`grep -c '"from"' manifests/capabilities.json` → `5`).
+The capability is registered, `observed`, in the mission route, and validator-clean. Two of
+the three facts shipped (`runtime.module.base`, `dynamic.hook.addr`); the third,
+`native.func.rva`, was **deliberately not published** and is derived at rebasing time —
+because a fact key that is computed rather than observed is a claim, and this registry
+declares only what something produced.
+
+**What did not ship, and is the more useful half of the result:** the probe attaches an
+`Interceptor` and **no callback fires**, because the `frida -f` CLI resumes the main thread
+before the injected script loads. The entry says so in `does_not_prove` rather than quoting
+the transcript that shows a hit. `frida-ps -ai` **hangs 300 s** instead of refusing, so it is
+neither a probe nor a control. **A capability that reaches the process and resolves addresses,
+and refuses to claim the thing it did not measure, is worth more here than one that claims
+the hook fired** — because the second kind is the failure this repository has paid for
+thirteen times.
+
+**Still an Owner decision, unchanged:** LLVM is the single gate on four more pairings, with
+no MSVC substitute for any of them, and P11's emulation venv is a throwaway install rather
+than station substrate.

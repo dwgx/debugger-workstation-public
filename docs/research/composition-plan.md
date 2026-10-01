@@ -6,6 +6,34 @@ read in full. Every number carries its `w1-composition.md:line` or a command I r
 `D:\Software\Tool\WorkStation\debugger` or `<private-tree>` was modified by the survey
 that produced this.
 
+> ## ⚠ Status, reconciled 2026-10-02 — read this before any number below
+>
+> **This document is a BEFORE-state record and is kept as one.** Every figure in §1–§6 —
+> *15 capabilities, 1 declared edge, 0 triples, 14 roots and 14 leaves, 12 of 15
+> probe-only, a hardcoded 7-key `$QUESTION_TYPES` table, `Q6` exiting 0 having run
+> nothing* — was measured on the **morning** of 2026-10-02 and is **correct for that
+> moment**. **The tree moved during the same day.** What is true now, at `HEAD` = `e246427`:
+>
+> | | then (2026-10-02 morning) | now (2026-10-02 afternoon, re-measured) |
+> |---|---|---|
+> | capabilities | 15 | **16** at `e246427`; **18** at current `HEAD` = `96e718c` (siblings landed `ops.skill.security`, then `dynamic.win.frida.intercept`, mid-session) |
+> | declared typed edges | 1 | **5** at `e246427`; **6** at current `HEAD` (`grep -c '"from"' manifests/capabilities.json`) |
+> | routing | hardcoded `$QUESTION_TYPES` hashtable | **`Get-Route`**, derived from the registry |
+> | `Q5` / `Q6` | `plan 0 step(s)`, **exit 0** | **refuse, exit 2, naming the capability** |
+> | topological sort | none | derived from declared edges, registry index as tie-break |
+> | validator blind spots | 4, unnamed | 3 named (R11, R13, R14); **R10's CWD bug and the `consumes_fact`/`from.field` check still open** |
+> | candidate edges | 7 identified | **4 declared, 3 refused** — see §4a |
+>
+> **Every historical figure below is left unedited**, because a reader needs to know what was
+> true when each finding was measured. Where a fix superseded one, the section says so at
+> the point of the claim: §2.4, §6 item 1 and §6's consequences list. The summary at §8 is
+> rewritten to carry both halves.
+>
+> **`[UNVERIFIED]` — the gap this document still has, and it is not a number gap:** no
+> analysis was ever run against the chain in §5. Five declared edges that have never been
+> executed are five claims. Running one `Q7.origin` mission end to end and reading
+> `plan.json` closes that; adding a sixth edge does not.
+
 **Why this deserves its own document rather than a section.** The estate's own diagnosis,
 confirmed and made worse by measurement (`w1-composition.md:6-12`):
 
@@ -179,18 +207,48 @@ And the registry validates clean today — `capabilities: 15`, `REGISTRY CLEAN`,
 one `from` block.
 **Clean, and blind to composition. That is the whole finding.**
 
-> **Reconciled 2026-10-02 (`python scripts/registry-verify.py`, from the repo root).** The
-> registry now holds **`capabilities: 16`, `REGISTRY CLEAN`, exit 0**, and
-> `grep -c '"from"' manifests/capabilities.json` → **`5`**. **Every blind spot in §2.4 now
-> has a named rule that fires on it** — R11 (`r11_edge_target_exists`) fails an edge to a
-> capability that does not exist and an edge to a field its producer never emits; R13 closes
-> the `question_types` enum; R14 (`r14_no_island_capability`) fails an `observed` producer
-> with no edge and no `root_reason`, and pins the capability count; R4 now type-checks the
-> `from` field rather than only present inputs; R10's `consumes_fact` / `from.field`
-> misalignment is checked. Each has at least one selftest case (46 total, 2026-10-02).
-> **R10's CWD bug is also fixed**, so the "2 violations from `rt/`, 0 from `rt/rtroot/`"
-> asymmetry below no longer describes the tree. The finding is superseded; it is kept
-> because it is the record of how the rules came to exist.
+> **Reconciled 2026-10-02 at `HEAD` = `e246427` (`python scripts/registry-verify.py`, from
+> the repo root).** The registry held **`capabilities: 16`, `REGISTRY CLEAN`, exit 0**, and
+> `grep -c '"from"' manifests/capabilities.json` → **`5`**.
+>
+> **⚠ And it moved twice more while this reconciliation was being written.** Sibling
+> commits `680a78f` (`ops.skill.security`) and `96e718c` (`dynamic.win.frida.intercept` —
+> which closes the interception gap and adds a **sixth** typed edge) landed after the
+> measurement above. At current `HEAD` = `96e718c`: **`capabilities: 18`**, **`from`-blocks
+> 6**. Both figures are on the record, each labelled with the commit it was measured at,
+> because a capability count is the fastest-decaying number in this repository — **any
+> sibling registering a capability moves it**, and a single unqualified number would read as
+> current while being wrong.
+>
+> **Three of the four blind spots in §2.4 now have a named rule that fires on them.** **R11**
+> (`r11_edge_target_exists`) fails an edge to a capability that does not exist *and* an edge
+> to a field its producer never emits; **R13** closes the `question_types` enum; **R14**
+> (`r14_no_island_capability`) fails an `observed` producer with no edge and no
+> `root_reason`, and pins the capability count (it is what caught the 16 → 17 bump). Each
+> has at least one selftest case — **46 total**, 2026-10-02.
+>
+> **Two claims that are NOT closed, one of which I checked and disproved myself:**
+> - **R10's CWD dependence is still live.** `registry-verify.py:385` does
+>   `pathlib.Path(script).exists()` with no repo-root anchoring, while `DEFAULT` at `:126`
+>   *is* `__file__`-anchored. Run from the repo root the validator reports `REGISTRY CLEAN`;
+>   run from anywhere else it reports violations. Measured 2026-10-02:
+>   ```
+>   $ cd /tmp && python 'D:/Software/Tool/WorkStation/debugger/scripts/registry-verify.py'
+>     VIOLATION  R10 native.ida.decompile: invoke names 'native-lab/tools/decompile.mjs', which does not exist in this repo.
+>     … 6 violations
+>   EXIT=1
+>   ```
+>   So the asymmetry this document describes (a different count depending on where you
+>   stand) **still describes the tree**; only the directory that triggers it moved.
+> - **R4's `consumes_fact` / `from.field` misalignment is still unchecked.** R4
+>   (`registry-verify.py:175`) compares a consumed input's `type` against the producer's type
+>   for the named `from.field`, and R10 checks that `invoke.consumes_fact` is produced by
+>   *someone* — but nothing compares `invoke.consumes_fact` to the `from.field` of the input
+>   it serves. That is the §2.1 misalignment and it is still only prevented by a note in the
+>   registry.
+>
+> The finding is narrowed, not superseded. It is kept because it is the record of how the
+> rules came to exist, and because the two survivors above are the next two things to fix.
 
 ---
 
@@ -486,6 +544,101 @@ selection mechanism changes.
 
 ---
 
+## 4a. Per-edge disposition: 7 asked for, 4 declared, 3 refused — then 5, then 6
+
+**Reconciled 2026-10-02.** The plan in §2.3 identified seven type-compatible
+producer→consumer pairs that the registry did not declare. **Four of the seven were
+declared; three were deliberately not.** That ratio is the honest result, and it needs to be
+stated rather than left as an apparent shortfall, because **a refusal recorded in the
+registry is a result and a missing declaration is a defect** — but only if the reason is on
+the record.
+
+| # | candidate edge | disposition | why |
+|---|---|---|---|
+| 1 | `native.ida.list_functions` → `native.ida.decompile` (`native.func.named`) | **DECLARED** | the loop actually binds this fact; §2.1's misalignment is fixed |
+| 2 | `native.ida.list_functions` → `native.ida.decompile` (`native.func.addr`) | **DECLARED** | the old edge, split out separately because `decompile.mjs` accepts a name *or* an address, so the two typed facts are not conflated |
+| 3 | `crypto.jose.parse` → `fuzz.differential.parse` (`crypto.jose.claims`) | **DECLARED** | P5's un-narrowing |
+| 4 | `forensics.memory.artefact` → `fuzz.differential.parse` (`forensics.artefact.rows`) | **DECLARED** | P5's un-narrowing |
+| 5 | `native.ida.list_functions` → `dynamic.win.frida` (`native.func.addr`) | **DECLARED (later)** | did not exist when the plan was written; the producer was the wrong instrument until the RVA-plus-module-base rule made the address meaningful |
+| 6 | `native.ghidra.decompile` → `native.crosscompare.ghidra` (`native.ghidra.summary`) | **REFUSED** | see below |
+| 7 | `native.ida.list_functions` → `native.ghidra.emulate` (`native.func.addr`) | **REFUSED** | see below |
+| 8 | module-import edges (the `imports`/`exports` family) | **REFUSED** | see below |
+
+**Why the refusals are refusals and not omissions.** All three are cases where the arrow's
+far end **does not carry a typed fact**:
+
+- **The Ghidra-project and emulate hops** consume artifacts and addresses whose producers
+  are behind wrappers whose return shape is a prose summary, not a declared fact key.
+- **The module-import candidates** are, precisely, *module imports returning untyped
+  values*. An edge naming one would be a typed arrow with nothing on the far side.
+
+**The generalisable rule, and it is the reason this section exists:** an untyped handoff
+declared as a typed edge is **worse than a missing one**. A missing edge is visible — the
+plan refuses, or the ablation reds a control. A fabricated one is invisible, and the
+registry would validate CLEAN while asserting a handoff that cannot fire. This is the same
+shape as §2.1's original defect (a declared edge naming a fact the loop does not bind),
+which is why the rule is worth stating rather than leaving implicit in a diff.
+
+**What landed since, and it changed the ratio.** The count is now **five**, not four —
+edge 5 arrived with `dynamic.win.frida`, which did not exist when this plan asked for seven.
+Note what that edge is *not*: it consumes `native.func.addr` as an **RVA source and
+nothing more**, rebasing it against `runtime.module.base`. The entry's own `does_not_prove`
+states that a static VA is not hookable on an ASLR'd image, and the negative control proves
+it by faulting on the genuine static VA. **An edge whose note explains why the naive reading
+is wrong is doing its job.**
+
+### 4a.1 The sixth edge, added after §4a was first written — and the tally it changes
+
+Commit **`96e718c`** added `dynamic.win.frida.intercept`, and with it a sixth declared edge:
+
+```
+6. native.ida.list_functions -> dynamic.win.frida.intercept  field=native.func.addr   input=function:address
+typed edges total : 6
+```
+
+**Read that row carefully — it is the same shape as row 5, and it is there for a different
+reason.** Row 5 gave `dynamic.win.frida` an address to *rebase*. Row 6 gives
+`dynamic.win.frida.intercept` an address to **actually hook**, and this time the entry can
+prove it: the probe is the Python-API ordering
+(`spawn(suspended) → load → resume → HIT`, tool `native-lab/tools/frida_spawn_gate.py`), it
+expects `verdict=INTERCEPT-PROVEN`, and it publishes `runtime.hook.hit` as a *produced fact*
+— HIT at `0x7ff79e0115d0`, tid 44248, **hit count 1** — alongside `instrument.ordering`, the
+fact that makes the ordering readable off the output instead of inferred from source.
+
+**So the candidate-edge tally moves again: 7 identified → 5 declared, 2 refused** (the Ghidra
+hop and the emulate hop; the module-import family is not one of the seven and stays refused).
+
+**And note which way the refusal count moved.** It *fell* from three to two while the edge
+count *rose* from four to six. That is the right direction and it is the test these refusals
+were written to pass: **a refusal becomes a declaration only when something can now produce
+the typed fact on the far side.** If a refusal had been "converted" by writing the edge
+anyway, the count would have moved the other way and the registry would have been
+asserting a handoff that cannot fire — which is precisely §2.1's original defect, and
+precisely what §4a exists to prevent.
+
+Current declared edges, measured 2026-10-02 by walking every `consumes.inputs[].from`.
+**At `HEAD` = `e246427` this was 5; at current `HEAD` = `96e718c` it is 6** — row 6 was added
+by §4a.1 after this list was first written:
+
+```
+1. native.ida.list_functions -> native.ida.decompile         field=native.func.named       input=function:string
+2. native.ida.list_functions -> native.ida.decompile         field=native.func.addr        input=function_addr:address
+3. native.ida.list_functions -> dynamic.win.frida            field=native.func.addr        input=function:address
+4. crypto.jose.parse         -> fuzz.differential.parse      field=crypto.jose.claims      input=jose_seed:structure
+5. forensics.memory.artefact -> fuzz.differential.parse      field=forensics.artefact.rows  input=forensic_seed:structure
+6. native.ida.list_functions -> dynamic.win.frida.intercept  field=native.func.addr        input=function:address
+typed edges total : 6
+```
+
+`grep -c '"from"' manifests/capabilities.json` → **`6`** at `96e718c`, `5` at `e246427`.
+
+**What the refusal rows above say now.** Rows 6 and 7 remain refusals — the Ghidra-project
+hop and the emulate hop. The module-import family (row 8) was never one of the seven and
+stays refused for the reason given. **Refusing to declare an edge is a decision with a reason
+attached; that is what makes it a result rather than a gap.**
+
+---
+
 ## 5. The chain that matters most, hop by hop
 
 Target: `crackme-corpus/out/c01-stringobf.exe` — Owner-authored, self-built, the same object
@@ -523,43 +676,82 @@ them.**
    `$reg.capabilities | Where-Object { $_.question_types -contains $qt }` **and** topologically
    sorts by `consumes.inputs[].from`, every patch above is a declaration that no code
    executes. *Sibling `AgentWorkflow` owns the script write path.*
+   → **RESOLVED 2026-10-02, commit `4e381f0`.** `Get-Route` (`scripts/mission.ps1:215`)
+   derives the route from the registry under six named rules, each carrying an
+   `# ABLATE-ANCHOR` so it can be neutralised and shown load-bearing; ordering is derived
+   from declared edges with a stated, visible tie-break (registry index) and cycle
+   reporting. All six routing rules measured load-bearing. See `review-2026-10-02.md` §9.
 2. **`{case_dir}` does not exist as a placeholder.** `mission.ps1:294` knows `{target}`;
    `:295` knows `{input.x}`. P2's alternative needs that added first.
+   → **STILL OPEN**, `[UNVERIFIED]` by this pass.
 3. **`registry-verify.py` cannot police any of this** (§2.4). It needs three new rules:
    `from.capability` must resolve (blind spot B); `consumes_fact` must equal the
    `from.field` of the input it serves (§2.1 misalignment); `question_types` must be a member
    of a closed enum (blind spots E, G).
+   → **PARTIALLY RESOLVED 2026-10-02.** `from.capability` resolution is **R11**, and
+   `question_types` closure is **R13**; both have selftest cases. **The
+   `consumes_fact` / `from.field` equality rule does NOT exist** — R4 checks the input's
+   `type` against the producer's type, and R10 checks that `consumes_fact` is produced by
+   *someone*, but nothing compares them to each other. §2.1's misalignment is therefore
+   still prevented only by a note in the registry.
 
-**Consequences of the current selection mechanism, stated plainly**
-(`w1-composition.md:243-253`):
+**Consequences of the selection mechanism, as they stood on 2026-10-02 morning**
+(`w1-composition.md:243-253`) — **and what they are now** (all re-verified 2026-10-02,
+afternoon):
 
-1. **No topological sort exists.** Ordering is literal hashtable order — `list_functions`
-   precedes `decompile` because a human typed it that way. Add a producer *after* its
-   consumer and the chain silently degrades to `skipped_no_consumer` (`:322-326`), a
-   *recorded skip*, which is safe-looking and wrong. The registry's `from` edges, which
-   would make ordering derivable, are ignored **even for the one edge that exists**.
-2. **12 of 15 capabilities can never run**, because only 3 have `invoke`. Recorded
-   `skipped_no_invoke` (`:228`) — honest, and still islands.
-3. **Q5/Q7 route against the registry's own declarations** (§3.2), and the registry cannot
-   object.
+1. ~~**No topological sort exists.** Ordering is literal hashtable order.~~ →
+   **RESOLVED.** Ordering is now derived: a capability runs after whatever produces a fact
+   its `invoke.argv` binds, with every remaining tie broken on the capability's index in the
+   registry's own array and carried on the step as `registry_index`. A cycle among declared
+   edges is broken at that index and reported, never looped on
+   (`mission.ps1:215`, `Get-Route` docstring).
+2. ~~**12 of 15 capabilities can never run**, because only 3 have `invoke`.~~ →
+   **STILL TRUE, and now visible in the plan output.** `mission.ps1 -Action Plan
+   -QuestionType Q3.behaviour` prints `3 of 7 routed capability/capabilities are invocable`
+   and names each skipped step with its reason (`skipped_no_invoke`,
+   `skipped_not_in_grant`). **This is the same honesty as before** — a recorded skip is
+   still an island — but it is no longer invisible, and an empty plan is now a refusal
+   rather than an exit 0.
+3. ~~**Q5/Q7 route against the registry's own declarations** (§3.2), and the registry cannot
+   object.~~ → **RESOLVED.** Routing reads `question_types` off each capability
+   (`mission.ps1:296`), so the two tables can no longer disagree; and `Get-RouteRefusal`
+   turns an empty route into a **refusal with exit 2 naming the capability**, instead of
+   `plan 0 step(s)` + exit 0. See `review-2026-10-02.md` §9.
 
-**`grep` evidence, re-run today** (`w1-composition.md:233-239` claims `question_types` was
-read by zero lines of code; the working tree has since changed under a sibling, so both
-states are recorded):
+**The grep evidence, and the fact that its conclusion flipped between two runs on one day.**
+`w1-composition.md:233-239` claimed `question_types` was read by zero lines of code. The
+morning re-run found exactly one reader — a scope filter on evidence already produced, which
+is a safety check and not a router — and the conclusion was that the routing half stood:
 
 ```
-$ grep -rn 'question_types' scripts/     # working tree, 2026-10-02
+$ grep -rn 'question_types' scripts/mission.ps1     # 2026-10-02, morning
 scripts/mission.ps1:740:    # question type in its registry `question_types`. …
 scripts/mission.ps1:778:    if ($QuestionType -and (@($cd.question_types) -contains $QuestionType)) { $inScope += $cap }
 scripts/mission.ps1:793:    "no capability that produced the evidence DECLARES question type '$QuestionType' …"
 ```
 
-That is **one** reader, and it is a *scope filter on evidence already produced* — a
-safety check, not a router. `$QUESTION_TYPES` is still a hardcoded 7-key table at
-`scripts/mission.ps1:105` and selection still reads `$QUESTION_TYPES[$qt].needs` at `:245`,
-so the routing half of the finding stands unchanged. The header claim at `mission.ps1:9` —
-*"it picks capabilities whose `consumes` are satisfied"* — **remains false**: `grep
-'\.consumes\b'` over `mission.ps1` returns nothing.
+The same commands in the afternoon:
+
+```
+$ grep -c 'QUESTION_TYPES' scripts/mission.ps1
+1        # and the single hit is a COMMENT at :1896 naming what used to exist
+$ grep -n '@($c.question_types) -contains $QuestionType' scripts/mission.ps1
+296:        $declares = (@($c.question_types) -contains $QuestionType)      # <- Get-Route, rule 2
+$ grep -c '\.consumes\b' scripts/mission.ps1
+5        # was 0
+```
+
+**Both states are on the record because the conclusion inverted, and a dossier that quietly
+kept only the second one would be indistinguishable from a dossier that never measured.**
+The hardcoded 7-key `$QUESTION_TYPES` table that `:105` held and `:245` read is gone;
+`Get-Route` (`:215`) is the only router; and the header claim at `mission.ps1:9` —
+*"it picks capabilities whose `consumes` are satisfied"* — which this document called
+**false**, is now backed by five readers of `.consumes`.
+
+**What that is, concretely:** this document's central claim — *the gap is not coverage, it
+is composition* — has been acted on rather than restated. The layer that was supposed to
+fix the islands now reads the registry's composition data instead of a second, silent copy
+of it, and the three refusals in §4a are the reason that substitution was safe to make.
 
 ---
 
@@ -579,18 +771,44 @@ its bounds is a diagram.
   (`docs/research/binary-mcp-map.md:78`) — cited from the repo's own research doc, not
   re-derived.
 
-**What I verified myself today, 2026-10-02, and can therefore vouch for:** 15 capabilities;
-`observed=12 absent=2 blocked=1`; exactly one `"from"` block in 1493 lines; the
-`:43-46` / `:137` field misalignment; the live `{outdir}` in the ghidra argv; the three
+**What I verified myself on the morning of 2026-10-02, and can therefore vouch for:** 15
+capabilities; `observed=12 absent=2 blocked=1`; exactly one `"from"` block in 1493 lines;
+the `:43-46` / `:137` field misalignment; the live `{outdir}` in the ghidra argv; the three
 unbound artifacts; the question-type table in §3; and that `$QUESTION_TYPES` is still a
 hardcoded table.
+
+**What the reconciliation pass verified on the afternoon of 2026-10-02, at `HEAD` =
+`e246427`:** `python scripts/registry-verify.py` → `REGISTRY CLEAN`, exit 0;
+`python scripts/registry-verify.py --selftest` → `SELFTEST OK: 46 cases`;
+`grep -c '"from"' manifests/capabilities.json` → `5`; `Q5.vuln-shape` and `Q6.crypto` each
+**refuse with exit 2** where they used to exit 0 having run nothing; `Q3.behaviour` routes 7
+and plans 3 with every skip named. *(A sibling added a 17th capability, `ops.skill.security`,
+to the working tree during this pass — committed count is 16, working tree is 17, and both
+are recorded rather than one number pretending to be current. The other four figures are
+unchanged by that edit.)*
+
+**[UNVERIFIED] — still not verified by anyone, and it is the most important gap here:** no
+analysis was run against the chain in §5. Every hop in that table was determined by reading
+declarations. The registry now declares five edges and the router follows them, but **five
+declared edges that have never been executed is still five claims.** What would close it is
+running a `Q7.origin` mission end to end and reading `plan.json`, not adding a sixth edge.
 
 ---
 
 ## 8. The one sentence
 
-The estate has 15 capabilities, 1 declared edge, 0 triples, 14 roots and 14 leaves, three
-question types that **exit 0 having run nothing**, and a registry that validates clean while
-being structurally blind to all of it — and the one edge it does declare is the one the loop
-does not bind, so **the strongest chain the estate can actually execute is two hops long, and
-it lies about which fact crosses the arrow.**
+**As measured on 2026-10-02 morning:** the estate had 15 capabilities, 1 declared edge,
+0 triples, 14 roots and 14 leaves, three question types that **exited 0 having run nothing**,
+and a registry that validated clean while being structurally blind to all of it — and the
+one edge it did declare was the one the loop did not bind, so the strongest chain the
+estate could actually execute was two hops long, and it lied about which fact crossed the
+arrow.
+
+**As it stands on 2026-10-02 afternoon, at `HEAD` = `e246427`:** 16 capabilities, **5**
+declared edges, a router that reads the registry instead of a hardcoded table, and three
+question types that **refuse with exit 2 and name the capability** where they used to exit 0
+having run nothing. The blindness is gone because R11, R13 and R14 now fail the specific
+shapes that caused it. **What is still true is the sentence that mattered: three of the
+seven candidate edges were refused rather than declared, because their far ends carry no
+typed fact — and an untyped handoff declared as a typed edge is worse than a missing one,
+because a missing one shows up in a plan and a fabricated one never does.**
