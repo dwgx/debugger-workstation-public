@@ -43,7 +43,7 @@ must apply to the `cmd.exe` path **only**, or `keytool -dname` splits into token
 
 ## Proved
 
-`node tools/loop.mjs` → 24/24 PASS, exit 0. Real APK built; pyelftools agrees; analyser
+`node tools/loop.mjs` → 31 checks, all PASS, exit 0 (as of 2026-10-02; 24 when first built). Real APK built; pyelftools agrees; analyser
 resolves 5/5 JNI boundaries and all 4 pinning mechanisms; 40/40 Frida cases pass with no
 device; 5 negative controls fail as designed.
 

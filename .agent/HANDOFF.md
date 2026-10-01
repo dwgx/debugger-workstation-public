@@ -77,7 +77,7 @@ node fuzz-lab\tools\loop.mjs
 ## 3. The one command that proves the orchestrator is real
 
 ```powershell
-powershell -File scripts\mission.ps1 -Action Selftest     # 13/13, incl. N4
+powershell -File scripts\mission.ps1 -Action Selftest     # 15/15, incl. N4
 ```
 
 **N4 is the one that matters:** it aims the station's own documented failure mode — the
@@ -126,8 +126,8 @@ Verify the claims, not the file:
 
 ```powershell
 python scripts\registry-verify.py               # 15 capabilities, CLEAN
-python scripts\registry-verify.py --selftest    # 18 rules, each fires on a registry
-                                                # built to violate exactly that rule
+python scripts\registry-verify.py --selftest    # 18 selftest cases across 11 rules, each
+                                                # case built to violate exactly that rule
 ```
 
 **Never trust a `last_summary` in the registry.** Re-run the `probe.command`. A recorded
@@ -215,8 +215,8 @@ Structural fixes, not fourth patches:
 - The smoke scan pattern is now **derived from each probe's own `expect`**, so a checklist
   and the thing it checks cannot drift apart.
 - Every selftest has an **explicit zero-case floor**. A checker over zero items must fail.
-- `registry-verify` has **18 rules**, each proven to fire against a registry built to
-  violate exactly that rule.
+- `registry-verify` has **11 rules, exercised by 18 selftest cases** — each case builds a
+  registry that violates exactly the rule it covers.
 
 ---
 
@@ -224,17 +224,17 @@ Structural fixes, not fourth patches:
 
 | | |
 |---|---|
-| registry | **15 capabilities**, CLEAN · **18 validator rules** |
-| gate selftest | **8/8** |
-| mission selftest | **13/13** incl. N4; **7** verdict gates |
+| registry | **15 capabilities**, CLEAN · **11 validator rules, 18 selftest cases** |
+| gate selftest | **10** refusals and grants |
+| mission selftest | **15/15** incl. N4; **7** verdict gates |
 | ghidra fail-open regression | **4/4 LOOP CLOSED** |
 | fuzz lab | **24/24 LOOP CLOSED**, 740 s at budget 90 (floor 40) |
 | native-lab | **15/15 LOOP CLOSED**, ~2.4 s |
 | fast smoke subset | **5/5 in 33 s**; the full aggregate contends on three Ghidra-consuming probes and is killed by timeout |
-| research | `docs/research/` — 8 reports, 5,621 lines |
-| `E:` | ~14.5 GB free. The VHDX **never returns bytes**; budget by peak cumulative pull |
+| research | `docs/research/` — 8 reports, 5,634 lines. Measured 2026-10-02 with `(Get-ChildItem docs\research -Filter *.md \| Where-Object Name -ne README.md \| Get-Content).Count`, summed per file |
+| `E:` | **28.01 GiB free of 33.67 GiB** (measured 2026-10-02, `Get-Volume -DriveLetter E`). The VHDX **never returns bytes**; budget by peak cumulative pull |
 
-Both trees clean. `<private-tree>` 18 commits, station 41.
+Both trees clean. `<private-tree>` 18 commits, station 47.
 
 ---
 

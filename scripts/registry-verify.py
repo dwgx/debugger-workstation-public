@@ -7,20 +7,61 @@ its own correctness the thing to worry about. A checker that inspects zero items
 passes is worse than no checker, so:
 
   * an EMPTY registry is a failure, not a vacuous success;
-  * every rule below is exercised by `--selftest`, which builds a registry that
-    violates that exact rule and asserts the validator rejects it.
+  * the rules below are the code in `RULES`, in the same order. Eleven rule
+    functions. `--selftest` prints 19 rows and reports 18, because the number it
+    prints is CASES, not rules: one row is a baseline that must stay clean, one
+    is a deliberate relaxation that must stay SILENT, and 17 are registries built
+    to break one rule. Ten of the eleven rules are asserted by name. The
+    eleventh, `r_shape`, is only covered incidentally -- popping
+    `negative_control` trips it too -- and no case asserts its output, so do not
+    read the 18 as proof that every rule has a test of its own.
 
-Rules, each traceable to a failure it prevents:
+Rules, each traceable to a failure it prevents. Eleven functions, in `RULES` order:
 
-  R1  empty registry fails                     a checker over nothing proves nothing
-  R2  observed state needs a probe             "observed" without a command is a wish
-  R3  proves[] and does_not_prove[] non-empty  honesty is a pair; one alone is marketing
-  R4  fact-key types agree across consumers    an orchestrator hands typed facts between
-                                                labs; a mismatch is a silent wrong answer
-  R5  negative_control present, expects != 0   a control that must SUCCEED is not a control
-  R6  net=any or admin=true needs escalation   reach beyond loopback is never a runtime
-                                                self-decision; it needs an Owner word
-  R7  ids unique and non-empty                 two capabilities with one id compose randomly
+  R1      r1_not_empty
+          capabilities[] must be non-empty. A checker over nothing proves nothing.
+
+  R-shape r_shape
+          every capability carries all 11 required keys and a state from the valid
+          set. A half-declared capability composes as a crash.
+
+  R2      r2_observed_needs_probe
+          state=observed requires probe.command. "observed" without a command is a wish.
+
+  R3      r3_honesty_pair
+          does_not_prove[] is always non-empty; proves[] too, unless the entry is
+          absent or blocked. Honesty is a pair; one alone is marketing.
+
+  R4      r4_fact_types_agree
+          every produced fact is typed, and every consumer agrees on the type. An
+          orchestrator hands typed facts between labs; a mismatch is a silent wrong answer.
+
+  R5      r5_control_must_fail
+          negative_control carries a command and expect_exit != 0. A control that
+          must SUCCEED is not a control.
+
+  R6      r6_reach_needs_escalation
+          escalation_class is one of the three known values, and net=any or
+          admin=true cannot be escalation_class=none. Reach beyond loopback is never
+          a runtime self-decision; it needs an Owner word.
+
+  R7      r7_ids
+          ids are non-empty and unique. Two capabilities with one id compose randomly.
+
+  R8      r8_reach_must_be_declared
+          reach declares the effects net/admin already imply; fs_write names a
+          write_scope, and only case_dir write may be class none. Authority declared
+          as a tag misses the one that writes anyway.
+
+  R9      r9_batch_must_account
+          a consumed type[] needs envelope.batch with max_items and aggregate, and
+          the envelope needs success_when. This class of API drops items with no signal.
+
+  R10     r10_invoke_must_runnable
+          invoke.argv is a non-empty array, never a joined string; the script it
+          names must exist; runner and success_when must be stated; consumes_fact
+          must be produced by someone. A declared chain the loop cannot fire is a
+          promise it breaks at run time.
 
 Usage:
     python scripts/registry-verify.py                     validate the real registry

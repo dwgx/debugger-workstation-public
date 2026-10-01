@@ -49,22 +49,24 @@ in one session; treat any "the tool cannot do X" as unverified until someone has
 > Superseded in part by `.agent/HANDOFF.md`, which is the shorter and more current
 > entry point. Section 13 below covers the mission layer, which postdates §2.
 
-Run from the repo root. Each is the registry's `probe.command`.
+Run from the repo root. Rows marked **probe** are the registry's `probe.command` for a
+registered capability id; the rest are lab or validator commands that no registry entry
+carries.
 
 | Capability | Command | Result |
 |---|---|---|
-| registry selftest | `python scripts/registry-verify.py --selftest` | **18/18 rules fire** |
+| registry selftest | `python scripts/registry-verify.py --selftest` | **18 selftest cases across 11 rules, all fire** |
 | registry validate | `python scripts/registry-verify.py` | **15 capabilities, CLEAN** |
 | ghidra fail-open | `powershell -File scripts\ghidra-failopen-regress.ps1` | **4/4 LOOP CLOSED** |
 | web/JS | `node web-reverse/tools/loop.mjs` | LOOP CLOSED |
-| web AST deobf | `node web-reverse/tools/loop2.mjs` | all checks incl. negative controls |
+| web AST deobf *(not a registry probe)* | `node web-reverse/tools/loop2.mjs` | all checks incl. negative controls |
 | crypto/JWT | `node crypto-lab/tools/loop.mjs` | `{"total":17,"pass":17,"fail":0}` |
 | network/protocol | `node net-reverse/tools/loop.mjs` | LANE CLOSED |
-| isolation | `node net-reverse/tools/trustcheck.mjs` | ISOLATION HELD |
+| isolation *(not a registry probe)* | `node net-reverse/tools/trustcheck.mjs` | ISOLATION HELD |
 | crackme corpus | `python crackme-corpus/tools/loop.py` | 20 checks, 5 negative controls |
 | forensics/memory | `node forensics-lab/tools/loop.mjs` | **37** checks |
 | managed .NET | `node managed-lab/tools/loop.mjs` | `{"total":27,"pass":27,"fail":0}` |
-| mobile/Android | `node mobile-lab/tools/loop.mjs` | 25 checks incl. 40-case Frida suite |
+| mobile/Android | `node mobile-lab/tools/loop.mjs` | 31 checks incl. 40-case Frida suite |
 | **native / IDA** | `node native-lab/tools/loop.mjs` | **15/15 LOOP CLOSED, ~2.4 s** |
 | fuzzing (D11) | `node fuzz-lab/tools/loop.mjs` | **LOOP CLOSED 24/24, 740 s at budget 90** — budget floor 40, default 90; 12 flawed-twin findings, 6/6 regressions holding |
 
@@ -162,17 +164,21 @@ worker via shared discovery files, then lost the session on the next call. Bind 
 
 ## 6. The registry and its validator
 
-`manifests/capabilities.json` (11 entries) is a **contract**; `manifests/tools.json` stays
+`manifests/capabilities.json` (15 entries) is a **contract**; `manifests/tools.json` stays
 an **inventory**. Conflating them is how a machine-readable file makes unverified claims.
 
-14 rules, each exercised by `--selftest` against a registry built to violate it:
+11 rules, exercised by 18 selftest cases — each case builds a registry that violates that
+rule. Regenerated from the `RULES` tuple at `scripts/registry-verify.py:292-294`; **18 is a
+case count, not a rule count.**
 
 ```
-R1 empty registry fails          R8 reach declared as an effect, not a tag
-R2 observed needs a probe        R9 batch consumed => envelope.batch declared
-R3 proves + does_not_prove      R-shape required fields, valid state
-R4 fact type agreement          R5 control present and expects non-zero
-R6 reach needs escalation       R7 ids unique
+R1  empty registry fails            R7  ids unique and non-empty
+R-shape required fields, valid state
+R2  observed needs a probe          R8  reach declared as an effect, not a tag
+R3  proves + does_not_prove         R9  batch consumed => envelope.batch declared
+R4  fact type agreement             R10 invoke argv/script/success_when runnable
+R5  control present and expects non-zero
+R6  reach beyond loopback needs an escalation class
 ```
 
 `R3` binds **claims, not absences**: an `absent` entry must prove nothing but must still
@@ -194,7 +200,8 @@ which is the second reason to run validators on real registries rather than fixt
   12.1.2 doing the same job: 29 s cold. Projects go to `%TEMP%` (**C:**), not `E:`.
 - **~30 stranded `%TEMP%\ghidra-proj-*` dirs, ~14 MB** — `ghidra-headless.ps1:41` only adds
   `-deleteProject` on the no-PostScript/no-Http path.
-- `E:` ≈ 14.5 GB free. The VHDX is dynamic and **never returns bytes** — budget by peak
+- `E:` **28.01 GiB free of 33.67 GiB** (measured 2026-10-02, `Get-Volume -DriveLetter E`).
+  The VHDX is dynamic and **never returns bytes** — budget by peak
   cumulative pull, not current usage.
 - **No gcc anywhere.** MSVC 2022 is the C toolchain. Docker stopped; do not start it.
 - No Android device, no `adb`. The emulator is ~1.7 GB and needs a Windows optional
@@ -262,8 +269,8 @@ gh repo clone OWNER/REPO -- --depth 1  # into %LOCALAPPDATA%\Temp\re-research\<n
 
 | Repo | Branch | Commits | Remote |
 |---|---|---|---|
-| `<private-tree>` | `master` | **16** | `<private-tree>` PRIVATE |
-| `debugger-workstation` | `main` | **26** | `github.com/dwgx/debugger-workstation` PRIVATE |
+| `<private-tree>` | `master` | **18** | `<private-tree>` PRIVATE |
+| `debugger-workstation` | `main` | **47** | `github.com/dwgx/debugger-workstation` PRIVATE |
 
 Both trees clean and both remotes pushed at time of writing.
 
@@ -315,10 +322,10 @@ when sections 2 and 3 were written.
 | Piece | Command | Result |
 |---|---|---|
 | **Orchestrator** | `powershell -File scripts\mission.ps1 -Action Run -Target <bin> -Question "..." -QuestionType Q2.locate -Provenance "..." -OwnerWord "..." -Containment station_under_named_process_rule -Claim "..."` | **DONE / confirmed / scope INTACT** |
-| Orchestrator selftest | `-Action Selftest` | **13/13**, incl. N4 |
-| Gate | `powershell -File scripts\gate.ps1 -Action Selftest` | **8/8** |
-| Registry | `python scripts/registry-verify.py` | **13 capabilities** |
-| Validator | `python scripts/registry-verify.py --selftest` | **18 rules** |
+| Orchestrator selftest | `-Action Selftest` | **15/15**, incl. N4 |
+| Gate | `powershell -File scripts\gate.ps1 -Action Selftest` | **10 refusals and grants** |
+| Registry | `python scripts/registry-verify.py` | **15 capabilities** |
+| Validator | `python scripts/registry-verify.py --selftest` | **11 rules, 18 selftest cases** |
 
 The acceptance case is our own `c01-stringobf.exe`, chosen because provenance is checkable
 by file and because it needs exactly the chain:

@@ -268,7 +268,10 @@ Nine READMEs describe what a human can do. A registry describes what a **program
 Registering all nine labs means writing down, for each, what it **proves** and what it **does not prove**. Three honest entries already fall out of `arsenal-inventory.md`, and they are the ones that matter:
 
 - `dynamic.frida.ondevice` → `state: "absent"`. Measured today: `adb` is not on `PATH` on this box. D10 is proved **logic-only**, and the registry must say so in the artifact rather than let a mission assume a device.
-- `fuzz.any` → `state: "absent"`. D11 is the one genuine gap in the inventory.
+- `fuzz.any` → `state: "absent"`. *(As written 2026-09-30, this was the one genuine gap in
+  the inventory. **Closed**: the shipped registry records `fuzz.differential.parse` as
+  `observed`, probe `node fuzz-lab/tools/loop.mjs --budget 40`. The `--budget 40` floor is
+  the minimum valid probe; `--budget 12` is refused with exit 2.)*
 - `net.capture.admin` → `requires.admin: true`. revlab probes this exactly right — `pktmon list` returning non-zero means no capture — and the registry copies that probe.
 
 And one that corrects a premise: the brief for this window states there is no IDA Pro on this box. Measured now, `debugger\Static-Reversing\IDA` is a junction to `D:\Software\Tool\Debugger\IDA Professional 9.2` and that directory is populated. **This is exactly why `state` is measured by `probe` and never asserted in prose** — the registry answers the question, and `debugger\OWNER.md` remains the authority on whether it may be used.
@@ -463,14 +466,14 @@ Honest inventory, measured on this box 2026-09-30:
 |---|---|---|
 | **A device** (Frida on-device, ART, on-device TLS interception) | `adb` **not on PATH**; no device | `dynamic.frida.ondevice` stays `state: "absent"`. The N4/acid chain must be the **logic-only** Frida suite `mobile-lab\tools\frida-selftest.mjs` (40 cases, no device) and the artifact must say so. This is exactly how D10 is recorded today. |
 | **Admin** (pktmon/Npcap capture) | `requires.admin: true` on `net.capture.admin` | The acceptance run uses the loopback CDP path, not a driver-level capture. revlab's `pktmon list` probe is copied verbatim so the registry reports `degraded` rather than pretending. |
-| **Disk** | `E:` **14.52 GB free**, `C:` 67.73, `D:` 287.86, `F:` 1475.19 (measured now; `arsenal-inventory.md` says 15.19 GB on the same day) | The `mission` layer itself costs **< 5 MB**. Every dynamic capability declares `requires.disk_mb`, and the loop refuses to start a round whose declared cost exceeds the remaining budget. A Ghidra project is ~300–800 MB, so roughly **15 full Ghidra rounds fit on `E:`**; beyond that the case must be compacted or moved. Tier-B containers are out of the question at 14.5 GB. |
+| **Disk** | `E:` **28.01 GiB free of 33.67 GiB**, `C:` 42.36 free of 250, `D:` 172.12 free of 640.12, `F:` 1457.13 free of 1863.01 (GiB, measured 2026-10-02 by `Get-Volume`; the 2026-09-30 figures in this cell and in `arsenal-inventory.md` are retired) | The `mission` layer itself costs **< 5 MB**. Every dynamic capability declares `requires.disk_mb`, and the loop refuses to start a round whose declared cost exceeds the remaining budget. A Ghidra project is ~300–800 MB, so **35–95 full Ghidra rounds fit on `E:`** — computed from the measured figure as 28.01 GiB ÷ 800 MiB = 35, ÷ 300 MiB = 95; the earlier "roughly 15" came from a retired input and was wrong by roughly half. **Re-derive per run**: free space is not a constant, and any conclusion about how many rounds fit is only as good as the `Get-Volume` reading behind it. The Tier-B container claim previously asserted here needs its own measurement of the named image — it does not follow from free space alone. |
 | **Docker** | stopped, and staying stopped | the acceptance run touches no container. |
 | **MSVC** | present, no gcc | the crackme corpus builds with MSVC already; the acceptance run needs no rebuild. |
 
 ### 6.4 Build order, if the Owner approves
 
-1. `manifests\capabilities.json` with **three** entries, not nine — `native.triage.die`, `native.decompile.ghidra`, `native.debug.breakpoint`. A three-entry registry that the loop can chain is worth more than a ninety-entry one that was never exercised, and it is the only way the chain in §2.2 gets tested rather than asserted.
-2. `scripts\registry-verify.py` with the six failure rules.
+1. `manifests\capabilities.json` with **three** entries, not nine — `native.triage.die`, `native.decompile.ghidra`, `native.debug.breakpoint`. A three-entry registry that the loop can chain is worth more than a ninety-entry one that was never exercised, and it is the only way the chain in §2.2 gets tested rather than asserted. **Superseded**: shipped as **15** entries (`python scripts/registry-verify.py` → `capabilities: 15`, CLEAN; 12 `observed`, 2 `absent`, 1 `blocked`). Kept as the design record.
+2. `scripts\registry-verify.py` with the six failure rules. **Superseded**: the shipped validator has **11 rule functions** (`RULES`, `scripts/registry-verify.py:292-294`) exercised by **18 selftest cases**.
 3. `scripts\gate.ps1` — grant, hash, three escalation classes, scope guard.
 4. `scripts\mission.ps1` — intake, plan, loop, artifact, `selftest`.
 

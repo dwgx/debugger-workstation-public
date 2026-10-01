@@ -9,9 +9,9 @@ Local baseline this is measured against (all re-verified today, not taken from a
 
 | Fact | Evidence |
 |---|---|
-| `mobile-lab/tools/loop.mjs` passes 25 checks, exit 0 | run today: 25 PASS / 0 FAIL / 3 negative controls, `LOOP CLOSED`, 40/40 Frida cases |
+| `mobile-lab/tools/loop.mjs` passes 31 checks, exit 0 | run 2026-10-02: 31 PASS / 0 FAIL / 3 negative controls, `LOOP CLOSED`, 40/40 Frida cases |
 | Android SDK is **build-tools 35.0.0 only** | `ls D:/Software/Android/Sdk` → `build-tools`; no `platform-tools`, no `ndk`, no `emulator` |
-| Free space: `D:` 288 GB, `E:` 15 GB | `df -h /e /d` |
+| Free space: `D:` 288 GB, `E:` **28.01 GiB free of 33.67 GiB** (measured 2026-10-02) | `Get-Volume -DriveLetter E` |
 | `frida-mcp` is **already vendored** | `mcp/frida-mcp` exists; `manifests/mcp-backends.json` → `frida-mcp | mobile-runtime | MIT` |
 | `Il2CppDumper` is **already installed and pinned** | `manifests/tools.json:46`; `Unpackers-Game/Il2CppDumper-net6-win-v6.7.46/` |
 | **…and it does not run on this box** | see §8, finding 1 |
@@ -389,7 +389,7 @@ Our labs are the stronger artefact. `mobile-lab` builds a genuinely signed APK f
 with the real Google `aapt2`/`d8`/`zipalign`/`apksigner`, hand-assembles an ELF64 AArch64
 `.so`, cross-checks it against **pyelftools** (which caught a real `sh_link` bug), and
 cross-checks its own findings against **JADX and Apktool** — two independent decoders.
-25 checks, exit 0, 40/40 Frida cases with a modelled runtime. SimoneAvogadro has *no
+31 checks, exit 0, 40/40 Frida cases with a modelled runtime. SimoneAvogadro has *no
 fixture, no oracle, and no negative control of any kind.* It is 2,358 lines of shell and
 PowerShell that call `jadx` and grep for URLs.
 
@@ -609,7 +609,7 @@ Two options, both requiring the Owner's word because they change the machine:
 - **(b)** take a newer Il2CppDumper release built for `net8.0` — preferred, and it stays
   on official upstream (`github.com/Perfare/Il2CppDumper/releases`, MIT).
 
-Disk: 15 GB free on `E:`, 288 GB on `D:`. A .NET runtime is not the constraint; **elevation
+Disk: **28.01 GiB free on `E:`** (measured 2026-10-02), 288 GB on `D:`. A .NET runtime is not the constraint; **elevation
 and the stop-line are.** This step is listed first because it is the only blocker on a
 whole new domain, and it costs ~55 MB either way.
 
@@ -763,7 +763,7 @@ device, and why the plan does not need one to start.
 
 Commands run on this box today, with results as stated above:
 
-- `node mobile-lab/tools/loop.mjs` → 25 PASS, 0 FAIL, 3 negative controls, `LOOP CLOSED`, exit 0
+- `node mobile-lab/tools/loop.mjs` → 31 checks, all PASS, 3 negative controls, `LOOP CLOSED`, exit 0
 - `'.../Il2CppDumper.exe'` → .NET 6.0.0 required; found 8.0.31 / 10.0.11
 - `DOTNET_ROLL_FORWARD=LatestMajor '.../Il2CppDumper.exe' < /dev/null` → 0 bytes, exit 124
 - `grep -ciE 'packer|packing|jiagu|shell|encrypt' mobile-lab/tools/analyze.mjs` → 0
@@ -776,7 +776,7 @@ Commands run on this box today, with results as stated above:
 - `grep -c 'record(' web-reverse/tools/loop2.mjs` → 16; `[^a-z]run(` → 9 (1 is the
   definition) → 24 step call sites; 4 unique `negative control` records
 - `ls D:/Software/Android/Sdk` → `build-tools` only
-- `df -h /e /d` → `E:` 15 GB avail, `D:` 288 GB avail
+- `Get-Volume -DriveLetter E,D` → `E:` 28.01 GiB avail of 33.67, `D:` 172.12 GiB avail of 640.12 (2026-10-02)
 
 Star counts and licenses via `gh api repos/<owner>/<repo>`, 2026-09-30:
 

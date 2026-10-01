@@ -371,8 +371,8 @@ surface, and did not finish either.
 
 | fact | value | how |
 |---|---|---|
-| `E:` free | **15 GB** (21 G total, 5.7 G used) | `df -h /e` |
-| `D:` free | **288 GB** (641 G total) | `df -h /d` |
+| `E:` free | **28.01 GiB free of 33.67 GiB** (measured 2026-10-02) | `Get-Volume -DriveLetter E` |
+| `D:` free | **172.12 GiB free of 640.12 GiB** (measured 2026-10-02) | `Get-Volume -DriveLetter D` |
 | Ghidra 12.1.3 install size | **874 MB** | `du -sh` |
 | second Ghidra already present | `ghidra_12.1.2_PUBLIC` | `ls -d Static-Reversing/Ghidra/*/` |
 | RAM | **31.4 GB** | `Win32_ComputerSystem.TotalPhysicalMemory` |
@@ -382,7 +382,7 @@ surface, and did not finish either.
 | user Ghidra profile | `%USERPROFILE%\AppData\Roaming\ghidra\ghidra_12.1.3_PUBLIC` exists | `ls` |
 | deploy target | `<install>/Extensions/Ghidra` exists | `ls -d` |
 
-**The E: constraint is not binding.** The station lives on `D:` with 288 GB free. `E:`'s 15 GB
+**The E: constraint is not binding.** The station lives on `D:`. `E:`'s **28.01 GiB free**
 only becomes relevant if someone proposes standing up a Postgres + BSim + LLM stack there, and
 no item in the plan below does. Stated plainly so the plan is not distorted by it.
 

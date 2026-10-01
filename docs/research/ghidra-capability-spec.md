@@ -269,13 +269,23 @@ classloader, and `ghidra.app.emulator` is not among them. `Emulation.jar` also s
 manifests that export the package for script bundles (its `META-INF/MANIFEST.MF` is the
 four-line stub, and its `Module.manifest` lists only ASM licences).
 
-**Therefore `native.pcode.emulate.ghidra` is registered `state: "absent"`.** Reaching
-`EmulatorHelper` would require either writing a script into a module's
-`ghidra_scripts` directory inside the install (a brief-then-follow change to an
-installed tool, and forbidden by this assignment's read-only constraint), or building a
-Ghidra Extension with a `Module.manifest` that declares the `Emulation` dependency —
-which is an install-class operation and an Owner decision. I am not writing that spec
-blind: it would be a confidently wrong entry.
+**Therefore `native.ghidra.emulate` — the id that shipped — is registered `state:
+"blocked"`, not `absent`.** `absent` says the route does not exist; `blocked` says the
+route runs and the ground truth was not recovered. The shipped probe
+(`powershell -File scripts\emulation-probe.ps1`) reached `EmulatorHelper` and
+`DefaultEmulator`, compiled and ran them, and executed **15 p-code steps**, then
+returned to PC=0 with the 48-byte output buffer all zero —
+`FLAG{c01_string_table_xor}` NOT recovered. What fails is the controlled-input setup,
+not the API. `EmulatorHelper` / `DefaultEmulator` are also deprecated and marked for
+removal, so this is worth deciding *before* the blocker is fixed.
+
+The postscript finding below still stands for the route it measured. Reaching
+`EmulatorHelper` from an out-of-tree `-postScript` requires either writing a script into
+a module's `ghidra_scripts` directory inside the install (a brief-then-follow change to
+an installed tool, and forbidden by this assignment's read-only constraint), or
+building a Ghidra Extension with a `Module.manifest` that declares the `Emulation`
+dependency — which is an install-class operation and an Owner decision. I am not writing
+that spec blind: it would be a confidently wrong entry.
 
 Note the contrast with Ghidra's own shipped `Ghidra/Debug/Debugger/ghidra_scripts`
 (`PopulateDemoTrace.java`) — in-tree, therefore reachable, and the reason the framework
@@ -1393,11 +1403,20 @@ shape, and the orchestrator must be able to choose.
 passes the 3 command-line arguments the file's own header documents is passing arguments
 nothing reads. If the orchestrator ever surfaces those, it is a confident no-op.
 
-### 3.8 `native.pcode.emulate.ghidra` — `state: "absent"`
+### 3.8 `native.ghidra.emulate` — `state: "blocked"` (proposal below, written as `"absent"`)
+
+> **PROPOSAL, superseded by `manifests/capabilities.json`.** The shipped entry is
+> `native.ghidra.emulate`, `state: "blocked"`, probe
+> `powershell -File scripts\emulation-probe.ps1`, last run 2026-09-30: *"API reached,
+> compiled, ran 15 p-code steps and returned to PC=0; output buffer 48 bytes all zero;
+> ground truth FLAG{c01_string_table_xor} NOT recovered."* The JSON below is the research
+> proposal as written that day and is kept as the record of what was measured and argued
+> then. Where it says `absent`, the shipped diagnosis is `blocked` — the controlled-input
+> setup is what fails, not the API (§1.5).
 
 ```jsonc
 {
-  "id": "native.pcode.emulate.ghidra",
+  "id": "native.ghidra.emulate",
   "version": 1,
   "title": "P-code emulation of a function with ghidra.app.emulator.EmulatorHelper (no debugger, no GUI)",
   "domains": ["D3", "D10", "D14"],
@@ -1434,6 +1453,8 @@ nothing reads. If the orchestrator ever surfaces those, it is a confident no-op.
   "falsifies": [],
   "side_effects": [],
   "gate": { "lane": "debug", "requires_verdict": "ALLOW_LOCAL", "escalation_class": "owner_word" },
+  // proposal value as written 2026-09-30; SHIPPED state is "blocked" (probe reached and
+  // ran the API, ground truth not recovered) — see the note above this block
   "state": "absent",
   "probe": {
     "command": "analyzeHeadless <proj> p -import <bin> -scriptPath <outside-install> -postScript EmuProbe.java",
@@ -1523,10 +1544,11 @@ cross-binary version tracking, p-code emulation. Status:
 | decompile | `native.decompile.ghidra` | **observed** — 512/512 measured; one NC `[UNVERIFIED]` |
 | string/symbol extraction | `native.strings.ghidra` | **observed** — 291 entries measured, decoy-flag NC verified |
 | cross-binary version tracking | `native.diff.ghidra.vt`, `native.diff.ghidra.autovt`, `native.diff.manifest` | **observed / observed / degraded** — VT measured end-to-end with 3 measured controls |
-| p-code emulation | `native.pcode.emulate.ghidra` | **absent** — the API is present and unreachable; the reason is a hard OSGi boundary, measured |
+| p-code emulation | `native.ghidra.emulate` | **blocked** — the API is reachable and ran 15 p-code steps; the controlled-input setup does not take, so ground truth was not recovered. Shipped, not this document's proposal |
 
 Plus, because the research turned them up: `native.symhash.ghidra` (degraded, does not
-compile) and `ghidra.resident.http` (degraded, does not compile).
+compile) and `ghidra.resident.http` (degraded, does not compile). Neither id is in the
+shipped registry; see §5.
 
 **Facts in this document that are `[UNVERIFIED]` or inference, stated plainly:**
 
@@ -1569,6 +1591,12 @@ None of these were applied — this assignment is read-only against the repo.
 
 ## 5. Registry-entry id list (the answer to the brief's last question)
 
+> **PROPOSAL, superseded by `manifests/capabilities.json`.** The shipped registry holds
+> **15 entries** (`python scripts/registry-verify.py` → `capabilities: 15`, CLEAN). Of the
+> nine ids proposed below, `native.ghidra.emulate` shipped (as `blocked`); the other eight
+> — `native.diff.ghidra.vt`, `native.symhash.ghidra`, `ghidra.resident.http` and the rest
+> — are **not** in the shipped registry. Kept as the research record.
+
 ```
 native.triage.ghidra          observed
 native.decompile.ghidra       observed
@@ -1577,8 +1605,8 @@ native.symhash.ghidra         degraded   (does not compile: FunctionHashes.java:
 native.diff.manifest          degraded   (blocked by native.symhash.ghidra)
 native.diff.ghidra.vt         observed
 native.diff.ghidra.autovt     observed
-native.pcode.emulate.ghidra   absent     (OSGi: ghidra.app.emulator not on the
-                                         out-of-tree script classloader)
+native.ghidra.emulate         blocked     (SHIPPED id; proposal said absent. API reached,
+                                         ran 15 p-code steps; ground truth not recovered)
 ghidra.resident.http          degraded   (does not compile: HeadlessMcpHttp.java:610,703)
 ```
 
@@ -1686,11 +1714,14 @@ bethington's `BinaryComparisonService`: it targets cross-*compiler* matching, wh
 corpus never varies, its known failure mode is the one I measured inside Ghidra's own
 BSim correlator (461 matches against a byte-identical copy *and* 461 against an
 unrelated binary), and ghidra-rpc — a vendor shipping this for money — chose Ghidra's
-correlator factories. The nine registry ids are in §5: **five `observed`** with measured
-costs and measured negative controls, **three `degraded`** because their scripts have
+correlator factories. The nine registry ids proposed here are in §5 — a PROPOSAL,
+superseded: of the nine only `native.ghidra.emulate` shipped, and it shipped **`blocked`**
+(API reached and ran 15 p-code steps, ground truth not recovered), not `absent`. Of the
+proposed set: **five `observed`** with measured costs and measured negative controls,
+**three `degraded`** because their scripts have
 never compiled (`FunctionHashes.java:37`, `HeadlessMcpHttp.java:610,703`, and
-`DiffPrograms.java` which depends on the first), and **one `absent`** because
-`ghidra.app.emulator` is not on an out-of-tree script's OSGi
-classloader. One fail-open surfaced that the registry must encode: `analyzeHeadless`
+`DiffPrograms.java` which depends on the first), and **one `blocked`** because the
+controlled-input setup is what fails, not the `ghidra.app.emulator` API. One fail-open
+surfaced that the registry must encode: `analyzeHeadless`
 **exits 0 when the import fails** and `scripts\ghidra-headless.ps1` exits 0 too, so no
 Ghidra entry may gate on the exit code.

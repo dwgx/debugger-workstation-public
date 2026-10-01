@@ -21,7 +21,7 @@
      tempting simplification in this design and it is the one thing that must never ship.
 
   3. THE VERDICT IS COMPUTED, NOT AUTHORED. The caller proposes a claim; this script
-     decides whether it survives six gates. A verdict written by the same mind that read
+     decides whether it survives seven gates. A verdict written by the same mind that read
      the evidence is not independent.
 
   4. THE STOP NOTE IS GENERATED FROM THE REGISTRY, so it cannot go stale. A stage that
@@ -498,11 +498,11 @@ function Get-Termination {
     return [ordered]@{ state = 'EXHAUSTED'; why = 'nothing ran and nothing was left to run'; guards_not_named = @($Planned | ForEach-Object { $_.id }) }
 }
 
-# ---------------------------------------------------------------------- the six gates
+# ---------------------------------------------------------------------- the seven gates
 
 function Get-Verdict {
     <#
-      The model never writes the verdict. This function does, from six gates, and every
+      The model never writes the verdict. This function does, from seven gates, and every
       gate that failed is reported by name. Fail any gate and the claim is downgraded to
       `unresolved`, which cannot be the terminal answer.
 
@@ -639,7 +639,7 @@ function Get-Verdict {
     # Read back from the script scope the helper wrote to. Returning the LOCAL `$vGates`
     # -- which nothing ever appended to -- produced an EMPTY gate list, and an empty gate
     # list passes vacuously. That is the most dangerous shape this script has: it looks
-    # like six gates ran and reported all-clear. Hence also the floor below.
+    # like seven gates ran and reported all-clear. Hence also the floor below.
     $vGates = @($script:vGates)
     if ($vGates.Count -eq 0) {
         return [ordered]@{

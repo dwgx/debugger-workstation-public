@@ -1054,7 +1054,7 @@
         "escalation_class": "none"
       },
       "probe": {
-        "command": "node fuzz-lab/tools/loop.mjs --budget 12",
+        "command": "node fuzz-lab/tools/loop.mjs --budget 40",
         "expect": "LOOP CLOSED",
         "exit": 0,
         "last_run": "2026-09-30",
