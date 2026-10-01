@@ -117,13 +117,18 @@ pushed.
 ## 4. 走过的死路 (dead ends — do not re-walk)
 
 - **Eight research agents all missed `vxcontrol/pentagi`** — 25,177 stars, 3,241 forks, Go,
-  pushed 2026-09-30, *"Fully autonomous AI Agents system…penetration testing"*, and **no
-  licence file**. Owner caught it; I confirmed it was in neither our corpus nor any of the
-  eight reports. **The method was wrong, not the luck:** every previous brief searched by
-  *capability keyword*, which only finds projects that describe themselves the way you
-  searched for. **Mining by stars, by topic, by language and by adjacency is now required.**
-  `W12-STARMINED` is doing that sweep; `W12-PENTAGI` is the deep dive. Do not send another
-  keyword-only brief.
+  pushed 2026-09-30, *"Fully autonomous AI Agents system…penetration testing"*. Owner caught
+  it; I confirmed it was in neither our corpus nor any of the eight reports. **The method was
+  wrong, not the luck:** every previous brief searched by *capability keyword*, which only
+  finds projects that describe themselves the way you searched for. **Mining by stars, by
+  topic, by language and by adjacency is now required.** Do not send another keyword-only
+  brief.
+  **CORRECTION, same day:** I first recorded pentagi as having **no licence file**. That was
+  wrong — a field-name error in my own probe, not a missing file. It is **MIT**
+  (`gh api repos/vxcontrol/pentagi/license` → `spdx_id: MIT`, `path: LICENSE`, with `NOTICE`
+  and a `licenses/` directory). I nearly repeated the exact failure this project exists to
+  catch: recording a confident, wrong claim instead of checking. **Verify a licence by
+  listing the repo root**, not by a field you have not confirmed.
 - **I overwrote `~/.omp/extra-hands/CACHE/board.py` with 72 bytes of JSON** (mis-typed
   `write` path while extending a board scope). The `.pyc` was an *older* build, so it could
   not serve as the source, and blindly replaying 36 recorded edits from the transcript onto a
