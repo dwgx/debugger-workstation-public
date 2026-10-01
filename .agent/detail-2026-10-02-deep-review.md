@@ -111,6 +111,26 @@ pushed.
     allow-list enforced on every path (`mcp/debugger-router/server.py:144-147`), but its
     granularity is the *backend*, not the tool: `call_backend_tool` forwards any
     `tool_name` unfiltered (`:219-227`).
+    **CORRECTION, from a worker that was told this and checked it: two of my premises were
+    wrong, and the correction cuts both ways — safer than I said, and more fragile.**
+    (a) **stdio is a FLAG, not the default.** `idalib_supervisor.py:1471-1473` defines
+    `--stdio` with defaults `--host 127.0.0.1 --port 8745`, and `:1524-1530` serves HTTP
+    unless the flag is present. **The default is an HTTP listener on 127.0.0.1:8745** — a
+    port that was in my own "no rows" port list. The estate is safe *only* because
+    `mcp/bin/ida-pro-mcp.cmd:7` passes `--stdio`, and there is no `--http` flag: the
+    exposure comes from **removing** that one argument. One flag in one `.cmd` file,
+    enforced by nothing.
+    (b) **The unsafe tools are removed by default, not shipped enabled.**
+    `idalib_server.py:285-289` pops them from `tools.methods` unless `--unsafe`, restored
+    only by that flag (`idalib_supervisor.py:1496-1497`), and upstream
+    `test_server.py:213-232` asserts the negative. **So there is a real server-side
+    `tools/call` gate — inside `ida-pro-mcp`, not in the router.**
+    (c) `http.py:93` does snapshot the tool registry at import time before the removal runs,
+    but that yields **reconnaissance, not code execution**: the removal still happens. My
+    phrasing would have had a reader believe the gate was defeated. It is not.
+    **The lesson is the one this project keeps relearning: I asserted a conclusion and
+    stopped. Both my supporting claims were wrong, in the estate's favour and against it
+    simultaneously.**
 
 ---
 

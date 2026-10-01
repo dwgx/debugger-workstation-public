@@ -11,13 +11,35 @@ capability selection was a hardcoded table that never read the registry at all. 
 reproduced first, all fixed, all covered by a control that reddens when its mechanism is
 removed. Commits `f1d23de`, `5ec8878`, `4e381f0`.
 
-**下一步:** the gate and the verdict layer are now honest, and that exposed the real gap —
-**the only end-to-end mission chain is one instrument, IDA Pro, held twice, so it cannot
-corroborate itself and `Q2.locate` correctly returns `unresolved`.** Do not weaken
-`independence` to change that. Two workers are in flight: board `W10-RECONCILE` (this file's
-`docs/research/` figures) — wait, do not duplicate. Full record with every measured number
-and the dead ends not to re-walk: **`.agent/detail-2026-10-02-deep-review.md`**. What
-follows below is the 2026-09-30 record; §9 is the only part kept current.
+**下一步:** **first, the bug that matters.** `mission.ps1:861` dereferenced `$parsed.PSObject`
+with no null guard while `:853` explicitly sets `$parsed = $null` when a tool emits non-JSON —
+which `mobile.apk.static` correctly does, exiting 3 on a non-ZIP target. So **the acceptance
+mission CRASHED on round 3 and exited 0, with no verdict and no artifact.** Every earlier
+measurement of "`unresolved`, `failed_gates=[independence]`" was taken at `-MaxRounds 2`, which
+never reaches the crash. Fixed and re-measured on the default: 3 rounds, `unresolved`,
+`failed_gates=[independence]`, exit 1. **Do not re-measure it at `-MaxRounds 2` again.**
+
+The gate and the verdict layer are honest, and that exposed the real gap: **the only end-to-end
+mission chain is one instrument, IDA Pro, held twice, so it cannot corroborate itself.**
+Do not weaken `independence` to change that.
+
+**Registry is now 18 capabilities** (was 16). Two added and both measured: `ops.skill.security`
+(NVIDIA/SkillSpector, 18,952★, Apache-2.0, installed from git — our own six skill files scan
+clean at 100% coverage, a planted poisoned control scores 39/MEDIUM and exits 1) and
+`dynamic.win.frida.intercept` (**interception is now genuinely proven**, `INTERCEPT-PROVEN`, hit
+count 1, from the committed `native-lab/tools/frida_spawn_gate.py`). The second one closes the
+gap that `dynamic.win.frida` recorded in its own first `does_not_prove`.
+
+**Three of my own claims were wrong this session and all three are corrected in place:**
+pentagi is **MIT**, not unlicensed; the MCP exposure is safe only because
+`mcp/bin/ida-pro-mcp.cmd:7` passes `--stdio` — **stdio is a flag, and HTTP on 127.0.0.1:8745 is
+the DEFAULT**; and the module base does **not** "differ every run" (five consecutive runs gave
+0x7ff666bb0000). A worker overturned two of these and I measured the third before agreeing.
+
+Full record with every measured number and the dead ends not to re-walk:
+**`.agent/detail-2026-10-02-deep-review.md`**. Survey evidence now tracked at
+`<private-tree>\wiki\literature\survey-2026-10-02\`. What follows below is the 2026-09-30
+record; §9 is the only part kept current.
 
 Written 2026-09-30 at the end of a long session. Every number below was produced by a
 command in this repo. Nothing here is remembered.
