@@ -11,7 +11,7 @@
       "Q7.origin": "what changed between these two builds"
     },
     "baseline": {
-      "capability_count": 21,
+      "capability_count": 22,
       "note": "The validator pins this count. A capability may only leave capabilities[] by appearing in retired[] with a reason, because deleting an island used to make the registry validate CLEANER rather than louder."
     },
     "retired": [],
@@ -27,7 +27,8 @@
       "package-inspection": "reads a packaged artefact as built: APK manifest, DEX, resources",
       "binary-similarity": "matches functions across two binaries by scoring, without proving equivalence",
       "differential-oracle": "compares two implementations of the same parser and treats a disagreement as the finding",
-      "practice": "solving self-built exercises; proves technique, not transfer"
+      "practice": "solving self-built exercises; proves technique, not transfer",
+      "disassembler": "reconstructs a machine instruction stream WITHOUT lifting it to a high-level language: capstone and similar code-generation libraries. Distinct from 'decompiler' because it performs no lifting, no type recovery and no control-flow reconstruction -- it is the only family here that states an OPERAND WIDTH, which is measured, not assumed: see native.disasm.capstone's negative control and the pairing study. Added 2026-10-02 after measuring that capstone independently identified the exact addresses Ghidra left as unresolved DAT_ references AND carried the byte-vs-dword width that Ghidra's output omitted. THIS IS NOT THE static-analysis RELABEL ESCAPE: that escape re-declared ONE instrument under a second name, which R18 also blocks by instrument identity. capstone is a genuinely different library with no decompiler in its lineage. What it does NOT buy is confirmation of MEANING -- it corroborates structure and operands, not what the code does."
     }
   },
   "generated": "2026-09-30",
@@ -2594,6 +2595,136 @@
       "evidence_source": "structural-parser",
       "evidence_source_note": "Deliberately NOT static-analysis, and the choice is worth stating. The schema reserves that value so it cannot be silently re-used and says no capability should carry it, because on this estate it existed solely to relabel one idalib-mcp capability and thereby manufacture a second family. Writing a paragraph explaining why a misleading label was acceptable would have been the same escape wearing a footnote. The honest member of the closed set is structural-parser -- a self-describing container decoded without executing it -- which is where packer identification genuinely sits: Die reads the PE container and its section names and matches signatures over them. It shares that family with native.pe.container and crypto.jose.parse, and those are DIFFERENT INSTRUMENTS, so R18 is satisfied and correctly so. Two instruments in one family is not two opinions about a decompilation either, so this entry adds no corroboration to the independence gate and is not offered as any.",
       "root_reason": "Genuine root. It is handed a path and answers a question about that file's container before anything else is allowed to run -- nothing upstream produces a packer verdict, and nothing downstream may trust one that was not produced here. It declares no typed edge for the same reason native.pe.container does not: it consumes an input no other capability emits, so the absence of an edge is a decision rather than an oversight."
+    },
+    {
+      "id": "native.disasm.capstone",
+      "title": "Disassemble a self-built PE at an RVA and resolve RIP-relative operands WITH their widths, using no decompiler at all",
+      "domains": [
+        "native",
+        "practice"
+      ],
+      "question_types": [
+        "Q2.locate",
+        "Q7.origin"
+      ],
+      "state": "observed",
+      "scope_note": "SELF-AUTHORED TARGETS. It reads a PE with pefile, maps an RVA through the section table, and decodes bytes with capstone. It does not execute the target and does not lift instructions to a language. A non-executable section is REFUSED unless --force is passed.",
+      "composition_note": "WHY IT EXISTS, in one measurement. On crackme-corpus/out/c01-stringobf.exe main at RVA 0x1080: IDA Pro inlined the XOR key constants as 18/11/90 and 26/5/51; Ghidra left two of them as DAT_140017344 and DAT_140017342 with NO width, which is dangerous because read as the natural u32, DAT_140017342 is 734042; capstone, containing no decompiler whatsoever, emits `movzx r9d, byte ptr [rip+0x16259]` -> 0x140017342 byte=90 and `mov r8d, dword ptr [rip+0x16254]` -> 0x140017344 dword=11. Same values IDA propagated, plus the WIDTH, because the movzx prefix says byte and the bare mov says dword. **So it is not merely a second opinion on structure: it is the only one of the three instruments that states the fact whose absence made Ghidra's output a trap rather than merely incomplete.**",
+      "consumes": {
+        "inputs": [
+          {
+            "name": "binary",
+            "type": "path_ref",
+            "required": true,
+            "note": "a Windows PE. Measured: crackme-corpus/out/c01-stringobf.exe."
+          },
+          {
+            "name": "function",
+            "type": "address",
+            "required": false,
+            "from": {
+              "capability": "native.ida.list_functions",
+              "field": "native.func.addr"
+            },
+            "note": "consumed as the RVA SOURCE only. The image-space address is NOT usable here and must be rebased: this tool takes --rva, never an address, because passing an address to a file-offset mapping is the mistake documented in does_not_prove."
+          }
+        ]
+      },
+      "produces": {
+        "facts": [
+          {
+            "key": "insn.stream",
+            "type": "bytes_ref",
+            "note": "the decoded instruction stream as {addr, mnemonic, op_str} triples. Measured 40 instructions from RVA 0x1080, including `cmp dword ptr [rsp + 0xa0], 2` at 0x1400010a2 -- the argc==2 guard the decompilers both report as `if (argc == 2)`."
+          },
+          {
+            "key": "insn.rip_operand",
+            "type": "structure",
+            "note": "every RIP-relative memory operand resolved to an absolute address WITH ITS WIDTH: {at, text, target, width, byte, dword}. This is the unique contribution. Measured: 0x140017342 width=byte value 90; 0x140017344 width=dword value 11; 0x140017343 width=byte value 51; 0x140017364 width=dword value 5."
+          },
+          {
+            "key": "pe.section_exec",
+            "type": "structure",
+            "note": "the containing section and whether IMAGE_SCN_MEM_EXECUTE (0x20000000) is set. Measured .text 0x60000020 executable, .rdata 0x40000040 not."
+          }
+        ]
+      },
+      "requires": {
+        "runtime": "python",
+        "net": "none",
+        "admin": false,
+        "device": false,
+        "disk_mb": 0,
+        "ram_mb": 128,
+        "wall_minutes": 1,
+        "tools": [
+          {
+            "name": "capstone",
+            "probe": "python -c \"import capstone;print(capstone.__version__)\"",
+            "expect": "5.0.7"
+          }
+        ],
+        "install_note": "Already installed in the system Python 3.14.7. No install, no disk cost. pefile 2024.8.26 is the same interpreter."
+      },
+      "reach": {
+        "fs_read": true,
+        "fs_write": false,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": false,
+        "db_write": false,
+        "proc_spawn_note": "Declared because the probe and both controls invoke `python native-lab/tools/disasm.py` as a child process, which is the station's own interpreter reading a file. Nothing else spawns and no target executes -- exec_target stays false and that is the distinction the validator exists to keep honest."
+      },
+      "proves": [
+        "THAT A NON-DECOMPILER INSTRUMENT INDEPENDENTLY CORROBORATES THE STRUCTURE of a locate claim. Measured with no decompiler in the lineage: `cmp dword ptr [rsp+0xa0], 2` at 0x1400010a2, and two calls to 0x140001000 with edx=0x12 and edx=0x1a -- matching the decompiled `argc == 2` guard and the decode-call lengths 18 and 26 that BOTH decompilers report.",
+        "THAT IT RESOLVES WHAT A DECOMPILER LEAVES BEHIND, INCLUDING THE WIDTH. The four RIP-relative operands it reports point at exactly the addresses Ghidra emitted as unresolved DAT_ references (0x140017342, 0x140017344, 0x140017343, 0x140017364) and it states that 0x140017342 is a BYTE load and 0x140017344 a DWORD load. Ghidra stated neither address's value nor its width; IDA stated the value but only by propagating a constant and discarding the width evidence.",
+        "THAT IT REFUSES NON-CODE. Measured: --rva 0x17000 lands in .rdata (Characteristics 0x40000040, no IMAGE_SCN_MEM_EXECUTE) and returns exit 2 with the section name and its characteristics, where the first version of this tool returned ok:true with 8 instructions decoded out of ASCII string bytes."
+      ],
+      "does_not_prove": [
+        "WHAT THE CODE MEANS. These are instructions, not recovered logic: no lifting, no types, no control-flow reconstruction. It corroborates that a comparison and two calls exist at these addresses; it cannot say the program checks a password.",
+        "THAT THE ACCEPTANCE MISSION NOW CONFIRMS, and this is the honest limit. evidence_source is 'disassembler', a genuinely different family from 'decompiler', so a chain of IDA plus capstone would satisfy the gate's two-instrument two-family requirement. **Whether that is CORRECT depends on the claim, and the gate cannot currently tell claims apart.** For 'main compares argc to 2 and calls a decode routine twice', capstone genuinely corroborates and confirmation would be honest. For 'the XOR key is 11, 90, 5, 51', it also happens to corroborate here -- but only because constant propagation happens to be visible in the operand, and that is a property of this binary, not a general guarantee. Registering this family must not be read as having resolved the acceptance question, and the mission's unresolved verdict stands until someone runs the chain and reads whether the RESULT is defensible, not merely whether the gate turned green.",
+        "THAT AN RVA IS AN ADDRESS. --rva takes a relative virtual address and maps it through the section table. Passing an image-space address, or using an RVA as a raw file offset, yields zero instructions or garbage; the first draft of this script did exactly that and the wrapper now refuses rather than reporting an empty success.",
+        "ANYTHING ABOUT A THIRD-PARTY BINARY. Corpus targets only.",
+        "THAT ADDING THIS FAMILY RESOLVED THE ACCEPTANCE MISSION. MEASURED, AND IT DID NOT. The Q2.locate acceptance mission was re-run AFTER this entry and the `disassembler` family existed in the schema, and it still returned tier=unresolved with independence FAIL: '2 capabilities resolve to 1 instrument(s) [idalib-mcp] carrying 1 distinct family/families [decompiler]'. The planner never routed this entry, because it has no `invoke` block -- the same condition that leaves native.function.match, native.pe.packer and native.crosscompare.ghidra probeable but uncallable. **So four capabilities in this registry, including the only instrument in a genuinely different family, cannot be planned into a mission.** That is the correct outcome -- registering a family must not be able to turn a gate green on its own -- and it is also the next structural hole. Wiring this one would require the typed edge to carry an RVA, because this tool takes --rva and IDA's native.func.addr is an image-space address, so the conversion has to happen somewhere and putting it in the argv would be the joined-command-line pattern R10 exists to refuse."
+      ],
+      "gate": {
+        "lane": "debug",
+        "requires_verdict": true,
+        "escalation_class": "none"
+      },
+      "gate_must_not_delegate": [
+        "disasm.py against any binary this repository did not author",
+        "passing --force on a section that is merely suspicious rather than known to hold unpacked code",
+        "reading decoded instructions as recovered logic, or their presence as evidence a function is reachable",
+        "using an instruction count as a measure of function size: count stops at --count, not at the ret"
+      ],
+      "gate_must_not_delegate_why": "Measured or read. (1) The target side is a red line. (2) --force is the one path that defeats the executable-section gate, and it exists for packed or self-modifying code where the section flags genuinely lie; used casually it restores exactly the garbage-out-of-data behaviour the gate exists to stop. (3) Reachability is a runtime property: native.crosscompare.ghidra and the frida entries both measured that the address being decodable and the address being executed are different questions. (4) --count truncates arbitrarily, so the count says nothing about the function's extent.",
+      "probe": {
+        "command": "python native-lab\\tools\\disasm.py crackme-corpus\\out\\c01-stringobf.exe --rva 0x1080 --count 40",
+        "expect": "0x140017342 width=byte",
+        "expect_exit": 0,
+        "last_run": "2026-10-02",
+        "run_log": "ok:true rva 0x1080 file_offset 0x480 count 40. RIP-REL operands: 0x140022080 dword 769630770; 0x140022000 dword 1734439797; 0x140017342 width=byte byte=90 dword=734042; 0x140017344 width=dword byte=11 dword=11; 0x140017330 dword 41361174; 0x140017343 width=byte byte=51 dword=2867; 0x140017364 width=dword byte=5 dword=5; 0x140017348 dword 1096567660; 0x140017368 dword 1195461702; 0x140022018 dword 1162495314. 0.18 s.",
+        "prepare": "cd 'D:\\Software\\Tool\\WorkStation\\debugger'",
+        "expect_note": "expect is the WIDTH, not the value. Asserting a value would be asserting something the two decompilers already give; the width is the only thing this instrument uniquely contributes and therefore the only thing worth a contract."
+      },
+      "negative_control": {
+        "id": "native.disasm.capstone.non_executable_section_refused",
+        "command": "python native-lab\\tools\\disasm.py crackme-corpus\\out\\c01-stringobf.exe --rva 0x17000",
+        "expect_exit": 2,
+        "expect_output": "which is NOT executable",
+        "expect_output_note": "THE CONTROL IS THE GARBAGE-THAT-LOOKS-LIKE-CODE CASE, and it is this capability's real hazard rather than a formality. .rdata at RVA 0x17000 holds initialized read-only data, Characteristics 0x40000040 with IMAGE_SCN_MEM_EXECUTE clear. The first version of this tool returned ok:true with 8 decoded instructions, the first being `sbb byte ptr [rip + 2], dl` -- assembled out of ASCII string bytes -- and the caller would have seen a successful run and a plausible instruction stream. Measured now: exit 2 naming the section and its characteristics. Two further refusals are measured and distinct: an RVA in no section (0x900000) exits 1 with the pefile error, and a non-PE exits 1 with 'DOS Header magic not found', so a caller can tell a mapping failure from a format failure from a non-code section. --force is the deliberate escape and is documented as such rather than left as a silent override.",
+        "measured": "--rva 0x17000: {ok:false, exit:2, error:\"RVA 0x17000 is in section '.rdata' (Characteristics 0x40000040), which is NOT executable...\", section:'.rdata', characteristics:'0x40000040'}, TRUE_EXIT=2. --rva 0x900000: exit 1 'not mapped by any section'. README.md: exit 1 'not a PE: DOS Header magic not found'. --force on 0x17000: ok:true count 4, the documented override."
+      },
+      "provenance": {
+        "source": "measured on this station 2026-10-02 by the agent that added this entry, immediately after the two-decompiler pairing study showed what Ghidra's output was missing",
+        "record": "docs/research/pairing-two-decompilers.md"
+      },
+      "evidence_source": "disassembler",
+      "evidence_source_note": "A NEW family value, added to schema.evidence_families on 2026-10-02 with its definition written in. It is deliberately NOT the 'static-analysis' relabel escape: that escape re-declared ONE instrument under a second name, and R18 independently fails when two capabilities sharing one instrument declare different families. capstone is a different library with no decompiler in its lineage, and it was measured carrying evidence neither decompiler emitted. THE HONEST CAVEAT, which is the whole reason this note is long: family-level independence is CLAIM-BLIND. It asks whether two families spoke, not whether they agreed about the thing being claimed. Here they did agree, and that agreement was verified rather than assumed -- but the gate cannot tell a structural claim from a semantic one, so adding this family makes confirmation POSSIBLE, not automatically CORRECT.",
+      "not_callable": {
+        "reason": "PROBEABLE BUT NOT CALLABLE, and the measured consequence is on the record because it matters. This entry has no invoke block, so mission.ps1 cannot plan it. Re-running the Q2.locate acceptance mission with the disassembler family present in the schema still returned unresolved on independence, with the chain '2 capabilities resolve to 1 instrument(s) [idalib-mcp] carrying 1 family'. Adding a family did NOT and must not green the gate. To make this callable the typed edge has to deliver an RVA rather than an image-space address; the conversion belongs in this wrapper, not in a joined argv, because R10 exists precisely to refuse commands assembled by string concatenation."
+      }
     }
   ]
 }
