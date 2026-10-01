@@ -1,5 +1,35 @@
 {
-  "schema": "capabilities.v1",
+  "schema": {
+    "name": "capabilities.v1",
+    "question_types": {
+      "Q1.identify": "what is this file, is it packed, what is its shape",
+      "Q2.locate": "where is the code that does X",
+      "Q3.behaviour": "what does it actually do at runtime -- needs a device or a debugger",
+      "Q4.data": "what is in this capture / image / dump",
+      "Q5.vuln-shape": "where does it trust something it should not",
+      "Q6.crypto": "what token/signature/key handling is this",
+      "Q7.origin": "what changed between these two builds"
+    },
+    "baseline": {
+      "capability_count": 15,
+      "note": "The validator pins this count. A capability may only leave capabilities[] by appearing in retired[] with a reason, because deleting an island used to make the registry validate CLEANER rather than louder."
+    },
+    "retired": [],
+    "evidence_families": {
+      "_definition": "Which FAMILY of instrument produced a fact. Independence is a property of the INSTRUMENT, not of the tool id and not of this label: two capabilities that drive the same instrument are ONE opinion however they are labelled, and two different decompilers are also one opinion (fact_types.evidence_source says exactly this). The enumerated values below are the permitted set; R18 fails the run on anything else, and R18 also fails when two capabilities sharing one instrument declare different families. Correcting a label here cannot change what the mission gate believes about independence -- the gate must derive the family axis from the instrument -- but a registry that disagrees with itself is a registry nobody can reason about.",
+      "decompiler": "reconstructs executable code into a higher-level language: Hex-Rays IDA and Ghidra both land here, and two of them agreeing is ONE opinion held twice, not corroboration",
+      "static-analysis": "NOT a separate family. Retained only so the value is not silently re-used; no capability should carry it, because on this estate it existed solely to relabel one idalib-mcp capability and thereby manufacture a second family",
+      "dynamic-observation": "watches a running subject: a live page over CDP, a live process",
+      "dynamic-instrumentation": "injects into or attaches to a live process to observe or alter it",
+      "structural-parser": "decodes a self-describing container without executing it: JOSE/JWT, zip, png",
+      "capture-analysis": "reads recorded traffic rather than live traffic",
+      "artefact-parser": "reads host artefacts left on disk: prefetch, SRUM, registry hives",
+      "package-inspection": "reads a packaged artefact as built: APK manifest, DEX, resources",
+      "binary-similarity": "matches functions across two binaries by scoring, without proving equivalence",
+      "differential-oracle": "compares two implementations of the same parser and treats a disagreement as the finding",
+      "practice": "solving self-built exercises; proves technique, not transfer"
+    }
+  },
   "generated": "2026-09-30",
   "_comment": "Capability contracts, so an orchestrator can compose labs it can introspect. This is NOT an inventory -- manifests/tools.json records what is installed. A capability here states what it consumes, the typed facts it produces, what it requires, what it proves, what it does NOT prove, and a negative control that must fail. 'state: observed' means the probe below was actually run; the summary is what it printed. Verify with: python scripts/registry-verify.py. Orchestrate with: powershell -File scripts\\mission.ps1 -Action Run ...",
   "fact_types": {
@@ -38,12 +68,23 @@
           },
           {
             "name": "function",
+            "type": "string",
+            "required": false,
+            "from": {
+              "capability": "native.ida.list_functions",
+              "field": "native.func.named"
+            },
+            "note": "P1: this edge was declared as native.func.addr while the loop binds native.func.named. mission.ps1:302 reads invoke.consumes_fact, and this entry's invoke.consumes_fact is native.func.named, so the fact the loop actually passes is the NAMED one. The declared edge now matches the edge that fires; R11 fails the run if the two ever drift apart again."
+          },
+          {
+            "name": "function_addr",
             "type": "address",
             "required": false,
             "from": {
               "capability": "native.ida.list_functions",
               "field": "native.func.addr"
-            }
+            },
+            "note": "The other edge is real too and is kept: decompile.mjs accepts a function-name-OR-address (native-lab/tools/decompile.mjs:4,15,31-39) and resolves a name to an address itself. Declared separately so the two typed facts are not conflated."
           }
         ],
         "context": [],
@@ -73,7 +114,11 @@
           {
             "key": "native.dec.saved",
             "type": "path_ref",
-            "glob": "*.c"
+            "glob": "*.c",
+            "unbound": {
+              "status": "unverified",
+              "reason": "P8 measured this rather than binding it: native-lab/tools/decompile.mjs writes NO file. Its whole output is stdout JSON {ok, addr, code, refs}; there is no fs.write in it at all. The *.c export belongs to the Ghidra path instead -- scripts/ghidra/ExportDecompile.java:67 writes safeName(name)+'.c' per function, and that artifact (native.ghidra.c) IS now bound to a fact_map. So this entry is kept as the declared name but marked unbound with the reason, rather than bound to something that does not exist."
+            }
           }
         ],
         "invalidates_on": [
@@ -163,6 +208,7 @@
         "expect": "LOOP CLOSED",
         "exit": 0,
         "last_run": "2026-09-30",
+        "evidence_binding": {"status": "unverified", "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."},
         "last_summary": "JSON-SUMMARY {\"total\":15,\"pass\":15,\"fail\":0}"
       },
       "negative_control": {
@@ -190,6 +236,7 @@
         "Q2.locate"
       ],
       "state": "observed",
+      "root_reason": "Genuine root of the native chain, and the ONLY capability here that is upstream of another: it is handed a binary path by the Owner and nothing in this registry produces a function list. Its two outputs (native.func.addr, native.func.named) are exactly what native.ida.decompile consumes, so it is a producer, not an island.",
       "consumes": {
         "inputs": [
           {
@@ -300,6 +347,7 @@
         "expect": "list_funcs enumerates functions",
         "exit": 0,
         "last_run": "2026-09-30",
+        "evidence_binding": {"status": "unverified", "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."},
         "last_summary": "300 functions enumerated from c01-stringobf.exe"
       },
       "negative_control": {
@@ -312,8 +360,8 @@
         "source": "measured on this host 2026-09-30",
         "record": "native-lab/README.md"
       },
-      "evidence_source": "static-analysis",
-      "evidence_source_note": "IDA function boundary recovery"
+      "evidence_source": "decompiler",
+      "evidence_source_note": "IDA function boundary recovery. CORRECTED from 'static-analysis': this capability and native.ida.decompile drive the SAME instrument (requires.tools[0] = idalib-mcp, Hex-Rays IDA 9.2), and fact_types.evidence_source already defines the family as a property of the INSTRUMENT -- 'independence is about the family, not the tool id'. Two labels for one instrument let a chain list_functions -> decompile -> ghidra.decompile present families {static-analysis, decompiler} and instruments {idalib-mcp, analyzeHeadless} as two independent opinions, when the first 'family' was one tool relabelled and Ghidra is a second DECOMPILER (one opinion held twice, as this entry's sibling already says in prose). Labelling both idalib-mcp capabilities 'decompiler' makes the structured field agree with the prose. This label is documentation for a human reader: the mission gate must derive the family axis from the instrument, not from this string."
     },
     {
       "id": "web.js.cdp",
@@ -328,6 +376,7 @@
         "Q4.data"
       ],
       "state": "observed",
+      "root_reason": "Genuine root: it is handed a loopback URL by the Owner and observes it live. Nothing upstream produces an observation of a running page -- the observation IS the input. It produces web.dom.nodes, which nothing consumes today; that is recorded as an unclaimed output rather than dressed up with an edge.",
       "consumes": {
         "inputs": [
           {
@@ -376,6 +425,15 @@
         "anything about a host we have no verdict for",
         "that behaviour is stable -- the page was observed once, at one moment"
       ],
+      "reach": {
+        "fs_read": true,
+        "fs_write": false,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": false,
+        "db_write": false,
+        "note": "Declared because R8's floor is derived from what the entry does, not from this block: it consumes a `url` input (so it reads) and its probe spawns node (so it spawns). net is false at the lab level -- chrome.mjs maps every host to NOTFOUND except the lab origin (web-reverse/tools/chrome.mjs:8), so the loopback-only note on the url input is the enforcement, and this block records it as an effect rather than as a claim."
+      },
       "gate": {
         "lane": "bounty",
         "requires_verdict": true,
@@ -386,7 +444,11 @@
         "expect": "6/6",
         "exit": 0,
         "last_run": "2026-09-30",
+        "evidence_binding": {"status": "unverified", "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."},
         "last_summary": "6 checks"
+      },
+      "not_callable": {
+        "reason": "P7, stated explicitly rather than left ambiguous. The probe proves the capability runs; there is deliberately no invoke. web-reverse/tools/chrome.mjs exposes NO standalone CLI: it is a module other tools IMPORT (net-reverse/tools/intercept.mjs:24-25 imports launchChrome from it and CDP from cdp.mjs), and the only driver that speaks to it is web-reverse/tools/loop.mjs, which runs the lab's own fixed 6 checks against a lab-served page rather than a caller-supplied URL. So there is no argv shape that takes this capability's `url` input and returns a typed fact; declaring an invoke here would be inventing an entry point that does not exist. UNVERIFIED: if a URL-taking wrapper is added later, this entry gains an invoke and the fact_map key must be read off that wrapper's real stdout, not guessed."
       },
       "negative_control": {
         "id": "web.js.cdp.trust",
@@ -412,6 +474,7 @@
         "Q6.crypto"
       ],
       "state": "observed",
+      "root_reason": "Genuine root: it is handed a token string and parses it. There is nothing upstream that hands over a JOSE token in this registry -- no capability fetches one from a live service. The token is the Owner's to supply, which is also why the entry refuses to claim anything about a live credential.",
       "consumes": {
         "inputs": [
           {
@@ -456,6 +519,15 @@
         "that a claimed algorithm matches the one the server enforces",
         "anything about a live credential -- nothing here consumes or stores one"
       ],
+      "reach": {
+        "fs_read": true,
+        "fs_write": false,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": false,
+        "db_write": false,
+        "note": "Declared from the entry's own floor: it consumes a `token` input (reads) and runs node (spawns). fs_write is false and that is the load-bearing part -- crypto-lab/tools/analyze.mjs can be handed --secret-file, but the shipped path never writes, and nothing in this capability persists a credential, which is what the third does_not_prove line claims."
+      },
       "gate": {
         "lane": "debug",
         "requires_verdict": false,
@@ -466,7 +538,23 @@
         "expect": "JSON-SUMMARY {\"total\":17,\"pass\":17,\"fail\":0}",
         "exit": 0,
         "last_run": "2026-09-30",
+        "evidence_binding": {"status": "unverified", "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."},
         "last_summary": "17 checks"
+      },
+      "invoke": {
+        "runner": "node",
+        "argv": [
+          "crypto-lab/tools/analyze.mjs",
+          "--file",
+          "{target}",
+          "--json"
+        ],
+        "stdout": "json",
+        "success_when": "parsed JSON has ok == true AND claims present; the analyser exits 2 on usage, 3 on bad input, 4 on --expect mismatch",
+        "fact_map": {
+          "claims": "crypto.jose.claims"
+        },
+        "note": "P7: probe-only until now. The entry point is real -- analyze.mjs's usage (:654-656) is '--token <jws> | --file <path> | --stdin', and --json prints the result object (:618-640) whose root keys include ok, algorithm, header, claims, weaknessClasses, findings, summary. `claims` is the field this capability's own fact describes, so the binding is to a key the tool really emits. --file rather than --token because argv is positional-safe and the target path is attacker-influenced by definition."
       },
       "negative_control": {
         "id": "crypto.jose.alg_confusion",
@@ -494,6 +582,7 @@
         "Q7.origin"
       ],
       "state": "observed",
+      "root_reason": "Genuine root: it is handed a capture file. Producing captures is a collection step (intercept.mjs drives Chrome over CDP and writes the file), and that step is not a declared capability -- it is a lab tool. Declaring a root_reason here is the honest reading; the alternative would be inventing a producer to make the graph look connected.",
       "consumes": {
         "inputs": [
           {
@@ -538,6 +627,16 @@
         "that a session was legitimate -- capture records traffic, not authority",
         "anything about traffic we did not capture"
       ],
+      "reach": {
+        "fs_read": true,
+        "fs_write": false,
+        "net": true,
+        "proc_spawn": true,
+        "exec_target": false,
+        "db_write": false,
+        "containment": "loopback_capture",
+        "note": "Declared from the entry's own floor, and net:true is the honest one here: pcap-lab.mask shells out to tshark on a capture and the lab's negative control is a CA-trust check, which is a network effect. containment is pinned by R8 because net is declared, and loopback_capture is the class the gate already accepts for exactly this shape (mission.ps1 intake enumerates station_under_named_process_rule | loopback_capture | isolated_vm). fs_write stays false: tshark reads the capture and the verdict goes to stdout."
+      },
       "gate": {
         "lane": "debug",
         "requires_verdict": true,
@@ -548,7 +647,26 @@
         "expect": "LANE CLOSED",
         "exit": 0,
         "last_run": "2026-09-30",
+        "evidence_binding": {"status": "unverified", "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."},
         "last_summary": "16 questions, request/response rewriting and isolation checks passed"
+      },
+      "invoke": {
+        "runner": "node",
+        "argv": [
+          "net-reverse/tools/pcap-lab.mjs",
+          "ask",
+          "--pcap",
+          "{target}",
+          "--question",
+          "dns-query-count",
+          "--json"
+        ],
+        "stdout": "json",
+        "success_when": "parsed JSON has ok == true AND stdout non-empty",
+        "fact_map": {
+          "detail": "net.flow.summary"
+        },
+        "note": "P7: probe-only until now. The entry point is real -- pcap-lab.mjs's own usage (:5,126) is 'ask --pcap <file> --question <id> [--json]', and --json prints {ok, question, asked, pcap, method, command, stdout, detail, guarantee} (:136-142). `detail` carries the analyser's verdict detail and is the field bound to this capability's typed fact. The question id is NOT a guess: it was read back out of the tool itself (`node net-reverse/tools/pcap-lab.mjs list --json` -> dns-a-record, dns-aaaa-record, dns-query-count, http-plaintext-credential, ...). An earlier draft used an invented 'protocol-summary', which does not exist -- precisely the plausible-looking id that yields a confident empty answer instead of an error."
       },
       "negative_control": {
         "id": "net.pcap.trust",
@@ -576,6 +694,7 @@
         "Q7.origin"
       ],
       "state": "observed",
+      "root_reason": "Genuine root: it is handed a memory image. The lab generates its own synthetic images (lab/mkimage.mjs) but image ACQUISITION from a live host is not a declared capability on this host, so the image arrives from the Owner. Its own parser is consumed by fuzz.differential.parse, which is recorded as an edge on the CONSUMER side.",
       "consumes": {
         "inputs": [
           {
@@ -619,6 +738,15 @@
         "that absence of an artefact means absence of the behaviour",
         "any conclusion resting on a single tool family -- corroboration needs a second capability"
       ],
+      "reach": {
+        "fs_read": true,
+        "fs_write": false,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": false,
+        "db_write": false,
+        "note": "Declared from the entry's own floor: it consumes an `image` path_ref (reads) and its runtime is node+python across five plugins (spawns). fs_write is false on the shipped path -- triage.mjs parses the image in memory and prints to stdout -- but the lab does GENERATE synthetic images (lab/mkimage.mjs), which is corpus construction rather than analysis, so the write is declared where it actually happens, in the entry that produces the image, not here."
+      },
       "gate": {
         "lane": "debug",
         "requires_verdict": true,
@@ -629,7 +757,23 @@
         "expect": "LOOP CLOSED",
         "exit": 0,
         "last_run": "2026-09-30",
+        "evidence_binding": {"status": "unverified", "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."},
         "last_summary": "37 checks (74 PASS lines -- each check prints a verdict and its evidence)"
+      },
+      "invoke": {
+        "runner": "node",
+        "argv": [
+          "forensics-lab/tools/analyze.mjs",
+          "--target",
+          "{target}",
+          "--print-header"
+        ],
+        "stdout": "json",
+        "success_when": "parsed JSON has ok == true AND triage present; the analyser exits 3 when the image cannot be read",
+        "fact_map": {
+          "triage": "forensics.artefact.rows"
+        },
+        "note": "P7: probe-only until now. The entry point is real -- analyze.mjs's main() (:294-299) takes --target <path> and --print-header, and --print-header prints JSON.stringify(r.triage) (:298), whose keys are pslist/psscan/netscan/malfind/handlescan (each {count, method, ...rows}). `triage` is bound to this capability's typed fact because that is the object the tool prints on that path. No --json flag exists on this tool, so the argv uses --print-header, which is the real machine-readable switch."
       },
       "negative_control": {
         "id": "forensics.memory.triangulation",
@@ -656,6 +800,7 @@
         "Q3.behaviour"
       ],
       "state": "observed",
+      "root_reason": "Genuine root: it is handed a .NET assembly path. ILSpy decompilation needs no upstream fact -- the assembly is the input. The solvers that consume the decompiled output are inside the same lab loop and are not separate capabilities.",
       "consumes": {
         "inputs": [
           {
@@ -698,6 +843,17 @@
         "that a recovery generalises beyond the sample it was recovered from",
         "that a confident answer is a correct one -- see the wrong-entry-state control"
       ],
+      "reach": {
+        "fs_read": true,
+        "fs_write": true,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": false,
+        "db_write": false,
+        "write_scope": "case_dir",
+        "write_scope_note": "ILSpy writes its decompiled output to an --ilspy-out directory that the corpus driver computes from the challenge record (crackme-corpus/tools/loop.py:150-152 shows the identical shape). That is inside the lab's own output tree, so case_dir, not an escalation -- and R8's floor would have flagged fs_write:true with no write_scope at all, which is how the two stop looking alike.",
+        "note": "Declared from the entry's own floor: it consumes an `assembly` path_ref (reads) and its runtime is node+dotnet with a per-sample ILSpy subprocess (spawns)."
+      },
       "gate": {
         "lane": "debug",
         "requires_verdict": true,
@@ -708,7 +864,11 @@
         "expect": "JSON-SUMMARY {\"total\":27,\"pass\":27,\"fail\":0}",
         "exit": 0,
         "last_run": "2026-09-30",
+        "evidence_binding": {"status": "unverified", "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."},
         "last_summary": "27 checks (46 PASS lines -- count unique names, not rows)"
+      },
+      "not_callable": {
+        "reason": "P7, stated explicitly rather than left ambiguous. managed-lab/tools/loop.mjs is a CORPUS driver, not a single-assembly entry point: it builds and solves the whole m01..m05 set and only honours --json for its own summary (:29). The per-sample solvers (solve-m01.mjs .. solve-m05.mjs) each hardcode their own assembly and ilspy-out path (tools/loop.py:150-152 shows the same shape: --dll and --ilspy-out are computed from the challenge record, not from argv a caller can supply). So there is no argv that takes THIS capability's `assembly` input and returns managed.method.code. Declaring an invoke would invent an entry point."
       },
       "negative_control": {
         "id": "managed.il.wrong_entry_state",
@@ -735,6 +895,7 @@
         "Q2.locate"
       ],
       "state": "observed",
+      "root_reason": "Genuine root: it is handed an APK. The lab BUILDS its own signed APK (that is what 'build and statically analyse' means in this title) and then analyses it, so both the input and the analysis happen in one entry and there is no upstream capability to name. mobile.tls.pinning is published as a fact for a later round to consume; nothing consumes it yet, and that is recorded rather than faked with an edge.",
       "consumes": {
         "inputs": [
           {
@@ -754,6 +915,17 @@
               "permission",
               "component"
             ]
+          },
+          {
+            "key": "mobile.tls.pinning",
+            "type": "structure",
+            "fields": [
+              "kind",
+              "domain",
+              "digest",
+              "mechanism_count"
+            ],
+            "note": "P6: published rather than discarded. The analyser has always measured all four pinning mechanisms and threw the answer away -- mobile-lab/tools/analyze.mjs:687-690 computes exactly these booleans ('pinning-declarative', 'pinning-okhttp', 'pinning-native', 'pinning-trustmanager') and uses them ONLY to assert its own --expect table, and :581-585 builds report.pinning with mechanisms/domains/digests/totalMechanisms. Nothing typed left the capability, so a later round had nothing to consume. It is now a declared fact AND bound to the `pinning` stdout field, so the loop can hand it forward."
           }
         ],
         "invalidates_on": [
@@ -781,6 +953,15 @@
         "any bypass of any detected check -- none is shipped, by design",
         "a Kotlin RENAME: the metadata census is recovered, the encoded_array is not decoded"
       ],
+      "reach": {
+        "fs_read": true,
+        "fs_write": false,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": false,
+        "db_write": false,
+        "note": "Declared from the entry's own floor: it consumes an `apk` (reads) and its runtime is node+java with apktool/jadx (spawns). exec_target is false and that is the load-bearing declaration, matching the first does_not_prove line: with device:false nothing here runs the APK, so the indicator census is a static read and not a firing. Declaring it explicitly is what stops a reader inferring 'mobile' means 'on-device'."
+      },
       "gate": {
         "lane": "debug",
         "requires_verdict": true,
@@ -791,7 +972,23 @@
         "expect": "LOOP CLOSED",
         "exit": 0,
         "last_run": "2026-09-30",
+        "evidence_binding": {"status": "unverified", "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."},
         "last_summary": "31 checks including 6 indicator controls: silence on our own clean APK, fire on a synthetic packer DEX, fire on load-bearing root/emulator paths, and weak-signal separation"
+      },
+      "invoke": {
+        "runner": "node",
+        "argv": [
+          "mobile-lab/tools/analyze.mjs",
+          "{target}",
+          "--json"
+        ],
+        "stdout": "json",
+        "success_when": "parsed JSON has manifest present AND pinning present; the analyser exits 3 on an unreadable APK",
+        "fact_map": {
+          "manifest": "mobile.manifest.summary",
+          "pinning": "mobile.tls.pinning"
+        },
+        "note": "P7: this entry had a probe and no invoke, so it could never take arguments or return a typed fact. The entry point is real and takes exactly this shape -- analyze.mjs's own usage line is 'node tools/analyze.mjs <apk> [--json]' (:663) and --json prints the whole report object whose root keys include `manifest` (:393) and `pinning` (:581), so both fact_map bindings resolve against fields the tool really emits. argv is an array and is never joined."
       },
       "negative_control": {
         "id": "mobile.apk.wrong_decoder",
@@ -818,6 +1015,7 @@
         "Q7.origin"
       ],
       "state": "observed",
+      "root_reason": "Genuine root: the corpus builds its own crackmes from lab sources and solves them. Both halves live in this entry, so there is no upstream producer. Its outputs are practice records, not inputs to another lab.",
       "consumes": {
         "inputs": [
           {
@@ -859,6 +1057,19 @@
       "does_not_prove": [
         "that the technique transfers to a binary we did not build"
       ],
+      "reach": {
+        "fs_read": true,
+        "fs_write": true,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": true,
+        "db_write": false,
+        "write_scope": "case_dir",
+        "write_scope_note": "the corpus builds its own crackmes (crackme-corpus/tools/build-c.ps1, invoked from loop.py) into the lab's out tree. That is a real write and a real exec of code we compiled ourselves, which is exactly why exec_target is declared here rather than left to be inferred from the word 'crackme' in the title. It is case_dir, not an escalation: the binaries are self-built from lab sources and never touch a third-party target.",
+        "containment": "station_under_named_process_rule",
+        "containment_note": "Pinned by R8 because reach.exec_target is declared. The corpus RUNS code -- it builds and executes its own crackmes -- so it needs a containment class on the record. station_under_named_process_rule is the honest one: the targets are self-built from lab sources under a named process, not a third-party binary and not a VM-hosted capture. This is the containment being pinned into the registry that the grant itself does not carry.",
+        "note": "Declared from the entry's own floor: it consumes a `binary` path_ref (reads) and its runtime is python+msvc, so it both builds and runs (spawns, execs)."
+      },
       "gate": {
         "lane": "debug",
         "requires_verdict": false,
@@ -869,7 +1080,11 @@
         "expect": "CORPUS CLOSED",
         "exit": 0,
         "last_run": "2026-09-30",
+        "evidence_binding": {"status": "unverified", "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."},
         "last_summary": "20 checks, 5 negative controls"
+      },
+      "not_callable": {
+        "reason": "P7, stated explicitly rather than left ambiguous. crackme-corpus/tools/loop.py is a CORPUS driver: its usage (:12-14) is '--no-build | --only c03 | --list', so --only selects a CHALLENGE ID from the corpus ramp, not an arbitrary binary path. This capability's `binary` input is a path_ref, and the corpus solver builds its own binaries from labkit.py rather than accepting one, so there is no argv that consumes a caller-supplied binary and returns re.solve.answer. Declaring an invoke would invent an entry point."
       },
       "negative_control": {
         "id": "re.corpus.wrong_sample",
@@ -927,12 +1142,14 @@
         ]
       },
       "reach": {
-        "fs_read": false,
+        "fs_read": true,
         "fs_write": true,
         "net": false,
         "proc_spawn": true,
         "exec_target": true,
         "db_write": false,
+        "containment": "isolated_vm",
+        "containment_note": "Pinned by R8 because reach.exec_target is declared. This is the registry's own correctly-labelled example of why containment has to live HERE: the entry already said 'Frida injects into a running process', and the gate accepts exactly three containment classes at intake while a grant carries no containment field of its own. isolated_vm is the honest class for injecting into a live process on a device -- the other two (station_under_named_process_rule, loopback_capture) do not contain a device. Declared even though the capability is absent: the effect is real whenever the capability is not, which is the note this entry already made.",
         "note": "admin=true is declared as fs_write and proc_spawn rather than left implicit, because a decorator tag can miss an effect. Frida injects into a running process and writes to the device, so the effect is real even while the capability is absent.",
         "write_scope": "case_dir",
         "write_scope_note": "writes only under the mission case directory; anything broader needs escalation"
@@ -986,9 +1203,35 @@
         "inputs": [
           {
             "name": "target",
-            "type": "string",
+            "type": "lab_target",
             "required": true,
-            "note": "one of pcap | jose | forensic-pf | web-triage. All four parsers are ours."
+            "enum": [
+              "pcap",
+              "jose",
+              "forensic-pf",
+              "web-triage"
+            ],
+            "note": "P5: this was an opaque `string` while its own note already named the four labs. Now typed and closed. The four ids are the registry-side names of the four targets fuzz-lab/lab/targets.mjs exports (TARGETS, ids 'pcap'|'jose'|'forensic-pf'|'web-triage', :69,:98,:145,:184) and each one is a parser THIS repository ships, which is the whole reason the finding counts."
+          },
+          {
+            "name": "jose_seed",
+            "type": "structure",
+            "required": false,
+            "from": {
+              "capability": "crypto.jose.parse",
+              "field": "crypto.jose.claims"
+            },
+            "note": "P-series composition edge, measured not invented: the jose target imports the crypto lab's own analyzer, fuzz-lab/lab/targets.mjs:34 `import { analyze as joseAnalyze } from '../../crypto-lab/tools/analyze.mjs'`, and the corpus seeds come from the same lab's signer (corpus.mjs:33). Declared so R11 can prove the edge resolves rather than leaving the dependency as a bare import line."
+          },
+          {
+            "name": "forensic_seed",
+            "type": "structure",
+            "required": false,
+            "from": {
+              "capability": "forensics.memory.artefact",
+              "field": "forensics.artefact.rows"
+            },
+            "note": "Measured: the forensic-pf target imports the forensics lab's parser, targets.mjs:35 `import { parsePrefetch as forensicsParsePrefetch } from '../../forensics-lab/tools/triage.mjs'`, and its seeds are the lab's own synthetic images (corpus.mjs:32)."
           }
         ],
         "context": [],
@@ -1011,7 +1254,11 @@
             "key": "fuzz.repro.bytes",
             "type": "bytes_ref",
             "glob": "crashes/*.bin",
-            "note": "gitignored on purpose -- a reproducer is hostile input against the parsers we ship. The recipe is committed; replay re-derives the bytes and checks the hash."
+            "note": "gitignored on purpose -- a reproducer is hostile input against the parsers we ship. The recipe is committed; replay re-derives the bytes and checks the hash.",
+            "unbound": {
+              "status": "unverified",
+              "reason": "P8: measured rather than bound. The bytes are real and written -- fuzz-lab/lab/triage.mjs:130 writes the reduced case and :156 writes crashes/index.json -- but they are written to DISK, not returned on stdout, and mission.ps1's fact_map reads stdout fields only (mission.ps1:355-361). So there is no stdout key to map. Declared unbound with the reason instead of inventing a mapping that the loop would silently never resolve. The durable record is the committed recipe plus the reduced sha256 (fuzz.finding.outcome.recipe_sha)."
+            }
           }
         ],
         "invalidates_on": [
@@ -1048,6 +1295,17 @@
       "side_effects": [
         "spawns roughly two child processes per input; about 11 min at the default budget of 60"
       ],
+      "reach": {
+        "fs_read": true,
+        "fs_write": true,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": false,
+        "db_write": false,
+        "write_scope": "case_dir",
+        "write_scope_note": "writes fuzz-lab/out/last-run.json and the gitignored crashes/ directory (lab/triage.mjs:130,156) plus the corpus scratch dir. All of it is inside the lab's own out tree, so case_dir rather than an escalation. exec_target stays FALSE and that is deliberate: the fuzzer feeds bytes to OUR parsers as data, it never executes a third-party binary -- which is also why the third does_not_prove line can say installed third-party parsers are not targets.",
+        "note": "Declared from the entry's own floor: it consumes a `target` input (reads) and spawns roughly two child processes per input (side_effects, :1263). proc_spawn is the honest headline number here."
+      },
       "gate": {
         "lane": "debug",
         "requires_verdict": false,
@@ -1058,7 +1316,11 @@
         "expect": "LOOP CLOSED",
         "exit": 0,
         "last_run": "2026-09-30",
+        "evidence_binding": {"status": "unverified", "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."},
         "last_summary": "24/24 assertions, 480 inputs, 1 live reference finding, 12 flawed-twin findings, 6/6 regressions holding"
+      },
+      "not_callable": {
+        "reason": "P7, stated explicitly rather than left ambiguous. This entry has a probe and deliberately NO invoke. The entry point does exist (fuzz-lab/tools/loop.mjs, usage 'node fuzz-lab/tools/loop.mjs [--budget N] [--run-id ID] [--keep-going]') but it is not addressable by the mission loop's shape for two measured reasons. First, it selects no single target: loop.mjs runs the whole TARGETS campaign (targets.mjs:216), whereas mission.ps1 resolves ONE capability per round and binds argv placeholders per input. Second, its machine-readable output is not stdout: the run summary is printed as human text and the structured record is written to fuzz-lab/out/last-run.json (:289), so there is no stdout field for fact_map to bind (mission.ps1:355-361). Declaring it not_callable says which of those two reasons applies, so a reader is not left guessing whether the omission was a decision or an oversight."
       },
       "negative_control": {
         "id": "fuzz.differential.flawed_twin",
@@ -1085,6 +1347,7 @@
         "Q2.locate"
       ],
       "state": "observed",
+      "root_reason": "Genuine root: it is handed a binary path and runs Ghidra headlessly on it. The Ghidra install and the analyzeHeadless wrapper are REQUIREMENTS, not capabilities, so there is nothing upstream to declare an edge to. It is a producer (native.ghidra.summary, native.ghidra.c) that no declared capability consumes yet.",
       "consumes": {
         "inputs": [
           {
@@ -1178,6 +1441,7 @@
         "expect": "LOOP CLOSED",
         "exit": 0,
         "last_run": "2026-09-30",
+        "evidence_binding": {"status": "unverified", "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."},
         "last_summary": "4/4; measured cost of one run on a 140.5 KB PE: 18.05 s wall, 1085.7 MB peak RAM, 673,090 B across 522 files"
       },
       "invoke": {
@@ -1191,14 +1455,18 @@
           "-Sample",
           "{target}",
           "-OutDir",
-          "{outdir}"
+          "{input.outdir}"
         ],
         "stdout": "json",
         "success_when": "summary.json exists and ok == true; the exit code is NOT the signal",
         "fact_map": {
-          "summary": "native.ghidra.summary"
+          "summary": "native.ghidra.summary",
+          "outdir": "native.ghidra.c"
         },
-        "note": "argv is an array and is never joined. The success test is declared in words because it cannot be reduced to an exit code -- see envelope.success_when."
+        "passed": [],
+        "note": "argv is an array and is never joined. The success test is declared in words because it cannot be reduced to an exit code -- see envelope.success_when.",
+        "placeholder_note": "P2: this was `-OutDir {outdir}`, and mission.ps1 substitutes only {target} and {input.<name>}, so the literal string {outdir} reached the command line and the wrapper created a directory NAMED '{outdir}'. It is now {input.outdir}, which is a declared input, so R16 can prove the substitution exists. The wrapper's own fallback (scripts/ghidra-headless.ps1:26-28) picks %TEMP%\\ghidra-out-<guid> when -OutDir is empty, so an unresolved outdir degrades to a temp dir rather than to a literal-brace path.",
+        "fact_map_note": "P8: native.ghidra.c was bound by no fact_map. It is now bound to `outdir`, which is the field the summary really carries -- ExportDecompile.java:93 writes \"outdir\" into summary.json and the per-function .c files are written beside it (:67)."
       },
       "negative_control": {
         "id": "native.ghidra.decompile.not_a_binary",
@@ -1224,6 +1492,7 @@
         "Q7.origin"
       ],
       "state": "observed",
+      "root_reason": "Genuine root: it is handed two binaries and one Ghidra project (the project precondition is now a declared input, P3). Both programs must already be imported into that project, and the import step is performed by the same hand-driven session recorded in this entry's probe -- it is not a separate declared capability, so naming one here would be inventing it.",
       "consumes": {
         "inputs": [
           {
@@ -1235,6 +1504,12 @@
             "name": "dest",
             "type": "path_ref",
             "required": true
+          },
+          {
+            "name": "project",
+            "type": "path_ref",
+            "required": true,
+            "note": "P3: this precondition was PROSE -- it sat in side_effects as 'needs both programs imported into ONE project first' -- so nothing in the machine-readable contract said a caller had to supply it. It is now a real consumed input, required:true. Auto Version Tracking matches programs that are open in the SAME project; hand it two files and no project and it has nothing to correlate, which is exactly the kind of missing precondition that reads as a tool failure at run time."
           }
         ],
         "prior": []
@@ -1299,7 +1574,11 @@
         "expect": "Auto Version Tracking Command completed successfully with no apply markup errors",
         "exit": 0,
         "last_run": "2026-09-30",
+        "evidence_binding": {"status": "unverified", "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."},
         "last_summary": "3 programs open in one headless process, 14 program correlators across two of them, 14-17 s, 2,889,483 B TSV"
+      },
+      "not_callable": {
+        "reason": "P7, stated explicitly rather than left ambiguous. This capability's probe is already a POINTER ('see scripts/ghidra-failopen.md reproduction section') rather than a command, which is itself the honest signal: the reproduction is a hand-driven Ghidra session that opens 3 programs in ONE headless process (last_summary) and runs AutoVersionTrackingScript.java against them. There is no single wrapper that takes --source/--dest/--project and returns the TSV as stdout, so there is no argv and no fact_map source field to declare. Note this entry is also the one whose probe.command is prose rather than a runnable command -- left as-is because fixing it means writing a wrapper script, which is outside this change."
       },
       "negative_control": {
         "id": "native.crosscompare.same_binary",
@@ -1362,6 +1641,15 @@
         "anything at all -- this capability is ABSENT, and an installed tool that never runs is not a capability",
         "that the tool is broken: it is a net6 build and this host has only .NET 8.0.31 and 10.0.11. Measured 2026-09-30: with DOTNET_ROLL_FORWARD=LatestMajor it produces no output and does not exit within 12 s, where an error would have been far more useful"
       ],
+      "reach": {
+        "fs_read": true,
+        "fs_write": false,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": false,
+        "db_write": false,
+        "note": "Declared even though state is ABSENT, because the effect is real whenever the capability is not: the probe spawns Il2CppDumper.exe and the tool would read the executable plus il2cpp_data/Metadata/global-metadata.dat. fs_write is false on the shipped path -- the probe measured that it produces no output at all. Declaring reach for an absent entry is the point of R8's floor: it stops 'absent' from reading as 'harmless' when the tool would clearly read and spawn if it ran."
+      },
       "gate": {
         "lane": "debug",
         "requires_verdict": true,
@@ -1408,7 +1696,11 @@
           {
             "name": "function",
             "type": "address",
-            "required": true
+            "required": true,
+            "unproduced": {
+              "status": "blocked",
+              "reason": "P4: this was required:true with no producer anywhere in the registry. Making it honest rather than declaring a producer: no capability here emits a GHIDRA function address. native.ida.list_functions emits native.func.addr, but that is an IDA address in IDA's own address space and is meaningless to Ghidra -- the two analysers load the same bytes into different images, and the registry's own invalidates_on for every address fact already says an address is void once the target is rebuilt. Declaring an edge here would satisfy R11 by pointing at a fact that cannot be used. So the requirement stays real (emulation genuinely needs an address inside the loaded program) and is marked unproduced with the reason."
+            }
           },
           {
             "name": "arguments",
@@ -1455,6 +1747,15 @@
         "that the p-code API is unusable: ghidra.app.emulator.EmulatorHelper and DefaultEmulator were reached, compiled and executed. What does not work is the CONTROLLED-INPUT setup, not the API",
         "that Ghidra cannot emulate. The blocker is ours: the scratch stack is not mapped, writeStackValue did not take, and the function returned to PC=0 with the output buffer still all zeros"
       ],
+      "reach": {
+        "fs_read": true,
+        "fs_write": false,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": false,
+        "db_write": false,
+        "note": "Declared even though state is BLOCKED. The probe measured the API end to end -- EmulatorHelper and DefaultEmulator reached, compiled, and 15 p-code steps executed (:1723 last_summary) -- so this entry genuinely spawns a JVM and reads the loaded program. exec_target is FALSE and that is the honest and load-bearing distinction: it emulates p-code INSIDE Ghidra's own address space, it never executes the target's machine code on this host. Writing emulation as exec_target would overstate the blast radius; omitting reach altogether would understate it."
+      },
       "side_effects": [],
       "gate": {
         "lane": "debug",

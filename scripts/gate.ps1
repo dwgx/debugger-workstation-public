@@ -40,12 +40,40 @@
   powershell -File scripts\gate.ps1 -Action Selftest
 
 .NOTES
-  Exit codes: 0 = granted · 3 = refused · 4 = self-asserted provenance · 5 = grant tampered.
+  Exit codes: 0 = granted · 3 = refused · 4 = self-asserted provenance · 5 = grant tampered
+  · 6 = the grant's claims could not be independently re-established.
 
   THE ONE THAT MATTERS: `New` refuses when the provenance is self-asserted. "I found it
   on my disk" is not ownership. If no subprocess is spawned before that refusal, the
   control held; a subprocess appearing first means the control FAILED and that is the
   test.
+
+  WHY exit 6 EXISTS. `grant_sha256` is an UNKEYED SHA-256 and the algorithm is in this
+  file, so anybody can recompute it: a hash over a file the attacker rewrote proves only
+  that the attacker can compute SHA-256. It is not a signature. So `Check` does not trust
+  the file it is checking. Every property it reports is re-derived from an authority the
+  grant file cannot forge:
+
+      grant.identity   the identity projection (owner word, provenance, target, target
+                       digest, containment, escalation, registry digest) sealed with DPAPI
+                       at CurrentUser scope. Its plaintext exists only under the
+                       interactive Windows account that minted it, so editing grant.json
+                       to say something else no longer produces a matching seal.
+      capabilities.json  the registry, for `allowed` and for each capability's `state`.
+      the target's bytes  re-hashed on every Check, and a target that is not on disk is
+                       refused rather than reported verified.
+
+  WHAT THIS BREAKS, DELIBERATELY. (1) schema is now `gate/grant@2`. A `gate/grant@1`
+  grant on disk has no `containment`, no `registry_sha256` and no `grant.identity`, so
+  `Check` refuses it with exit 5 and says "re-mint". There is no silent default and no
+  back-compat path, because a grant this gate cannot re-establish is exactly the grant
+  the exit-6 path exists to refuse. (2) `New` now REQUIRES `-Containment`; guessing a
+  containment class is what mission.ps1's intake refuses to do, so the gate refuses it
+  too. As of this revision `mission.ps1` does not pass `-Containment`, so
+  `mission.ps1 -Action Run` is refused at the mint until that call site is updated.
+  (3) Editing `manifests\capabilities.json` changes its digest, which every grant records,
+  so a registry edit invalidates existing grants and they must be re-minted. That is the
+  point: a registry edit is a committed diff the Owner can see.
 #>
 [CmdletBinding()]
 param(
@@ -57,6 +85,7 @@ param(
     [string]$Capability = '',
     [string]$EscalationClass = '',
     [string]$Lane = 'debug',
+    [string]$Containment = '',
     [string]$Registry = ''
 )
 
@@ -166,56 +195,205 @@ function Test-SelfAsserted {
     return $false
 }
 
+# --------------------------------------------------------------------------------
+# The grant schema, as a CLOSED set of fields.
+#
+# `gate/grant@1` had no allow-list, so `Test-Grant` hashed whatever it found and
+# reported ok:true. Adding `attach_pid` to a grant and recomputing the unkeyed hash was
+# accepted: "this grant names a process" was not even expressible as a refusal, let alone
+# constrained to an Owner-named one. A field the gate does not define is a field the gate
+# is silently ignoring, and a silently ignored field is an attack surface. So: unknown
+# field, refused.
+$GrantSchemaVersion = 'gate/grant@2'
+$GrantRequiredFields = @(
+    'schema', 'case_id', 'lane', 'target', 'target_sha256', 'provenance', 'owner_word',
+    'granted_at', 'containment', 'allowed', 'escalation', 'registry_sha256', 'grant_sha256')
+$GrantKnownFields = @($GrantRequiredFields + @('note', 'escalation_word', 'escalated_at', 'prior_grant_sha256'))
+$GrantSealFile = 'grant.identity'
+
+# `containment` is a mission.ps1 intake parameter validated against these three literals
+# at mission.ps1:186 and never passed through to this script, so a grant minted under
+# `station_under_named_process_rule` was byte-identical to one minted under `isolated_vm`.
+# The declaration that exists to keep an untrusted sample off the host was the one thing
+# the grant did not record. The gate now records it and refuses a grant without it.
+$KnownContainments = @('station_under_named_process_rule', 'loopback_capture', 'isolated_vm')
+
+# --------------------------------------------------------------------------------
+# The identity seal.
+#
+# THE KEY, AND WHERE IT LIVES. There is no key file and no key material in this repo. The
+# seal is sealed with DPAPI at DataProtectionScope::CurrentUser, so the sealing key is
+# the interactive Windows account's master key, held by LSA and reachable only through
+# CryptProtectData. Consequences, stated plainly:
+#   - A model, a mission loop, or an agent editing grant.json as text cannot produce a
+#     matching seal. It would have to execute CryptProtectData as this user, which is a
+#     different kind of act from editing a file and is itself auditable.
+#   - A grant minted by user A does not unseal under user B, and does not unseal on
+#     another machine. Re-sealing is one `gate.ps1 -Action New`.
+#   - This is still weaker than an asymmetric signature: any code running as this user
+#     can call CryptProtectData. It is a real step up from an unkeyed hash, not a claim
+#     of non-forgeability by the account itself.
+$script:GateEntropy = [System.Text.Encoding]::UTF8.GetBytes('debugger/gate.ps1 :: grant identity attestation v2')
+
+function Initialize-GateCrypto {
+    # `System.Security` is a .NET Framework assembly; in PowerShell 7 ProtectedData is
+    # already in the box and there is nothing to add. Try both, then report.
+    if ('System.Security.Cryptography.ProtectedData' -as [type]) { return $true }
+    try { Add-Type -AssemblyName System.Security -ErrorAction Stop } catch { }
+    return [bool]('System.Security.Cryptography.ProtectedData' -as [type])
+}
+
+function Protect-Identity {
+    param([string]$Plain)
+    if (-not (Initialize-GateCrypto)) { throw 'DPAPI is unavailable on this host' }
+    $sealed = [System.Security.Cryptography.ProtectedData]::Protect(
+        [System.Text.Encoding]::UTF8.GetBytes($Plain), $script:GateEntropy,
+        [System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+    return [Convert]::ToBase64String($sealed)
+}
+
+function Unprotect-Identity {
+    param([string]$Sealed)
+    if (-not (Initialize-GateCrypto)) { throw 'DPAPI is unavailable on this host' }
+    $plain = [System.Security.Cryptography.ProtectedData]::Unprotect(
+        [Convert]::FromBase64String($Sealed.Trim()), $script:GateEntropy,
+        [System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+    return [System.Text.Encoding]::UTF8.GetString($plain)
+}
+
+function Get-GrantField {
+    # Shape-agnostic single-field read that yields '' for an absent property instead of
+    # $null, so the canonical form of a grant that has never been escalated is identical
+    # whether the fields are missing or empty.
+    param($Object, [string]$Name)
+    if ($null -eq $Object) { return '' }
+    foreach ($e in (Get-Entries $Object)) {
+        if ($e.Key -eq $Name) { if ($null -eq $e.Value) { return '' }; return $e.Value }
+    }
+    return ''
+}
+
+function Get-GrantIdentity {
+    # THE IDENTITY PROJECTION: who authorised this, for what, under what word, in what
+    # containment, over which bytes, against which registry, and any escalation on top.
+    #
+    # `allowed` and `note` are deliberately NOT in it. Escalation is the one legal
+    # operation that rewrites `allowed`, so sealing it would forbid escalation itself;
+    # `allowed` is instead held to the registry, which is the authority for it anyway.
+    # Everything here is minted once and must never change afterwards.
+    param($Grant)
+    $id = [ordered]@{}
+    foreach ($k in @('schema', 'case_id', 'lane', 'target', 'target_sha256', 'provenance',
+                     'owner_word', 'granted_at', 'containment', 'escalation',
+                     'escalation_word', 'escalated_at', 'prior_grant_sha256', 'registry_sha256')) {
+        $id[$k] = Get-GrantField $Grant $k
+    }
+    return $id
+}
+
+function Write-GrantSeal {
+    # Called BEFORE grant.json is written, by both New and Escalate, so a grant whose seal
+    # cannot be produced is never left on disk.
+    param([string]$CaseDir, $Grant)
+    $sealed = Protect-Identity (Get-CanonicalJson (Get-GrantIdentity $Grant))
+    Set-Content -LiteralPath (Join-Path $CaseDir $GrantSealFile) -Value $sealed -Encoding UTF8
+}
+
+function Get-RegistryDigest {
+    param([string]$Path)
+    return Get-Sha256File -Path $Path
+}
+
+function Get-GrantableIds {
+    # The invocable set the registry actually sanctions for a lane: same lane, the grant
+    # IS the verdict, AND state 'observed'. The state filter is not a formality. Minting
+    # `dynamic.device.frida` (state=absent) or `native.ghidra.emulate` (state=blocked) into
+    # a grant handed the verdict layer a capability it can never run, which is worse than
+    # refusing: it believes it holds evidence it never produced. registry-verify.py lists
+    # observed | absent | degraded | planned | blocked; only 'observed' means the probe
+    # actually ran, so only 'observed' is grantable.
+    param($Registry, [string]$Lane)
+    return @($Registry.capabilities | Where-Object {
+        $_.gate -and $_.gate.lane -eq $Lane -and $_.gate.requires_verdict -and $_.state -eq 'observed'
+    } | ForEach-Object { $_.id })
+}
+
 function New-Grant {
-    param($Target, $Provenance, $OwnerWord, $CaseDir, $Lane)
+    param($Target, $Provenance, $OwnerWord, $CaseDir, $Lane, $Containment)
 
     if (-not $Target -or -not (Test-Path -LiteralPath $Target)) {
         return @{ ok = $false; exit = 3; error = 'target missing or not a path we can see'; detail = "target=$Target" }
     }
-    if (-not $OwnerWord) {
-        # No Owner word, no grant. This is the whole gate.
+    if ([string]::IsNullOrWhiteSpace($OwnerWord)) {
+        # No Owner word, no grant. This is the whole gate. Whitespace counts as absent:
+        # `"   "` was truthy to `-not`, so a caller could pass a blank sentence and the
+        # gate would record that blank sentence as the Owner's authorisation.
         return @{ ok = $false; exit = 3; error = 'no Owner word recorded. A mission is not a permission, and a context boundary is not a new permission.' }
     }
-    if (-not $Provenance -or (Test-SelfAsserted $Provenance)) {
+    if ([string]::IsNullOrWhiteSpace($Provenance) -or (Test-SelfAsserted $Provenance)) {
         return @{ ok = $false; exit = 4; error = 'provenance is self-asserted or absent'; detail = $Provenance
                   why = '"I found it on my disk" is not ownership. Provenance must be checkable by the Owner, not asserted by the caller.' }
     }
-
-    $reg = Get-Content -LiteralPath (Get-RegistryPath $Registry) -Raw | ConvertFrom-Json
-
-    # The grant starts as the set of capabilities whose own gate declares they may run
-    # on this lane. Anything else has to be escalated explicitly, later, with a word.
-    $allowed = @()
-    foreach ($c in $reg.capabilities) {
-        $g = $c.gate
-        if (-not $g) { continue }
-        if ($g.lane -ne $Lane) { continue }
-        if ($g.requires_verdict) { $allowed += $c.id }   # this grant IS the verdict
+    if ([string]::IsNullOrWhiteSpace($Containment) -or ($KnownContainments -notcontains $Containment)) {
+        # No default, on purpose. mission.ps1:183-188 already refuses to guess a
+        # containment class; defaulting one here would re-open exactly that hole one layer
+        # down, in the component that is supposed to be the authority.
+        return @{ ok = $false; exit = 3
+                 error = "containment class is required and must be one of: $($KnownContainments -join ' | ')"
+                 detail = "containment=$Containment"
+                 why = 'a grant that does not say how the object is contained says nothing, and two grants over different containment are otherwise byte-identical.' }
+    }
+    if ([string]::IsNullOrWhiteSpace($CaseDir)) {
+        return @{ ok = $false; exit = 3; error = 'a grant must be written into a case directory'
+                 why = 'a grant that is not persisted cannot be attested, and an unattested grant cannot be checked.' }
     }
 
+    $regPath = Get-RegistryPath $Registry
+    $reg = Get-Content -LiteralPath $regPath -Raw | ConvertFrom-Json
+
+    # The grant starts as the set of capabilities whose own gate declares they may run
+    # on this lane AND whose registry state says they have actually been observed. Anything
+    # else has to be escalated explicitly, later, with a word. See Get-GrantableIds for why
+    # the state filter is load-bearing and not cosmetic.
+    $allowed = @(Get-GrantableIds -Registry $reg -Lane $Lane)
+
     $grant = [ordered]@{
-        schema        = 'gate/grant@1'
-        case_id       = [IO.Path]::GetFileName($CaseDir.TrimEnd('\','/'))
-        lane          = $Lane
-        target        = (Resolve-Path -LiteralPath $Target).Path
-        target_sha256 = (Get-Sha256File -Path $Target)
-        provenance    = $Provenance
-        owner_word    = $OwnerWord
-        granted_at    = (Get-Date).ToUniversalTime().ToString('o')
-        allowed       = @($allowed | Sort-Object)
-        escalation    = 'none'
-        note          = 'The invocable set may only shrink. Only gate.ps1 mints a grant; only an Owner word authorises one.'
+        schema         = $GrantSchemaVersion
+        case_id        = [IO.Path]::GetFileName($CaseDir.TrimEnd('\','/'))
+        lane           = $Lane
+        target         = (Resolve-Path -LiteralPath $Target).Path
+        target_sha256  = (Get-Sha256File -Path $Target)
+        provenance     = $Provenance
+        owner_word     = $OwnerWord
+        granted_at     = (Get-Date).ToUniversalTime().ToString('o')
+        containment    = $Containment
+        allowed        = @($allowed | Sort-Object)
+        escalation     = 'none'
+        registry_sha256 = (Get-RegistryDigest -Path $regPath)
+        note           = 'The invocable set may only shrink. Only gate.ps1 mints a grant; only an Owner word authorises one.'
     }
     $grant['grant_sha256'] = Get-GrantHash $grant
 
-    if ($CaseDir) {
-        New-Item -ItemType Directory -Path $CaseDir -Force | Out-Null
-        Set-Content -LiteralPath (Join-Path $CaseDir 'grant.json') -Value (Out-Json $grant) -Encoding UTF8
-    }
-    return @{ ok = $true; exit = 0; grant = $grant; allowed_count = @($allowed).Count }
+    New-Item -ItemType Directory -Path $CaseDir -Force | Out-Null
+    # Seal FIRST. If this throws, no grant.json is written at all, so the case directory
+    # never holds a grant that Check would have to refuse.
+    try { Write-GrantSeal -CaseDir $CaseDir -Grant $grant }
+    catch { return @{ ok = $false; exit = 6; error = "the grant could not be attested: $($_.Exception.Message)"
+                     why = 'an unsealed grant is a grant whose identity anyone can rewrite. Refusing to mint beats minting one that Check will refuse.' } }
+    Set-Content -LiteralPath (Join-Path $CaseDir 'grant.json') -Value (Out-Json $grant) -Encoding UTF8
+
+    return @{ ok = $true; exit = 0; grant = $grant; allowed_count = @($allowed).Count
+             containment = $Containment; attested = $true }
 }
 
 function Test-Grant {
+    # Check does not trust the file it is checking. Every property it reports is
+    # re-derived from an authority the grant file cannot forge: the DPAPI identity seal
+    # (who/why/which bytes/which containment/which registry), the registry in git (which
+    # capabilities, and whether they have been observed at all), and the target's bytes
+    # re-hashed right now. `grant_sha256` is still checked, and it is still not a
+    # signature: an unkeyed hash over a file the attacker rewrote proves only that the
+    # attacker can compute SHA-256.
     param($CaseDir, $Capability)
 
     $gp = Join-Path $CaseDir 'grant.json'
@@ -224,15 +402,148 @@ function Test-Grant {
     }
     $grant = Get-Content -LiteralPath $gp -Raw | ConvertFrom-Json
 
+    # --- the field allow-list -------------------------------------------------
+    # An unknown field used to be hashed along with everything else and reported ok:true.
+    # Adding attach_pid=99999 and attach_to='any process on this host' to a grant and
+    # recomputing the hash was ACCEPTED: the gate had no vocabulary for "this grant names
+    # a process", so it could neither record nor refuse one. A field the gate ignores is
+    # an attack surface, so an unknown field is now a refusal, not a shrug.
+    $present = @(Get-Entries $grant | ForEach-Object { $_.Key })
+    $unknown = @($present | Where-Object { $GrantKnownFields -notcontains $_ })
+    if ($unknown.Count -gt 0) {
+        return @{ ok = $false; exit = 5; unknown_fields = $unknown
+                 error = "grant carries unknown field(s): $($unknown -join ', ')"
+                 why = 'a grant may only say what this gate defines. An unrecognised field is refused rather than hashed, because a field the gate silently ignores is a field nobody constrains.' }
+    }
+    $missing = @($GrantRequiredFields | Where-Object { $present -notcontains $_ })
+    if ($missing.Count -gt 0) {
+        return @{ ok = $false; exit = 5; missing_fields = $missing
+                 error = "grant is missing required field(s): $($missing -join ', ') -- re-mint it with 'gate.ps1 -Action New'"
+                 why = "a grant minted by an older gate.ps1 (schema $GrantSchemaVersion) carries no attestation this version can check. It is refused, not defaulted: a grant the gate cannot re-establish is exactly the grant the exit-6 path exists to refuse." }
+    }
+    $schema = [string](Get-GrantField $grant 'schema')
+    if ($schema -ne $GrantSchemaVersion) {
+        return @{ ok = $false; exit = 5
+                 error = "grant schema '$schema' is not '$GrantSchemaVersion' -- re-mint it with 'gate.ps1 -Action New'" }
+    }
+
     $recomputed = Get-GrantHash $grant
-    if ($recomputed -ne $grant.grant_sha256) {
+    $stored = [string](Get-GrantField $grant 'grant_sha256')
+    if ($recomputed -ne $stored) {
         # Somebody edited the grant in place, or it was rewritten by a tool that does not
         # preserve the canonical form. Either way the authority it claims is not trustworthy.
         return @{ ok = $false; exit = 5; error = 'grant hash mismatch -- the grant was altered after it was minted'
-                 stored = $grant.grant_sha256; recomputed = $recomputed }
+                 stored = $stored; recomputed = $recomputed }
     }
 
-    $allowed = @($grant.allowed)
+    # --- the identity, re-established field by field --------------------------
+    # These four were NEVER re-validated. `Test-Grant` checked the hash, the allowed set
+    # and the target, and then reported ok:true about owner_word, provenance and
+    # escalation without ever reading them. Blanking owner_word and provenance in the
+    # file and recomputing the unkeyed hash produced a grant that Check accepted with
+    # exit 0 and `target_bytes_verified: true` -- an authority record with no authority
+    # in it. The self-assertion heuristic ran only inside New-Grant, so a grant that said
+    # "I found it on my disk" was accepted on every Check after the mint.
+    $ownerWord = [string](Get-GrantField $grant 'owner_word')
+    if ([string]::IsNullOrWhiteSpace($ownerWord)) {
+        return @{ ok = $false; exit = 6
+                 error = 'grant records no Owner word -- there is nothing in it that the Owner said'
+                 why = 'only an Owner word authorises a grant. A grant with an empty owner word is not a weaker grant, it is no grant.' }
+    }
+    $provenance = [string](Get-GrantField $grant 'provenance')
+    if ([string]::IsNullOrWhiteSpace($provenance)) {
+        return @{ ok = $false; exit = 6
+                 error = 'grant records no provenance -- there is nothing checkable behind the Owner word' }
+    }
+    if (Test-SelfAsserted $provenance) {
+        return @{ ok = $false; exit = 6
+                 error = 'grant provenance is self-asserted'
+                 detail = $provenance
+                 why = 'New refuses this at the mint. Check has to refuse it too, or the refusal is one rewrite away from being gone.' }
+    }
+
+    $containment = [string](Get-GrantField $grant 'containment')
+    if ([string]::IsNullOrWhiteSpace($containment) -or ($KnownContainments -notcontains $containment)) {
+        return @{ ok = $false; exit = 6
+                 error = "grant containment class is missing or unnameable; known: $($KnownContainments -join ' | ')"
+                 detail = "containment=$containment"
+                 why = 'mission.ps1 requires a containment class at intake and never told the gate about it, so a grant under station_under_named_process_rule was byte-identical to one under isolated_vm. The gate now refuses a grant that does not say.' }
+    }
+
+    $escalation = [string](Get-GrantField $grant 'escalation')
+    if (($escalation -ne 'none') -and [string]::IsNullOrWhiteSpace([string](Get-GrantField $grant 'escalation_word'))) {
+        return @{ ok = $false; exit = 6
+                 error = 'grant records an escalation but no Owner word for it -- the widening operation is the one that needed a word most'
+                 detail = "escalation=$escalation" }
+    }
+
+    # --- the seal -------------------------------------------------------------
+    # THE HEADLINE FIX. Un-keyed-hash re-derivation cannot be beaten by editing text, so
+    # the identity is additionally sealed with DPAPI at mint time and unsealed here. The
+    # plaintext of the sealed copy exists only under the Windows account that minted it.
+    $sealPath = Join-Path $CaseDir $GrantSealFile
+    if (-not (Test-Path -LiteralPath $sealPath)) {
+        return @{ ok = $false; exit = 6
+                 error = "grant has no identity attestation ($GrantSealFile) -- re-mint it with 'gate.ps1 -Action New'"
+                 why = 'the identity of a grant has to survive the grant file being rewritten. Without a sealed copy, the only copy of the identity is the one the attacker edits.' }
+    }
+    $sealedJson = $null
+    try { $sealedJson = Unprotect-Identity (Get-Content -LiteralPath $sealPath -Raw) }
+    catch {
+        return @{ ok = $false; exit = 6
+                 error = "the identity attestation could not be unsealed: $($_.Exception.Message)"
+                 why = 'the seal is bound to the Windows account that wrote it. A grant sealed elsewhere cannot be verified here; re-mint it as this user.' }
+    }
+    $sealedDoc = $sealedJson | ConvertFrom-Json
+    $sealedCan = Get-CanonicalJson (Get-GrantIdentity $sealedDoc)
+    $onDiskCan = Get-CanonicalJson (Get-GrantIdentity $grant)
+    if ($sealedCan -ne $onDiskCan) {
+        $sealedId = Get-GrantIdentity $sealedDoc
+        $onDiskId = Get-GrantIdentity $grant
+        $drift = @(Get-Entries $onDiskId | Where-Object {
+            [string](Get-GrantField $sealedId $_.Key) -ne [string]$_.Value } | ForEach-Object { $_.Key })
+        return @{ ok = $false; exit = 6
+                 error = 'identity attestation does not match the grant -- the grant was rewritten after it was minted'
+                 drifted_fields = $drift
+                 why = 'the unkeyed hash over grant.json is not a signature, so the identity is compared against a DPAPI-sealed copy that a text edit cannot reproduce. Blank the owner word, swap the owner word, repoint the target, restate the containment class -- the seal is what notices.' }
+    }
+
+    # --- the registry, as the authority ---------------------------------------
+    $regPath = Get-RegistryPath $Registry
+    $reg = Get-Content -LiteralPath $regPath -Raw | ConvertFrom-Json
+
+    # -Registry is a caller-controlled parameter, so "the registry authority" used to be
+    # whatever file the caller named. A grant minted against the real registry, then
+    # Checked with a hand-written one, passed: the registry subset test below was
+    # evaluated against the attacker's own file. The digest the seal covers closes that --
+    # the grant names the registry it was minted from, and Check refuses any other.
+    $regDigest = Get-RegistryDigest -Path $regPath
+    $claimedReg = [string](Get-GrantField $grant 'registry_sha256')
+    if ($claimedReg -ne $regDigest) {
+        $shortClaimed = if ($claimedReg.Length -gt 16) { $claimedReg.Substring(0, 16) } else { $claimedReg }
+        $shortOnDisk = if ($regDigest.Length -gt 16) { $regDigest.Substring(0, 16) } else { $regDigest }
+        return @{ ok = $false; exit = 6
+                 error = "grant was minted against a different capabilities registry (grant $shortClaimed... / on disk $shortOnDisk...) -- re-mint it"
+                 detail = "registry=$regPath"
+                 why = '-Registry is caller-controlled, so the registry is bound into the sealed identity. Checking a real grant against a substituted registry now fails instead of passing.' }
+    }
+
+    # --- the capability, against that registry --------------------------------
+    if ($Capability) {
+        $capDef = $reg.capabilities | Where-Object { $_.id -eq $Capability }
+        # Before the membership test, so the refusal says WHY rather than only "not in the
+        # grant". Minting an absent or blocked capability used to yield a Check that
+        # returned ok:true for a tool that cannot run -- the verdict layer then believes it
+        # holds evidence it never produced.
+        if ($capDef -and ($capDef.state -ne 'observed')) {
+            return @{ ok = $false; exit = 3
+                     error = "capability '$Capability' is registry state '$($capDef.state)', not 'observed' -- it cannot be granted"
+                     detail = "state=$($capDef.state)"
+                     why = 'only an observed capability has had its probe actually run. An absent or blocked capability in a grant is a claim about evidence that does not exist.' }
+        }
+    }
+
+    $allowed = @(Get-GrantField $grant 'allowed')
     if ($Capability -and ($allowed -notcontains $Capability)) {
         return @{ ok = $false; exit = 3; error = "capability '$Capability' is not inside the grant"
                  allowed = $allowed
@@ -254,11 +565,8 @@ function Test-Grant {
     # registry does not grant for this lane is DROPPED, and a capability outside that set is
     # refused. E:\missions\ is outside git; the registry is not. Forging a grant now means
     # forging the registry, which is a committed diff an Owner can see.
-    $reg = Get-Content -LiteralPath (Get-RegistryPath $Registry) -Raw | ConvertFrom-Json
-    $lane = $grant.lane
-    $registryAllows = @($reg.capabilities | Where-Object {
-        $_.gate -and $_.gate.lane -eq $lane -and $_.gate.requires_verdict
-    } | ForEach-Object { $_.id })
+    $lane = [string](Get-GrantField $grant 'lane')
+    $registryAllows = @(Get-GrantableIds -Registry $reg -Lane $lane)
     $forged = @($allowed | Where-Object { $registryAllows -notcontains $_ })
     if ($forged.Count -gt 0) {
         return @{ ok = $false; exit = 3
@@ -267,21 +575,43 @@ function Test-Grant {
                  forged = $forged }
     }
 
-    # --- CRITICAL FIX, same audit --------------------------------------------
+    # --- CRITICAL FIX, same audit, second half --------------------------------
     # target_sha256 was ASSIGNED and never read again. Overwriting the granted binary with
     # 35 bytes of garbage left Check returning ok:true over the substituted bytes: the grant
-    # was still valid for a target that no longer existed. Re-hash it here.
-    if ($grant.target -and (Test-Path -LiteralPath $grant.target)) {
-        $nowHash = Get-Sha256File -Path $grant.target
-        if ($nowHash -ne $grant.target_sha256) {
-            return @{ ok = $false; exit = 5
-                     error = 'the granted target has changed on disk since the grant was minted'
-                     granted_sha256 = $grant.target_sha256; current_sha256 = $nowHash
-                     why = 'a grant authorises BYTES, not a path. Re-issue the grant for the new target.' }
-        }
+    # was still valid for a target that no longer existed. Re-hash it here. Swapped bytes
+    # are caught below and were already caught before this revision; what was NOT caught is
+    # the branch above it, where a target that is not on disk skipped the re-hash entirely
+    # and then reported `target_bytes_verified = $true` unconditionally. A file that does
+    # not exist has no bytes, so there is nothing to have verified. Fail closed.
+    $target = [string](Get-GrantField $grant 'target')
+    if (-not $target) {
+        return @{ ok = $false; exit = 5; target_bytes_verified = $false
+                 error = 'grant records no target' }
+    }
+    if (-not (Test-Path -LiteralPath $target)) {
+        return @{ ok = $false; exit = 5; target_bytes_verified = $false
+                 error = 'the granted target is not on disk -- its bytes cannot be verified, so the grant is refused'
+                 target = $target
+                 why = 'this used to skip the re-hash and then report target_bytes_verified: true. A missing file has no bytes to hash; the only honest answer is that nothing was verified.' }
+    }
+    $nowHash = Get-Sha256File -Path $target
+    $grantedHash = [string](Get-GrantField $grant 'target_sha256')
+    if ($nowHash -ne $grantedHash) {
+        return @{ ok = $false; exit = 5; target_bytes_verified = $false
+                 error = 'the granted target has changed on disk since the grant was minted'
+                 granted_sha256 = $grantedHash; current_sha256 = $nowHash
+                 why = 'a grant authorises BYTES, not a path. Re-issue the grant for the new target.' }
     }
 
-    return @{ ok = $true; exit = 0; case_id = $grant.case_id; target = $grant.target; allowed = $allowed; verified_against_registry = $true; target_bytes_verified = $true }
+    return @{ ok = $true; exit = 0
+             case_id = [string](Get-GrantField $grant 'case_id')
+             lane = $lane
+             target = $target
+             containment = $containment
+             allowed = $allowed
+             identity_reestablished = $true
+             verified_against_registry = $true
+             target_bytes_verified = $true }
 }
 
 function Invoke-Escalate {
@@ -294,6 +624,18 @@ function Invoke-Escalate {
         return @{ ok = $false; exit = 3; error = 'the impossible class cannot be granted at runtime'
                  why = 'changing lane or reach is an Owner edit to AGENTS.md / CHARTER-ARSENAL.md in git. There is no flag on this script that changes that, by design.' }
     }
+    # G8. The one operation that WIDENS authority had no check at all on its
+    # authorisation: `Escalate -NewWord ''` returned exit 0 and wrote an empty
+    # escalation_word to disk. New refuses an empty Owner word, so the gate already knew
+    # an empty sentence is not an authorisation -- it just did not say so here, on the one
+    # path where the sentence is the only thing standing between the current grant and a
+    # wider one.
+    if ([string]::IsNullOrWhiteSpace($NewWord)) {
+        return @{ ok = $false; exit = 3
+                 error = 'escalation refused: no fresh Owner word was given. The operation that widens authority is the one that may not run on a blank.'
+                 why = 'New refuses an empty Owner word. Escalation is strictly more dangerous than minting, so it cannot have a weaker rule.' }
+    }
+
     $reg = Get-Content -LiteralPath (Get-RegistryPath $Registry) -Raw | ConvertFrom-Json
     $cap = $reg.capabilities | Where-Object { $_.id -eq $Capability }
     if (-not $cap) { return @{ ok = $false; exit = 3; error = "unknown capability '$Capability'" } }
@@ -304,16 +646,33 @@ function Invoke-Escalate {
                  why = 'changing lane is the impossible class: it needs an Owner edit to AGENTS.md in git, not a runtime flag.' }
     }
 
+    # An escalation must not be the back door around the state filter in New-Grant: if
+    # `dynamic.device.frida` (absent) or `native.ghidra.emulate` (blocked) may not enter a
+    # grant by minting, a single `Escalate` must not be able to put it there either.
+    if ($cap.state -ne 'observed') {
+        return @{ ok = $false; exit = 3
+                 error = "capability '$Capability' is registry state '$($cap.state)', not 'observed' -- it cannot be escalated into a grant"
+                 why = 'an Owner word authorises a capability that can run. It cannot conjure one whose probe never ran.' }
+    }
+
     $gp = Join-Path $CaseDir 'grant.json'
     $grant = Get-Content -LiteralPath $gp -Raw | ConvertFrom-Json
-    $prior = $grant.grant_sha256
-    $grant.allowed = @(@($grant.allowed) + $Capability | Sort-Object -Unique)
+    $prior = [string](Get-GrantField $grant 'grant_sha256')
+    $grant.allowed = @(@(Get-GrantField $grant 'allowed') + $Capability | Sort-Object -Unique)
     $grant.escalation = $NewClass
     $grant.note = "escalated to $NewClass on $Capability with a fresh Owner word; prior grant hash retained in the trace"
     $grant | Add-Member -NotePropertyName prior_grant_sha256 -NotePropertyValue $prior -Force
     $grant | Add-Member -NotePropertyName escalation_word -NotePropertyValue $NewWord -Force
     $grant | Add-Member -NotePropertyName escalated_at -NotePropertyValue (Get-Date).ToUniversalTime().ToString('o') -Force
     $grant.grant_sha256 = Get-GrantHash $grant
+
+    # Re-seal. escalation / escalation_word / escalated_at are part of the identity
+    # projection, so without this a later text edit could restate what the Owner
+    # authorised. Seal BEFORE writing grant.json so a failure here leaves the previous,
+    # still-valid grant on disk rather than an escalated one that Check would refuse.
+    try { Write-GrantSeal -CaseDir $CaseDir -Grant $grant }
+    catch { return @{ ok = $false; exit = 6; error = "the escalation could not be attested: $($_.Exception.Message)"
+                     why = 'grant.json was not modified. The previous grant is still on disk and still valid.' } }
     Set-Content -LiteralPath $gp -Value (Out-Json $grant) -Encoding UTF8
 
     return @{ ok = $true; exit = 0; escalation = $NewClass; capability = $Capability; prior = $prior; now = $grant.grant_sha256 }
@@ -325,8 +684,8 @@ function Invoke-Selftest {
     # and grants all behaved" -- a green run that tested nothing, which is exactly the
     # failure this repo exists to reject. There is now an explicit floor below.
     $script:gateCases = @()
-    function T($name, $body, $wantExit) {
-        $script:gateCases += ,@($name, (& $body), $wantExit)
+    function T($name, $body, $wantExit, $wantError = '') {
+        $script:gateCases += ,@($name, (& $body), $wantExit, $wantError)
     }
 
 
@@ -335,16 +694,27 @@ function Invoke-Selftest {
     $tgt = Join-Path $tmp 'sample.bin'
     Set-Content -LiteralPath $tgt -Value 'not really a binary, but a path we can see'
 
-    $C = @{ CaseDir = $tmp; Target = $tgt; Provenance = 'Owner named this file in conversation 2026-09-30'; OwnerWord = 'analyze this exe' }
+    # `containment` is now a REQUIRED mint input (New refuses without it -- there is no
+    # default, because guessing a containment class is what mission.ps1's intake refuses
+    # to do). These five fixtures therefore carry one. The ASSERTIONS are untouched: same
+    # scenarios, same expected exit codes, same names.
+    $L = 'debug'
+    $C = @{ CaseDir = $tmp; Target = $tgt; Provenance = 'Owner named this file in conversation 2026-09-30'
+            OwnerWord = 'analyze this exe'; Containment = 'station_under_named_process_rule'; Lane = $L }
 
     T 'mint a grant with an Owner word and a checkable provenance' { New-Grant @C } 0
-    T 'refuse with NO Owner word' { New-Grant -Target $tgt -Provenance 'Owner named it' -OwnerWord '' -CaseDir $tmp } 3
-    T 'refuse self-asserted provenance' { New-Grant -Target $tgt -Provenance 'I found it on my disk' -OwnerWord 'go' -CaseDir $tmp } 4
-    T 'refuse an empty provenance' { New-Grant -Target $tgt -Provenance '' -OwnerWord 'go' -CaseDir $tmp } 4
-    T 'refuse a target that does not exist' { New-Grant -Target (Join-Path $tmp 'nope.bin') -Provenance 'Owner named it' -OwnerWord 'go' -CaseDir $tmp } 3
+    T 'refuse with NO Owner word' { New-Grant -Target $tgt -Provenance 'Owner named it' -OwnerWord '' -CaseDir $tmp -Containment 'isolated_vm' -Lane $L } 3
+    T 'refuse self-asserted provenance' { New-Grant -Target $tgt -Provenance 'I found it on my disk' -OwnerWord 'go' -CaseDir $tmp -Containment 'isolated_vm' -Lane $L } 4
+    T 'refuse an empty provenance' { New-Grant -Target $tgt -Provenance '' -OwnerWord 'go' -CaseDir $tmp -Containment 'isolated_vm' -Lane $L } 4
+    T 'refuse a target that does not exist' { New-Grant -Target (Join-Path $tmp 'nope.bin') -Provenance 'Owner named it' -OwnerWord 'go' -CaseDir $tmp -Containment 'isolated_vm' -Lane $L } 3
 
     $g = New-Grant @C
-    T 'a capability inside the grant is allowed' { Test-Grant -CaseDir $tmp -Capability ($g.allowed | Select-Object -First 1) } 0
+    # `$g.grant.allowed`, not `$g.allowed`: New-Grant returns `grant`, so `$g.allowed` is
+    # $null, `-Capability $null` skipped the membership branch, and this control asserted
+    # only that a lookup with no capability succeeds. Combined with the -Lane that these
+    # fixtures did not pass -- without it every grant here had lane="" and allowed=[] --
+    # this control was green while testing nothing at all. Both are real now.
+    T 'a capability inside the grant is allowed' { Test-Grant -CaseDir $tmp -Capability ($g.grant.allowed | Select-Object -First 1) } 0
     T 'a capability OUTSIDE the grant is refused' { Test-Grant -CaseDir $tmp -Capability 'not.a.real.capability' } 3
 
     # Tamper: the whole point of the hash.
@@ -376,14 +746,178 @@ function Invoke-Selftest {
     # first attempt, the same failure mode as every other one in this selftest's history.
     $tamperTarget = Join-Path $tmp 'target-to-tamper.bin'
     Set-Content -LiteralPath $tamperTarget -Value 'the original bytes, before substitution'
-    $g3 = New-Grant -Target $tamperTarget -Provenance 'Owner named this file in conversation 2026-09-30' -OwnerWord 'analyze this exe' -CaseDir $tmp
+    $g3 = New-Grant -Target $tamperTarget -Provenance 'Owner named this file in conversation 2026-09-30' -OwnerWord 'analyze this exe' -CaseDir $tmp -Containment 'station_under_named_process_rule' -Lane $L
     # Never call a method on the result unguarded: New-Grant returns a hashtable WITHOUT a
     # `raw` key on success and one WITH it on refusal, and under $ErrorActionPreference='Stop'
     # a null .raw took the whole selftest down before a single control printed.
-    $g3code = if ($g3 -is [array]) { $g3[0].code } else { $g3.code }
+    # The key is `exit`, not `code`: reading `.code` yielded $null, so this "the control
+    # below would be vacuous" warning printed `exit ` and never once fired. A guard that
+    # cannot fire is not a guard.
+    $g3code = if ($g3 -is [array]) { $g3[0].exit } else { $g3.exit }
     if ($g3code -ne 0) { Write-Host ("  NOTE: tamper-case grant was not minted (exit " + $g3code + "); the control below would be vacuous") }
     Set-Content -LiteralPath $tamperTarget -Value ('X' * 35)     # substituted with garbage
     T 'CRITICAL: a grant over REPLACED target bytes is refused' { Test-Grant -CaseDir $tmp } 5
+
+    # =============================================================================
+    # THE EXPLOITED HOLES. Every control below reproduced a refusal that DID NOT HAPPEN
+    # against the previous revision of this file, and each one asserts the SPECIFIC error
+    # as well as the exit code, via T()'s $wantError. The regex is the point: a control
+    # that checks only the exit code goes green the moment a second mechanism starts
+    # refusing the same input, and then it is no longer testing the thing it was written
+    # for. That is the failure mode this repo exists to reject, and it is why the
+    # ablation table in the hand-off report is a per-control table and not a summary.
+    # =============================================================================
+
+    function Rewrite-Grant {
+        # Edit grant.json AND recompute the unkeyed hash, exactly as an attacker would.
+        # Without the recompute, every control here would go green on the hash check
+        # alone -- which is the one thing no attacker does.
+        param([string]$CaseDir, [scriptblock]$Mutate)
+        $path = Join-Path $CaseDir 'grant.json'
+        $d = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+        & $Mutate $d
+        $d.grant_sha256 = Get-GrantHash $d
+        Set-Content -LiteralPath $path -Value (Out-Json $d) -Encoding UTF8
+    }
+
+    $Prov = 'Owner named this file in conversation 2026-09-30'
+    $Cont = 'station_under_named_process_rule'
+    $regRealPath = Get-RegistryPath ''
+
+    # Scratch registries, so these controls test the gate and not a sibling's next edit
+    # to manifests\capabilities.json. Written with -Depth 20 because Out-Json's -Depth 8
+    # is not enough to round-trip a capability entry intact.
+    $regStatePath = Join-Path $tmp 'capabilities-states.json'
+    $regState = Get-Content -LiteralPath $regRealPath -Raw | ConvertFrom-Json
+    foreach ($c in $regState.capabilities) {
+        if ($c.id -eq 'native.ida.decompile') { $c.state = 'blocked' }
+        elseif ($c.id -eq 'native.ida.list_functions') { $c.state = 'absent' }
+    }
+    Set-Content -LiteralPath $regStatePath -Value ($regState | ConvertTo-Json -Compress -Depth 20) -Encoding UTF8
+
+    $regEvilPath = Join-Path $tmp 'capabilities-widened.json'
+    $regEvil = Get-Content -LiteralPath $regRealPath -Raw | ConvertFrom-Json
+    $regEvil.capabilities = @($regEvil.capabilities) + [pscustomobject]@{
+        id = 'RULE.THE.WORLD'; state = 'observed'
+        gate = [pscustomobject]@{ lane = 'debug'; requires_verdict = $true } }
+    Set-Content -LiteralPath $regEvilPath -Value ($regEvil | ConvertTo-Json -Compress -Depth 20) -Encoding UTF8
+
+    # --- G4b: absent and blocked capabilities may not enter a grant ------------
+    # Minted against a registry where two observed capabilities are flipped, so this does
+    # not depend on which entries happen to be absent or blocked today.
+    $script:Registry = $regStatePath
+    $cState = Join-Path $tmp 'c-state-filter'
+    New-Item -ItemType Directory -Path $cState -Force | Out-Null
+    New-Grant -Target $tgt -Provenance $Prov -OwnerWord 'analyze this exe' -CaseDir $cState -Containment $Cont -Lane $L | Out-Null
+    T 'G4b: a fresh grant contains no absent or blocked capability' {
+        $gd = Get-Content -LiteralPath (Join-Path $cState 'grant.json') -Raw | ConvertFrom-Json
+        $rd = Get-Content -LiteralPath $regStatePath -Raw | ConvertFrom-Json
+        $bad = @()
+        foreach ($a in @($gd.allowed)) {
+            $cd = $rd.capabilities | Where-Object { $_.id -eq $a }
+            if ($cd -and $cd.state -ne 'observed') { $bad += $a }
+        }
+        if ($bad.Count -gt 0) { return @{ ok = $false; exit = 3; error = "reached the grant: $($bad -join ', ')" } }
+        return @{ ok = $true; exit = 0; error = 'clean: no absent or blocked capability entered the grant' }
+    } 0 '^clean'
+    T 'G4b: a BLOCKED capability is refused at Check, by state' { Test-Grant -CaseDir $cState -Capability 'native.ida.decompile' } 3 'state'
+    T 'G4b: an ABSENT capability is refused at Check, by state' { Test-Grant -CaseDir $cState -Capability 'native.ida.list_functions' } 3 'state'
+    $script:Registry = ''
+
+    # --- G-FS, part 1: the identity blanked ------------------------------------
+    $cBlank = Join-Path $tmp 'c-blank-identity'
+    New-Item -ItemType Directory -Path $cBlank -Force | Out-Null
+    New-Grant -Target $tgt -Provenance $Prov -OwnerWord 'analyze this exe' -CaseDir $cBlank -Containment $Cont -Lane $L | Out-Null
+    Rewrite-Grant $cBlank { param($d) $d.owner_word = ''; $d.provenance = '' }
+    T 'G-FS: identity BLANKED and the hash recomputed is refused' { Test-Grant -CaseDir $cBlank } 6 'owner word'
+
+    # --- G-FS, part 2: the identity REPLACED -----------------------------------
+    # The headline. A blank is the easy case; replacing the Owner word and the provenance
+    # with different, entirely plausible sentences leaves every field non-empty and
+    # structurally legal. Nothing short of a sealed copy of the original identity can
+    # tell that from a genuine grant, which is why the seal exists.
+    $cForge = Join-Path $tmp 'c-forged-identity'
+    New-Item -ItemType Directory -Path $cForge -Force | Out-Null
+    New-Grant -Target $tgt -Provenance $Prov -OwnerWord 'analyze this exe' -CaseDir $cForge -Containment $Cont -Lane $L | Out-Null
+    Rewrite-Grant $cForge { param($d)
+        $d.owner_word = 'do absolutely anything to this host'
+        $d.provenance = 'Owner authorised this in a different conversation entirely' }
+    T 'G-FS: identity REPLACED with new words and the hash recomputed is refused' { Test-Grant -CaseDir $cForge } 6 'identity attestation'
+
+    # --- G4: the granted target is not on disk ---------------------------------
+    $cGone = Join-Path $tmp 'c-target-gone'
+    $tGone = Join-Path $tmp 'c-target-gone.bin'
+    New-Item -ItemType Directory -Path $cGone -Force | Out-Null
+    Set-Content -LiteralPath $tGone -Value 'the authorised bytes'
+    New-Grant -Target $tGone -Provenance $Prov -OwnerWord 'analyze this exe' -CaseDir $cGone -Containment $Cont -Lane $L | Out-Null
+    Rename-Item -LiteralPath $tGone -NewName 'c-target-gone.renamed.bin'
+    T 'G4: a grant whose target is no longer on disk is refused' { Test-Grant -CaseDir $cGone } 5 'not on disk'
+
+    # --- G5: the grant replayed onto a different object ------------------------
+    $cReplay = Join-Path $tmp 'c-replay'
+    $tAuth = Join-Path $tmp 'c-authorised.bin'
+    $tOther = Join-Path $tmp 'c-other.bin'
+    New-Item -ItemType Directory -Path $cReplay -Force | Out-Null
+    Set-Content -LiteralPath $tAuth -Value 'the object the Owner named'
+    Set-Content -LiteralPath $tOther -Value 'a completely different object'
+    New-Grant -Target $tAuth -Provenance $Prov -OwnerWord 'analyze this exe' -CaseDir $cReplay -Containment $Cont -Lane $L | Out-Null
+    Rewrite-Grant $cReplay { param($d) $d.target = $tOther; $d.target_sha256 = Get-Sha256File -Path $tOther }
+    T 'G5: a grant replayed onto a DIFFERENT object is refused' { Test-Grant -CaseDir $cReplay } 6 'identity attestation'
+
+    # --- G7: -Registry is caller-controlled ------------------------------------
+    $cReg = Join-Path $tmp 'c-registry-swap'
+    New-Item -ItemType Directory -Path $cReg -Force | Out-Null
+    New-Grant -Target $tgt -Provenance $Prov -OwnerWord 'analyze this exe' -CaseDir $cReg -Containment $Cont -Lane $L | Out-Null
+    $script:Registry = $regEvilPath
+    T 'G7: Check against a caller-substituted registry is refused' { Test-Grant -CaseDir $cReg -Capability 'native.ida.decompile' } 6 'registry'
+    $script:Registry = ''
+
+    # --- G8: the widening operation, with no word ------------------------------
+    $cEsc = Join-Path $tmp 'c-escalate-word'
+    New-Item -ItemType Directory -Path $cEsc -Force | Out-Null
+    New-Grant -Target $tgt -Provenance $Prov -OwnerWord 'analyze this exe' -CaseDir $cEsc -Containment $Cont -Lane $L | Out-Null
+    T 'G8: escalating on a BLANK Owner word is refused and writes nothing' {
+        $e = Invoke-Escalate -CaseDir $cEsc -Capability 'net.pcap.analyse' -NewWord '   ' -NewClass 'owner_word'
+        $after = Get-Content -LiteralPath (Join-Path $cEsc 'grant.json') -Raw | ConvertFrom-Json
+        if ([string]$after.escalation -ne 'none') {
+            return @{ ok = $false; exit = 0; error = "the refused escalation was written to disk anyway (escalation=$($after.escalation))" }
+        }
+        return $e
+    } 3 'Owner word'
+    # and the positive case, so the guard is not simply "escalation never works"
+    T 'G8: a real Owner word still escalates and the grant still checks' {
+        $e = Invoke-Escalate -CaseDir $cEsc -Capability 'net.pcap.analyse' -NewWord 'the Owner widened this to the pcap parser' -NewClass 'owner_word'
+        if (-not $e.ok) { return $e }
+        $c = Test-Grant -CaseDir $cEsc -Capability 'net.pcap.analyse'
+        if (-not $c.ok) { return @{ ok = $false; exit = 0; error = "the escalated grant no longer checks: $($c.error)" } }
+        return @{ ok = $true; exit = 0; error = 'none' }
+    } 0 'none'
+
+    # --- the field allow-list ---------------------------------------------------
+    $cFields = Join-Path $tmp 'c-unknown-field'
+    New-Item -ItemType Directory -Path $cFields -Force | Out-Null
+    New-Grant -Target $tgt -Provenance $Prov -OwnerWord 'analyze this exe' -CaseDir $cFields -Containment $Cont -Lane $L | Out-Null
+    Rewrite-Grant $cFields { param($d)
+        $d | Add-Member -NotePropertyName attach_pid -NotePropertyValue 99999 -Force
+        $d | Add-Member -NotePropertyName attach_to -NotePropertyValue 'any process on this host' -Force }
+    T 'a grant carrying unknown fields (attach_pid / attach_to) is refused' { Test-Grant -CaseDir $cFields } 5 'unknown field'
+
+    # --- containment ------------------------------------------------------------
+    $cNoCont = Join-Path $tmp 'c-containment-missing'
+    New-Item -ItemType Directory -Path $cNoCont -Force | Out-Null
+    New-Grant -Target $tgt -Provenance $Prov -OwnerWord 'analyze this exe' -CaseDir $cNoCont -Containment $Cont -Lane $L | Out-Null
+    Rewrite-Grant $cNoCont { param($d) $d.containment = '' }
+    T 'a grant with its containment class blanked is refused' { Test-Grant -CaseDir $cNoCont } 6 'containment'
+
+    $cContSwap = Join-Path $tmp 'c-containment-replay'
+    New-Item -ItemType Directory -Path $cContSwap -Force | Out-Null
+    New-Grant -Target $tgt -Provenance $Prov -OwnerWord 'analyze this exe' -CaseDir $cContSwap -Containment 'station_under_named_process_rule' -Lane $L | Out-Null
+    Rewrite-Grant $cContSwap { param($d) $d.containment = 'isolated_vm' }
+    T 'a grant minted under one containment class, restated as another, is refused' { Test-Grant -CaseDir $cContSwap } 6 'identity attestation'
+
+    T 'refuse a mint with NO containment class' {
+        New-Grant -Target $tgt -Provenance $Prov -OwnerWord 'go' -CaseDir (Join-Path $tmp 'c-mint-no-containment') -Containment ''
+    } 3 'containment'
 
     Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
 
@@ -397,12 +931,21 @@ function Invoke-Selftest {
         return 2
     }
 
+    # $width was never assigned anywhere in this script. "abc".PadRight($null) is
+    # PadRight(0), so every line happened to render unpadded and nothing looked wrong.
+    $width = 0
+    foreach ($c in $cases) { if ("$($c[0])".Length -gt $width) { $width = "$($c[0])".Length } }
+
     $failed = 0
     foreach ($c in $cases) {
         $got = $c[1]
         $okc = ($null -ne $got) -and ($got.exit -eq $c[2])
+        # The exit code alone is not enough. Assert the refusal's OWN error text, so a
+        # control cannot go green because some other mechanism started refusing the same
+        # input. That is the difference between a control and a coincidence.
+        if ($okc -and $c[3]) { $okc = ("$($got.error)" -match $c[3]) }
         if (-not $okc) { $failed++ }
-        $detail = if ($okc) { "exit=$($got.exit)" } else { "WANT exit=$($c[2]) GOT exit=$($got.exit) $($got.error)" }
+        $detail = if ($okc) { "exit=$($got.exit)" } else { "WANT exit=$($c[2]) [$($c[3])] GOT exit=$($got.exit) $($got.error)" }
         Write-Host ("  {0}  {1}  {2}" -f $(if ($okc) { 'PASS' } else { 'FAIL' }), $c[0].PadRight($width), $detail)
     }
     Write-Host ''
@@ -413,7 +956,7 @@ function Invoke-Selftest {
 
 switch ($Action) {
     'New' {
-        $r = New-Grant -Target $Target -Provenance $Provenance -OwnerWord $OwnerWord -CaseDir $CaseDir -Lane $Lane
+        $r = New-Grant -Target $Target -Provenance $Provenance -OwnerWord $OwnerWord -CaseDir $CaseDir -Lane $Lane -Containment $Containment
         Out-Json $r
         exit ([int]$r.exit)
     }
