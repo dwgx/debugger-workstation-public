@@ -125,6 +125,12 @@ import sys
 
 DEFAULT = pathlib.Path(__file__).resolve().parent.parent / "manifests" / "capabilities.json"
 
+# The repo root, derived from this file's own location. Every path a rule checks must
+# resolve against THIS, never against the process working directory: the registry path was
+# already anchored here, and a rule that resolves its paths differently from the file it
+# loaded is a rule that reports different answers depending on where you ran it from.
+REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
+
 TOP_REQUIRED = ("id", "title", "domains", "state", "consumes", "produces",
                 "requires", "proves", "does_not_prove", "negative_control", "gate")
 VALID_STATES = {"observed", "absent", "degraded", "planned", "blocked"}
@@ -382,9 +388,25 @@ def r10_invoke_must_runnable(reg, doc):
                        f"that is exactly how a failed Ghidra import looked like a pass.")
         # The script must actually exist. This is the whole point: a declared entry that
         # points at a missing file is a promise the loop will break at run time.
+        #
+        # Resolve it against the REPO ROOT, not the current working directory. Measured
+        # defect: this line used pathlib.Path(script).exists(), which is CWD-relative, so
+        # `cd /tmp && python scripts/registry-verify.py` reported SIX false R10 violations
+        # -- "invoke names 'native-lab/tools/decompile.mjs', which does not exist" -- for
+        # scripts that were sitting right there in the repo. The registry path itself was
+        # always resolved from __file__ (DEFAULT, :126), so the file loaded correctly while
+        # every path inside it was checked against the wrong root. A validator that cries
+        # wolf on a clean checkout is worse than no validator, because the fix is to stop
+        # reading its output. Recorded by a worker that had earlier written the bug down as
+        # fixed; it was not.
         script = next((a for a in argv if isinstance(a, str) and a.endswith((".mjs", ".js", ".py"))), None)
-        if script and not pathlib.Path(script).exists():
-            out.append(f"R10 {cid}: invoke names {script!r}, which does not exist in this repo.")
+        if script:
+            cand = pathlib.Path(script)
+            if not cand.is_absolute() and not (REPO_ROOT / cand).exists():
+                cand2 = pathlib.Path(DEFAULT).parent.parent / cand
+                if not cand2.exists():
+                    out.append(f"R10 {cid}: invoke names {script!r}, which does not exist "
+                               f"in this repo (looked in {REPO_ROOT / script}).")
         # A declared chain must be real: whatever it consumes_fact, someone must produce it.
         need = inv.get("consumes_fact")
         if need:
