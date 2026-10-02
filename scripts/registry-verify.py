@@ -1477,6 +1477,106 @@ def r31_callability_is_declared(reg, doc):
     return out
 
 
+
+def r32_owner_decision_agrees_with_grantability(reg, doc):
+    """`gate.owner_decision_required` and `gate.requires_verdict` must tell the same story.
+
+    Measured 2026-10-03 by mutation: `gate.owner_decision_required` appears ZERO times outside the
+    manifest. Three entries declare it true, and they are -- measured -- the ONLY three in the
+    registry with `requires_verdict: false`:
+
+        crypto.jose.parse / re.corpus.solve / fuzz.differential.parse
+
+    So the restriction those three carry is enforced, but by a DIFFERENT mechanism than the one
+    the manifest names. `requires_verdict: false` is what keeps them out of every grant
+    (gate.ps1 Get-GrantableIds filters on it, and Check refuses a capability that is not on the
+    list). `owner_decision_required: true` is the sentence that says WHY, and it is read by nothing
+    at all. The registry's own schema note even records the intent -- "It is recorded as an OWNER
+    DECISION on the three capabilities carrying it" -- in prose that no code consults.
+
+    The dangerous state is the one this rule refuses: somebody edits `requires_verdict` to true on
+    one of the three, because it looks like an ordinary flag flip. The capability becomes grantable
+    to anything, and the field that records the Owner's decision is still `true` and still dead, so
+    nothing in the tree objects. That is the shape of every finding in this file -- a restriction
+    that lives in one field while another field silently governs it.
+
+    Both directions are checked, because both are silent today:
+      * owner_decision_required true with requires_verdict true  -> contradicts itself
+      * requires_verdict false with no recorded reason            -> ungrantable for no stated cause
+
+    `requires_verdict: false` is NOT treated as a defect here and never will be. It is a safety
+    marker; this rule only insists that whatever removes a capability from every grant says out
+    loud that it is doing so, and that the two fields which describe that state agree.
+    """
+    out = []
+    for c in reg:
+        g = c.get("gate") or {}
+        if not isinstance(g, dict):
+            continue
+        cid = c.get("id", "?")
+        odr = g.get("owner_decision_required")
+        rv = g.get("requires_verdict")
+        if odr is True and rv is not False:
+            out.append(f"R32 {cid}: gate.owner_decision_required is true but "
+                       f"gate.requires_verdict is {rv!r}. Those two fields are the same statement -- "
+                       f"only the Owner may authorise this -- and they disagree. Today the "
+                       f"restriction is enforced by requires_verdict alone, because "
+                       f"owner_decision_required is read by nothing in this repository (measured: "
+                       f"zero occurrences outside the manifest). Flip requires_verdict for an "
+                       f"ordinary reason and this capability becomes grantable to anything while "
+                       f"the field recording the Owner's decision still reads true.")
+        if rv is False and not str(g.get("requires_verdict_reason") or "").strip():
+            out.append(f"R32 {cid}: gate.requires_verdict is false with no reason. That flag is "
+                       f"the only thing keeping this capability out of every grant, and a silent "
+                       f"refusal cannot be reviewed, inherited or deliberately lifted by whoever "
+                       f"inherits this registry. Record why.")
+    return out
+
+
+
+def r33_envelope_error_field_is_an_error(reg, doc):
+    """`envelope.item_error_field` must name an error, not the success sentinel.
+
+    Measured 2026-10-03: the field is read by nothing (a sweep set it to `-1` on every entry
+    that has it and the validator stayed clean), and one entry had it wrong in a way that would
+    invert a consumer. `native.ghidra.decompile` declared `item_error_field: "ok"` while its own
+    `success_when` -- three lines above, in the same object -- reads "summary.json EXISTS and its
+    `ok` is true -- NEVER the process exit code". So the entry named the field that means SUCCESS
+    as the field that means ERROR, and a batch consumer keying on it would read a good result as a
+    failed item. The other three entries name `error`.
+
+    The closed part is small on purpose: a name, not a type. The anti-contradiction part is the
+    load-bearing one and it is textual on purpose -- `ok`, `success`, `status: 0` and `exit_code`
+    are the names a success sentinel actually takes, and this entry used one of them. A consumer
+    asking "which field carries a per-item error" deserves an answer that cannot be the field the
+    same object calls its success condition.
+
+    What this does NOT do: validate that `error` exists in the output. That is a property of the
+    TOOL, not of the manifest, and the honest place to check it is a probe -- which is what
+    `probe.expect` is for.
+    """
+    SUCCESS_SENTINELS = ("ok", "success", "status", "exit", "exit_code", "exitcode", "result")
+    out = []
+    for c in reg:
+        env = c.get("envelope") or c.get("invoke", {}).get("envelope") or {}
+        if not isinstance(env, dict):
+            continue
+        fld = env.get("item_error_field")
+        if fld is None:
+            continue
+        cid = c.get("id", "?")
+        if str(fld).strip().lower() in SUCCESS_SENTINELS:
+            sw = str(env.get("success_when") or "")
+            out.append(f"R33 {cid}: envelope.item_error_field is {fld!r}, which is a SUCCESS "
+                       f"sentinel name, not an error field"
+                       + (f" -- and this entry's own success_when reads {sw[:70]!r}, so the same "
+                          f"object names one field as both." if sw else ".")
+                       + f" A consumer keying on this field would read a good item as a failed "
+                         f"one. Name the field that actually carries the error (`error` on all "
+                         f"three sibling entries) and record why here.")
+    return out
+
+
 RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r4_fact_types_agree, r5_control_must_fail, r6_reach_needs_escalation, r7_ids,
          r8_reach_must_be_declared, r9_batch_must_account, r10_invoke_must_runnable,
@@ -1491,7 +1591,9 @@ RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r28_evidence_is_tracked_not_merely_present,
          r29_fact_types_are_declared,
          r30_requires_and_lane_are_declared,
-         r31_callability_is_declared)
+         r31_callability_is_declared,
+         r32_owner_decision_agrees_with_grantability,
+         r33_envelope_error_field_is_an_error)
 
 
 # ---------------------------------------------------------------------------- core
@@ -1715,6 +1817,28 @@ def selftest() -> int:
     # R31 cases. The positive that matters is BOTH-keys: a reader cannot honour "callable" and
     # "not callable" at once, and today nothing notices. The fixture had to give up its
     # not_callable for this one, which is the collision two rules can have over one field.
+    # R32: two fields that are the same statement, one of which is enforced and one of which is
+    # documentation. The dangerous mutation is flipping `requires_verdict` to true, which is what an
+    # ordinary flag edit looks like; the second branch is the silent one.
+    # R33: the anti-contradiction half, planted on an entry whose own success_when mentions `ok`.
+    case("R33 an envelope naming a success sentinel as its error field",
+         lambda b: b[0].__setitem__(
+             "envelope", {"success_when": "body.ok is true", "item_error_field": "ok"}), "R33")
+    nocase("R33 an envelope naming a real error field is accepted",
+           lambda b: b[0].__setitem__(
+               "envelope", {"success_when": "body.ok is true", "item_error_field": "error"}),
+           "R33")
+    case("R32 an owner-decision entry that became grantable",
+         lambda b: b[0]["gate"].update({"owner_decision_required": True,
+                                         "requires_verdict": True}), "R32")
+    case("R32 an ungrantable entry with no stated reason",
+         lambda b: b[0]["gate"].update({"requires_verdict": False,
+                                         "requires_verdict_reason": ""}), "R32")
+    nocase("R32 an owner-decision entry that stays ungrantable is accepted",
+           lambda b: b[0]["gate"].update({"owner_decision_required": True,
+                                          "requires_verdict": False,
+                                          "requires_verdict_reason": "only the Owner may authorise it"}),
+           "R32")
     case("R31 an observed entry declaring neither",
          lambda b: b[0].pop("not_callable"), "R31")
     case("R31 an observed entry declaring both",
