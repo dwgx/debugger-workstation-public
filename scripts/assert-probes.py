@@ -221,6 +221,19 @@ def check(cap: dict, timeout: int) -> list[tuple[str, str]]:
     want_co = nc.get("expect_output")
     if want_co and want_co not in cblob:
         out.append(("DRIFT", f"{cid} CONTROL expect_output: {want_co!r} absent from real output"))
+    # THE FLOOR. A capability whose probe and control both matched used to return NOTHING, so
+    # `results` stayed empty for it, the summary printed `1 checked, .`, and main() returned 0.
+    # That is how a two-line script printing the recorded strings passes as proof: the
+    # instrument is never asked whether it ran. Measured 2026-10-02 (.agent/audit/a2/report.md
+    # against native.pe.packer) and re-confirmed by the 2026-10-03 red team, which found the
+    # same hole untouched a day later. gate.ps1 already gives itself this floor at its own
+    # zero-case check, for the same reason: a checker that inspects zero items must not be able
+    # to report OK.
+    if not out:
+        out.append(("OK", f"{cid}: recorded exit+expect and the control's exit+output all "
+                          f"matched. Read that as 'the strings are still true', NOT as 'the "
+                          f"instrument ran' -- this checker matches strings, and a stub which "
+                          f"prints them satisfies it."))
     return out
 
 
@@ -264,6 +277,13 @@ def main() -> int:
     if counts.get("DRIFT"):
         print("\nA DRIFT is a finding, not an auto-fix: the instrument may have regressed, or the\n"
               "recorded string may never have been true. Those have opposite fixes, so read it.")
+    # Unreachable code is not a floor. The first version of this check was appended after the
+    # `return`, so it could never run -- the same mistake as a control placed where it cannot
+    # fire, which is the thing this file exists to catch.
+    if len(results) < len(todo):
+        print(f"\nassert-probes: {len(todo) - len(results)} capability(ies) produced NO verdict "
+              f"at all. A run that concludes nothing must not exit 0.", file=sys.stderr)
+        return 2
     return 1 if counts.get("DRIFT") else 0
 
 
