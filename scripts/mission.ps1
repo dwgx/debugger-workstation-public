@@ -37,6 +37,14 @@
      that ran nothing and reported success. An empty route, or a route in which not one
      step is invocable, is a refusal with a non-zero exit that NAMES the capability that
      would have served the question. See `Get-RouteRefusal`.
+
+  6. THE BUDGET COUNTS STEPS, AND THE ARTIFACT NAMES WHICH ENDING IT WAS. The route is
+     computed ONCE, before the first step runs, and is never re-planned; one step consumes
+     one round. So the cap has always been a STEP count wearing the name of a round count,
+     and a mission that ran out of BUDGET wrote the same artifact shape as one that ran out
+     of STEPS. `termination_reason` now names the ending -- `budget_exhausted`,
+     `steps_completed`, `grant_halt`, `registry_changed`, `precondition_failed` -- and
+     `steps_dropped_by_budget` names the steps the cap took away.
 .PARAMETER Action
   Run      execute a mission end to end
   Plan     print the route the registry gives this question type and exit without running
@@ -47,6 +55,20 @@
            be deleted without turning the suite red is not a gate, it is a sentence in a
            comment. This is the control that keeps the other seven from rotting back into
            that, and it is now also what keeps the route derived from the registry.
+.PARAMETER MaxSteps
+  How many STEPS the loop may execute. Not rounds: the route is derived once from the
+  registry before the first step runs and is never re-planned, and one step consumes one
+  round, so this number is a count of executed steps. The artifact records the same number
+  as `budget.max_steps`, and anything the cap dropped is named by id under
+  `steps_dropped_by_budget`.
+
+.PARAMETER MaxRounds
+  DEPRECATED ALIAS for `-MaxSteps`, kept accepted so existing callers keep working, and
+  scheduled for removal. It sets the same step cap and warns ONCE per process on stderr.
+  Passing both `-MaxRounds` and `-MaxSteps` is REFUSED rather than resolved by a guess:
+  two spellings of one number with two values is an ambiguity, and picking one silently is
+  how a caller stops believing the tool reads what it says.
+
 
 
 .EXAMPLE
@@ -84,7 +106,10 @@ param(
     [string[]]$Discharged = @(),
     [string]$CaseRoot = 'E:\missions',
     [string]$CaseId = '',
-    [int]$MaxRounds = 6,
+    # The cap counts STEPS, not rounds -- the route is derived once and never re-planned.
+    # The alias below is the old spelling and is deliberately still accepted.
+    [int]$MaxSteps = 6,
+    [Nullable[int]]$MaxRounds = $null,
     [string[]]$SeedFact = @(),
     [string]$Registry = '',
     [switch]$Json
@@ -94,8 +119,75 @@ $ErrorActionPreference = 'Continue'
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $RepoRoot
 
+# Which of the two budget spellings the CALLER actually typed. Read from the binder rather
+# than inferred from a sentinel value, because a sentinel cannot distinguish "the caller
+# asked for 6" from "the caller asked for nothing and 6 is the default" -- and that
+# distinction is the whole of the deprecation warning. `[Nullable[int]]` is what makes the
+# question askable at all: with a plain `[int]` default, an absent -MaxRounds is
+# indistinguishable from -MaxRounds 0.
+$script:BudgetSpelling = @{ max_steps = $PSBoundParameters.ContainsKey('MaxSteps')
+                           max_rounds = $PSBoundParameters.ContainsKey('MaxRounds') }
+
 function Out-Json($o) { $o | ConvertTo-Json -Compress -Depth 12 }
 function Say($s) { if (-not $Json) { Write-Host $s } }
+
+function Resolve-Budget {
+    <#
+      ONE step cap out of two accepted spellings, and the record of which one was used.
+
+      Measured 2026-10-03: the parameter was called `MaxRounds` and counted STEPS. The
+      route is derived once, before the loop, from the registry and the grant; nothing in
+      the loop re-plans it, and exactly one round is consumed per executed step. So the
+      name promised a re-planning loop that does not exist, and a reader budgeting "6
+      rounds" got 6 steps with no way to know that from the parameter's own name.
+
+      The alias stays ACCEPTED, because a rename that breaks callers is a rename nobody can
+      roll out. What it no longer does is pass in silence: the deprecation warning is
+      emitted ONCE per process on stderr, which is the difference between a deprecation and
+      a rumour. Both spellings together is REFUSED rather than resolved by a preference
+      order -- guessing which of two contradictory numbers the caller meant is how a tool
+      stops being believed, and the fix (drop one) costs the caller one edit.
+
+      The returned record carries `parameter_used` so the artifact can name the spelling the
+      caller actually typed. An artifact that records only the number cannot be used to
+      find the callers still on the old name, which is the only reason the deprecation
+      needs an end date.
+    #>
+    param([hashtable]$Spelling = $script:BudgetSpelling, [int]$MaxSteps = 6, $MaxRounds = $null)
+
+    if ($Spelling.max_steps -and $Spelling.max_rounds) {
+        Refuse 2 'both -MaxSteps and -MaxRounds were supplied' (
+            "-MaxSteps $MaxSteps and -MaxRounds $MaxRounds are two spellings of one cap, and resolving them " +
+            'by a preference order would silently discard one of two numbers the caller typed. ' +
+            'Pass one of them. No mission ran and no case directory was created.')
+    }
+
+    $record = [ordered]@{
+        max_steps      = $MaxSteps
+        parameter_used = 'MaxSteps'
+        alias_used     = $false
+        warning        = $null
+        emitted        = $false
+    }
+
+    if ($Spelling.max_rounds) {
+        $record.max_steps = [int]$MaxRounds
+        $record.parameter_used = 'MaxRounds'
+        $record.alias_used = $true
+        $record.warning = ('-MaxRounds is a deprecated alias for -MaxSteps and still works; it sets the same ' +
+                           'cap of ' + [int]$MaxRounds + ' STEP(S). The route is planned once and never ' +
+                           're-planned, so this number has always counted steps. Callers still using ' +
+                           '-MaxRounds will be removed; switch to -MaxSteps.')
+        # ONCE per process. Emitting it per resolution would bury the one line a reader needs
+        # under a repeat of itself, which is how a deprecation warning becomes background noise.
+        if (-not $script:BudgetAliasWarned) {
+            $script:BudgetAliasWarned = $true
+            [Console]::Error.WriteLine('[mission] DEPRECATION: ' + $record.warning)
+            $record.emitted = $true
+        }
+    }
+    return $record
+}
 
 function Get-Registry {
     <#
@@ -185,14 +277,14 @@ function Get-ArgvSlots {
 
 function Get-BudgetDropped {
     <#
-      WHICH planned steps a round budget never reaches, by id. Extracted 2026-10-03 so a
+      WHICH planned steps a step budget never reaches, by id. Extracted 2026-10-03 so a
       control can fire at it: the first version of this was three lines inline inside the round
       loop, which by construction no selftest could reach -- a rule nobody can run is not a
       rule. Steps already skipped for another reason are NOT counted as dropped: the plan
       already says why they did not run, and listing them twice would double-count one absence.
     #>
-    param($Planned, [int]$Round, [int]$MaxRounds)
-    if ($Round -lt $MaxRounds) { return @() }
+    param($Planned, [int]$Round, [int]$MaxSteps)
+    if ($Round -lt $MaxSteps) { return @() }
     if (-not $Planned -or $Planned.Count -le $Round) { return @() }
     return @($Planned[$Round..($Planned.Count - 1)] |
              Where-Object { $_.state -eq 'planned' } |
@@ -751,6 +843,18 @@ function Invoke-Intake {
 # -------------------------------------------------------------------------------- run
 
 function Invoke-Mission {
+    # FIRST, before the case directory exists: a caller who supplied two contradictory
+    # budget spellings gets a refusal that says no case directory was created, and that has
+    # to be true. Resolving this after the directory is created would make the message a
+    # lie by exactly one line of ordering.
+    # The values are passed EXPLICITLY, and that is load-bearing rather than stylistic.
+    # `Resolve-Budget`'s own parameter is `$MaxSteps`; a bare `Resolve-Budget` call binds it
+    # to that function's DEFAULT of 6 and never reads the script-scope parameter of the same
+    # name. Measured 2026-10-03: the bare form made -MaxSteps 1 run three steps and the cap
+    # never fired, so the cap looked like it worked while ignoring its own argument. Two
+    # same-named variables in two scopes is exactly the ambiguity this file keeps refusing
+    # elsewhere, so it is refused here too -- by naming them at the call.
+    $budget = Resolve-Budget -Spelling $script:BudgetSpelling -MaxSteps $MaxSteps -MaxRounds $MaxRounds
     $intake = Invoke-Intake
     $reg = $intake.registry
     $qt = $intake.question_type
@@ -866,7 +970,14 @@ function Invoke-Mission {
             cycles = $route.cycles
         }
         capabilities = $planned
-        budget       = [ordered]@{ max_rounds = $MaxRounds }
+        # `max_steps`, and `counts` says why -- a plan that records a cap without its unit is
+        # the artifact that let a step budget be read as a round budget for a year.
+        budget       = [ordered]@{
+            max_steps      = $budget.max_steps
+            counts         = 'steps executed, not rounds: the route is derived once, before the first step runs, and is never re-planned'
+            parameter_used = $budget.parameter_used
+            alias_used     = $budget.alias_used
+        }
         proposed_claim = $Claim
     }
     Set-Content -LiteralPath (Join-Path $caseDir 'plan.json') -Value (Out-Json $plan) -Encoding UTF8
@@ -924,18 +1035,25 @@ function Invoke-Mission {
 
     $regStale = $false
     $dropped = @()      # planned steps the budget never reached; named in the artifact
+    # WHICH BRANCH LEFT THE LOOP, and nothing more. The artifact's `termination_reason` is
+    # derived from this plus the recorded drop list by `Get-TerminationReason`; the loop
+    # never announces its own ending. Measured 2026-10-03: the route is computed ONCE and one
+    # step consumes one round, so the cap was always a STEP cap named as rounds.
+    $halt = ''
+    $maxSteps = [int]$budget.max_steps
     foreach ($step in $planned) {
-        if ($round -ge $MaxRounds) {
+        if ($round -ge $maxSteps) {
             # The cap used to `break` with nothing said, so an artifact could not distinguish a
             # short plan from a truncated one -- and "the steps that never ran" is exactly the
-            # gap that produces no error to notice. Measured 2026-10-03: the route is computed ONCE
-            # and one round runs per step, so -MaxRounds is really -MaxSteps; naming it otherwise
-            # invites a reader to believe the loop re-plans. The truncation is now recorded, by id.
-            $dropped = @(Get-BudgetDropped -Planned $planned -Round $round -MaxRounds $MaxRounds)
+            # gap that produces no error to notice. The truncation is now recorded, by id, and
+            # the fact that the CAP ended the mission (rather than the plan running out) is
+            # recorded beside it, which is the distinction a reader cannot make otherwise.
+            $halt = 'budget_cap'
+            $dropped = @(Get-BudgetDropped -Planned $planned -Round $round -MaxSteps $maxSteps)
             if ($dropped.Count -gt 0) {
-                Say "  budget: -MaxRounds $MaxRounds reached after $round round(s); these planned steps DID NOT RUN: $($dropped -join ', ')"
+                Say "  budget: step cap $maxSteps reached after $round step(s); these planned steps DID NOT RUN: $($dropped -join ', ')"
                 $trace += [ordered]@{ round = $round; capability = ($dropped -join ',')
-                                      event = 'budget_cap_reached'; max_rounds = $MaxRounds
+                                      event = 'budget_cap_reached'; max_steps = $maxSteps
                                       not_run = $dropped; blocks = 'every remaining step' }
             }
             break
@@ -957,6 +1075,7 @@ function Invoke-Mission {
                 event = 'registry_changed_midflight'
                 planned_against = $regHash; found = $nowReg; blocks = 'every remaining round' }
             $regStale = $true
+            $halt = 'registry_changed'
             break
         }
 
@@ -965,6 +1084,7 @@ function Invoke-Mission {
         if ($gc.code -ne 0) {
             Say "  round $round  HALTED: $($step.id) is not inside the grant any more (exit $($gc.code))"
             $trace += [ordered]@{ round = $round; capability = $step.id; event = 'gate_halt'; gate_exit = $gc.code }
+            $halt = 'grant_halt'
             break
         }
 
@@ -1189,13 +1309,16 @@ function Invoke-Mission {
             Say "    Analysing the target now would mean analysing whatever the packer left behind."
             $trace += [ordered]@{ round = $round; capability = $step.id
                                   event = 'precondition_failed'; blocks = 'all remaining rounds' }
+            $halt = 'precondition_failed'
             break
         }
     }
 
     # --- termination, COMPUTED over the artifact, never self-reported --------------
     $failedRounds = @($evidence | Where-Object { $_.ok -ne $true }).Count
-    $term = Get-Termination -Evidence $evidence -Registry $reg -MaxRounds $MaxRounds -Round $round -FailedRounds $failedRounds -Planned $planned
+    $term = Get-Termination -Evidence $evidence -Registry $reg -MaxSteps $maxSteps -Round $round -FailedRounds $failedRounds -Planned $planned
+    # WHY the loop stopped, derived from the branch it left and what the cap dropped.
+    $termReason = Get-TerminationReason -Halt $halt -Dropped $dropped -Round $round -MaxSteps $maxSteps -Planned $planned
 
     # --- the verdict, COMPUTED ---------------------------------------------------
     $verdict = Get-Verdict -Claim $Claim -QuestionType $qt -Evidence $evidence -Registry $reg -DischargedIn $Discharged
@@ -1248,14 +1371,37 @@ function Invoke-Mission {
         # to say so rather than leave a reader to assume the plan still holds.
         registry_sha256 = $regHash
         registry_stale = $regStale
+        # `termination_reason` is the field a reader greps. Measured 2026-10-03: it did not
+        # exist, and `termination.state` cannot substitute for it -- a mission truncated by
+        # the cap and one that ran every planned step both reported EXHAUSTED, so the two
+        # endings had the same shape. `state` answers whether the QUESTION is answered;
+        # this answers whether the WORK was cut off, and the two are independent.
+        termination_reason = $termReason.reason
+        termination = [ordered]@{
+            state = $term.state
+            why   = $term.why
+            # WHY THE LOOP STOPPED, beside the state, so a reader of one object sees both.
+            # `halt` is the branch that fired; `truncated_by_budget` is the consequence.
+            reason               = $termReason.reason
+            halt                 = $termReason.halt
+            truncated_by_budget  = $termReason.truncated_by_budget
+            ended_because        = $termReason.why
+            guards_not_named     = $term.guards_not_named
+            failed_steps         = $term.failed_steps
+            note                 = $term.note
+        }
+        # `rounds` is KEPT as well as `steps_executed`. Two spellings of one number is the
+        # disease this change is about, so it does not get committed here: `rounds` is what
+        # existing readers of `artifact.json` already parse, and a clean cutover that breaks
+        # the one script in this repo that reads it is not a cutover.
         rounds     = $round
+        steps_executed = $round
         # Stated rather than inferred: one round runs per planned step and the route is computed
         # once, so `rounds` is also `steps executed`, and anything the cap dropped is named here.
         rounds_are_steps = $true
         steps_dropped_by_budget = @($dropped)
         chain      = @($trace | Where-Object { $_.capability } | ForEach-Object { [ordered]@{ round = $_.round; capability = $_.capability; ok = $_.ok; facts = ($_.facts | ForEach-Object { $_.key }) } })
         verdict    = $verdict
-        termination = $term
         scope_guard = [ordered]@{ baseline = $baseline.Substring(0,16); after = $after.Substring(0,16); intact = $scopeOk }
         # Recorded under its own key and never mixed into the measured chain. An artifact that
         # cannot tell a measured fact from an operator-supplied one is an artifact that will be
@@ -1276,10 +1422,13 @@ function Invoke-Mission {
     Say ''
     Say ('=' * 78)
     Say "termination   $($term.state) -- $($term.why)"
+    # The two lines above and here answer different questions, and printing only the first
+    # is what let a truncated mission read as a finished one at the console too.
+    Say "ended because $($termReason.reason) -- $($termReason.why)"
     Say "verdict       $($verdict.tier)   (computed by seven gates; the caller proposed, this script disposed)"
     foreach ($g in $verdict.gates) { Say ("  {0}  {1,-16} {2}" -f $(if ($g.pass) { 'PASS' } else { 'FAIL' }), $g.name, $g.detail) }
     Say ''
-    Say "evidence chain: $(@($artifact.chain).Count) step(s), $round round(s)"
+    Say "evidence chain: $(@($artifact.chain).Count) step(s), $round step(s) of a cap of $maxSteps"
     Say "scope guard:   $(if ($scopeOk) { 'INTACT' } else { 'VIOLATED' })"
     Say "STOP note:     $($notRun.Count) capability/capabilities did not run"
     Say ('=' * 78)
@@ -1287,6 +1436,83 @@ function Invoke-Mission {
     $exit = if (-not $scopeOk) { 3 } elseif ($verdict.tier -eq 'unresolved') { 1 } else { 0 }
     Out-Json @{ ok = ($exit -eq 0); exit = $exit; case_dir = $caseDir; artifact = $artifact }
     exit $exit
+}
+
+function Get-TerminationReason {
+    <#
+      WHY THE LOOP STOPPED, as one greppable token, COMPUTED from recorded state.
+
+      Measured 2026-10-03: `termination.state` cannot answer this. A mission cut off by
+      the step cap and a mission that ran every planned step both ended with the same
+      artifact shape -- an EXHAUSTED state and an empty dropped-step list -- so a reader
+      holding a truncated mission could not tell it from a finished one without reading
+      `rounds` against a cap it had to guess. The name `MaxRounds` was the visible symptom;
+      this is the defect: two different endings, one shape.
+
+      It is derived, not self-reported. The loop records only WHICH branch left it
+      (`$Halt`), and every fact that decides the published reason -- whether the cap
+      actually truncated work, which branch fired -- is read back here. A loop that
+      announced "budget_exhausted" in the branch that fired would be a claim, not a
+      computation, and claims rot.
+
+      The cap is only exhaustion when it DROPPED something. A cap that fires as the last
+      planned step completes has truncated nothing, and calling that `budget_exhausted`
+      trains a reader to distrust the field -- which is how a true truncation gets
+      dismissed as a false alarm later.
+
+      An unrecognised `$Halt` is `unrecognised_halt`, never `steps_completed`. The whole
+      point of this function is that an unnamed ending is visible; a new exit branch that
+      forgets to register itself must not fall through to the one value that reads as
+      "everything ran".
+    #>
+    param([string]$Halt = '', [string[]]$Dropped = @(), [int]$Round = 0, [int]$MaxSteps = 6, $Planned = @())
+
+    $known = @('', 'budget_cap', 'grant_halt', 'registry_changed', 'precondition_failed')
+    $droppedIds = @($Dropped | Where-Object { $_ })
+
+    if ($Halt -notin $known) {
+        return [ordered]@{
+            reason        = 'unrecognised_halt'
+            halt          = $Halt
+            truncated_by_budget = $false
+            steps_executed = $Round
+            max_steps     = $MaxSteps
+            steps_dropped_by_budget = $droppedIds
+            why           = ("the loop left through '$Halt', which this file does not name; the ending is " +
+                              'recorded verbatim rather than reported as a completed mission')
+        }
+    }
+
+    $reason = switch ($Halt) {
+        'registry_changed'    { 'registry_changed' }
+        'grant_halt'          { 'grant_halt' }
+        'precondition_failed' { 'precondition_failed' }
+        'budget_cap'          { if ($droppedIds.Count -gt 0) { 'budget_exhausted' } else { 'steps_completed' } }
+        default               { 'steps_completed' }
+    }
+
+    $why = switch ($reason) {
+        'steps_completed' {
+            "every planned step that was invocable ran, and the step cap of $MaxSteps was not what ended the mission"
+        }
+        'budget_exhausted' {
+            "the step cap of $MaxSteps was reached after $Round step(s) with $($droppedIds.Count) planned step(s) " +
+            "still to run: $($droppedIds -join ', ')"
+        }
+        'grant_halt'          { 'a step left the grant mid-mission; the loop halted rather than run it' }
+        'registry_changed'    { 'manifests/capabilities.json changed mid-mission, so every remaining step was routed from a registry that no longer exists' }
+        'precondition_failed' { 'a precondition capability refused the target; the remaining steps were skipped, not attempted' }
+    }
+
+    return [ordered]@{
+        reason        = $reason
+        halt          = $Halt
+        truncated_by_budget = ($droppedIds.Count -gt 0)
+        steps_executed = $Round
+        max_steps     = $MaxSteps
+        steps_dropped_by_budget = $droppedIds
+        why           = $why
+    }
 }
 
 
@@ -1306,8 +1532,17 @@ function Get-Termination {
         EXHAUSTED  every hypothesis reached a terminal state and no capability is left
                    that would change the answer -- and the guards are NAMED, not assumed
         DONE       the question type's success criterion is met by evidence that covers it
+
+      This says whether the QUESTION is answered. `Get-TerminationReason` says why the LOOP
+      stopped, which is a different question: a mission can be DONE, EXHAUSTED and
+      budget-truncated at once, and only the second function can tell a reader that.
+
+      `-MaxSteps` was `-MaxRounds` until 2026-10-03. The route is derived once, before this
+      is ever called, and the loop consumes one round per executed step, so the cap is a
+      step count. The name survived into a predicate about whether work remains, which is
+      how a lie about a unit becomes a lie about a conclusion.
     #>
-    param($Evidence, $Registry, $MaxRounds, $Round, $FailedRounds, $Planned)
+    param($Evidence, $Registry, [int]$MaxSteps, [int]$Round, [int]$FailedRounds, $Planned)
 
     $good = @($Evidence | Where-Object { $_.ok -eq $true })
     # "Left to run" is computed from the EVIDENCE, not from the plan's own state field.
@@ -1316,8 +1551,8 @@ function Get-Termination {
     $ranIds = @($Evidence | ForEach-Object { $_.capability } | Sort-Object -Unique)
     $leftToRun = @($Planned | Where-Object { $_.state -eq 'planned' -and $_.id -notin $ranIds }).Count
 
-    if ($good.Count -gt 0 -and $FailedRounds -eq 0 -and $round -lt $MaxRounds -and $leftToRun -gt 0) {
-        return [ordered]@{ state = 'CONTINUE'; why = "rounds remain ($leftToRun planned, $round/$MaxRounds used) and the last round produced usable facts" }
+    if ($good.Count -gt 0 -and $FailedRounds -eq 0 -and $round -lt $MaxSteps -and $leftToRun -gt 0) {
+        return [ordered]@{ state = 'CONTINUE'; why = "steps remain ($leftToRun planned, $round/$MaxSteps used) and the last step produced usable facts" }
     }
 
     # What is still LEFT that could change the answer. Computed from the plan and the
@@ -1335,12 +1570,12 @@ function Get-Termination {
     # which is the exact error EXHAUSTED exists to prevent.
     if ($good.Count -gt 0 -and $FailedRounds -eq 0 -and $couldStillHelp.Count -eq 0 -and $leftToRun -eq 0) {
         return [ordered]@{ state = 'DONE'
-            why = "$($good.Count) invocation(s) produced typed facts, no round failed, and no observed capability remained that could have changed the answer" }
+            why = "$($good.Count) invocation(s) produced typed facts, no step failed, and no observed capability remained that could have changed the answer" }
     }
     if ($good.Count -gt 0 -and $FailedRounds -gt 0) {
         return [ordered]@{ state = 'EXHAUSTED'
-            why = "$FailedRounds round(s) FAILED. A mission with a failure has not met its criterion, so it cannot be DONE; a partial result is not a clean one."
-            failed_rounds = $FailedRounds
+            why = "$FailedRounds step(s) FAILED. A mission with a failure has not met its criterion, so it cannot be DONE; a partial result is not a clean one."
+            failed_steps = $FailedRounds
             guards_not_named = $couldStillHelp
             note = 'EXHAUSTED must never be read as "nothing was there". The capability ids that did not run are listed, and naming a guard is what turns this into an answer.' }
     }
@@ -1350,7 +1585,7 @@ function Get-Termination {
             guards_not_named = $couldStillHelp
             note = 'EXHAUSTED must never be read as "nothing was there". The capability ids that did not run are listed, and naming a guard is what turns this into an answer.' }
     }
-    if ($round -ge $MaxRounds -or $FailedRounds -gt 0) {
+    if ($round -ge $MaxSteps -or $FailedRounds -gt 0) {
         return [ordered]@{ state = 'EXHAUSTED'
             why = "budget or failure exhausted the mission; this is an unanswered question, not a clean result"
             guards_not_named = @($Planned | Where-Object { $_.state -eq 'planned' } | ForEach-Object { $_.id })
@@ -1358,6 +1593,7 @@ function Get-Termination {
     }
     return [ordered]@{ state = 'EXHAUSTED'; why = 'nothing ran and nothing was left to run'; guards_not_named = @($Planned | ForEach-Object { $_.id }) }
 }
+
 
 # ---------------------------------------------------------------------- the seven gates
 
@@ -1902,17 +2138,17 @@ function Invoke-Selftest {
     # Termination is a predicate over recorded state. The dangerous combination is a
     # hypothesis still pending with an empty next-actions list: it looks finished and is not.
     C 'termination: nothing ran and budget is gone is EXHAUSTED, not a clean result' {
-        (Get-Termination -Evidence @() -Registry (Get-Registry) -MaxRounds 1 -Round 1 -FailedRounds 0 -Planned @([ordered]@{ id='native.ida.decompile'; state='planned' })).state
+        (Get-Termination -Evidence @() -Registry (Get-Registry) -MaxSteps 1 -Round 1 -FailedRounds 0 -Planned @([ordered]@{ id='native.ida.decompile'; state='planned' })).state
     } 'EXHAUSTED'
 
     C 'termination: an EXHAUSTED verdict names the guards it did not run' {
-        $t = Get-Termination -Evidence @() -Registry (Get-Registry) -MaxRounds 1 -Round 1 -FailedRounds 0 -Planned @([ordered]@{ id='native.ida.decompile'; state='planned' })
+        $t = Get-Termination -Evidence @() -Registry (Get-Registry) -MaxSteps 1 -Round 1 -FailedRounds 0 -Planned @([ordered]@{ id='native.ida.decompile'; state='planned' })
         if (@($t.guards_not_named).Count -gt 0) { 'named' } else { 'unnamed' }
     } 'named'
 
     C 'termination: real facts with rounds remaining is CONTINUE, not DONE' {
         $ev = @([ordered]@{ capability='native.ida.decompile'; ok=$true; facts=@([ordered]@{key='native.dec.code';value='x'}) })
-        (Get-Termination -Evidence $ev -Registry (Get-Registry) -MaxRounds 6 -Round 1 -FailedRounds 0 -Planned @([ordered]@{ id='native.ida.list_functions'; state='planned' })).state
+        (Get-Termination -Evidence $ev -Registry (Get-Registry) -MaxSteps 6 -Round 1 -FailedRounds 0 -Planned @([ordered]@{ id='native.ida.list_functions'; state='planned' })).state
     } 'CONTINUE'
 
     C 'a failed round contributes no facts to the verdict' {
@@ -2120,19 +2356,19 @@ function Invoke-Selftest {
                         facts=@([ordered]@{ key='native.func.addr'; value='0x1400' }) },
             [ordered]@{ id='e2'; round=2; capability='native.ida.decompile'; ok=$false; facts=@() }
         )
-        (Get-Termination -Evidence $ev -Registry (Get-Registry) -MaxRounds 6 -Round 2 -FailedRounds 1 `
+        (Get-Termination -Evidence $ev -Registry (Get-Registry) -MaxSteps 6 -Round 2 -FailedRounds 1 `
             -Planned @([ordered]@{ id='native.ida.list_functions'; state='planned' },
                        [ordered]@{ id='native.ida.decompile'; state='planned' })).state
     } 'EXHAUSTED'
 
     # The FIRST branch of Get-Termination owns "budget remains, progress was made" and
     # correctly returns CONTINUE. To reach the DONE question the budget must be gone, so
-    # MaxRounds is 1 here: `$couldStillHelp` is non-empty (list_functions is observed and
+    # MaxSteps is 1 here: `$couldStillHelp` is non-empty (list_functions is observed and
     # still planned) and DONE must be refused.
     C 'gate termination: DONE is unreachable once the budget is gone with an OBSERVED capability unrun' {
         $ev = @([ordered]@{ id='e1'; round=1; capability='native.ida.decompile'; ok=$true
                             facts=@([ordered]@{ key='native.dec.code'; value='x' }) })
-        (Get-Termination -Evidence $ev -Registry (Get-Registry) -MaxRounds 1 -Round 1 -FailedRounds 0 `
+        (Get-Termination -Evidence $ev -Registry (Get-Registry) -MaxSteps 1 -Round 1 -FailedRounds 0 `
             -Planned @([ordered]@{ id='native.ida.list_functions'; state='planned' })).state
     } 'EXHAUSTED'
 
@@ -2470,7 +2706,7 @@ function Invoke-Selftest {
             [pscustomobject]@{ id = 'two';   state = 'planned' }
             [pscustomobject]@{ id = 'three'; state = 'skipped_no_invoke' }
             [pscustomobject]@{ id = 'four';  state = 'planned' })
-        $d = @(Get-BudgetDropped -Planned $plan -Round 1 -MaxRounds 1)
+        $d = @(Get-BudgetDropped -Planned $plan -Round 1 -MaxSteps 1)
         "dropped=$($d -join ',')"
     } 'dropped=two,four'
 
@@ -2478,9 +2714,214 @@ function Invoke-Selftest {
         $plan = @(
             [pscustomobject]@{ id = 'one'; state = 'planned' }
             [pscustomobject]@{ id = 'two'; state = 'planned' })
-        $d = @(Get-BudgetDropped -Planned $plan -Round 1 -MaxRounds 5)
+        $d = @(Get-BudgetDropped -Planned $plan -Round 1 -MaxSteps 5)
         "dropped=$($d.Count)"
     } 'dropped=0'
+
+    # THE DEFECT THIS WHOLE BLOCK EXISTS FOR. A mission truncated by the cap and a mission
+    # that ran every planned step both reported `termination.state = EXHAUSTED`, so the two
+    # endings had the same shape in artifact.json. These four controls pin the field that
+    # separates them, and the FIRST is written as a comparison rather than as two
+    # expectations: two controls each asserting their own value would both stay green if
+    # the function returned the same token for both.
+    C 'termination_reason: a truncated mission and a finished one are DIFFERENT values' {
+        $plan4 = @(
+            [pscustomobject]@{ id = 'one';   state = 'planned' }
+            [pscustomobject]@{ id = 'two';   state = 'planned' }
+            [pscustomobject]@{ id = 'three'; state = 'skipped_no_invoke' }
+            [pscustomobject]@{ id = 'four';  state = 'planned' })
+        $cut = @(Get-BudgetDropped -Planned $plan4 -Round 1 -MaxSteps 1)
+        $a = (Get-TerminationReason -Halt 'budget_cap' -Dropped $cut -Round 1 -MaxSteps 1 -Planned $plan4).reason
+        $b = (Get-TerminationReason -Halt '' -Dropped @() -Round 4 -MaxSteps 6 -Planned $plan4).reason
+        if ($a -eq $b) { "INDISTINGUISHABLE=$a" } else { "distinct=$a/$b" }
+    } 'distinct=budget_exhausted/steps_completed'
+
+    C 'termination_reason: the cap is exhaustion only when it actually DROPPED a step' {
+        # A cap that fires as the last planned step completes has truncated nothing.
+        # Calling that budget_exhausted trains a reader to discount the field, which is how
+        # a real truncation gets waved through as a false alarm.
+        $r = Get-TerminationReason -Halt 'budget_cap' -Dropped @() -Round 3 -MaxSteps 3
+        "reason=$($r.reason) truncated=$($r.truncated_by_budget)"
+    } 'reason=steps_completed truncated=False'
+
+    C 'termination_reason: every other loop exit is named, and none of them reads as finished' {
+        $seen = @('budget_cap', 'grant_halt', 'registry_changed', 'precondition_failed') |
+                ForEach-Object { (Get-TerminationReason -Halt $_ -Dropped @('x') -Round 1 -MaxSteps 6).reason }
+        "named=$($seen -join ',') finished=$(@($seen | Where-Object { $_ -eq 'steps_completed' }).Count)"
+    } 'named=budget_exhausted,grant_halt,registry_changed,precondition_failed finished=0'
+
+    C 'termination_reason: an exit this file does not name is visible, not reported as finished' {
+        $r = Get-TerminationReason -Halt 'some_new_branch_a_sibling_adds' -Dropped @() -Round 1 -MaxSteps 6
+        "reason=$($r.reason) halt=$($r.halt)"
+    } 'reason=unrecognised_halt halt=some_new_branch_a_sibling_adds'
+
+    C 'budget: -MaxRounds is still ACCEPTED, sets the same cap, and names itself in the record' {
+        $b = Resolve-Budget -Spelling @{ max_steps = $false; max_rounds = $true } -MaxSteps 6 -MaxRounds 3
+        "steps=$($b.max_steps) used=$($b.parameter_used) alias=$($b.alias_used)"
+    } 'steps=3 used=MaxRounds alias=True'
+
+    C 'budget: -MaxSteps is not deprecated and warns nobody' {
+        $script:BudgetAliasWarned = $false
+        $b = Resolve-Budget -Spelling @{ max_steps = $true; max_rounds = $false } -MaxSteps 4 -MaxRounds $null
+        "steps=$($b.max_steps) used=$($b.parameter_used) alias=$($b.alias_used) warned=$($b.warning -ne $null)"
+    } 'steps=4 used=MaxSteps alias=False warned=False'
+
+    C 'budget: BOTH spellings are REFUSED rather than resolved by a preference order' {
+        RefusalCode { Resolve-Budget -Spelling @{ max_steps = $true; max_rounds = $true } -MaxSteps 6 -MaxRounds 3 }
+    } 2
+
+    C 'budget: the deprecation warning is emitted ONCE per process, however many missions resolve' {
+        # Once, not per resolution: a warning that repeats on every call is background noise,
+        # and background noise is how a deprecation becomes a rumour with no end date.
+        $script:BudgetAliasWarned = $false
+        $emitted = 0
+        foreach ($i in 1..3) {
+            $b = Resolve-Budget -Spelling @{ max_steps = $false; max_rounds = $true } -MaxSteps 6 -MaxRounds 2
+            if ($b.emitted) { $emitted++ }
+        }
+        "emitted=$emitted cap=$($b.max_steps)"
+    } 'emitted=1 cap=2'
+
+    # THE WIRING CONTROL, added because a mutation demanded it.
+    #
+    # Measured 2026-10-03: deleting every `$halt = ...` assignment from the round loop left
+    # this suite GREEN. The controls above call `Get-TerminationReason` directly, so they
+    # proved the FUNCTION and said nothing about whether the loop ever told it what
+    # happened -- which is the only part a reader of an artifact depends on. A control that
+    # cannot see the wiring is a control of the wiring's absence.
+    #
+    # So this one runs the real entry point end to end, twice, against a THROWAWAY registry
+    # under %TEMP% whose runners are stubs that print one line of JSON. No lab, no probe, no
+    # real target, nothing in the repo touched: the two runs differ only in the step cap.
+    # The registry is a copy precisely because the live one refuses to be substituted, and
+    # that refusal is correct -- so the copy is built here, beside a copy of this script and
+    # of gate.ps1, where `$RepoRoot` resolves to the throwaway tree.
+    function New-BudgetProbe {
+        $root = Join-Path $env:TEMP ('mission-budget-probe-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
+        $cases = Join-Path $env:TEMP ('mission-budget-probe-out-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
+        foreach ($d in @((Join-Path $root 'scripts'), (Join-Path $root 'manifests'), (Join-Path $root 'bin'), $cases)) {
+            New-Item -ItemType Directory -Path $d -Force | Out-Null
+        }
+        Copy-Item -LiteralPath $PSCommandPath -Destination (Join-Path $root 'scripts\mission.ps1') -Force
+        Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\gate.ps1') -Destination (Join-Path $root 'scripts\gate.ps1') -Force
+        Set-Content -LiteralPath (Join-Path $root 'target.bin') -Value 'MZ probe target' -Encoding ASCII
+
+        # THREE runnable steps, so a cap of 1 truncates and a cap of 6 does not. The runners
+        # are stubs because this control is about the loop's own accounting, not about any
+        # instrument: what it must prove is which branch the loop left by.
+        $caps = @()
+        foreach ($n in @('one', 'two', 'three')) {
+            $runner = Join-Path $root "bin\runner-$n.cmd"
+            Set-Content -LiteralPath $runner -Encoding ASCII -Value "@echo off`r`necho {`"ok`":true,`"probe`":`"$n`"}`r`n"
+            $caps += [ordered]@{
+                id = "probe.$n"; state = 'observed'; question_types = @('Q2.locate')
+                evidence_source = 'probe-stub'
+                gate = [ordered]@{ lane = 'debug'; requires_verdict = $true }
+                consumes = [ordered]@{ inputs = @() }
+                produces = [ordered]@{ facts = @([ordered]@{ key = "probe.fact.$n"; type = 'string' }) }
+                invoke = [ordered]@{ runner = $runner; argv = @('{target}'); stdout = 'json'
+                                    fact_map = [ordered]@{ probe = "probe.fact.$n" }; success_when = 'ok == true' }
+                does_not_prove = @('nothing; a stub runner used only to exercise this loop''s own accounting')
+            }
+        }
+        $reg = [ordered]@{
+            schema = [ordered]@{ name = 'probe.v1'; question_types = [ordered]@{ 'Q2.locate' = 'where is the code' } }
+            capabilities = $caps
+            retired = @()
+        }
+        Set-Content -LiteralPath (Join-Path $root 'manifests\capabilities.json') `
+            -Value ($reg | ConvertTo-Json -Depth 12) -Encoding UTF8
+
+        # The scope guard hashes the tree with `git ls-files`, and a directory that is not a
+        # repository answers nothing -- which is a separate latent crash in this file's
+        # scope_guard line, recorded in the handoff rather than fixed here. The probe tree is
+        # made a repository so the guard has something real to compare, and the case
+        # directories live OUTSIDE it so writing them cannot move the hash.
+        & git -C $root init -q 2>&1 | Out-Null
+        & git -C $root config user.email 'probe@localhost' 2>&1 | Out-Null
+        & git -C $root config user.name 'probe' 2>&1 | Out-Null
+        & git -C $root add -A 2>&1 | Out-Null
+        & git -C $root commit -q -m 'probe baseline' 2>&1 | Out-Null
+
+        return @{ root = $root; cases = $cases; script = (Join-Path $root 'scripts\mission.ps1')
+                   target = (Join-Path $root 'target.bin') }
+    }
+
+    function Get-ProbeArtifact($probe, $caseId, $cap, [switch]$UseAlias) {
+        $budgetArg = if ($UseAlias) { @('-MaxRounds', "$cap") } else { @('-MaxSteps', "$cap") }
+        $a = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $probe.script,
+               '-Action', 'Run', '-Target', $probe.target, '-QuestionType', 'Q2.locate',
+               '-Question', 'where is the code',
+               '-Provenance', 'built by this probe harness from a string literal in its own source',
+               '-OwnerWord', 'analyze this file',
+               '-Containment', 'station_under_named_process_rule',
+               '-CaseRoot', $probe.cases, '-CaseId', $caseId) + $budgetArg
+        & powershell @a 2>&1 | Out-Null
+        $f = Join-Path (Join-Path $probe.cases $caseId) 'artifact.json'
+        if (-not (Test-Path -LiteralPath $f)) { return $null }
+        return (Get-Content -LiteralPath $f -Raw | ConvertFrom-Json)
+    }
+
+    C 'termination_reason: a REAL mission truncated by the cap and one that ran out are DIFFERENT' {
+        # Both artifacts are produced by the real entry point; only the cap differs. The
+        # comparison is the assertion, because two controls each naming their own value
+        # would both stay green if the loop reported the same one for both.
+        $probe = New-BudgetProbe
+        try {
+            $cut  = Get-ProbeArtifact $probe 'cut' 1
+            $full = Get-ProbeArtifact $probe 'full' 6
+            if (-not $cut -or -not $full) {
+                "NO-ARTIFACT cut=$([bool]$cut) full=$([bool]$full)"
+            } elseif ($cut.termination_reason -eq $full.termination_reason) {
+                "INDISTINGUISHABLE=$($cut.termination_reason)"
+            } else {
+                "distinct=$($cut.termination_reason)/$($full.termination_reason) dropped=$(@($cut.steps_dropped_by_budget).Count)"
+            }
+        } finally {
+            # Both trees are under %TEMP%, both were created here, both are removed in a
+            # finally so an exception in the control cannot leave a mission tree behind.
+            Remove-Item -LiteralPath $probe.root -Recurse -Force -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath $probe.cases -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    } 'distinct=budget_exhausted/steps_completed dropped=2'
+
+    C 'termination_reason: the artifact states BOTH reasons as the same field a reader greps' {
+        # One grep, on the file, not on a function return: this is the acceptance criterion,
+        # so it is asserted where a reader would actually look.
+        $probe = New-BudgetProbe
+        try {
+            $full = Get-ProbeArtifact $probe 'full' 6
+            $f = Join-Path (Join-Path $probe.cases 'full') 'artifact.json'
+            $raw = Get-Content -LiteralPath $f -Raw
+            $hit = $raw -match '"termination_reason"\s*:\s*"steps_completed"'
+            $top = ($full.termination_reason -eq 'steps_completed')
+            $nested = ($full.termination.reason -eq 'steps_completed')
+            "grepped=$hit top-level=$top nested=$nested"
+        } finally {
+            Remove-Item -LiteralPath $probe.root -Recurse -Force -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath $probe.cases -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    } 'grepped=True top-level=True nested=True'
+
+    C 'budget: the deprecated alias produces the SAME artifact as -MaxSteps, not a different one' {
+        # An alias that quietly changed the unit would be worse than no alias at all.
+        $probe = New-BudgetProbe
+        try {
+            $alias = Get-ProbeArtifact $probe 'alias' 1 -UseAlias
+            $steps = Get-ProbeArtifact $probe 'steps' 1
+            if (-not $alias -or -not $steps) { 'NO-ARTIFACT' }
+            else {
+                # `parameter_used` is recorded in plan.json, which is where the caller's
+                # spelling is decided; the artifact records the RESULT of it.
+                $plan = Get-Content -LiteralPath (Join-Path (Join-Path $probe.cases 'alias') 'plan.json') -Raw | ConvertFrom-Json
+                "reason=$($alias.termination_reason)/$($steps.termination_reason) " +
+                "dropped=$(@($alias.steps_dropped_by_budget) -join ',') used=$($plan.budget.parameter_used)"
+            }
+        } finally {
+            Remove-Item -LiteralPath $probe.root -Recurse -Force -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath $probe.cases -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    } 'reason=budget_exhausted/budget_exhausted dropped=probe.two,probe.three used=MaxRounds'
 
 
     Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
