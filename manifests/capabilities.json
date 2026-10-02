@@ -1,6 +1,17 @@
 {
   "schema": {
     "name": "capabilities.v1",
+    "input_types": {
+      "_why_this_exists": "ADDED 2026-10-03. Until now the registry had a `fact_types` vocabulary and no `input_types` one, so `consumes.inputs[].type` was free text that nothing could check: R4 only compares a consumer's declared type against the producer's when the input carries a `from` edge, and 34 of 41 inputs do not. The two mistakes this made possible were measured, not guessed -- `net.pcap.analyse` and `net.pcap.selfparse` declared `capture: pcap`, and `mobile.apk.static` declared `apk: apk`, where `pcap` and `apk` are FACT types meaning an ALREADY-PARSED record set, while those three inputs are paths to files on disk. A file is a `path_ref`; what a reader makes of it is a fact.",
+      "path_ref": "a filesystem path to an artefact the caller supplies. Never the artefact's contents -- that is what a fact is.",
+      "string": "a text literal the caller supplies: a URL, a function name, a selector.",
+      "address": "an address in the target's own address space, hex string, never reused across rebuilds.",
+      "token": "a compact JOSE/JWT supplied as text. Never a live credential.",
+      "structure": "a typed record the caller builds; the entry declares its fields.",
+      "structure[]": "a batch of typed records. Needs envelope.batch (R9) because this class of API drops items silently.",
+      "lab_workdir": "a directory the mission created for its own case. Not a caller-supplied file, which is why it is not a path_ref.",
+      "lab_target": "a lab-chosen target the runner resolves from its own id list, not from anything the caller passes."
+    },
     "question_types": {
       "Q1.identify": "what is this file, is it packed, what is its shape",
       "Q2.locate": "where is the code that does X",
@@ -466,7 +477,8 @@
       "gate": {
         "lane": "bounty",
         "requires_verdict": true,
-        "escalation_class": "owner_word"
+        "escalation_class": "owner_word",
+        "escalation_reason": "STATED 2026-10-03, when R23 asked for it for the first time. This capability drives a REAL Chrome over CDP, and `requires.tools[0].verify` is false precisely because there is no shell invocation that would prove a browser surface present -- the honest declaration of that is 'unverifiable', not a probe that cannot fail. Attaching to a browser the Owner has open is attaching to the Owner's own session, which is the exact object CHARTER-ARSENAL.md's STOP table names (lsass, Defender, another user's session, the daily Chrome). So the capability that can touch it must arrive through a grant carrying a checkable Owner word. `owner_word` and not `impossible` because no lane or reach changes here: the browser is a device the Owner already has, and naming it is a decision, not an edit to AGENTS.md."
       },
       "probe": {
         "command": "node web-reverse/tools/loop.mjs",
@@ -644,7 +656,7 @@
         "inputs": [
           {
             "name": "capture",
-            "type": "pcap",
+            "type": "path_ref",
             "required": true,
             "note": "loopback or lab-origin only"
           }
@@ -711,7 +723,8 @@
       "gate": {
         "lane": "debug",
         "requires_verdict": true,
-        "escalation_class": "owner_word"
+        "escalation_class": "owner_word",
+        "escalation_reason": "STATED 2026-10-03, when R23 asked for it for the first time. `reach.net` is true and `reach.containment` is loopback_capture, so this capability's whole job is touching captured traffic. R8 already requires a containment class wherever reach.net is declared and R6 already refuses `none` for wide reach; what was missing is the sentence saying what a grant naming this one authorises. It is: parsing a capture the Owner named, under loopback_capture containment, with no reach beyond loopback."
       },
       "probe": {
         "command": "node net-reverse/tools/loop.mjs",
@@ -1000,7 +1013,7 @@
         "inputs": [
           {
             "name": "apk",
-            "type": "apk",
+            "type": "path_ref",
             "required": true
           }
         ],
@@ -1277,7 +1290,8 @@
       "gate": {
         "lane": "debug",
         "requires_verdict": true,
-        "escalation_class": "impossible"
+        "escalation_class": "impossible",
+        "escalation_reason": "STATED 2026-10-03, when R23 asked for it for the first time. `requires.admin` is true and `reach.exec_target` is true: this entry runs code ON a device that is not this process, and it is `state: absent` because there is no device. No runtime flag can conjure one, so the class is `impossible` -- the change, if it ever comes, is an Owner decision to attach a device, recorded as an edit to AGENTS.md / CHARTER-ARSENAL.md in git. Do NOT read this sentence as an invitation to flip the state."
       },
       "probe": {
         "command": "adb devices",
@@ -1963,7 +1977,8 @@
       "gate": {
         "lane": "debug",
         "requires_verdict": true,
-        "escalation_class": "impossible"
+        "escalation_class": "impossible",
+        "escalation_reason": "STATED 2026-10-03, when R23 asked for it for the first time. This entry is `state: absent` on a TOOLCHAIN fact, not a permission fact: Il2CppDumper 6.7.46 needs .NET 6 and this box runs 8.0.31 / 10.0.11, with DOTNET_ROLL_FORWARD=LatestMajor measured and still exiting 124. A mission cannot install a runtime, so this is not an authority question at all, which is why it is `impossible` rather than `owner_word`. The second blocker is authorisation and is stated in the entry: a `global-metadata.dat` does exist on this machine, inside third-party commercial software, and using it is out of scope."
       },
       "probe": {
         "command": "powershell -File scripts\\il2cpp-probe.ps1",
@@ -2329,7 +2344,7 @@
         "lane": "debug",
         "requires_verdict": true,
         "escalation_class": "owner_word",
-        "escalation_why": "RAISED FROM none, and deliberately. This entry was not callable before today, so escalation_class=none described a capability nothing could invoke. Making it callable means mission.ps1 will SPAWN AND EXECUTE a binary, which is the single most consequential thing any capability in this registry does. **Executing a target must never be a runtime self-decision**: a grant naming this capability must carry a checkable Owner word, which is what gate.ps1 already mints and verifies. The wrapper is defence in depth on top of that, not a substitute -- it copies the target into a fresh %TEMP% directory so the repository original, which holds the corpus IDA databases, is never executed."
+        "escalation_reason": "RAISED FROM none, and deliberately. This entry was not callable before 2026-10-02, so escalation_class=none described a capability nothing could invoke. Making it callable means mission.ps1 will SPAWN AND EXECUTE a binary, which is the single most consequential thing any capability in this registry does. **Executing a target must never be a runtime self-decision**: a grant naming this capability must carry a checkable Owner word, which is what gate.ps1 already mints and verifies. The wrapper is defence in depth on top of that, not a substitute -- it copies the target into a fresh %TEMP% directory so the repository original, which holds the corpus IDA databases, is never executed. (Key renamed from `escalation_why` on 2026-10-03: the registry spelled this explanation two ways and no rule read either, so R23 now names one key and the other spelling is a violation.)"
       },
       "gate_must_not_delegate": [
         "frida_spawn_gate.py against any binary this repository did not author",
@@ -2613,7 +2628,7 @@
         "lane": "debug",
         "requires_verdict": true,
         "escalation_class": "owner_word",
-        "escalation_why": "Measured, and the validator was right to force this. The wrapper writes a scratch Ghidra project to %TEMP%, which is OUTSIDE the mission case directory, and the rule is that writing outside the case dir is never a runtime self-decision. It is therefore an Owner-authorised escalation rather than 'none': a grant naming this capability must carry a checkable Owner word, which is exactly what gate.ps1 already mints and what it verifies. The scratch is deleted on both paths, so nothing persists -- but 'deleted afterwards' does not make an out-of-case write a self-authorised one, and downgrading it to keep a cleaner-looking entry would be the wrong trade."
+        "escalation_reason": "Measured, and the validator was right to force this. The wrapper writes a scratch Ghidra project to %TEMP%, which is OUTSIDE the mission case directory, and the rule is that writing outside the case dir is never a runtime self-decision. It is therefore an Owner-authorised escalation rather than 'none': a grant naming this capability must carry a checkable Owner word, which is exactly what gate.ps1 already mints and what it verifies. The scratch is deleted on both paths, so nothing persists -- but 'deleted afterwards' does not make an out-of-case write a self-authorised one, and downgrading it to keep a cleaner-looking entry would be the wrong trade. (Key renamed from `escalation_why` on 2026-10-03, for the reason given on the other entry.)"
       },
       "gate_must_not_delegate": [
         "match-functions.ps1 against any binary this repository did not author",
@@ -3376,7 +3391,7 @@
         "inputs": [
           {
             "name": "capture",
-            "type": "pcap",
+            "type": "path_ref",
             "required": true,
             "note": "a classic libpcap file. The corpus is GENERATED, not committed: net-reverse/lab/gen-pcaps.mjs writes five synthetic captures to %TEMP%\\net-reverse-lab\\pcaps (override NET_REVERSE_PCAP_DIR)."
           }

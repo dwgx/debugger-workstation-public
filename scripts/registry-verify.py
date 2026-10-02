@@ -7,15 +7,17 @@ its own correctness the thing to worry about. A checker that inspects zero items
 passes is worse than no checker, so:
 
   * an EMPTY registry is a failure, not a vacuous success;
-  * the rules below are the code in `RULES`, in the same order. Nineteen rule
-    functions. `--selftest` prints 47 rows and reports 46, and that number is
-    CASES, not rules: one row is a baseline that must stay clean, two are
-    deliberate relaxations that must stay SILENT, and 44 are registries built to
-    break one rule. Cases outnumber rules because several rules have more than one
-    independent half, and each half needs its own control -- deleting either half
-    alone leaves the suite green while the registry quietly loses the check.
+  * the rules below are the code in `RULES`, in the same order. Twenty-five rule
+    functions; R23 and R24 were added 2026-10-03. `--selftest` prints 67 rows and
+    reports 66, and that number is CASES, not rules: one row is a baseline that must
+    stay clean, two are deliberate relaxations that must stay SILENT, and 63 are
+    registries built to break one rule. Cases outnumber rules because several rules
+    have more than one independent half, and each half needs its own control --
+    deleting either half alone leaves the suite green while the registry quietly
+    loses the check. R9 to R24 are not repeated in this header; each is documented at
+    its own definition, which is where the measurement behind it lives.
 
-Rules, each traceable to a failure it prevents. Nineteen functions, in `RULES` order:
+Rules, each traceable to a failure it prevents. R1 to R8, in `RULES` order:
 
   R1      r1_not_empty
           capabilities[] must be non-empty. A checker over nothing proves nothing.
@@ -944,6 +946,88 @@ def r22_ungrantable_needs_a_reason(reg, doc):
     return out
 
 
+def r23_escalation_class_needs_a_reason(reg, doc):
+    """A class above `none` is a claim about authority, so it must be justified -- once, under one key.
+
+    Measured 2026-10-03. `gate.escalation_class` is checked against VALID_ESCALATION by R6,
+    so the vocabulary was sound; the EXPLANATION was the soft field, and it was spelled two
+    ways. `gate.escalation_why` appears on `dynamic.win.frida.intercept` and
+    `native.function.match`; `gate.escalation_reason` appears on `native.signature.certverify`.
+    Neither key is read by any rule in this file or any other script, so which spelling wins
+    is decided by whoever typed last, and four of the seven non-`none` entries carry no
+    explanation under any spelling at all.
+
+    `owner_word` is not a formality: it is the only class that lets a mission widen its own
+    invocable set with a fresh Owner sentence. An entry that declares it without saying what
+    the extra authority buys is an entry nobody can review.
+
+    What this rule does NOT do: decide whether a class is right. As in R22, that is an Owner
+    decision and a validator that could flip it would improve metrics by weakening gates.
+    """
+    out = []
+    for c in reg:
+        g = c.get("gate") or {}
+        cls = g.get("escalation_class")
+        if cls in (None, "none"):
+            continue
+        if "escalation_why" in g:
+            out.append(f"R23 {c.get('id','?')}: gate.escalation_class is '{cls}' and the "
+                       f"reason is spelled `escalation_why`. The canonical key is "
+                       f"`escalation_reason`; two spellings means whichever one a reader "
+                       f"knows to look for is the one that is missing.")
+        why = str(g.get("escalation_reason") or "").strip()
+        if not why:
+            out.append(f"R23 {c.get('id','?')}: gate.escalation_class is '{cls}', which is the "
+                       f"only class that lets a mission widen its own invocable set with a fresh "
+                       f"Owner sentence, and no escalation_reason is recorded. State what the "
+                       f"extra authority buys. (Do NOT lower the class to make a metric improve: "
+                       f"that is an Owner decision, not a fix.)")
+    return out
+
+
+def r24_input_types_are_declared(reg, doc):
+    """Every input is typed from the input vocabulary, and a fact type is not an input type.
+
+    Measured 2026-10-03, and this rule exists because of three wrong declarations rather than
+    a theory. `net.pcap.analyse` and `net.pcap.selfparse` both declared `capture: pcap`, and
+    `mobile.apk.static` declared `apk: apk`. Read against `fact_types`, whose own text is
+    "a parsed packet-capture record set" and "a parsed Android package manifest or dex
+    summary", those three inputs claimed to be ALREADY-PARSED CONTENT while all three are
+    paths to files on disk. The board's next-action said to fix `net.pcap.selfparse`; the
+    measurement said three entries and a missing vocabulary.
+
+    Nothing caught it, and the reason is structural rather than accidental: R4 compares a
+    consumer's declared input type against the producer's fact type ONLY when the input
+    carries a `from` edge. 34 of the 41 inputs in this registry have no edge -- they are
+    supplied from outside -- so their `type` was read by no rule at all. `schema.input_types`
+    was added the same day so the field has a closed vocabulary to be wrong about.
+
+    The second half is the one that generalises: `pcap`, `apk`, `verdict` and `bytes_ref` are
+    fact types, and naming one as an input type asserts that the caller hands over parsed
+    content. That is almost never true, and when it is, the input has a producer and a `from`.
+    """
+    declared = (doc.get("schema") or {}).get("input_types") or {}
+    out = []
+    parsed = {k for k, v in (doc.get("fact_types") or {}).items()
+              if k not in ("string", "address", "structure", "token", "path_ref")}
+    for c in reg:
+        for i in (c.get("consumes") or {}).get("inputs") or []:
+            t = i.get("type")
+            if not t:
+                out.append(f"R24 {c.get('id','?')}: input {i.get('name','?')!r} has no type.")
+                continue
+            if t not in declared:
+                extra = ""
+                if t in parsed:
+                    extra = (f" It is a FACT type ({sorted(parsed)}), which asserts the caller "
+                             f"hands over parsed content. A file on disk is a path_ref; what a "
+                             f"reader makes of it is a fact.")
+                out.append(f"R24 {c.get('id','?')}: input {i.get('name','?')!r} is typed "
+                           f"{t!r}, which is not in schema.input_types "
+                           f"({sorted(k for k in declared if not k.startswith('_'))}).{extra}")
+    return out
+
+
 RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r4_fact_types_agree, r5_control_must_fail, r6_reach_needs_escalation, r7_ids,
          r8_reach_must_be_declared, r9_batch_must_account, r10_invoke_must_runnable,
@@ -951,7 +1035,8 @@ RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r14_no_island_capability, r15_artifacts_are_bound, r16_placeholders_resolve,
          r17_state_is_evidenced, r18_evidence_family_agrees, r19_probes_distinguish,
          r20_fact_map_declares, r21_control_command_runnable,
-         r22_ungrantable_needs_a_reason)
+         r22_ungrantable_needs_a_reason, r23_escalation_class_needs_a_reason,
+         r24_input_types_are_declared)
 
 
 # ---------------------------------------------------------------------------- core
@@ -1019,8 +1104,21 @@ def _schema_doc(caps, pinned=None):
             "evidence_families": {"decompiler": "reconstructs code into a language",
                                   "dynamic-observation": "watches a live subject",
                                   "practice": "self-built exercises"},
+            # R24 reads this vocabulary. Without it in the envelope every case below would
+            # redden on R24 instead of on the rule it is testing -- the fixture must be a
+            # legal registry, and a registry without the vocabulary R24 checks against is
+            # not one.
+            "input_types": {"path_ref": "a path to a file the caller supplies",
+                            "string": "a text literal",
+                            "structure": "a typed record the caller builds"},
         },
         "capabilities": caps,
+        # R24 reads the FACT vocabulary at the document root, where the real registry keeps
+        # it. Declared here so the "a fact type is not an input type" half has something to
+        # compare against; without it that half is inert in every selftest case.
+        "fact_types": {"string": "a text literal recovered from the target",
+                       "structure": "a typed record",
+                       "path_ref": "a filesystem path to an artifact"},
     }
 
 
@@ -1152,6 +1250,31 @@ def selftest() -> int:
                                              "requires_verdict_reason": "a grant does not authorise this"}), "R22")
     nocase("R22 a grantable capability needs no reason",
            lambda b: b[0]["gate"].update({"requires_verdict": True}), "R22")
+    case("R23 an escalation class with no recorded reason",
+         lambda b: b[0]["gate"].update({"escalation_class": "owner_word"}), "R23")
+    case("R23 the reason under the WRONG key is still no reason",
+         lambda b: b[0]["gate"].update({"escalation_class": "owner_word",
+                                         "escalation_why": "needs a word"}), "R23")
+    nocase("R23 an escalation class WITH a reason is accepted",
+           lambda b: b[0]["gate"].update({"escalation_class": "owner_word",
+                                           "escalation_reason": "needs a fresh Owner word"}), "R23")
+    nocase("R23 a class of none needs no reason",
+           lambda b: b[0]["gate"].update({"escalation_class": "none"}), "R23")
+    # R24: the field had no vocabulary, so it had no wrong answer. Three real entries were
+    # wrong and nothing said so.
+    case("R24 an input typed with a FACT type",
+         lambda b: b[0]["consumes"].update(
+             {"inputs": [{"name": "capture", "type": "pcap", "required": True}]}), "R24")
+    case("R24 an input with no type at all",
+         lambda b: b[0]["consumes"].update(
+             {"inputs": [{"name": "capture", "required": True}]}), "R24")
+    # `reach.fs_read` comes along because R8's floor is "an input implies reading it", so a
+    # legal fixture carrying an input must declare the read. The first attempt at this case
+    # reddened on R8 instead of staying silent -- the fixture was illegal, not the rule wrong.
+    nocase("R24 an input typed from the vocabulary is accepted",
+           lambda b: b[0]["consumes"].update(
+               {"inputs": [{"name": "capture", "type": "path_ref", "required": True}]})
+           or b[0]["reach"].update({"fs_read": True}), "R24")
     case("R3 missing does_not_prove", lambda b: b[0].__setitem__("does_not_prove", []), "R3")
     # --- per-half controls -------------------------------------------------------
     # R3 and R5 each have two independent halves, and deleting EITHER half alone
