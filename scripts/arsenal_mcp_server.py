@@ -21,17 +21,29 @@ inform decisions; contracts enforce them. If a proposal's value depends on the a
 true, it's asking for a contract, and the right place for that is the authorization layer, the
 transport, or the runtime rather than ToolAnnotations."*
 
-**So this file emits hints and enforces nothing.** Every call still goes through the same gate
-invocation and the same refuse-on-wrong-subject logic as a mission. A tool that says
-`readOnlyHint: true` and then writes a temp file is lying, and the client is entitled to believe it
--- which is exactly why the arsenal's own authorisation layer, not this surface, remains the thing
-that decides.
+**So this file emits hints and ENFORCES the gate.** As of 2026-10-03 every call carries a
+`case_dir`, and `gate_check` runs `gate.ps1 -Action Check` on it before anything is executed:
+no grant naming the capability, no call. That sentence used to read "Every call still goes
+through the same gate invocation and the same refuse-on-wrong-subject logic as a mission" --
+and grepping this file for `gate`, `grant` or `OwnerWord` found only that sentence and two like
+it, because no such call existed. Sixteen invocable capabilities were reachable from any MCP
+client, against any path on this machine, with no Owner word and no containment class, while
+this header described the file as the surface that does not bypass the gate. That was a written
+contract with no implementation behind it -- the same species as `requires.tools[].expect` and
+`grant.escalation`, and the third time in this project. It is fixed by making the sentence true,
+not by making the sentence better.
 
-WHAT IT DELIBERATELY DOES NOT DO. It does not bypass the gate. It does not expose a capability
-whose `invoke` is absent. It does not accept a caller-supplied argv. Every tool takes exactly the
-capability's declared inputs and runs the capability's own runner -- there is no path by which an
-MCP client can cause an arbitrary command to run, which is the property that makes exposing
-read-oriented instruments to a model safe at all.
+WHAT IT DELIBERATELY DOES NOT DO. It does not expose a capability whose `invoke` is absent, and
+it does not accept a caller-supplied argv. Every tool takes exactly the capability's declared
+inputs and runs the capability's own runner -- there is no path by which an MCP client can cause
+an arbitrary command to run, which is the property that makes exposing read-oriented instruments
+to a model safe at all. It also refuses a capability whose argv still carries a placeholder fed
+by an upstream fact (`{input.function}`, `{input.outdir}`), because handing a subprocess a literal
+`{...}` is not a call, it is a crash waiting for a client to trigger.
+
+THE BREAKING CHANGE. `case_dir` is now a REQUIRED parameter on all sixteen tools. Any existing
+client stops working until it passes one, which is the correct direction: the previous signature
+let a model run the arsenal with no authorisation at all.
 """
 from __future__ import annotations
 
@@ -136,8 +148,51 @@ def output_schema_for(c: dict) -> dict:
     return {"type": "object", "properties": props, "additionalProperties": True}
 
 
-def run_capability(cid: str, **kwargs) -> dict[str, Any]:
-    """The single execution path. No caller-supplied argv, by construction."""
+def gate_check(case_dir: str, cid: str) -> tuple[bool, str]:
+    """Ask the ONE component on this station that may say yes to authority.
+
+    Measured 2026-10-03, and this function exists because a sentence in this file's own header
+    was false. The header said "Every call still goes through the same gate invocation"; grepping
+    the file for `gate`, `grant` or `OwnerWord` found only that sentence and two others like it.
+    `run_capability` resolved the capability, substituted placeholders and called subprocess.run.
+    So all 16 invocable capabilities were reachable from any MCP client, against any path on this
+    machine, with no Owner word, no containment class and no grant -- while the file described
+    itself as the surface that does not bypass the gate.
+
+    The property the header claimed was right; the code was not. This is the third instance in
+    this project of one species -- a written contract with no implementation behind it -- after
+    `requires.tools[].expect` and `grant.escalation`. The fix is not a better sentence: it is a
+    call to the authority, whose answer is an exit code.
+
+    Deliberately a subprocess, not a re-implementation: this file must not grow its own idea of
+    what a grant means. mission.ps1 already does exactly this (its Invoke-Gate), so the MCP
+    surface and the mission loop now ask the same question of the same program.
+    """
+    if not case_dir or not str(case_dir).strip():
+        return False, ("no case_dir was given, so there is no grant to check. Every call to this "
+                       "surface is authorised by a grant, and a grant lives in a mission case "
+                       "directory. Pass case_dir=<the mission's case dir>.")
+    gate = Path(__file__).resolve().parent / "gate.ps1"
+    if not gate.exists():
+        return False, f"gate.ps1 is missing at {gate}; refusing rather than running unauthorised"
+    cmd = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(gate),
+           "-Action", "Check", "-CaseDir", str(case_dir), "-Capability", cid]
+    try:
+        p = subprocess.run(cmd, capture_output=True, text=True, timeout=120,
+                           stdin=subprocess.DEVNULL)
+    except Exception as exc:                                    # noqa: BLE001
+        return False, f"the gate could not be run ({exc}); refusing rather than assuming yes"
+    if p.returncode == 0:
+        return True, "gate.ps1 exit 0"
+    detail = (p.stdout or "").strip()[:400]
+    return False, (f"gate.ps1 refused this capability (exit {p.returncode}). "
+                   f"A debugging-lane ALLOW is not a bounty-lane ALLOW and neither is a "
+                   f"model's request. {detail}")
+
+
+def run_capability(cid: str, case_dir: str = "", **kwargs) -> dict[str, Any]:
+    """The single execution path. No caller-supplied argv, by construction -- and no call
+    without a grant that names the capability, by construction too."""
     reg = load()
     cap = next((x for x in reg["capabilities"] if x["id"] == cid), None)
     if cap is None:
@@ -148,6 +203,16 @@ def run_capability(cid: str, **kwargs) -> dict[str, Any]:
                 "state": cap.get("state"),
                 "note": "a capability with only a probe is not something an agent can invoke"}
 
+    # The authorisation check comes AFTER the cheap structural refusals and BEFORE anything is
+    # executed. A capability nobody may run should not be able to spend a gate invocation, and a
+    # capability that does not exist should not produce an authorisation question at all.
+    ok, why = gate_check(case_dir, cid)
+    if not ok:
+        return {"ok": False, "error": f"{cid} refused by the gate: {why}",
+                "gate": "scripts/gate.ps1 -Action Check",
+                "note": "mint a grant first: gate.ps1 -Action New -Target <object> -OwnerWord "
+                        "'<the Owner's sentence>' -Containment station_under_named_process_rule"}
+
     argv = list(inv["argv"])
     for k, v in kwargs.items():
         token = "{" + k + "}"
@@ -156,6 +221,27 @@ def run_capability(cid: str, **kwargs) -> dict[str, Any]:
                     "error": f"{cid} does not bind an input named {k}",
                     "binds": placeholders(cap)}
         argv = [str(v) if a == token else a for a in argv]
+
+    # Fail closed on an UNBOUND placeholder. `placeholders()` matches `\{[a-z_][a-z0-9_]*\}`, so a
+    # token like `{input.function}` does not match -- the dot is not in the class -- and it was
+    # therefore invisible to the generated signature. The consequence, measured 2026-10-03:
+    # calling native.disasm.capstone through this surface ran
+    # `disasm.py <target> --hex {input.function} --count 48`, argparse rejected it, and the client
+    # got a Python traceback. Four of the sixteen invocable capabilities bind such a token
+    # (native.ida.decompile, native.disasm.capstone, native.ghidra.decompile, crypto.jose.parse).
+    #
+    # Handing a subprocess a literal `{...}` is never right, and a tool that looks callable and
+    # is not is the exact failure this project keeps finding. So an unbound placeholder is a
+    # refusal that names the missing binding, not a process that guesses.
+    leftover = sorted({t for a in argv for t in re.findall(r"\{[^}]+\}", str(a))})
+    if leftover:
+        return {"ok": False,
+                "error": f"{cid} binds {leftover} from a fact this surface cannot supply",
+                "consumes_fact": inv.get("consumes_fact"),
+                "binds": placeholders(cap),
+                "note": "a placeholder fed by an upstream fact belongs to a mission, not to a "
+                        "model. Either run it as a mission round, or expose the value the runner "
+                        "needs as an argument this tool does not currently take."}
 
     runner = inv.get("runner", "python")
     exe = {"python": sys.executable, "powershell": "powershell",
@@ -194,13 +280,17 @@ def build() -> FastMCP:
         # parameter list is therefore generated from the invoke's own placeholders, so the model
         # the client sees IS the set of things the runner can substitute.
         params = placeholders(c)
-        sig = ", ".join(f"{n}: str" for n in params)
+        # `case_dir` is NOT one of the registry's placeholders: it is the authorisation carrier,
+        # and it is required on every tool because a capability that cannot be authorised must
+        # not be callable. It is a breaking change for any existing client, which is the point --
+        # the previous signature let a model run 16 capabilities with no Owner word at all.
+        sig = "case_dir: str, " + ", ".join(f"{n}: str" for n in params)
         # keyword arguments, not dict entries: run_capability(cid, target=target) --
         # "target": target inside a call is a SyntaxError, found by running it.
         kwarg = ", ".join(f"{n}={n}" for n in params)
         ns: dict[str, Any] = {"run_capability": run_capability, "cid": cid, "Any": Any}
         exec(f"def handler({sig}) -> dict[str, Any]:\n"
-             f"    return run_capability(cid, {kwarg})\n", ns)   # noqa: S102 - generated, not parsed
+             f"    return run_capability(cid, case_dir=case_dir, {kwarg})\n", ns)   # noqa: S102
         handler = ns["handler"]
 
         handler.__doc__ = (f"{c.get('title','')}\n\n{c.get('composition_note','')[:1200]}\n\n"
