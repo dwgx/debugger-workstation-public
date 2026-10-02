@@ -457,23 +457,33 @@
       },
       "probe": {
         "command": "node web-reverse/tools/loop.mjs",
-        "expect": "6/6",
+        "expect": "LOOP CLOSED",
         "exit": 0,
         "last_run": "2026-09-30",
         "evidence_binding": {
           "status": "unverified",
           "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."
         },
-        "last_summary": "6 checks"
+        "last_summary": "6 checks",
+        "expect_note": "CORRECTED 2026-10-02 by assert-probes.py. This read '6/6', a tally the loop does not print. Measured output ends 'LOOP CLOSED: signature captured, algorithm recovered, request minted outside the browser, gate accepted it.' A tally is also the weaker assertion: it says a count but not WHICH checks, so a run that passed four and failed two could still be described as 4/6 by eye. The loop's own closing marker names what it actually proved."
       },
       "not_callable": {
         "reason": "P7, stated explicitly rather than left ambiguous. The probe proves the capability runs; there is deliberately no invoke. web-reverse/tools/chrome.mjs exposes NO standalone CLI: it is a module other tools IMPORT (net-reverse/tools/intercept.mjs:24-25 imports launchChrome from it and CDP from cdp.mjs), and the only driver that speaks to it is web-reverse/tools/loop.mjs, which runs the lab's own fixed 6 checks against a lab-served page rather than a caller-supplied URL. So there is no argv shape that takes this capability's `url` input and returns a typed fact; declaring an invoke here would be inventing an entry point that does not exist. UNVERIFIED: if a URL-taking wrapper is added later, this entry gains an invoke and the fact_map key must be read off that wrapper's real stdout, not guessed."
       },
       "negative_control": {
         "id": "web.js.cdp.trust",
-        "command": "node net-reverse/tools/trustcheck.mjs",
-        "expect_exit": 1,
-        "why": "the CA must not be trusted outside the lab instance; ISOLATION HELD is the passing state and a broken pin must not"
+        "why": "the CA must not be trusted outside the lab instance; ISOLATION HELD is the passing state and a broken pin must not",
+        "kind": "plan",
+        "kind_note": "THIS ENTRY HAS NO NEGATIVE CONTROL, AND SAYS SO. The thing that used to sit here was not one. It has been moved to `isolation_check`, where it is still checked and still run.",
+        "isolation_check": {
+          "command": "node net-reverse/tools/trustcheck.mjs",
+          "expect_exit": 0,
+          "expect_output": "ISOLATION HELD",
+          "polarity": "SUCCESS IS EXIT 0. Do not compare this to a negative control; it asserts that the station is uncontaminated, and its failure is an emergency rather than a finding.",
+          "note": "ISOLATION INVARIANT, NOT A NEGATIVE CONTROL, AND IT WAS FILED AS ONE. trustcheck.mjs answers a different question from every other control in this registry: not 'what would make this capability wrong' but 'has the station been contaminated'. It asserts that zero lab certificates reached the machine and user root stores and that the Windows system proxy is unconfigured. It exits 0 when the isolation HELD, which is the opposite polarity from a control, and the registry recorded expect_exit=1 against it -- meaning the one moment this project most needs to hear from it, a silent success would have been recorded as a failure.\n\nIt was ALSO attached to two capabilities at once (web.js.cdp and net.pcap.analyse), so even on its own terms it could not localise which one was implicated. That is R19's argument applied to a control, and R19 never had a control-side half.\n\nMeasured: exit 0, printing 'PASS WinHTTP proxy is not configured  Direct access (no proxy server).', 'PASS no certificate landed since the baseline run  unchanged since <ts> (machine 15, user 0)' and 'ISOLATION HELD: zero lab certificates in the machine/user root stores, no system proxy.'"
+        },
+        "plan_reason": "OPEN GAP, NOT AN OBSTACLE: no negative control has been written for this capability. The registry previously carried trustcheck.mjs here, which asserts MACHINE ISOLATION (no lab certificate installed, no system proxy) and exits 0 when the isolation held. That is not a negative control -- its polarity is inverted -- and attaching one isolation check to two capabilities also meant it could not localise which was implicated. It now lives in isolation_check, where it is still run. What remains here is the honest admission: this capability can produce evidence and has nothing yet that could refute it.",
+        "control_plan": "none written yet"
       },
       "provenance": {
         "source": "measured on this host 2026-09-30",
@@ -698,9 +708,18 @@
       },
       "negative_control": {
         "id": "net.pcap.trust",
-        "command": "node net-reverse/tools/trustcheck.mjs",
-        "expect_exit": 1,
-        "why": "isolation must fail loudly if the lab CA is trusted outside its instance"
+        "why": "isolation must fail loudly if the lab CA is trusted outside its instance",
+        "kind": "plan",
+        "kind_note": "THIS ENTRY HAS NO NEGATIVE CONTROL, AND SAYS SO. The thing that used to sit here was not one. It has been moved to `isolation_check`, where it is still checked and still run.",
+        "isolation_check": {
+          "command": "node net-reverse/tools/trustcheck.mjs",
+          "expect_exit": 0,
+          "expect_output": "ISOLATION HELD",
+          "polarity": "SUCCESS IS EXIT 0. Do not compare this to a negative control; it asserts that the station is uncontaminated, and its failure is an emergency rather than a finding.",
+          "note": "ISOLATION INVARIANT, NOT A NEGATIVE CONTROL, AND IT WAS FILED AS ONE. trustcheck.mjs answers a different question from every other control in this registry: not 'what would make this capability wrong' but 'has the station been contaminated'. It asserts that zero lab certificates reached the machine and user root stores and that the Windows system proxy is unconfigured. It exits 0 when the isolation HELD, which is the opposite polarity from a control, and the registry recorded expect_exit=1 against it -- meaning the one moment this project most needs to hear from it, a silent success would have been recorded as a failure.\n\nIt was ALSO attached to two capabilities at once (web.js.cdp and net.pcap.analyse), so even on its own terms it could not localise which one was implicated. That is R19's argument applied to a control, and R19 never had a control-side half.\n\nMeasured: exit 0, printing 'PASS WinHTTP proxy is not configured  Direct access (no proxy server).', 'PASS no certificate landed since the baseline run  unchanged since <ts> (machine 15, user 0)' and 'ISOLATION HELD: zero lab certificates in the machine/user root stores, no system proxy.'"
+        },
+        "plan_reason": "OPEN GAP, NOT AN OBSTACLE: no negative control has been written for this capability. The registry previously carried trustcheck.mjs here, which asserts MACHINE ISOLATION (no lab certificate installed, no system proxy) and exits 0 when the isolation held. That is not a negative control -- its polarity is inverted -- and attaching one isolation check to two capabilities also meant it could not localise which was implicated. It now lives in isolation_check, where it is still run. What remains here is the honest admission: this capability can produce evidence and has nothing yet that could refute it.",
+        "control_plan": "none written yet"
       },
       "provenance": {
         "source": "measured on this host 2026-09-30",
@@ -2827,12 +2846,12 @@
       "gate_must_not_delegate_why": "Measured or read. (1) The target side is a red line. (2) --force is the one path that defeats the executable-section gate, and it exists for packed or self-modifying code where the section flags genuinely lie; used casually it restores exactly the garbage-out-of-data behaviour the gate exists to stop. (3) Reachability is a runtime property: native.crosscompare.ghidra and the frida entries both measured that the address being decodable and the address being executed are different questions. (4) --count truncates arbitrarily, so the count says nothing about the function's extent.",
       "probe": {
         "command": "python native-lab\\tools\\disasm.py crackme-corpus\\out\\c01-stringobf.exe --rva 0x1080 --count 40",
-        "expect": "0x140017342 width=byte",
+        "expect": "\"addr\": \"0x140001080\"",
         "expect_exit": 0,
         "last_run": "2026-10-02",
-        "run_log": "ok:true rva 0x1080 file_offset 0x480 count 40. RIP-REL operands: 0x140022080 dword 769630770; 0x140022000 dword 1734439797; 0x140017342 width=byte byte=90 dword=734042; 0x140017344 width=dword byte=11 dword=11; 0x140017330 dword 41361174; 0x140017343 width=byte byte=51 dword=2867; 0x140017364 width=dword byte=5 dword=5; 0x140017348 dword 1096567660; 0x140017368 dword 1195461702; 0x140022018 dword 1162495314. 0.18 s.",
+        "run_log": "ok:true rva 0x1080 file_offset 0x480 count 40. RIP-REL operands: 0x140022080 dword 769630770; 0x140022000 dword 1734439797; 0x140017342 width=byte byte=90 dword=734042; 0x140017344 width=dword byte=11 dword=11; 0x140017330 dword 41361174; 0x140017343 width=byte byte=51 dword=2867; 0x140017364 width=dword byte=5 dword=5; 0x140017348 dword 1096567660; 0x140017368 dword 1195461702; 0x140022018 dword 1162495314. 0.18 s. Re-measured 2026-10-02 for the expect correction: --rva 0x1080 --count 40 returns ok:true, image_base 0x140000000, first insn {addr: 0x140001080, mnemonic: mov}, and zero 'width=byte' fields.",
         "prepare": "cd 'D:\\Software\\Tool\\WorkStation\\debugger'",
-        "expect_note": "expect is the WIDTH, not the value. Asserting a value would be asserting something the two decompilers already give; the width is the only thing this instrument uniquely contributes and therefore the only thing worth a contract."
+        "expect_note": "CORRECTED 2026-10-02 by assert-probes.py. This read '0x140017342 width=byte', but the recorded probe disassembles --rva 0x1080, and that invocation emits NO width= field at all: measured, grep -c 'width=byte' over its real output returns 0. The old string came from a DIFFERENT invocation, so the entry asserted a fact about a run it does not name. Worse, the value it asserted -- the operand WIDTH that Ghidra's DAT_ loses -- is the whole reason this instrument exists, so the string that got checked was not even the property worth checking. The replacement is what this command really emits: the first instruction at 0x140001080."
       },
       "negative_control": {
         "id": "native.disasm.capstone.non_executable_section_refused",

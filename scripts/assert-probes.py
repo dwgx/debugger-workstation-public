@@ -168,6 +168,20 @@ def check(cap: dict, timeout: int) -> list[tuple[str, str]]:
                                   f"output{near}. Either the instrument regressed or the string "
                                   f"was never true; those have opposite fixes, so read it."))
 
+    # An isolation_check is not a negative control: it asserts the MACHINE is uncontaminated and
+    # its success is exit 0. Checking it under control polarity would record a clean station as a
+    # broken capability, which is the exact inversion that got it misfiled in the first place.
+    iso = cap.get("negative_control", {}).get("isolation_check")
+    if isinstance(iso, dict) and (iso.get("command") or "").strip():
+        irc, iblob, _ = run(iso["command"].strip(), timeout)
+        if irc != iso.get("expect_exit", 0):
+            out.append(("DRIFT", f"{cid} ISOLATION exit: expected "
+                                  f"{iso.get('expect_exit')}, real={irc}. The station may be "
+                                  f"contaminated; treat this as an emergency, not a finding."))
+        want_i = iso.get("expect_output")
+        if want_i and want_i not in iblob:
+            out.append(("DRIFT", f"{cid} ISOLATION output: {want_i!r} absent"))
+
     nc = cap.get("negative_control") or {}
     ccmd = (nc.get("command") or "").strip()
     if not ccmd or prose(ccmd):
