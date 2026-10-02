@@ -1331,8 +1331,21 @@ def main() -> int:
         for p in problems:
             print(f"  VIOLATION  {p}")
         if not problems:
-            print("REGISTRY CLEAN: every capability declares what it proves, what it does "
-                  "not prove, a probe, and a negative control that must fail.")
+            # This sentence was a FALSE CLAIM and an audit proved it: 14 of 26 entries had no
+            # runnable negative_control.command at all -- they are kind:'plan' with a
+            # control_plan, and two carry only an isolation_check whose own polarity field says
+            # it is not a negative control. So "REGISTRY CLEAN" was asserting a control that
+            # must fail for the majority of the registry. A summary line that overstates what
+            # was checked is worse than no summary, because it is the one line everyone reads.
+            # It now states the counts it actually verified, including the ones that are not
+            # what they would ideally be.
+            runnable = sum(1 for c in caps
+                           if str(((c.get("negative_control") or {}).get("command")) or "").strip())
+            planned = sum(1 for c in caps if (c.get("negative_control") or {}).get("kind") == "plan")
+            print(f"REGISTRY CLEAN: no rule fired. Negative controls -- {runnable} runnable "
+                  f"commands, {planned} declared PLANS (documented negative designs that cannot be "
+                  f"executed). 'CLEAN' means no rule fired; it does NOT mean every capability has a "
+                  f"working control.")
     return 1 if problems else 0
 
 

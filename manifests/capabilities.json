@@ -11,7 +11,7 @@
       "Q7.origin": "what changed between these two builds"
     },
     "baseline": {
-      "capability_count": 26,
+      "capability_count": 27,
       "note": "The validator pins this count. A capability may only leave capabilities[] by appearing in retired[] with a reason, because deleting an island used to make the registry validate CLEANER rather than louder.",
       "note_unused_fact_types": "MEASURED 2026-10-02, and it corrects a natural misreading. A query for declared fact types produced by no capability returns four: apk, pcap, token, evidence_source. The first three look like dead declarations, and it is tempting to conclude the three matching capabilities (mobile.apk.static, net.pcap.analyse, crypto.jose.parse) do not declare what they produce. They DO -- all three declare their facts, and all three now carry an invoke. The types are unused because the capabilities declaring them have never RUN IN A MISSION, not because their output is unspecified. evidence_source is a different thing entirely: it is a capability attribute used to count independent instruments, not an artifact any capability emits, so it must never be counted here.",
       "note_q5_unreachable": "MEASURED END TO END 2026-10-02, and it is a shape problem rather than a missing tool. Q5.vuln-shape has no reachable instrument. Its only target-scoped candidate, fuzz.differential.parse, declares two seed inputs whose producers are crypto.jose.parse and forensics.memory.artefact -- and both producers are observed and correctly wired. Verified on the real binaries rather than by reading: crypto.jose.parse invokes crypto-lab/tools/analyze.mjs --file {target} --json, and pointed at a PE it refuses with 'not a compact JWS: expected 3 dot-separated segments, got 2' and EXITS 3, which its own success_when already documents as bad input. Pointed at a real compact JWS it exits 0. forensics.memory.artefact invokes forensics-lab/tools/analyze.mjs --target {target}.\n\nSo neither producer is broken. They refuse correctly when handed the wrong KIND of thing, and that is the whole problem: mission.ps1 has one -Target, and this axis needs three different kinds of subject -- a JOSE token, a forensic memory image, and a lab target. Q5 is not dark because a tool is missing. It is dark because the mission can name exactly one artefact and Q5 needs three heterogeneous ones.\n\nTwo refutations are kept because both looked right first. First: 'these labs build their own fixtures, so no extra parameter is needed' is true of the LOOPS -- crypto-lab/tools/loop.mjs reads only --json and generates its own tokens, and forensics-lab/tools/loop.mjs:38 hardcodes const TARGET = path.join(WORK, 'target') -- but the invoke blocks point at the inner ANALYSERS, which do take an external subject. The loop and the instrument are different things and a mission calls the instrument. Second: 'fuzz.differential.parse wants two artefacts, so it needs a peer selector' is also true and also not the blocker, because its two missing inputs are not two paths; they are a token and a structure produced upstream.\n\nWhat would light the axis is now stated precisely: a mission able to name MORE THAN ONE artefact with HETEROGENEOUS types. A second path would not help -- native.function.match is the only capability that wants two of the same thing and it is not on this axis. Naming the shape exactly is what separates this from the speculative -Artefact parameter considered and correctly rejected earlier, when the premise had not been measured.\n\nThe misattribution risk was checked and does not exist: a PE substituted into the JOSE analyser exits 3, so a mission records a loud failure rather than crediting the lab's own token to the mission's target.",
@@ -33,7 +33,8 @@
       "practice": "solving self-built exercises; proves technique, not transfer",
       "disassembler": "reconstructs a machine instruction stream WITHOUT lifting it to a high-level language: capstone and similar code-generation libraries. Distinct from 'decompiler' because it performs no lifting, no type recovery and no control-flow reconstruction -- it is the only family here that states an OPERAND WIDTH, which is measured, not assumed: see native.disasm.capstone's negative control and the pairing study. Added 2026-10-02 after measuring that capstone independently identified the exact addresses Ghidra left as unresolved DAT_ references AND carried the byte-vs-dword width that Ghidra's output omitted. THIS IS NOT THE static-analysis RELABEL ESCAPE: that escape re-declared ONE instrument under a second name, which R18 also blocks by instrument identity. capstone is a genuinely different library with no decompiler in its lineage. What it does NOT buy is confirmation of MEANING -- it corroborates structure and operands, not what the code does.",
       "certificate-verifier": "A certificate-verifier decides whether a byte range is a valid encoding of a CERTIFICATE. It is not structural-parser: that family parses a PE IMAGE structure, while this decides whether the bytes inside the SECURITY directory are DER at all, using a different implementation (OpenSSL) from the one that located them (pefile). And it is not trust: no member of this family checks that a chain roots anywhere or that a digest matches a file. der_parsed:true means well-formed ASN.1, which is a far weaker statement than signed.",
-      "packet-reader": "A packet-reader parses the capture FILE FORMAT itself -- global header, per-packet headers, then enough of the link and network layers to count. It is not capture-analysis, which means shelling out to a dissector, and not structural-parser, which means reading an executable image. Two readers agreeing on a capture is agreement between two implementations of the format, which is the only kind of agreement that is worth calling corroboration."
+      "packet-reader": "A packet-reader parses the capture FILE FORMAT itself -- global header, per-packet headers, then enough of the link and network layers to count. It is not capture-analysis, which means shelling out to a dissector, and not structural-parser, which means reading an executable image. Two readers agreeing on a capture is agreement between two implementations of the format, which is the only kind of agreement that is worth calling corroboration.",
+      "format-reader": "A format-reader parses a container's structure using a SEPARATE IMPLEMENTATION from the one other readers use, so agreement between them is corroboration rather than a restatement. rabin2 is a C tool with its own PE format layer; pefile is a Python library. This family is named for the implementation being independent, not for the file type, because the file type is not what the independence gate is counting."
     }
   },
   "generated": "2026-09-30",
@@ -671,7 +672,8 @@
           {
             "name": "lab pcaps",
             "probe": "node net-reverse\\lab\\gen-pcaps.mjs",
-            "expect": "corpus.json written to %TEMP%\\net-reverse-lab\\pcaps"
+            "expect": "corpus.json",
+            "note": "CORRECTED by audit: the expect read 'corpus.json written to %TEMP%\\net-reverse-lab\\pcaps', which is unmeetable -- the command exits 0 and that substring occurs 0 times, because %TEMP% is a CMD token the program never expands and it prints 'label -> <path>\\corpus.json'. The substring that actually appears is 'corpus.json'. NOTHING EXECUTES requires.tools[].expect, which is why an unmeetable expectation sat here unnoticed."
           }
         ],
         "install_note": "tshark ships with Wireshark and is already on PATH. THE PCAPS ARE NOT INSTALLED, THEY ARE GENERATED: net-reverse/lab/gen-pcaps.mjs writes five synthetic captures plus corpus.json to %TEMP%\\net-reverse-lab\\pcaps (override with NET_REVERSE_PCAP_DIR). Measured 2026-10-02: asked against a freshly generated dns-txt.pcap, `pcap-lab.mjs ask --pcap <pcap> --question dns-query-count --json` returns {ok:true, asked:..., method:'counting rows: filter on dns.flags.response == 0, count the ids'} and exits 0. Asked against a path that is not a pcap it prints a usage block and exits 1.\n\nThis is why Q4.data was dark and it had nothing to do with the capability: unlike crypto.jose.parse and forensics.memory.artefact, a PCAP IS A FILE PATH, so this one really is target-scoped and a mission can point at it directly. Every previous Q4 attempt aimed it at a PE. Verified 2026-10-02: a Q4 mission with -Target on the generated dns-txt.pcap runs round 1 ok=true producing net.flow.summary."
@@ -2155,7 +2157,7 @@
       "proves": [
         "that NVIDIA SkillSpector v2.12.0 installs and runs on this station from git under uv, at %USERPROFILE%\\.local\\bin\\skillspector.exe, reporting 'SkillSpector v2.12.0'",
         "THAT THIS ARSENAL'S OWN SIX SKILL FILES ARE CLEAN: `skillspector scan skills --no-llm --format json` returns issues: [], risk_assessment {score 0, severity LOW, recommendation SAFE, max_issue_severity NONE}, analysis_completeness {total_components 6, scanned_components 6, coverage_percent 100.0, is_complete true, execution_successful true, fully_inspected_files 6, partially_inspected_files 0, entirely_uninspected_files 0}. Components: skills/debugger-review/SKILL.md, skills/debugger-workstation/SKILL.md and its four references.",
-        "THAT THE SCANNER CAN ACTUALLY FIRE, which is the part that matters: the synthetic negative control at %TEMP%\\ssp-neg\\skill carries three planted attacks -- read ~/.ssh/id_rsa and ~/.aws/credentials and echo them in a comment (line 10), an instruction to ignore the system prompt (line 12), and a silent curl of %APPDATA%\\opencode\\config.json to 198.51.100.7 (line 16) -- and the scan returns score 39 / MEDIUM / CAUTION with max_issue_severity HIGH and 3 issues: two HIGH 'Privilege Escalation' at SKILL.md line 10 columns 35 and 55, one MEDIUM 'Data Exfiltration' at SKILL.md line 16 column 53. The exfiltration finding is on the line where the payload was planted, so the detector localises rather than merely counting.",
+        "OUR OWN SKILL FILES SCAN CLEAN, and the poisoned control shows the scanner has teeth. CORRECTED by audit 2026-10-02: this previously cited 'line 10', 'line 12' and 'line 16' and findings at 'line 10 columns 35 and 55' / 'line 16 column 53'. Every one of those is +2: grep for SKILL.md:10 and SKILL.md:16 returns 0. The real observations are SKILL.md:8, SKILL.md:8 and SKILL.md:12, against the numbered fixture the control writes.\n\nAND THE COUNTING WAS MISLEADING, which is the part worth keeping. This sat next to '3 issues' and invited the reading that three planted attacks produced three findings. They did not: BOTH HIGH findings come from the single credential line 8, and the planted PROMPT INJECTION at line 8 produces no finding at all. So the scanner catches credential access and does not catch injected instructions -- which is a materially different statement from 'our skills scan clean', and the honest one is that the clean scan covers credential-shaped findings only.",
         "that the analyzer ledger distinguishes 'clean' from 'never ran': the same scan without --no-llm reports limitations ['Analyzer failed after beginning applicable work.'] x3 and per-analyzer status failed with planned_work 6, completed 6, failed 6, because the semantic analyzers have no provider. See analysis_note."
       ],
       "does_not_prove": [
@@ -3277,13 +3279,14 @@
         "escalation_reason": "CORRECTED BY R6 AND R8, WHICH CAUGHT AN UNDER-DECLARATION. This entry was first written with escalation_class 'temp_write', a class that does not exist, and no write_scope at all -- so it looked identical to a capability that writes only into the case directory. It does not: it writes a .der into the system temp directory and deletes it in a finally block.\n\nThe rule's own comment is the reason this is owner_word and not none: 'writing anywhere else is not a runtime self-decision', and only case_dir write may be class none. Small and bounded is still outside the boundary, and the honest way to say so is the strict reading rather than the comfortable one. No instrument in the arsenal should choose to write outside its case directory without an Owner word, and if this one is ever run under a mission that is the grant that governs it."
       },
       "probe": {
-        "command": "python native-lab\\tools\\cert_verify.py %TEMP%\\signed-fixture.exe",
+        "command": "python native-lab\\tools\\cert_verify.py \"$env:TEMP\\signed-fixture.exe\"",
         "expect": "\"der_parsed\": false",
         "expect_exit": 0,
         "last_run": "2026-10-02",
-        "run_log": "fixture: {ok:true, exit:0, security_offset:143872, win_certificate:{dwLength:48, wRevision:'0x200', wCertificateType:'0x2', revision_is_2_0:true, is_pkcs_signed_data:true, body_bytes:40}, der_parsed:false, verifiable:false, reason:'182B0000:error:0680009B:asn1 encoding routines:ASN1_get_object:too long:...'}, TRUE_EXIT=0.",
-        "prepare": "python headless-lab\\tools\\authenticode.py crackme-corpus\\out\\c01-stringobf.exe --make-control %TEMP%\\signed-fixture.exe   # the fixture is GENERATED, not committed",
-        "expect_note": "This is the one probe in the registry whose expectation is a REFUSAL, and that is the point rather than an embarrassment: the capability under test is 'can this tell DER from non-DER', and the fixture is a known non-DER body. If the fixture is ever replaced with a real signature this expectation must become true, and that is the correct time to notice."
+        "run_log": "fixture: {ok:true, exit:0, security_offset:143872, win_certificate:{dwLength:48, wRevision:'0x200', wCertificateType:'0x2', revision_is_2_0:true, is_pkcs_signed_data:true, body_bytes:40}, der_parsed:false, verifiable:false, cert_state:'not_der'}, TRUE_EXIT=0.\n\nThe 7-digit prefix on OpenSSL's error line is TRANSIENT (the audit saw '182B0000:...' where an earlier run recorded 'ECB80000:...') and is deliberately NOT quoted here. Only the stable parts are recorded: the 0680009B code, the 'ASN1_get_object:too long' text and der_parsed:false. Storing a per-process prefix as if it were reproducible is how a volatile value becomes a false claim the next time the library is rebuilt.",
+        "prepare": "python headless-lab\\tools\\authenticode.py crackme-corpus\\out\\c01-stringobf.exe --make-control \"$env:TEMP\\signed-fixture.exe\"   # the fixture is GENERATED, not committed",
+        "expect_note": "This is the one probe in the registry whose expectation is a REFUSAL, and that is the point rather than an embarrassment: the capability under test is 'can this tell DER from non-DER', and the fixture is a known non-DER body. If the fixture is ever replaced with a real signature this expectation must become true, and that is the correct time to notice.",
+        "prepare_note": "$env:TEMP, NOT %TEMP%. assert-probes.py runs each recorded command by writing it to a .ps1 and invoking `powershell -File`, and %TEMP% is a CMD token PowerShell does not expand -- so the probe pointed at a literal path named '%TEMP%\\signed-fixture.exe', which does not exist. It failed with exit 2 and assert-probes correctly reported BOTH a wrong exit and a missing expect string. This is the third %TEMP%/%env:TEMP% confusion in this registry (native.pe.hardening's rabin2 probe would have hit it too had it used one), and the fix is the PowerShell spelling."
       },
       "negative_control": {
         "id": "native.signature.certverify.non_pe_refused",
@@ -3308,10 +3311,10 @@
         "stdout": "json",
         "success_when": "parsed JSON with ok == true. der_parsed false is a SUCCESSFUL measurement of a negative -- the instrument ran and reported. exit 2 is a non-PE.",
         "fact_map": {
-          "win_certificate": "cert.win_header",
-          "verifiable": "cert.der_verdict"
+          "cert_state": "cert.der_verdict",
+          "win_certificate": "cert.win_header"
         },
-        "fact_map_note": "verifiable is tri-state on purpose and the fact map forwards the KEY, so null, true and false all travel. A wrapper that mapped only the true case would report an unsigned binary as though the check had been skipped, which is the always-green shape."
+        "fact_map_note": "CORRECTED TWICE, both times by running it rather than reading it. First: a mission on c01-stringobf.exe recorded ok:true with facts:{} because the fact_map mapped win_certificate, which does NOT exist for an unsigned binary, and verifiable, which is NULL there -- and the orchestrator drops null-valued facts. So the round succeeded and taught nothing, which is the always-green shape. Now cert_state is emitted in BOTH branches as an always-string tri-state (no_certificate / valid_der / not_der) and that is what carries the fact.\n\nThe lesson is the one this capability was built to demonstrate, applied to itself: a null-valued fact is a legitimate FINDING ('there is nothing to verify'), and a pipeline that discards nulls cannot distinguish that from a round that learned nothing. win_certificate remains mapped for the signed case, where it exists."
       },
       "root_reason": "A genuine root: it is handed a PE path and answers a question about the certificate bytes, and nothing upstream produces a DER verdict. Its subject is the same file native.pe.authenticode reads, but the fact is a different question about a different layer, which is why the absence of a typed edge to it is a decision and not an oversight."
     },
@@ -3409,8 +3412,8 @@
         "command": "python net-reverse\\tools\\pcap_reader.py README.md",
         "expect_exit": 2,
         "expect_output": "not a pcap",
-        "measured": "README.md: {ok:false, exit:2, error:\"not a pcap: magic 0x4d5a206c is neither 0xa1b2c3d4 nor its byte-swapped twin\", first_bytes:'4d5a'}, TRUE_EXIT=2.",
-        "expect_output_note": "The control refuses on the MAGIC rather than on a parse failure partway through, and it names the magic it read. A reader that discovered the file was not a pcap only after a length field sent it somewhere absurd would be reporting a different failure, and 'this is not a pcap' and 'this pcap is broken' must not be the same error. 0x4d5a is 'MZ' -- the first two bytes of a PE, which is the exact confusion a network reader must not make."
+        "measured": "RE-DERIVED by independent audit 2026-10-02. The recorded string said \"magic 0x4d5a\" and \"first_bytes:'4d5a'\" and called it MZ; the file actually begins 23 20 = '# '. Verified two ways over: the bytes read b'# debugg', and both capa's and native.pe.packer's controls record first_bytes '2320' for the same README.md. Output today: {ok:false, exit:2, error:\"not a pcap: magic 0x65642023 is neither 0xa1b2c3d4 nor its byte-swapped twin\", first_bytes:'23206465'}, TRUE_EXIT=2.",
+        "expect_output_note": "CORRECTED: this note previously explained that '0x4d5a is MZ -- the first two bytes of a PE, which is the exact confusion a network reader must not make'. That explanation was built on a wrong measurement and described bytes the file does not contain. The property being controlled is unchanged and still worth having: the refusal names the magic it actually read and happens at the HEADER rather than partway through a parse, so 'this is not a pcap' and 'this pcap is broken' stay different errors."
       },
       "provenance": {
         "source": "measured on this station 2026-10-02, written after Q4.data measured one capture family and the independence gate could not pass there",
@@ -3432,6 +3435,124 @@
         }
       },
       "root_reason": "A genuine root: it is handed a capture path and answers a question about its structure, and nothing upstream produces a packet count. Its subject is the same file net.pcap.analyse reads, but the fact comes from a different implementation, which is exactly why there is no typed edge to it."
+    },
+    {
+      "id": "native.pe.hardening",
+      "title": "Read a PE's mitigation posture with rabin2: stack canary, injection protection, retguard, checksum, image base",
+      "domains": [
+        "native",
+        "practice"
+      ],
+      "question_types": [
+        "Q1.identify",
+        "Q7.origin"
+      ],
+      "state": "observed",
+      "scope_note": "READS ONE FILE via rabin2 -I. No network, no execution of the target, no writes, no temp files. rabin2 is spawned as a child process.",
+      "composition_note": "REGISTERED BECAUSE AN AUDIT FOUND IT INSTALLED, PAID FOR, AND UNWIRED. radare2 6.2.2 is pinned in manifests/tools.json, smoke-tested in scripts/smoke-tools.ps1, and present on disk at Static-Reversing/radare2/ -- and a grep for radare2, rabin2 and rizin across the whole registry returned ZERO capability hits. This is the same discovery as capa (installed, working, no entry), found a second time by auditing INVENTORY rather than intentions.\n\nIT IS ALSO THE ONLY INSTRUMENT HERE THAT ANSWERS A QUESTION NOTHING ELSE ASKS. native.pe.container reads ASLR; native.pe.authenticode reads the certificate table. Neither reports whether a binary carries a stack canary, whether the image is marked as vulnerable to control-flow hijack, or whether a checksum is present. Mitigation posture is what a reviewer asks before deciding whether a crash is interesting, and it was absent from a 26-capability arsenal.\n\nIT IS A FOURTH INSTRUMENT AND A GENUINELY DIFFERENT IMPLEMENTATION: pefile reads the IMAGE structure in Python, rabin2 is a C tool with its own format layer. The independence gate counts families, so a fourth reading from a different codebase is worth more here than another pefile wrapper would be.",
+      "consumes": {
+        "inputs": [
+          {
+            "name": "binary",
+            "type": "path_ref",
+            "required": true,
+            "note": "a Windows PE. Measured: crackme-corpus/out/c01-stringobf.exe."
+          }
+        ],
+        "prior": []
+      },
+      "produces": {
+        "facts": [
+          {
+            "key": "pe.image",
+            "type": "structure",
+            "note": "arch, bits, class, bintype, baddr, binsz, endian, machine, os, subsys, compiler, lang. Measured: x86 / 64 / PE32+ / pe / baddr 0x140000000 / binsz 143872."
+          },
+          {
+            "key": "pe.mitigations",
+            "type": "structure",
+            "note": "canary, injprot, retguard, nx, pic, relocs, stripped, crypto. Measured on c01-stringobf.exe: canary true, nx true, pic true, injprot false, retguard false, crypto false, relocs false, stripped false. PRESENCE FLAGS FROM ONE IMPLEMENTATION."
+          }
+        ]
+      },
+      "requires": {
+        "runtime": "python",
+        "net": "none",
+        "admin": false,
+        "device": false,
+        "disk_mb": 0,
+        "ram_mb": 128,
+        "wall_minutes": 0.1,
+        "tools": [
+          {
+            "name": "rabin2",
+            "expect": "info block with arch and bintype",
+            "probe": "Static-Reversing\\radare2\\radare2-6.2.2-w64\\bin\\rabin2.exe -I crackme-corpus\\out\\c01-stringobf.exe",
+            "note": "NOT on PATH, and the probe is an absolute relative-to-repo path because of it. Verified: `where rabin2` finds nothing. The probe runs in 0.4 s. Nothing executes requires.tools probes, so this one is correct on purpose rather than by luck."
+          }
+        ],
+        "install_note": "ALREADY INSTALLED. Nothing to download, nothing to build, no PATH change. Portable build pinned at 6.2.2; a 6.2.0 build also exists on disk and the wrapper deliberately points at the pinned one."
+      },
+      "reach": {
+        "fs_read": true,
+        "fs_write": false,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": false,
+        "db_write": false,
+        "proc_spawn_note": "rabin2 is spawned as a child. The target is read, never executed."
+      },
+      "proves": [
+        "THAT THE ARSENAL CAN NOW ANSWER 'what hardening does this binary carry', WHICH IT COULD NOT BEFORE. Measured on c01-stringobf.exe in 0.4 s: canary true, nx true, pic true, injprot false, retguard false, crypto false. No other capability reports any of these.",
+        "THAT A FOURTH INDEPENDENT NATIVE INSTRUMENT EXISTS AND IS NOT pefile WEARING A HAT. rabin2 is a C tool with its own PE format layer; native.pe.container and native.pe.authenticode are pefile. Verified by grep: before this entry, radare2/rabin2/rizin appeared in ZERO capabilities."
+      ],
+      "does_not_prove": [
+        "THAT THE BINARY IS HARDENED. These are presence flags from ONE implementation, not a hardening assessment. `canary true` means a stack-protection cookie symbol was found; it does not mean the buffer it protects is bounded, and it says nothing about whether the cookie is checked correctly.",
+        "THAT ANY MITIGATION IS CORRECTLY APPLIED. A present-but-ineffective mitigation reads exactly like an effective one here. `nx true` is rabin2 reporting the NX-compatible bit, and a PE can carry that bit and still be marked executable -- which is why the field is reported but not asserted.",
+        "THAT `crypto true` MEANS TRUSTED. It means a signature directory is PRESENT, which is a trigger to ask native.pe.authenticode or native.signature.certverify. That the arsenal's own signed fixture is not a real signature is already measured.",
+        "THAT AN ABSENT FLAG MEANS ABSENT HARDENING. As with every instrument here, a field rabin2 does not report is unknown, not false."
+      ],
+      "gate": {
+        "lane": "debug",
+        "requires_verdict": true,
+        "escalation_class": "none"
+      },
+      "probe": {
+        "command": "python native-lab\\tools\\hardening_probe.py crackme-corpus\\out\\c01-stringobf.exe",
+        "expect": "\"canary\": \"true\"",
+        "expect_exit": 0,
+        "last_run": "2026-10-02",
+        "run_log": "c01-stringobf.exe: {ok:true, exit:0, image:{arch:'x86', bits:'64', class:'PE32+', bintype:'pe', baddr:'0x140000000', binsz:'143872'}, mitigations:{canary:'true', injprot:'false', retguard:'false', nx:'true', pic:'true', relocs:'false', stripped:'false', crypto:'false'}}, TRUE_EXIT=0, ~0.4 s.",
+        "expect_note": "canary is chosen over crypto or nx deliberately: it is the mitigation whose value this corpus actually varies, and crypto:false here would make the expectation pass for the wrong reason on any unsigned binary."
+      },
+      "negative_control": {
+        "id": "native.pe.hardening.non_pe_refused",
+        "command": "python native-lab\\tools\\hardening_probe.py README.md",
+        "expect_exit": 2,
+        "expect_output": "no recognisable info block",
+        "measured": "README.md: {ok:false, exit:2, error:'rabin2 ran but returned no recognisable info block; refusing rather than reporting an empty mitigation profile as a clean one', parsed_keys:[]}, TRUE_EXIT=2.",
+        "expect_output_note": "rabin2 exits 0 on a markdown file and prints nothing usable, so the wrapper's check is on the PARSED INFO BLOCK rather than on the exit code. That is the whole reason this control exists: a tool that returned a mitigation profile of all-false for a README would be reporting the absence of evidence as evidence of absence, which is the always-clean shape this project treats as worse than no tool at all."
+      },
+      "provenance": {
+        "source": "measured on this station 2026-10-02 after an audit found radare2 installed, pinned, smoke-tested and referenced by zero capabilities",
+        "record": "wiki/CHARTER-ARSENAL.md"
+      },
+      "evidence_source": "format-reader",
+      "evidence_source_note": "A NEW FAMILY. The point is the IMPLEMENTATION, not the artefact: pefile reads the IMAGE structure in Python, rabin2 is a separate C codebase with its own format layer. Naming this structural-parser because both read a PE would have made the independence gate count one implementation twice -- the relabel escape R18 exists to stop.",
+      "invoke": {
+        "runner": "python",
+        "argv": [
+          "native-lab/tools/hardening_probe.py",
+          "{target}"
+        ],
+        "stdout": "json",
+        "success_when": "parsed JSON with ok == true AND an image block carrying arch and bintype. A file rabin2 cannot read is refused with exit 2, never reported as an all-false profile.",
+        "fact_map": {
+          "image": "pe.image",
+          "mitigations": "pe.mitigations"
+        }
+      },
+      "root_reason": "A genuine root: it is handed a PE path and answers a question about mitigation posture, and NOTHING upstream produces one. It consumes no fact another capability emits and nothing consumes what it emits today, which is a decision about what to wire next rather than an oversight -- the natural next edge is a consumer that asks 'is this crash worth chasing'."
     }
   ]
 }

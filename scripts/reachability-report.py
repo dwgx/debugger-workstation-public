@@ -51,7 +51,23 @@ def scan(root: str):
             if not cid:
                 continue
             routed[cid] += 1
-            if r.get("ok"):
+            # ok AND produced at least one fact. Reading `ok` alone was WRONG and an audit
+            # proved it: a synthetic artifact with ok:true and facts:[] reported as
+            # "worked (2x)" while the docstring claims the report is about capabilities
+            # that "have never once produced a FACT". Every reachability number this project
+            # quoted before this fix was an UPPER BOUND, because `ok` means "the round did
+            # not error", not "the round learned anything". A round that succeeds and emits
+            # nothing is the always-green shape this project exists to refuse.
+            # TRUTHINESS, NOT A TYPE CHECK. The first attempt at this fix used
+            # isinstance(facts, (list, dict)) and that was wrong in the flattering-to-the-old-
+            # error direction again: artifacts store the produced-fact marker in THREE shapes --
+            # a list ['mobile.manifest.summary', ...], a dict, and a bare STRING naming one fact
+            # ('net.flow.summary', 'pcap.dns_direction'). Excluding the string form silently
+            # reported two capabilities that demonstrably produced facts as never having run.
+            # Measured across all 45 artifacts: list 84, dict 45, str 6, None 5 -- and among the
+            # dicts an empty {} means NOTHING was produced, which is exactly the case this rule
+            # exists to catch. Plain truthiness gets all six shapes right.
+            if r.get("ok") and r.get("facts"):
                 ok[cid] += 1
     return files, routed, ok, unreadable
 
@@ -70,6 +86,8 @@ def main() -> int:
     for f, e in unreadable:
         print(f"   !! could not parse {f}: {e}")
     print(f"capabilities declaring an invoke : {len(inv)}")
+    print("'worked' means: ran ok AND emitted at least one fact. An ok round with no facts")
+    print("does NOT count -- see the comment in scan().")
     print()
     print(f"{'capability':<30}{'routed':>7}{'ok':>5}  status")
     never_ran, never_ok = [], []

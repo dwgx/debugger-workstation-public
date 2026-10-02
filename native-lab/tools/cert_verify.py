@@ -67,6 +67,12 @@ def main() -> int:
     if not entry.VirtualAddress or not entry.Size:
         print(json.dumps({
             "ok": True, "exit": 0, "binary": args.binary, "verifiable": None,
+            # cert_state is ALWAYS A STRING, which is why it exists. `verifiable` is null here,
+            # and the orchestrator DROPS null-valued facts -- so a mission that mapped only
+            # `verifiable` recorded an empty fact set for every unsigned binary and could not
+            # tell "nothing to verify" from "the round learned nothing". Measured: on
+            # c01-stringobf.exe this round reported ok:true with facts:{} until this key existed.
+            "cert_state": "no_certificate",
             "reason": "no SECURITY directory: this binary carries no certificate to verify",
             "note": "null is the honest answer here, not false. 'there is nothing to verify' and "
                     "'what is there is not valid' are different findings and must not share a value.",
@@ -104,6 +110,9 @@ def main() -> int:
                             "body_bytes": len(body)},
         "der_parsed": parsed,
         "verifiable": parsed,
+        # ALWAYS A STRING, for the same reason as the unsigned branch. 'valid_der' and
+        # 'not_der' are DIFFERENT findings and must not collapse into one falsy value.
+        "cert_state": "valid_der" if parsed else "not_der",
     }
     if parsed:
         result["asn1_head"] = (p.stdout or "").splitlines()[:6]
