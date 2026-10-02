@@ -1671,7 +1671,7 @@
       "question_types": [
         "Q7.origin"
       ],
-      "state": "observed",
+      "state": "planned",
       "root_reason": "Genuine root: it is handed two binaries and one Ghidra project (the project precondition is now a declared input, P3). Both programs must already be imported into that project, and the import step is performed by the same hand-driven session recorded in this entry's probe -- it is not a separate declared capability, so naming one here would be inventing it.",
       "consumes": {
         "inputs": [
@@ -1774,7 +1774,16 @@
         "record": "docs/research/ghidra-capability-spec.md"
       },
       "evidence_source": "binary-similarity",
-      "evidence_source_note": "Ghidra Version Tracking correlators"
+      "evidence_source_note": "Ghidra Version Tracking correlators",
+      "state_correction": {
+        "from": "observed",
+        "on": "2026-10-02",
+        "by": "the agent that added R2 probe-runnability",
+        "why": "DOWNGRADED, and it is a real false claim removed rather than a bookkeeping tidy. The entry asserted that Ghidra matched functions across two binaries and reported the differences, while its probe.command was the STRING \"see scripts/ghidra-failopen.md reproduction section\" -- prose, not a command. Audited rather than trusted: the referenced scripts/ghidra-failopen-regress.ps1 was read, and it tests the fail-open behaviour by checking whether summary.json exists; it never invokes AutoVersionTrackingScript at all. NO runnable command in this repository performs the cross-binary comparison this entry claims was observed. That is precisely what the North Star forbids, and R10 had been enforcing the same requirement on invoke while leaving probe unchecked -- a rule present on one side of a pair and not the other.",
+        "family_still_covered": "The binary-similarity family is NOT left uncovered by this. native.function.match is observed with a runnable probe, measured at 511 of 511 functions matched across two builds differing in four timestamp bytes, and it is callable. This entry is the Ghidra-native alternative, not the only route to the family.",
+        "what_would_restore_it": "A runnable command that opens both binaries in ONE Ghidra project and runs AutoVersionTrackingScript, which needs a GhidraValuesMap startup properties file carrying the project path. That is real work with a real precondition, and writing it to make a state field look better would be the same error in the other direction. Not built; recorded as planned.",
+        "control_for_the_correction": "R2 now refuses a prose probe.command for any observed entry, and the selftest carries a case that plants one. The rule was written by finding this, so it is anchored to a real defect rather than a hypothetical."
+      }
     },
     {
       "id": "native.il2cpp.symbols",

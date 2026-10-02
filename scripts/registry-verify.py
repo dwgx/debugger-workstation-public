@@ -149,6 +149,22 @@ def r1_not_empty(reg, doc):
 
 
 def r2_observed_needs_probe(reg, doc):
+    """`observed` has to mean A COMMAND RAN, and R10 already insists an `invoke` is runnable.
+    This rule now insists the same of a `probe`, which it did not.
+
+    Found by auditing every probe rather than trusting the North Star: one entry carried
+    `probe.command: "see scripts/ghidra-failopen.md reproduction section"`. That is PROSE. It
+    cannot be executed, nobody ran it, and nothing about it could ever redden. The estate's
+    North Star says *every capability this project claims is proved by one runnable command*,
+    and R10 enforced that for `invoke` while leaving the `probe` half of the same claim
+    unchecked -- the shape of a rule that exists on one side of a pair and not the other.
+
+    The test is about SHAPE, not about the command succeeding: a probe naming something
+    executable is accepted and anything else is refused by name. Verifying that a probe RUNS
+    belongs to the suite, not to a static rule -- a rule that executed commands would make
+    validation slow, destructive and machine-state dependent.
+    """
+    RUNNABLE = (".mjs", ".js", ".cjs", ".py", ".ps1", ".exe", ".bat", ".cmd", ".com")
     out = []
     for c in reg:
         if c.get("state") == "observed":
@@ -156,6 +172,15 @@ def r2_observed_needs_probe(reg, doc):
             if not isinstance(probe, dict) or not probe.get("command"):
                 out.append(f"R2 {c.get('id','?')}: state=observed but no probe.command. "
                            f"'observed' has to mean a command ran, not that someone hoped so.")
+                continue
+            cmd = str(probe["command"])
+            low = cmd.lower()
+            looks_runnable = any(t in low for t in RUNNABLE) or low.startswith(
+                ("node ", "python ", "powershell ", "cmd ", "uv "))
+            if not looks_runnable:
+                out.append(f"R2 {c.get('id','?')}: probe.command is not a runnable command, it is "
+                           f"prose -- {cmd[:70]!r}. 'observed' means something ran; pointing at a "
+                           f"document is a pointer, not a proof.")
     return out
 
 
@@ -814,7 +839,11 @@ def _good_entry() -> dict:
         "reach": {"fs_read": False, "fs_write": False, "net": False, "proc_spawn": True,
                   "exec_target": False, "db_write": False},
         "evidence_source": "practice",
-        "probe": {"command": "example --selftest", "expect": "ok", "exit": 0,
+        # A runnable command, not a placeholder. It said "example --selftest", which is PROSE,
+        # and the R2 probe-runnability half added below caught it -- the synthetic registry was
+        # modelling something the real rule forbids. A fixture has to be a LEGAL registry or it
+        # tests the wrong baseline; this one was polluting four other cases expectations.
+        "probe": {"command": "python scripts/example_selftest_probe.py", "expect": "ok", "exit": 0,
                   "last_run": "2026-09-30",
                   "evidence_binding": {"status": "unverified",
                                        "reason": "probe output was summarised by hand and "
@@ -873,6 +902,24 @@ def selftest() -> int:
         hit = any(must_contain in p for p in got)
         cases.append((name, hit, got))
 
+
+    def nocase(name, mutate, must_not_contain):
+        """A mutation that must NOT trip a rule.
+
+        Without this, only positive cases are expressible, and a rule that refuses EVERYTHING
+        passes every one of them -- the same always-red defect as an always-green control, in the
+        validator rather than in a probe. The check that matters is that the registry still
+        validates and that this particular message is absent.
+        """
+        base = [_good_entry(), _good_entry()]
+        base[0]["id"], base[1]["id"] = "a.one", "b.two"
+        base[1]["produces"]["facts"] = [{"key": "b.out", "type": "string"}]
+        pinned = len(base)
+        mutate(base)
+        got = validate(_schema_doc(base, pinned))
+        hit = any(must_not_contain in p for p in got)
+        clean = not any("VIOLATION" in p or p.strip() for p in got)
+        cases.append((name, (not hit) and clean, got))
     case("baseline must be clean", lambda b: None, "!!never!!")
     # An absent entry may prove nothing, but it must still say what it does NOT
     # prove -- otherwise "absent" quietly becomes "unexamined".
@@ -886,6 +933,15 @@ def selftest() -> int:
     # control. Match R1's own message text instead.
     case("R1 empty registry fails", lambda b: b.clear(), "capabilities[] is empty")
     case("R2 observed without probe", lambda b: b[0].pop("probe"), "R2")
+    # Written because a real entry was found carrying a prose probe: a command that points at a
+    # document cannot be executed, so "observed" was resting on a pointer rather than a run. The
+    # second case matters as much as the first -- a rule that refuses everything is as useless as
+    # one that refuses nothing, so a REAL command with no file extension must still pass.
+    case("R2 observed with a PROSE probe (a pointer, not a command)",
+         lambda b: b[0]["probe"].__setitem__("command", "see the reproduction section of some.md"),
+         "R2")
+    nocase("R2 a real command with no file extension is still accepted",
+           lambda b: b[0]["probe"].__setitem__("command", 'python -c "import pefile"'), "R2")
     case("R3 missing does_not_prove", lambda b: b[0].__setitem__("does_not_prove", []), "R3")
     # --- per-half controls -------------------------------------------------------
     # R3 and R5 each have two independent halves, and deleting EITHER half alone
