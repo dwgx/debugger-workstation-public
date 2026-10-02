@@ -1259,6 +1259,57 @@ def r27_probe_exit_has_one_spelling(reg, doc):
     return out
 
 
+def r28_evidence_is_tracked_not_merely_present(reg, doc):
+    """A run_log that exists but is not in git is evidence the next window cannot check.
+
+    R17 already refuses a `probe.run_log` that is not a file, and refuses a `sha256` that does not
+    match it. Neither of those notices whether git CARRIES the file, and this registry learned the
+    hard way why that is the wrong question to stop at.
+
+    Measured 2026-10-03, in this order. `evidence/probes/*.log` matched `.gitignore`'s blanket
+    `*.log`, so eleven `probe.run_log` paths pointed at files git refused to carry: present on this
+    workstation, invisible to a clone, hash-checkable here and nowhere else. The fix was a
+    deliberate `.gitignore` exception plus `.gitattributes` `-text`, and both were applied BY HAND,
+    once, by a person who remembered. Nothing in the validator would have noticed the next person
+    adding a twenty-second binding under a path nobody had excepted -- which is the same shape as
+    every other finding in this file: a contract maintained by memory.
+
+    So the exception is now checked rather than remembered. `git ls-files` is the only honest
+    answer to "will the next window have this file", and it is what this rule asks.
+
+    What this does NOT do: verify the file is unmodified, or that git's copy matches the working
+    tree beyond what R17's hash already does. It asks one question -- is it committed.
+    """
+    import subprocess
+    out = []
+    tracked = None
+    for c in reg:
+        probe = c.get("probe") or {}
+        rl = str(probe.get("run_log") or "").strip()
+        if not rl:
+            continue
+        if tracked is None:
+            try:
+                r = subprocess.run(["git", "ls-files"], cwd=str(REPO_ROOT),
+                                   capture_output=True, text=True, timeout=60)
+                tracked = set(r.stdout.split("\n")) if r.returncode == 0 else set()
+            except Exception:                                        # noqa: BLE001
+                tracked = set()
+            if not tracked:
+                out.append("R28?: git ls-files produced nothing, so nothing here can be checked "
+                           "for tracking. Refusing to pass rather than pretending the evidence is "
+                           "committed.")
+                return out
+        if rl.replace("\\", "/") not in tracked:
+            out.append(f"R28 {c.get('id','?')}: probe.run_log {rl!r} exists and its sha256 matches, "
+                       f"but git does not carry it. On this workstation that file is present and "
+                       f"checkable; in a clone it does not exist, so the binding is a claim about "
+                       f"one machine. Either commit it (and check .gitignore -- a blanket `*.log` "
+                       f"will swallow a .log silently) or drop the binding and say the evidence is "
+                       f"not retained.")
+    return out
+
+
 RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r4_fact_types_agree, r5_control_must_fail, r6_reach_needs_escalation, r7_ids,
          r8_reach_must_be_declared, r9_batch_must_account, r10_invoke_must_runnable,
@@ -1269,7 +1320,8 @@ RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r22_ungrantable_needs_a_reason, r23_escalation_class_needs_a_reason,
          r24_input_types_are_declared, r25_plan_needs_a_checkable_ref,
          r26_bare_braces_survive_the_shell,
-         r27_probe_exit_has_one_spelling)
+         r27_probe_exit_has_one_spelling,
+         r28_evidence_is_tracked_not_merely_present)
 
 
 # ---------------------------------------------------------------------------- core
@@ -1631,6 +1683,26 @@ def selftest() -> int:
          lambda b: b[0]["probe"].__setitem__("exit", 0), "R27")
     case("R27 probe.exit with a deliberately wrong value",
          lambda b: b[0]["probe"].__setitem__("exit", 999), "R27")
+    # R28: the file existing and hashing correctly is not the question -- git carrying it is.
+    # The positive plants a REAL file with a REAL matching hash in %TEMP%, which is byte-for-byte
+    # the state this registry was in on 2026-10-03 before the .gitignore exception existed.
+    def _untracked_evidence(b):
+        import tempfile, hashlib as _h
+        d = pathlib.Path(tempfile.mkdtemp(prefix="r28-"))
+        f = d / "fake.probe.log"
+        f.write_text("# a real file nobody committed\n", encoding="utf-8")
+        b[0]["probe"]["run_log"] = str(f)
+        b[0]["probe"]["sha256"] = _h.sha256(f.read_bytes()).hexdigest()
+    case("R28 a run_log git does not carry", _untracked_evidence, "R28")
+    # The negative side must leave the registry CLEAN, not merely quiet about R28 -- so the hash
+    # is READ from the file at selftest time rather than typed. Typing it would make this case
+    # fail the moment the evidence is refreshed, and a case that rots teaches people to ignore it.
+    def _tracked_evidence(b):
+        import hashlib as _h
+        rel = "evidence/probes/ops.skill.security.probe.log"
+        b[0]["probe"]["run_log"] = rel
+        b[0]["probe"]["sha256"] = _h.sha256((REPO_ROOT / rel).read_bytes()).hexdigest()
+    nocase("R28 a tracked run_log is accepted", _tracked_evidence, "R28")
     nocase("R27 probe.expect_exit alone is accepted",
            lambda b: b[0]["probe"].__setitem__("expect_exit", 0), "R27")
     nocase("R26 braces inside a quoted span are accepted",
