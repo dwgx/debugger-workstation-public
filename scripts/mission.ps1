@@ -360,6 +360,51 @@ function Get-Route {
     }
     $selected = $keep
 
+    # --- rule 6: a precondition whose CONSUMERS are in this plan -------------------
+    # A precondition that declares only one question type is a gate that runs on some
+    # paths and not others. MEASURED 2026-10-02: native.pe.packer is gate_role
+    # 'precondition' but declared Q1.identify only, while the consumers it exists to
+    # protect -- native.ida.decompile, native.ida.list_functions, native.ghidra.decompile,
+    # native.disasm.capstone -- declare Q2.locate, Q3.behaviour and Q7.origin. A Q2.locate
+    # mission aimed at a UPX-packed binary planned six capabilities, the packer was not
+    # among them, and round 2 DECOMPILED THE PACKED TARGET, producing native.dec.code.
+    #
+    # Applicability now follows WHAT IT GATES rather than a question type it happens to
+    # share. This rule can only ever ADD a gate to a plan, never remove one.
+    $pulledGates = @()
+    $plannedIds = @{}
+    foreach ($s in $selected) { $plannedIds[$s.id] = $true }
+    foreach ($c in $all) {
+        if ("$($c.invoke.gate_role)" -ne 'precondition') { continue }
+        if ($plannedIds.ContainsKey($c.id)) { continue }
+        $gates = @($c.invoke.gates)
+        if ($gates.Count -eq 0) { continue }
+        foreach ($g in $gates) {
+            if (-not $plannedIds.ContainsKey($g)) { continue }
+            # TRUTHINESS, NOT .Count. First attempt used `@(Get-Blocker $c).Count -gt 0`, and
+            # Get-Blocker returns a SINGLE EMPTY element when there is nothing to report --
+            # so the array has one member, the count is 1, and the gate was skipped every time.
+            # Diagnosed by printing it: `blocker=` empty, count 1. Filtering on the element
+            # itself is the correct test, and this is the same trap that reachability-report.py
+            # hit two days ago in the opposite direction.
+            if (@(Get-Blocker $c | Where-Object { $_ }).Count -gt 0) { continue }
+            # `why` IS NOT OPTIONAL. The route invariant requires every selected capability to
+            # carry a stated reason, and the mission selftest caught this rule breaking it --
+            # "unsound=4 native.pe.packer:no-reason". A capability that appears in a plan with no
+            # reason given is exactly the kind of thing this project has been removing all along.
+            $selected += [pscustomobject]@{
+                id = $c.id
+                selected_by = "precondition gating $g"
+                why = "it is a precondition and $g is in this plan, so it gates something this mission would otherwise run; it declares a different question type and would otherwise never be consulted"
+            }
+            $plannedIds[$c.id] = $true
+            $pulledGates += [ordered]@{ id = $c.id; gates = $g
+                why = "this precondition was not selected by question type, but it gates $g which IS in this plan; a gate that skips the paths it exists to protect is not a gate" }
+            break
+        }
+    }
+    foreach ($pg in $pulledGates) { $dropped += $pg }
+
     # A producer whose consumer was just dropped is doing unrequested work. Prune to a
     # fixpoint, and say so on the step that survives.
     $pruned = $true

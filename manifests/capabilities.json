@@ -2713,7 +2713,7 @@
       "does_not_prove": [
         "THAT THE BINARY IS PROVEN UNPACKED. 'not packed' means no packer SIGNATURE matched. A custom, modified or novel packer matches nothing, and the absence of a signature is not the absence of a packer. This is a green light to look, never proof, and no score improves it.",
         "THAT DIE'S SCORE MEANS ANYTHING AS A THRESHOLD. MEASURED, AND THIS IS THE LESSON. The first draft computed packed as ($score -ge 5.0) with a hand-picked threshold, and the first probe proved it wrong: the binary is emphatically not packed, Die says so, and it scores 6.15091 -- so the threshold reported packed:true and would have blocked EVERY decompilation in the arsenal. The score is now advisory and nothing branches on it. A confident number with no denominator behind it is the same defect as a scanner scoring our own router 100/100 CRITICAL.",
-        "THAT A PACKED BINARY WOULD BE CAUGHT HERE. NOT DEMONSTRATED, and stated rather than implied: no packer is available on this host to build a packed control -- there is no UPX anywhere, and the corpus holds no packed binary. So the positive branch has never run. The refusal branch has, twice. Until a packed target exists this capability has a measured negative result and an unmeasured positive one.",
+        "THAT A PACKED BINARY WOULD BE CAUGHT HERE. NOW MEASURED, and the excuse this entry used to give was itself false. It previously read: 'no packer is available on this host to build a packed control -- there is no UPX anywhere'. UPX 5.2.1 has been on this station the whole time, at Unpackers-Game/upx/upx-5.2.1-win64/upx.exe. Measured 2026-10-02: 'upx --best' on a corpus binary took it from 143872 to 72192 bytes, and triage-packer.ps1 on that packed file returns ok:false with exit 0. Since exit 0 is not in skip_exits [3], the loop breaks and downstream rounds are blocked.\n\nSo the packer DETECTION was always sound. What was broken was WHEN IT RAN -- see gates_applies_to_note.",
         "THAT A CLEAN RESULT PERMITS SKIPPING THE REST OF TRIAGE. It is one gate in a sequence, not a replacement for the entropy and section signals triage.md also lists."
       ],
       "gate": {
@@ -2776,7 +2776,19 @@
         "skip_exits": [
           3
         ],
-        "skip_exits_note": "EXIT 3 IS 'NOT MY SUBJECT' AND IS DISTINGUISHABLE FROM EVERY FAILURE. Measured 2026-10-02: this refusal used to be exit 2, shared with 'diec.exe not found' and 'diec produced no parseable output' -- three unrelated situations on one number. mission.ps1 treats a PRECONDITION's failure as 'the target is gated shut, skip everything downstream', so a mission aimed at an APK was halted after round 1 with mobile.apk.static never running, even though that capability analyses the APK correctly (verified exit 0 on mobile-lab/artifacts/mobilelab.apk).\n\nThe packed path is deliberately untouched: a genuinely packed PE exits 0 with ok:false, so it still breaks the loop and still blocks every downstream round. Exit 2, an instrument failure, also still blocks -- which is the conservative behaviour and the reason the distinction had to be made in the TOOL rather than in the orchestrator: two different causes shared one code, and only the tool knows which cause it hit."
+        "skip_exits_note": "EXIT 3 IS 'NOT MY SUBJECT' AND IS DISTINGUISHABLE FROM EVERY FAILURE. Measured 2026-10-02: this refusal used to be exit 2, shared with 'diec.exe not found' and 'diec produced no parseable output' -- three unrelated situations on one number. mission.ps1 treats a PRECONDITION's failure as 'the target is gated shut, skip everything downstream', so a mission aimed at an APK was halted after round 1 with mobile.apk.static never running, even though that capability analyses the APK correctly (verified exit 0 on mobile-lab/artifacts/mobilelab.apk).\n\nThe packed path is deliberately untouched: a genuinely packed PE exits 0 with ok:false, so it still breaks the loop and still blocks every downstream round. Exit 2, an instrument failure, also still blocks -- which is the conservative behaviour and the reason the distinction had to be made in the TOOL rather than in the orchestrator: two different causes shared one code, and only the tool knows which cause it hit.",
+        "gates": [
+          "native.ida.decompile",
+          "native.ida.list_functions",
+          "native.ghidra.decompile",
+          "native.disasm.capstone",
+          "native.behaviour.capa",
+          "native.pe.container",
+          "native.pe.hardening",
+          "native.signature.certverify",
+          "dynamic.win.frida.intercept"
+        ],
+        "gates_applies_to_note": "THIS IS THE FIX, AND IT CLOSES A REAL SAFETY HOLE FOUND BY AUDIT ON 2026-10-02.\n\nThis entry is gate_role: precondition, but it declared only Q1.identify. The consumers it exists to protect -- native.ida.decompile, native.ida.list_functions, native.ghidra.decompile, native.disasm.capstone -- declare Q2.locate, Q3.behaviour and Q7.origin. A precondition whose question_types do not overlap its consumers is a gate that runs on some paths and not others.\n\nMEASURED, not inferred: a Q2.locate mission aimed at a UPX-packed binary planned SIX capabilities and native.pe.packer was not among them. Round 1 native.ida.list_functions ok=true, round 2 native.ida.decompile ok=true producing native.dec.code and native.dec.refs. The packed target was decompiled with no packer gate ever consulted -- which is precisely what this capability exists to prevent.\n\n`gates` now names the consumers explicitly and mission.ps1 pulls a precondition into any plan whose selected set intersects it. Applicability follows WHAT IT GATES rather than a question type it happens to share. This only ever ADDS a gate, never removes one."
       }
     },
     {
