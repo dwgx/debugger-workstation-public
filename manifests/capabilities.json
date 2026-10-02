@@ -11,7 +11,7 @@
       "Q7.origin": "what changed between these two builds"
     },
     "baseline": {
-      "capability_count": 24,
+      "capability_count": 25,
       "note": "The validator pins this count. A capability may only leave capabilities[] by appearing in retired[] with a reason, because deleting an island used to make the registry validate CLEANER rather than louder.",
       "note_unused_fact_types": "MEASURED 2026-10-02, and it corrects a natural misreading. A query for declared fact types produced by no capability returns four: apk, pcap, token, evidence_source. The first three look like dead declarations, and it is tempting to conclude the three matching capabilities (mobile.apk.static, net.pcap.analyse, crypto.jose.parse) do not declare what they produce. They DO -- all three declare their facts, and all three now carry an invoke. The types are unused because the capabilities declaring them have never RUN IN A MISSION, not because their output is unspecified. evidence_source is a different thing entirely: it is a capability attribute used to count independent instruments, not an artifact any capability emits, so it must never be counted here.",
       "note_q5_unreachable": "MEASURED END TO END 2026-10-02, and it is a shape problem rather than a missing tool. Q5.vuln-shape has no reachable instrument. Its only target-scoped candidate, fuzz.differential.parse, declares two seed inputs whose producers are crypto.jose.parse and forensics.memory.artefact -- and both producers are observed and correctly wired. Verified on the real binaries rather than by reading: crypto.jose.parse invokes crypto-lab/tools/analyze.mjs --file {target} --json, and pointed at a PE it refuses with 'not a compact JWS: expected 3 dot-separated segments, got 2' and EXITS 3, which its own success_when already documents as bad input. Pointed at a real compact JWS it exits 0. forensics.memory.artefact invokes forensics-lab/tools/analyze.mjs --target {target}.\n\nSo neither producer is broken. They refuse correctly when handed the wrong KIND of thing, and that is the whole problem: mission.ps1 has one -Target, and this axis needs three different kinds of subject -- a JOSE token, a forensic memory image, and a lab target. Q5 is not dark because a tool is missing. It is dark because the mission can name exactly one artefact and Q5 needs three heterogeneous ones.\n\nTwo refutations are kept because both looked right first. First: 'these labs build their own fixtures, so no extra parameter is needed' is true of the LOOPS -- crypto-lab/tools/loop.mjs reads only --json and generates its own tokens, and forensics-lab/tools/loop.mjs:38 hardcodes const TARGET = path.join(WORK, 'target') -- but the invoke blocks point at the inner ANALYSERS, which do take an external subject. The loop and the instrument are different things and a mission calls the instrument. Second: 'fuzz.differential.parse wants two artefacts, so it needs a peer selector' is also true and also not the blocker, because its two missing inputs are not two paths; they are a token and a structure produced upstream.\n\nWhat would light the axis is now stated precisely: a mission able to name MORE THAN ONE artefact with HETEROGENEOUS types. A second path would not help -- native.function.match is the only capability that wants two of the same thing and it is not on this axis. Naming the shape exactly is what separates this from the speculative -Artefact parameter considered and correctly rejected earlier, when the premise had not been measured.\n\nThe misattribution risk was checked and does not exist: a PE substituted into the JOSE analyser exits 3, so a mission records a loud failure rather than crediting the lab's own token to the mission's target.",
@@ -31,7 +31,8 @@
       "binary-similarity": "matches functions across two binaries by scoring, without proving equivalence",
       "differential-oracle": "compares two implementations of the same parser and treats a disagreement as the finding",
       "practice": "solving self-built exercises; proves technique, not transfer",
-      "disassembler": "reconstructs a machine instruction stream WITHOUT lifting it to a high-level language: capstone and similar code-generation libraries. Distinct from 'decompiler' because it performs no lifting, no type recovery and no control-flow reconstruction -- it is the only family here that states an OPERAND WIDTH, which is measured, not assumed: see native.disasm.capstone's negative control and the pairing study. Added 2026-10-02 after measuring that capstone independently identified the exact addresses Ghidra left as unresolved DAT_ references AND carried the byte-vs-dword width that Ghidra's output omitted. THIS IS NOT THE static-analysis RELABEL ESCAPE: that escape re-declared ONE instrument under a second name, which R18 also blocks by instrument identity. capstone is a genuinely different library with no decompiler in its lineage. What it does NOT buy is confirmation of MEANING -- it corroborates structure and operands, not what the code does."
+      "disassembler": "reconstructs a machine instruction stream WITHOUT lifting it to a high-level language: capstone and similar code-generation libraries. Distinct from 'decompiler' because it performs no lifting, no type recovery and no control-flow reconstruction -- it is the only family here that states an OPERAND WIDTH, which is measured, not assumed: see native.disasm.capstone's negative control and the pairing study. Added 2026-10-02 after measuring that capstone independently identified the exact addresses Ghidra left as unresolved DAT_ references AND carried the byte-vs-dword width that Ghidra's output omitted. THIS IS NOT THE static-analysis RELABEL ESCAPE: that escape re-declared ONE instrument under a second name, which R18 also blocks by instrument identity. capstone is a genuinely different library with no decompiler in its lineage. What it does NOT buy is confirmation of MEANING -- it corroborates structure and operands, not what the code does.",
+      "certificate-verifier": "A certificate-verifier decides whether a byte range is a valid encoding of a CERTIFICATE. It is not structural-parser: that family parses a PE IMAGE structure, while this decides whether the bytes inside the SECURITY directory are DER at all, using a different implementation (OpenSSL) from the one that located them (pefile). And it is not trust: no member of this family checks that a chain roots anywhere or that a digest matches a file. der_parsed:true means well-formed ASN.1, which is a far weaker statement than signed."
     }
   },
   "generated": "2026-09-30",
@@ -3184,6 +3185,133 @@
         },
         "note": "Added immediately after registration because a capability with only a probe is exactly the state this registry spent the last pass measuring as unreachable -- and the mission said so out loud on its first run: \"native.behaviour.capa skipped_no_invoke -- the registry declares no invoke block, so the loop cannot call it with arguments\". The wrapper writes PURE JSON to stdout and is silent on stderr, because mission.ps1 merges the two and a tool that decorates stderr corrupts the JSON it declared. ctypes maps capa's own non-zero exit on a non-PE to a clean refusal, and the wrapper checks the DOS magic FIRST so the refusal costs under a second instead of capa's ~3 s of engine start."
       }
+    },
+    {
+      "id": "native.signature.certverify",
+      "title": "Independently parse a PE certificate table's bytes with OpenSSL ASN.1 and say whether they are DER",
+      "domains": [
+        "native",
+        "crypto",
+        "practice"
+      ],
+      "question_types": [
+        "Q6.crypto"
+      ],
+      "state": "observed",
+      "scope_note": "SELF-BUILT CORPUS AND FIXTURE TARGETS ONLY. It reads the file and shells out to openssl asn1parse on an extracted temporary .der, which is deleted in a finally block. No network, no execution of the target.",
+      "composition_note": "ADDED BECAUSE INDEPENDENCE, NOT BECAUSE COVERAGE. Q6.crypto measured 1 of 2 callable capabilities working, and its single working instrument was native.pe.authenticode carrying family structural-parser -- one instrument, one family, so the independence gate could never pass there. This is a SECOND FAMILY answering a different question, not a second label on the first.\n\nAND IT FOUND A REAL DISAGREEMENT, which is the strongest evidence in the registry for keeping it. native.pe.authenticode's own does_not_prove says it verifies nothing. Pointed at this repository's own signed fixture it reports dwLength=48, wRevision=0x200, revision_is_2_0=true -- a plausible, cheerful header. MEASURED, the 40-byte body is the ASCII string ARSENAL-FIXTURE-NOT-A-REAL-SIGNATURE and `openssl asn1parse -inform DER` rejects it outright: 'error:0680009B:asn1 encoding routines:ASN1_get_object:too long', exit 1.\n\nNeither instrument is wrong. pefile is right about the header; OpenSSL is right about the DER. Only together do they say the thing that matters: the arsenal's own 'signed' fixture is not a signature, and an instrument reading only the header would never have noticed. That is what a second opinion is FOR, and it is not visible from either side alone.",
+      "consumes": {
+        "inputs": [
+          {
+            "name": "binary",
+            "type": "path_ref",
+            "required": true,
+            "note": "a Windows PE. The SECURITY directory stores a FILE OFFSET, not an RVA; this tool resolves it the same way native.pe.authenticode does and says so in its source rather than quietly agreeing with it."
+          }
+        ],
+        "prior": []
+      },
+      "produces": {
+        "facts": [
+          {
+            "key": "cert.win_header",
+            "type": "structure",
+            "note": "dwLength, wRevision, wCertificateType, revision_is_2_0, is_pkcs_signed_data, body_bytes. Measured on the fixture: dwLength 48, wRevision 0x200, wCertificateType 0x2, 40 body bytes."
+          },
+          {
+            "key": "cert.der_verdict",
+            "type": "verdict",
+            "note": "TRI-STATE, and the three states are not interchangeable. true = OpenSSL parsed the bytes as DER. false = OpenSSL rejected them and reason says why. null = there is no SECURITY directory, so there is nothing to verify. 'nothing to verify' and 'what is there is not valid' are different findings and MUST NOT share a value -- collapsing them is how an unsigned binary gets reported as a broken signature. Measured: null on c01-stringobf.exe, false on the fixture, with reason 'ASN1_get_object:too long'."
+          }
+        ]
+      },
+      "requires": {
+        "runtime": "python",
+        "net": "none",
+        "admin": false,
+        "device": false,
+        "disk_mb": 0,
+        "ram_mb": 256,
+        "wall_minutes": 0.2,
+        "tools": [
+          {
+            "name": "openssl",
+            "probe": "openssl version",
+            "expect": "OpenSSL"
+          },
+          {
+            "name": "pefile",
+            "probe": "python -c \"import pefile\"",
+            "expect": "exit 0"
+          }
+        ],
+        "install_note": "Both already present. Measured OpenSSL 3.5.7. No download, no build, no PATH change. Runs in well under a second against a fixture -- the cheapest capability in the arsenal, which is worth knowing because it makes this the natural second instrument to run whenever a first one reports something surprising."
+      },
+      "reach": {
+        "fs_read": true,
+        "fs_write": true,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": false,
+        "db_write": false,
+        "proc_spawn_note": "Declared because it invokes openssl.exe as a child. fs_write is also true and honestly so: it writes a temporary .der under the system temp directory and deletes it in a finally block, which is WHY write_scope is temp_dir and why escalation_class is owner_word rather than none.",
+        "write_scope": "temp_dir"
+      },
+      "proves": [
+        "THAT A SECOND INSTRUMENT CAN DISAGREE WITH THE FIRST AND BE RIGHT, measured on this repository's own artefact. native.pe.authenticode reads dwLength=48 / wRevision=0x200 / revision_is_2_0=true off the fixture and is not wrong; OpenSSL rejects the same 40 bytes with ASN1_get_object:too long and is not wrong either. The fixture's certificate is the ASCII string ARSENAL-FIXTURE-NOT-A-REAL-SIGNATURE.",
+        "THAT Q6.crypto HAS A SECOND FAMILY. Q6 measured 1 of 2 working, one instrument, one family, which is the state the independence gate exists to refuse. This entry carries certificate-verifier, a genuinely different question from reading the table."
+      ],
+      "does_not_prove": [
+        "THAT THESE TWO INSTRUMENTS ARE FULLY INDEPENDENT, AND THE MISSION'S OWN OUTPUT SAYS SO. Verified in a Q6 mission on 2026-10-02: independence PASSES with '2 capabilities across 2 instruments (openssl+pefile, pefile) carrying 2 distinct families'. Read that instrument list rather than the verdict: the two SHARE pefile. This entry uses pefile only to LOCATE the SECURITY directory; the DECISION is OpenSSL's DER decoder, which is a genuinely separate implementation and is where the disagreement with native.pe.authenticode actually comes from.\n\nThe shared part is not decorative. If pefile misread the DATA_DIRECTORY entry, both instruments would be wrong together and the second opinion would be worthless -- the independence gate counts instruments, and two instruments that share a locator are only as independent as that locator. It is recorded here rather than left to be discovered later, because a partial overlap that is written down is a limitation and the same overlap written down as '2 independent instruments' is a false claim.",
+        "THAT ANYTHING IS TRUSTED, SIGNED OR SAFE. ASN.1 PARSING IS NOT TRUST. der_parsed:true means the bytes are well-formed ASN.1 -- nothing here checks that the chain roots anywhere, that the digest matches the file, or that the signer is who it claims.",
+        "THAT A REAL SIGNATURE WAS REJECTED. What was rejected is a fixture whose payload SAYS it is not one. Rejecting it proves the instrument can tell DER from non-DER; it says nothing about a genuine signature, because this repository has no genuine signed binary to point it at.",
+        "ANYTHING ABOUT TRUST BOUNDARIES. Not a Q5 instrument and not offered as one.",
+        "THAT pefile IS WRONG. It is not. It reads a header and reports it accurately; this tool checks the layer below. Two instruments each being right is the whole mechanism, and collapsing either into 'the other one is broken' destroys it."
+      ],
+      "gate": {
+        "lane": "debug",
+        "requires_verdict": true,
+        "escalation_class": "owner_word",
+        "escalation_reason": "CORRECTED BY R6 AND R8, WHICH CAUGHT AN UNDER-DECLARATION. This entry was first written with escalation_class 'temp_write', a class that does not exist, and no write_scope at all -- so it looked identical to a capability that writes only into the case directory. It does not: it writes a .der into the system temp directory and deletes it in a finally block.\n\nThe rule's own comment is the reason this is owner_word and not none: 'writing anywhere else is not a runtime self-decision', and only case_dir write may be class none. Small and bounded is still outside the boundary, and the honest way to say so is the strict reading rather than the comfortable one. No instrument in the arsenal should choose to write outside its case directory without an Owner word, and if this one is ever run under a mission that is the grant that governs it."
+      },
+      "probe": {
+        "command": "python native-lab\\tools\\cert_verify.py %TEMP%\\signed-fixture.exe",
+        "expect": "\"der_parsed\": false",
+        "expect_exit": 0,
+        "last_run": "2026-10-02",
+        "run_log": "fixture: {ok:true, exit:0, security_offset:143872, win_certificate:{dwLength:48, wRevision:'0x200', wCertificateType:'0x2', revision_is_2_0:true, is_pkcs_signed_data:true, body_bytes:40}, der_parsed:false, verifiable:false, reason:'182B0000:error:0680009B:asn1 encoding routines:ASN1_get_object:too long:...'}, TRUE_EXIT=0.",
+        "prepare": "python headless-lab\\tools\\authenticode.py crackme-corpus\\out\\c01-stringobf.exe --make-control %TEMP%\\signed-fixture.exe   # the fixture is GENERATED, not committed",
+        "expect_note": "This is the one probe in the registry whose expectation is a REFUSAL, and that is the point rather than an embarrassment: the capability under test is 'can this tell DER from non-DER', and the fixture is a known non-DER body. If the fixture is ever replaced with a real signature this expectation must become true, and that is the correct time to notice."
+      },
+      "negative_control": {
+        "id": "native.signature.certverify.non_pe_refused",
+        "command": "python native-lab\\tools\\cert_verify.py README.md",
+        "expect_exit": 2,
+        "expect_output": "not a PE",
+        "measured": "README.md: {ok:false, exit:2, error:\"not a PE: 'DOS Header magic not found.'\"}, TRUE_EXIT=2.",
+        "expect_output_note": "The control is that it refuses a non-PE rather than returning 'no certificate found'. Those two answers are opposite: one says 'I could not look', the other says 'there is nothing there', and conflating them would let a parser bug read as a clean binary. A third path is separately verified and is the honest middle: a real unsigned PE gives {verifiable:null, reason:'no SECURITY directory'}, exit 0."
+      },
+      "provenance": {
+        "source": "measured on this station 2026-10-02 after Q6.crypto measured 1 of 2 working with a single family",
+        "record": "wiki/CHARTER-ARSENAL.md"
+      },
+      "evidence_source": "certificate-verifier",
+      "evidence_source_note": "A NEW FAMILY VALUE, and deliberately not structural-parser. pefile parses a PE IMAGE structure; this entry's subject is whether a byte range is valid ASN.1, decided by OpenSSL's decoder. Counting both as structural-parser would make Q6 report two instruments when it has one implementation and one reader, which is precisely the relabel escape R18 exists to stop.\n\nINSTRUMENT NOTE, because the mission reports this capability as 'openssl+pefile' and the honest reading is that the pefile half is shared with native.pe.authenticode. See does_not_prove[0].",
+      "invoke": {
+        "runner": "python",
+        "argv": [
+          "native-lab/tools/cert_verify.py",
+          "{target}"
+        ],
+        "stdout": "json",
+        "success_when": "parsed JSON with ok == true. der_parsed false is a SUCCESSFUL measurement of a negative -- the instrument ran and reported. exit 2 is a non-PE.",
+        "fact_map": {
+          "win_certificate": "cert.win_header",
+          "verifiable": "cert.der_verdict"
+        },
+        "fact_map_note": "verifiable is tri-state on purpose and the fact map forwards the KEY, so null, true and false all travel. A wrapper that mapped only the true case would report an unsigned binary as though the check had been skipped, which is the always-green shape."
+      },
+      "root_reason": "A genuine root: it is handed a PE path and answers a question about the certificate bytes, and nothing upstream produces a DER verdict. Its subject is the same file native.pe.authenticode reads, but the fact is a different question about a different layer, which is why the absence of a typed edge to it is a decision and not an oversight."
     }
   ]
 }

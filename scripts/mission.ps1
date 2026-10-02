@@ -2186,8 +2186,15 @@ function Invoke-Selftest {
             if (@($c.question_types) -contains 'Q6.crypto') { $c.question_types = @('Q4.data'); $n++ }
         }
         $mut = @(Get-Route -Registry $m -QuestionType 'Q6.crypto').steps.Count
-        "live=$(if ($live) { 'routed' } else { 'empty' }) undeclared=$(if ($mut) { 'routed' } else { 'empty' }) (n=$n)"
-    } 'live=routed undeclared=empty (n=2)'
+        # NO (n=$n) IN THE EXPECTATION, AND THAT IS THE SECOND TIME. The comment above already
+        # records this failure: a previous fix updated n=1 to n=2 when native.pe.authenticode
+        # declared Q6, which fixed the symptom and left the cause. Adding
+        # native.signature.certverify broke it again. The count is incidental to the behaviour
+        # under test -- the routing either empties when a question type is undeclared or it does
+        # not -- and pinning it means this test fails every single time the arsenal grows, for a
+        # reason that has nothing to do with routing.
+        "live=$(if ($live) { 'routed' } else { 'empty' }) undeclared=$(if ($mut) { 'routed' } else { 'empty' })"
+    } 'live=routed undeclared=empty'
 
     C 'route: a question type whose only capability is absent refuses and names it' {
         # EVERY capability declaring Q6.crypto is made absent, not just crypto.jose.parse.
@@ -2204,8 +2211,10 @@ function Invoke-Selftest {
         }
         $r = Get-Route -Registry $m -QuestionType 'Q6.crypto'
         $msg = Get-RouteRefusal -Route $r
-        "steps=$(@($r.steps).Count) names=$($msg -match 'jose\.parse') exit-would-be=2 (n=$n)"
-    } 'steps=0 names=True exit-would-be=2 (n=2)'
+        # Same registry-size pin removed here for the same reason: steps=0 and names=True are the
+        # behaviour, and the count of candidates is not. See the note above.
+        "steps=$(@($r.steps).Count) names=$($msg -match 'jose\.parse') exit-would-be=2"
+    } 'steps=0 names=True exit-would-be=2'
 
     C 'route: a hard edge puts its producer ahead of the consumer, and says which fact' {
         # Q3.behaviour names `native.ida.decompile`; that capability's runner binds
