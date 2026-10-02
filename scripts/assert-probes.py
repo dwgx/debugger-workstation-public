@@ -26,6 +26,44 @@ REGISTRY CLEAN. They were found only because somebody ran the strings.
 
     python scripts/assert-probes.py                 # every capability whose probe is safe here
     python scripts/assert-probes.py native.pe.packer native.pe.container
+
+    python scripts/assert-probes.py --require-produces   # sweep mode: every entry that runs
+                                                          # must name the bytes its probe leaves
+
+WHAT probe.produces IS, AND WHY IT HAD TO BE ADDED. Everything below compares STRINGS, and a
+two-line stub that prints the recorded `probe.expect` and exits 0 satisfies every comparison
+this script makes -- which is exactly what the OK verdict used to admit in its own last
+sentence. No better string fixes that; a stub can be handed any string. The fix is a check that
+does not read the output at all: a check on the FILE SYSTEM. `probe.produces` names a path or
+glob the probe RUN must leave behind -- repo-relative or absolute, `%VAR%` and `$env:VAR`
+expanded, `**` honoured. After the run the pattern is resolved:
+
+  matches nothing                       -> DRIFT, naming the glob and the command
+  matches, but every file BYTE-IDENTICAL before and after this run -> DRIFT
+  matches and at least one file CHANGED during this run -> every matched file's sha256 goes
+                                                    into the evidence log beside the command, so
+                                                    the artifact is hashable by the next window
+
+Freshness is what makes this a check rather than a formality, and it is measured in BYTES, not
+seconds. The checker hashes every declared path before launching the probe and again after, and
+counts a file as produced only if its size, mtime or content changed. Existence alone would be
+worthless: one honest green run leaves a file behind and every stub run afterwards inherits it.
+A time window was implemented first and MEASURED WRONG -- with 4 seconds of slack, the real
+capability's own artifact, written 0.4 s earlier in the same sweep, satisfied the stub's check and
+both capabilities came back OK. Comparing identities has no window to tune and no race to lose.
+
+An entry that declares nothing is UNAFFECTED, so the default sweep stays backward compatible and
+such an entry simply receives the weaker OK verdict, which says in its own words that only
+strings were matched. `--require-produces` makes the declaration itself the requirement for every
+entry that runs, which is how a NEW entry is held to the stronger standard without retro-fitting
+every old one in the same commit.
+
+WHAT IS STILL NOT PROVEN WHEN PRODUCES PASSES. That a file appeared and that its bytes changed
+during this run. NOT that the bytes are correct, NOT that the number inside them is right, and
+NOT that the instrument a caller reaches in anger is the one that ran here. An instrument that
+writes the right bytes for the wrong reason would still pass, and a hash buys tamper-evidence
+after the fact, not correctness at the moment of writing.
+
     python scripts/assert-probes.py --list          # ids only, run nothing
 
 WHAT IT DELIBERATELY DOES NOT DO. It does not fix anything, and it does not rewrite a string
@@ -44,6 +82,8 @@ not a zero.
 from __future__ import annotations
 
 import argparse
+import glob as globmod
+import hashlib
 import json
 import os
 import re
@@ -80,9 +120,34 @@ TIMEOUT_RC = -1          # what run() returns when subprocess.TimeoutExpired fir
 # contain. A retained file is the smallest thing that makes that binding real.
 EVIDENCE_DIR: "pathlib.Path | None" = None
 
+# `--require-produces` makes the sweep DEMAND `probe.produces` from every entry that runs. It is
+# the whole-sweep form of the same check: a capability that declares nothing has told this
+# script which strings to look for and nothing about which bytes it must leave, so with the flag
+# on, silence about produces is itself the finding. Off by default, because turning it on against
+# today's registry would report 21 DRIFT for a missing annotation rather than for a broken claim.
+REQUIRE_PRODUCES = False
 
-def save_evidence(cid: str, kind: str, cmd: str, rc: int, secs: float, blob: str) -> None:
-    """Write one run's output verbatim, with enough header to re-run it."""
+# Freshness is decided by IDENTITY, not by a clock. The checker records (size, mtime_ns, sha256)
+# for every matched file BEFORE launching the probe and compares after it returns; a file counts
+# as produced only if one of those three changed. A time window was tried first and measured
+# wrong: with a 4-second slack the real capability's own artifact -- written 0.4 s earlier in the
+# same sweep -- satisfied the STUB's check, and both capabilities came back OK. Two green
+# verdicts from one real run and one stub is precisely the defect this file exists to close, so
+# the window had to go rather than be narrowed. A hash is more expensive than an mtime and buys
+# the thing that matters: a file rewritten with identical bytes is still not a fresh observation
+# of an instrument, while a file rewritten with different bytes is, whatever the clock says.
+
+
+def save_evidence(cid: str, kind: str, cmd: str, rc: int, secs: float, blob: str,
+                 artifacts: "list[tuple[Path, bool]] | None" = None) -> None:
+    """Write one run's output verbatim, with enough header to re-run it.
+
+    `artifacts` are the (path, written-by-this-run) pairs the produces check resolved. They are
+    hashed HERE, in the evidence log, next to the command that made them -- so the log is a
+    complete record on its own: what ran, what it printed, and what bytes it left behind with
+    their sha256. A log that names a command and its stdout but not its artifact still cannot be
+    re-verified by a later window, which is the entire point of retaining it.
+    """
     if EVIDENCE_DIR is None:
         return
     EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
@@ -91,9 +156,154 @@ def save_evidence(cid: str, kind: str, cmd: str, rc: int, secs: float, blob: str
             f"# exit: {rc}\n"
             f"# seconds: {secs:.2f}\n"
             f"# captured by: python scripts/assert-probes.py --save-evidence <dir>\n"
-            f"# re-run the command above; this file is OUTPUT, not a claim about it.\n"
-            f"{'-' * 72}\n")
+            f"# re-run the command above; this file is OUTPUT, not a claim about it.\n")
+    for path, fresh in (artifacts or []):
+        try:
+            digest = sha256_of(path)
+        except OSError as e:
+            head += f"# produces: {path} UNREADABLE ({e})\n"
+            continue
+        head += (f"# produces: {path}\n"
+                 f"#   sha256: {digest}\n"
+                 f"#   bytes: {path.stat().st_size}\n"
+                 f"#   written-by-this-run: {'yes' if fresh else 'NO -- pre-existing'}\n")
+    head += f"{'-' * 72}\n"
     (EVIDENCE_DIR / f"{cid}.{kind}.log").write_text(head + blob, encoding="utf-8")
+
+
+def sha256_of(path: Path) -> str:
+    """Hash a file in chunks. A probe artifact can be hundreds of MB and must not be slurped."""
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def expand_produces(pat: str) -> str:
+    """Resolve one `probe.produces` value to a glob this machine can actually match.
+
+    A registry that names `%TEMP%\\signed-fixture.exe` is naming a real place, not a template --
+    the commands beside it already use `$env:TEMP`, so the same spelling has to work here or the
+    declaration is unmatchable on the only platform it was written for.
+    """
+    p = os.path.expandvars(pat.strip().strip('"'))
+    p = re.sub(r"\$\{env:([A-Za-z_][A-Za-z0-9_]*)\}",
+               lambda m: os.environ.get(m.group(1), m.group(0)), p)
+    p = re.sub(r"\$env:([A-Za-z_][A-Za-z0-9_]*)",
+               lambda m: os.environ.get(m.group(1), m.group(0)), p)
+    return p
+
+
+def produces_specs(probe: dict) -> list[str]:
+    """`probe.produces` as a list, whether the registry wrote one string or several."""
+    spec = probe.get("produces")
+    if spec is None:
+        return []
+    return [str(s) for s in ([spec] if isinstance(spec, str) else spec) if str(s).strip()]
+
+
+def resolve_produces(spec: str) -> list[Path]:
+    """Every existing file the `probe.produces` glob names, repo-relative or absolute.
+
+    Directories are excluded on purpose: a glob like `fuzz-lab/out/**` matching the directory
+    `fuzz-lab/out` itself is not evidence that anything was produced inside it, and a checker that
+    counted it would pass on an empty output directory.
+    """
+    pat = expand_produces(spec)
+    # A bare path with no magic must not be globbed away: glob() returns [] for a literal
+    # path that does not exist, which is the answer we want, but it also returns [] for one that
+    # does -- so the literal branch is only about reporting a clearer "no such file" downstream.
+    if not globmod.has_magic(pat):
+        cand = Path(pat)
+        if not cand.is_absolute():
+            cand = REPO / cand
+        return [cand] if cand.is_file() else []
+    base = pat if Path(pat).is_absolute() else str(REPO / pat)
+    # recursive=True is what makes `**` cross directory levels; without it `**` behaves as `*`.
+    hits = [Path(m) for m in globmod.glob(base, recursive=True)]
+    return sorted({p for p in hits if p.is_file()})
+
+
+def snapshot_produces(specs: list[str]) -> dict[Path, tuple[int, int, str]]:
+    """The identity of every file `specs` names RIGHT NOW: (size, mtime_ns, sha256).
+
+    Taken before the probe is launched so the comparison afterwards can distinguish "this run wrote
+    it" from "it was already there", which is the entire difference between an instrument and a
+    stub that prints the recorded strings.
+    """
+    snap: dict[Path, tuple[int, int, str]] = {}
+    for spec in specs:
+        for p in resolve_produces(spec):
+            if p in snap:
+                continue
+            try:
+                st = p.stat()
+                snap[p] = (st.st_size, st.st_mtime_ns, sha256_of(p))
+            except OSError:
+                continue
+    return snap
+
+
+def check_produces(cid: str, specs: list[str], cmd: str,
+                   before: dict[Path, tuple[int, int, str]]
+                   ) -> tuple[str, list[tuple[str, str]], dict[Path, tuple[int, int, str]]]:
+    """Did this run leave the bytes it declared? Returns (state, verdicts-to-add, after-map).
+
+    `state` is "unclaimed" (the entry declares nothing), "fresh" (at least one declared file's
+    identity CHANGED across the run) or "stale" (the paths exist but none of them was touched).
+    The fresh/stale split is the whole mechanism: a stub printing the recorded strings satisfies
+    every comparison in check() and still leaves the filesystem exactly as it found it, so
+    "stale" is the verdict that finally separates an instrument from a two-line `echo`.
+
+    The after-map comes back so the caller can write the evidence log from it instead of hashing
+    the same artifact a third time. A probe artifact can be hundreds of megabytes; reading it
+    three times to answer one question is a cost the mechanism does not need to pay.
+    """
+    if not specs:
+        return "unclaimed", [], {}
+    after = snapshot_produces(specs)
+
+    out: list[tuple[str, str]] = []
+    fresh: list[Path] = []
+    stale: list[Path] = []
+    for one in specs:
+        hits = resolve_produces(one)
+        if not hits:
+            out.append(("DRIFT",
+                        f"{cid} PRODUCES: {one!r} matched NO FILE after the run, so the command "
+                        f"above either never ran or ran without writing what it declared. This "
+                        f"is the check a string matcher cannot do: a stub which prints the "
+                        f"recorded expect strings passes every comparison above and still leaves "
+                        f"the filesystem untouched, because nothing that only reads stdout can "
+                        f"account for bytes. Check the glob against the instrument's real output "
+                        f"path. :: {cmd[:60]}"))
+            continue
+        for p in hits:
+            (fresh if before.get(p) != after.get(p) else stale).append(p)
+    if not out and fresh and not stale:
+        return "fresh", [], after
+    if not out and fresh:
+        # A mixed result is still a finding: something was written, but part of the declaration
+        # was already on disk, so the glob is too wide to be evidence of this run alone.
+        names = ", ".join(str(p) for p in stale[:4])
+        out.append(("DRIFT",
+                    f"{cid} PRODUCES: {len(fresh)} of the declared file(s) changed during this "
+                    f"run, but {len(stale)} were byte-identical before and after: {names}. Either "
+                    f"the glob is too wide or the instrument stopped producing part of what it "
+                    f"declares."))
+        return "fresh", out, after
+    if not out and stale:
+        names = ", ".join(str(p) for p in stale[:4])
+        out.append(("DRIFT",
+                    f"{cid} PRODUCES: {specs!r} matched {len(stale)} existing file(s) -- "
+                    f"{names} -- and every one of them is BYTE-IDENTICAL before and after this "
+                    f"run. This is the verdict a string matcher cannot reach: a stub which prints "
+                    f"the recorded expect strings satisfies every comparison above and leaves the "
+                    f"filesystem exactly as it found it, so the path existing proves nothing. "
+                    f"Compare the bytes, not the presence."))
+        return "stale", out, after
+    return ("fresh" if fresh else "stale"), out, after
 
 
 def load() -> list[dict]:
@@ -198,12 +408,23 @@ def check(cap: dict, timeout: int) -> list[tuple[str, str]]:
     # port 8791 is held by ANOTHER of the Owner's projects, so without this the checker
     # reports a DRIFT on every run for a reason that is not the registry's. A checker that
     # cries wolf gets switched off, so teaching it to set the variable is the fix.
+    # Snapshot the declared artifacts BEFORE launching the probe. What the probe writes is then
+    # whatever differs between these two maps, which is a question about bytes rather than about
+    # the clock -- see the note above on freshness for why the clock version was measured wrong.
+    specs = produces_specs(probe)
+    before = snapshot_produces(specs)
     rc, blob, secs = run(cmd, timeout, (probe.get("env") or None))
-    save_evidence(cid, "probe", cmd, rc, secs, blob)
+    pstate, pverdicts, after = check_produces(cid, specs, cmd, before)
+    artifacts = [(p, before.get(p) != after.get(p)) for p in sorted(after)]
+    save_evidence(cid, "probe", cmd, rc, secs, blob, artifacts)
     fault = tool_fault(rc, blob, secs)
     if fault:
         out.append(("TOOL-FAULT", f"{cid} PROBE {fault} :: {cmd[:60]}"))
     else:
+        # The produces verdicts land BEFORE the string ones on purpose. The strings are exactly
+        # what a stub can fake, so when both fail the reader meets the filesystem evidence first
+        # and forms the more serious hypothesis first.
+        out.extend(pverdicts)
         want_exit = probe.get("expect_exit")
         if want_exit is not None and rc != want_exit:
             out.append(("DRIFT", f"{cid} PROBE exit: recorded expect_exit={want_exit}, real={rc} "
@@ -238,7 +459,19 @@ def check(cap: dict, timeout: int) -> list[tuple[str, str]]:
     nc = cap.get("negative_control") or {}
     ccmd = (nc.get("command") or "").strip()
     if not ccmd or prose(ccmd):
+        # NOT a bare `return out`. This early exit meant a capability whose negative control is a
+        # plan -- an empty command -- produced NO verdict at all, so the run printed
+        # "1 checked, ." with the SKIP as its only line. That is the same "checked nothing and
+        # looked fine" shape the floor exists to prevent, wearing a SKIP instead of a dot.
+        # Found by fuzz.differential.parse, the one entry with an empty negative_control.command.
+        probe_said_something = bool(out)
         out.append(("SKIP", f"{cid} CONTROL: not executable ({ccmd[:50]!r})"))
+        if not probe_said_something:
+            out.append(("OK", f"{cid}: every comparison this entry declares matched, and it "
+                              f"declares no EXECUTABLE negative control, so nothing about its "
+                              f"control was compared at all -- the SKIP above is the whole of it. "
+                              f"PROVEN: the probe's own comparisons held. NOT PROVEN: that the "
+                              f"instrument ran, or that the capability refuses anything."))
         return out
 
     crc, cblob, csecs = run(ccmd, timeout, (nc.get("env") or None))
@@ -270,14 +503,43 @@ def check(cap: dict, timeout: int) -> list[tuple[str, str]]:
     # while deleting THIS one turned the run red. Two floors, one of them dead, is zero floors
     # plus one: the same lesson mission.ps1's tombstone records the same day.
     #
-    # The verdict says only what was compared. Four capabilities declare no `probe.expect_exit`,
-    # so for those "exit matched" would be a claim about nothing; this text is true for all of
-    # them, and it still refuses to claim the instrument ran.
+    if REQUIRE_PRODUCES and pstate == "unclaimed":
+        out.append(("DRIFT",
+                    f"{cid} PRODUCES: --require-produces is on and this entry declares no "
+                    f"probe.produces, so its verdict is STRINGS ONLY. Everything that can be "
+                    f"faked by a two-line script is all that was checked: name the file or glob "
+                    f"the probe run leaves behind and this entry becomes falsifiable."))
+    #
+    # The verdict says only what was compared, and now also only what the FILE SYSTEM showed.
+    # Four capabilities declare no `probe.expect_exit`, so for those "exit matched" would be a
+    # claim about nothing; the text below is true for all of them either way.
+    #
+    # The two OK texts are the difference this whole change exists to make, so they must not be
+    # collapsed into one lenient sentence. `pstate == "fresh"` means bytes were written by this
+    # run and hashed into the evidence log; `unclaimed` means the entry never asked, and saying
+    # so in the verdict is what stops the green from being read as stronger than it is.
     if not out:
-        out.append(("OK", f"{cid}: every comparison this entry declares matched -- probe.expect "
-                          f"substring, control expect_exit, control expect_output. NOT a claim "
-                          f"that the instrument ran: this checker matches strings, and a stub "
-                          f"which prints them satisfies it."))
+        if pstate == "fresh":
+            out.append(("OK", f"{cid}: every comparison this entry declares matched -- probe."
+                              f"expect substring, control expect_exit, control expect_output -- "
+                              f"AND probe.produces {produces_specs(probe)!r} matched a file this "
+                              f"run WROTE, whose sha256 is in the evidence log beside the "
+                              f"command. PROVEN: those strings were printed AND those bytes "
+                              f"landed on disk during this run. NOT PROVEN: that the bytes are "
+                              f"correct, that the number inside them is right, or that the "
+                              f"instrument a caller reaches in anger is the one that ran here."))
+        elif pstate == "stale":
+            # Unreachable while check_produces emits its own DRIFT for "stale"; kept so that a
+            # future edit to that function cannot silently turn a stale artifact into an OK.
+            out.append(("OK", f"{cid}: string comparisons matched and the declared artifact "
+                              f"exists, but this verdict proves nothing about the run."))
+        else:
+            out.append(("OK", f"{cid}: every comparison this entry declares matched -- probe."
+                              f"expect substring, control expect_exit, control expect_output. "
+                              f"NOT a claim that the instrument ran: this entry declares no "
+                              f"probe.produces, so this checker matched STRINGS only, and a "
+                              f"stub which prints them satisfies it. Name the artifact the probe "
+                              f"leaves and this verdict becomes falsifiable."))
     return out
 
 
@@ -288,9 +550,14 @@ def main() -> int:
     ap.add_argument("--list", action="store_true", help="show what would run, run nothing")
     ap.add_argument("--save-evidence", metavar="DIR", default=None,
                     help="write each probe's and control's REAL output to DIR/<id>.<kind>.log")
+    ap.add_argument("--require-produces", action="store_true",
+                    help="require every entry that runs to declare probe.produces, and to leave a "
+                         "file this run wrote. Off by default: an entry without the field is "
+                         "unaffected, it just gets the weaker OK verdict that admits it.")
     args = ap.parse_args()
+    global EVIDENCE_DIR, REQUIRE_PRODUCES
+    REQUIRE_PRODUCES = args.require_produces
     if args.save_evidence:
-        global EVIDENCE_DIR
         EVIDENCE_DIR = Path(args.save_evidence)
         if not EVIDENCE_DIR.is_absolute():
             EVIDENCE_DIR = REPO / EVIDENCE_DIR

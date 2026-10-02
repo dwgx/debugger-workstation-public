@@ -1,0 +1,14 @@
+# assert-probes evidence: net.pcap.analyse control
+# command: node net-reverse/tools/pcap-lab.mjs ask --pcap dns-txt.pcap --question dns-a-record
+# exit: 3
+# seconds: 0.58
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+Q: What IPv4 address does lab.example.test resolve to?
+   capture  dns-txt.pcap
+   method   field extraction (-e dns.a under the dns display filter)
+   command  tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\dns-txt.pcap -Y dns.a -T fields -e dns.a
+   observed 203.0.113.99
+   guarantee  lab.example.test resolves to A 203.0.113.7 (TTL 300)
+   verdict  NOT FOUND

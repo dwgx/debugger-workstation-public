@@ -1,9 +1,13 @@
 # assert-probes evidence: native.ghidra.decompile probe
 # command: powershell -File scripts\ghidra-failopen-regress.ps1
 # exit: 0
-# seconds: 29.15
+# seconds: 35.62
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
+# produces: %USERPROFILE%\AppData\Local\Temp\gh-regress-good\summary.json
+#   sha256: 363f9e5d7e744734a6de61bdc29abb865a48738818453cfb11d49ecbf8985396
+#   bytes: 183
+#   written-by-this-run: yes
 ------------------------------------------------------------------------
 ================================================================================================
 ghidra-headless fail-open regression -- exit code must not be able to mean success
@@ -17,5 +21,5 @@ ghidra-headless fail-open regression -- exit code must not be able to mean succe
 ================================================================================================
 LOOP CLOSED: a failed import can no longer be reported as exit 0.
 JSON-SUMMARY {"pass":4,"fail":0,"total":4}
-GHIDRA "D:\Software\Tool\WorkStation\debugger\Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\support\analyzeHeadless.bat" %USERPROFILE%\AppData\Local\Temp\ghidra-proj-77fe71c19e0c4ec9a554b30f77036d5d agent -import %USERPROFILE%\AppData\Local\Temp\gh-regress-notabinary.txt -overwrite -scriptPath D:\Software\Tool\WorkStation\debugger\scripts\ghidra -deleteProject -postScript ExportDecompile.java %USERPROFILE%\AppData\Local\Temp\gh-regress-bad
-GHIDRA "D:\Software\Tool\WorkStation\debugger\Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\support\analyzeHeadless.bat" %USERPROFILE%\AppData\Local\Temp\ghidra-proj-7a3725f576f94f53a5c36e67f7a2faab agent -import D:\Software\Tool\WorkStation\debugger\crackme-corpus\out\c01-stringobf.exe -overwrite -scriptPath D:\Software\Tool\WorkStation\debugger\scripts\ghidra -deleteProject -postScript ExportDecompile.java %USERPROFILE%\AppData\Local\Temp\gh-regress-good
+GHIDRA "D:\Software\Tool\WorkStation\debugger\Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\support\analyzeHeadless.bat" %USERPROFILE%\AppData\Local\Temp\ghidra-proj-b12b1e69070f4f68aa20d08f3cc5366f agent -import %USERPROFILE%\AppData\Local\Temp\gh-regress-notabinary.txt -overwrite -scriptPath D:\Software\Tool\WorkStation\debugger\scripts\ghidra -deleteProject -postScript ExportDecompile.java %USERPROFILE%\AppData\Local\Temp\gh-regress-bad
+GHIDRA "D:\Software\Tool\WorkStation\debugger\Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\support\analyzeHeadless.bat" %USERPROFILE%\AppData\Local\Temp\ghidra-proj-39d058325136463e8657a69654f2d943 agent -import D:\Software\Tool\WorkStation\debugger\crackme-corpus\out\c01-stringobf.exe -overwrite -scriptPath D:\Software\Tool\WorkStation\debugger\scripts\ghidra -deleteProject -postScript ExportDecompile.java %USERPROFILE%\AppData\Local\Temp\gh-regress-good
