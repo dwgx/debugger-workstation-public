@@ -12,7 +12,8 @@
     },
     "baseline": {
       "capability_count": 24,
-      "note": "The validator pins this count. A capability may only leave capabilities[] by appearing in retired[] with a reason, because deleting an island used to make the registry validate CLEANER rather than louder."
+      "note": "The validator pins this count. A capability may only leave capabilities[] by appearing in retired[] with a reason, because deleting an island used to make the registry validate CLEANER rather than louder.",
+      "note_unused_fact_types": "MEASURED 2026-10-02, and it corrects a natural misreading. A query for declared fact types produced by no capability returns four: apk, pcap, token, evidence_source. The first three look like dead declarations, and it is tempting to conclude the three matching capabilities (mobile.apk.static, net.pcap.analyse, crypto.jose.parse) do not declare what they produce. They DO -- all three declare their facts, and all three now carry an invoke. The types are unused because the capabilities declaring them have never RUN IN A MISSION, not because their output is unspecified. evidence_source is a different thing entirely: it is a capability attribute used to count independent instruments, not an artifact any capability emits, so it must never be counted here."
     },
     "retired": [],
     "evidence_families": {
