@@ -213,6 +213,35 @@ def overlaps(a: tuple[int, ...], b: tuple[int, ...]) -> bool:
     return a[0] < b[1] and b[0] < a[1]
 
 
+# Text that is a property of THIS MACHINE rather than of the tool. An expectation quoting it is
+# correct here and wrong on the next box, which no same-host differential can detect -- it does
+# not vary here, it varies somewhere this script has never run. Reported, never refused.
+#
+# Each pattern is anchored on something that has to be there for the reading to be right, so this
+# is not a keyword list: 'C:\Users\...' is a path because it starts with a drive and contains a
+# user directory, and `%TEMP%`/`$env:` are unexpanded CMD/PowerShell tokens wherever they appear.
+HOST_SPECIFIC_PATTERNS = [
+    (re.compile(r"[A-Za-z]:\\Users\\[^\\\s]+"), "absolute path containing a user profile"),
+    (re.compile(r"[A-Za-z]:\\Program Files", re.IGNORECASE), "absolute Program Files path"),
+    (re.compile(r"%[A-Za-z_]+%|\$env:[A-Za-z_]+"), "unexpanded environment token"),
+    (re.compile(r"\bMemory:\s*\d+\s*MB", re.IGNORECASE), "physical memory size"),
+    (re.compile(r"\b0x[0-9a-fA-F]{8,}\b"), "long hex value (image base or address)"),
+    (re.compile(r"\bsha256:[0-9a-f]{8,}"), "content hash prefix"),
+]
+
+
+def host_specific(literals: list[str]) -> str:
+    """Name the host-bound spans an expectation quotes. A report, never a refusal."""
+    hits = []
+    for lit in literals:
+        for rx, why in HOST_SPECIFIC_PATTERNS:
+            m = rx.search(lit)
+            if m:
+                hits.append(f"{m.group(0)[:40]!r} ({why})")
+    return "; ".join(dict.fromkeys(hits))
+
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--verbose", action="store_true")
@@ -226,9 +255,6 @@ def main() -> int:
                          "proven against without editing the real one.")
     ap.add_argument("--only", action="append", default=[], metavar="CAP_ID",
                     help="check only these capability ids (repeatable)")
-    ap.add_argument("--quiet-ok", action="store_true",
-                    help="print only rows that are not OK; used by the fixture proof so the signal "
-                         "is not buried under 26 passing entries")
     args = ap.parse_args()
     args.repeats = max(2, args.repeats)
 
@@ -271,18 +297,28 @@ def main() -> int:
                      f"so running its probe would be checking a contradiction")
                 continue
 
-            # Run the SAME probe N times and keep every output. One run cannot show volatility;
-            # it can only show a match, and a match is exactly what a volatile expectation gives
-            # too. The repeat is the whole measurement.
+            # Run the SAME probe until there are `repeats` SUCCESSFUL runs, keeping every output.
+            # One run cannot show volatility; it can only show a match, and a match is exactly
+            # what a volatile expectation gives too. The repeat is the whole measurement.
             #
             # A run that never reached the probe is DISCARDED, not diffed and not reported as a
             # registry defect: this box runs several agents at once, and a starved PowerShell
             # fails at startup with an exit code no registry entry could ever have caused.
+            #
+            # THE DISCARD MUST NOT SHRINK N. Discarding is a filter, and a filter that quietly
+            # hands back fewer samples than were asked for turns 'eight runs, two of them real'
+            # into a verdict about eight. That is the vacuous diff this script refuses to accept
+            # at N=1, arriving by the back door. So: keep collecting to a CEILING of 3N attempts,
+            # and if N successes were not reached, say TOOL-FAULT with the discarded runs named.
+            # Never 'stable', never 'no difference observed' -- those words require N samples.
+            ceiling = args.repeats * 3
             runs: list[tuple[int, str]] = []
             host_faults: list[str] = []
             fault: tuple[int, str] | None = None
-            for k in range(args.repeats):
-                shell, script = as_powershell(probe, f"{name}_{k}")
+            attempts = 0
+            while len(runs) < args.repeats and attempts < ceiling:
+                attempts += 1
+                shell, script = as_powershell(probe, f"{name}_{attempts}")
                 try:
                     rc, blob = run_probe(shell, args.timeout)
                 finally:
@@ -293,15 +329,25 @@ def main() -> int:
                 if rc < 0:
                     fault = (rc, blob)
                     break
-                if HOST_FAULT_RE.search(blob) or rc in HOST_FAULT_EXITS:
-                    host_faults.append(f"run{k} rc={rc}: {blob.strip()[:90]}")
+                sig = HOST_FAULT_RE.search(blob)
+                if sig or rc in HOST_FAULT_EXITS:
+                    # Record WHICH signature and WHICH exit code, so a reader can disagree with
+                    # the classification instead of taking it on faith. This is the one place
+                    # the script trusts a pattern rather than a measurement, so it is also the
+                    # one place the pattern is printed in full.
+                    why = (f"matched signature {sig.group(0)[:70]!r}" if sig
+                           else f"exit {rc} is in HOST_FAULT_EXITS")
+                    host_faults.append(f"attempt{attempts} rc={rc}: {why}")
                     continue
                 runs.append((rc, blob))
-            if fault is None and len(runs) < 2 and host_faults:
-                fault = (-3, "; ".join(host_faults))
+            if fault is None and len(runs) < args.repeats:
+                fault = (-3, f"{len(host_faults)} of {attempts} attempts discarded: "
+                             + " | ".join(host_faults[:6]))
 
             rec: dict = {"id": c["id"], "tool": name, "probe": probe, "expect": expect,
-                         "repeats_requested": args.repeats, "runs_completed": len(runs),
+                         "repeats_requested": args.repeats, "attempts": attempts,
+                         "attempt_ceiling": ceiling,
+                         "runs_completed": len(runs),
                          "exits": sorted({r for r, _ in runs})}
             if host_faults:
                 # Real runs exist, so the comparison is still meaningful; say what was dropped
@@ -317,10 +363,12 @@ def main() -> int:
                          f"not the registry's. A truncated run is not evidence.", rec)
                 elif frc == -3:
                     emit(c["id"], name, "TOOL-FAULT",
-                         f"only {len(runs)} of {args.repeats} runs reached the probe; the rest "
-                         f"failed BEFORE executing it -- this box was short of memory or the shell "
-                         f"could not start. THIS SCRIPT'S PROBLEM, not the registry's, and not "
-                         f"evidence that anything is volatile: {fblob[:200]}", rec)
+                         f"reached only {len(runs)} usable run(s) of the {args.repeats} asked for, "
+                         f"within a ceiling of {ceiling} attempts. THIS SCRIPT'S PROBLEM, not the "
+                         f"registry's -- these runs failed BEFORE executing the probe, so they "
+                         f"are not evidence that anything is or is not volatile. Refusing to "
+                         f"answer is the honest result: a verdict here would rest on fewer "
+                         f"samples than it claims. Discards: {fblob[:300]}", rec)
                 else:
                     emit(c["id"], name, "TOOL-FAULT", fblob.strip()[:120], rec)
                 continue
@@ -425,7 +473,7 @@ def main() -> int:
                      if tg == "volatile"
                      and not any(overlaps(sp, regions[k]) for sp in spans)]
             if stale:
-                wy, k = stale[0]
+                wy, _k = stale[0]
                 emit(c["id"], name, "VOLATILE-UNJUSTIFIED",
                      f"expect marks {{{wy}}} as volatile, and across {len(runs)} runs of the same "
                      f"probe that region never moved. A volatility claim nothing observed is "
@@ -438,15 +486,18 @@ def main() -> int:
                 f"{tg}:{wy} [{'measured moving' if any(overlaps(sp, regions[k]) for sp in spans)
                           else 'no difference observed'}]"
                 for k, (tg, wy) in enumerate(markers))
+            # A REPORTED note, never a verdict. Host-specific text cannot be detected from one
+            # host by definition -- it does not vary here, it varies on a box that is not this
+            # one -- so refusing it would refuse correct entries for a difference they cannot
+            # exhibit. Naming it costs nothing and lets a reader judge the next host.
+            hs = host_specific(literals)
+            if hs:
+                note = (note + "; " if note else "") + f"HOST-SPECIFIC, not refused: {hs}"
             emit(c["id"], name, "OK", note, rec)
 
-    # Counts come from every row; only the PRINTING is filtered, so --quiet-ok cannot make the
-    # summary line under-report what it just decided.
-    shown = [r for r in rows
-             if not (args.quiet_ok and r[2] in ("OK", "SKIP", "UNDECLARED-UNVERIFIABLE"))]
     widths = (max(len(r[1]) for r in rows) if rows else 8,
               max(len(r[2]) for r in rows) if rows else 8)
-    for cid, name, verdict, detail in shown:
+    for cid, name, verdict, detail in rows:
         print(f"  {verdict:<{widths[1]}}  {name:<{widths[0]}}  {cid}")
         if detail and (args.verbose or verdict not in ("OK", "SKIP", "UNDECLARED-UNVERIFIABLE")):
             print(f"      {detail}")
