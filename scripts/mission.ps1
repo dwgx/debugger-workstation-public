@@ -183,6 +183,22 @@ function Get-ArgvSlots {
     return @($slots)
 }
 
+function Get-BudgetDropped {
+    <#
+      WHICH planned steps a round budget never reaches, by id. Extracted 2026-10-03 so a
+      control can fire at it: the first version of this was three lines inline inside the round
+      loop, which by construction no selftest could reach -- a rule nobody can run is not a
+      rule. Steps already skipped for another reason are NOT counted as dropped: the plan
+      already says why they did not run, and listing them twice would double-count one absence.
+    #>
+    param($Planned, [int]$Round, [int]$MaxRounds)
+    if ($Round -lt $MaxRounds) { return @() }
+    if (-not $Planned -or $Planned.Count -le $Round) { return @() }
+    return @($Planned[$Round..($Planned.Count - 1)] |
+             Where-Object { $_.state -eq 'planned' } |
+             ForEach-Object { $_.id })
+}
+
 function Get-CapabilityEdges {
     <#
       One capability's declared consumed facts, each classified HARD or SOFT. This
@@ -907,8 +923,23 @@ function Invoke-Mission {
     $round = 0
 
     $regStale = $false
+    $dropped = @()      # planned steps the budget never reached; named in the artifact
     foreach ($step in $planned) {
-        if ($round -ge $MaxRounds) { break }
+        if ($round -ge $MaxRounds) {
+            # The cap used to `break` with nothing said, so an artifact could not distinguish a
+            # short plan from a truncated one -- and "the steps that never ran" is exactly the
+            # gap that produces no error to notice. Measured 2026-10-03: the route is computed ONCE
+            # and one round runs per step, so -MaxRounds is really -MaxSteps; naming it otherwise
+            # invites a reader to believe the loop re-plans. The truncation is now recorded, by id.
+            $dropped = @(Get-BudgetDropped -Planned $planned -Round $round -MaxRounds $MaxRounds)
+            if ($dropped.Count -gt 0) {
+                Say "  budget: -MaxRounds $MaxRounds reached after $round round(s); these planned steps DID NOT RUN: $($dropped -join ', ')"
+                $trace += [ordered]@{ round = $round; capability = ($dropped -join ',')
+                                      event = 'budget_cap_reached'; max_rounds = $MaxRounds
+                                      not_run = $dropped; blocks = 'every remaining step' }
+            }
+            break
+        }
         if ($step.state -ne 'planned') { continue }
         $round++
 
@@ -1218,6 +1249,10 @@ function Invoke-Mission {
         registry_sha256 = $regHash
         registry_stale = $regStale
         rounds     = $round
+        # Stated rather than inferred: one round runs per planned step and the route is computed
+        # once, so `rounds` is also `steps executed`, and anything the cap dropped is named here.
+        rounds_are_steps = $true
+        steps_dropped_by_budget = @($dropped)
         chain      = @($trace | Where-Object { $_.capability } | ForEach-Object { [ordered]@{ round = $_.round; capability = $_.capability; ok = $_.ok; facts = ($_.facts | ForEach-Object { $_.key }) } })
         verdict    = $verdict
         termination = $term
@@ -2425,6 +2460,27 @@ function Invoke-Selftest {
         if ($a -ne $b) { $bad += 'order-not-stable' }
         "unsound=$($bad.Count) $(if ($bad.Count) { $bad -join ',' })"
     } 'unsound=0 '
+
+    # The budget cap used to `break` with nothing recorded, so an artifact could not tell a
+    # short plan from a truncated one. "The steps that never ran" is exactly the gap that
+    # produces no error to notice -- the same shape as the STOP note this file already insists on.
+    C 'budget: a cap that truncates the plan NAMES the steps it dropped' {
+        $plan = @(
+            [pscustomobject]@{ id = 'one';   state = 'planned' }
+            [pscustomobject]@{ id = 'two';   state = 'planned' }
+            [pscustomobject]@{ id = 'three'; state = 'skipped_no_invoke' }
+            [pscustomobject]@{ id = 'four';  state = 'planned' })
+        $d = @(Get-BudgetDropped -Planned $plan -Round 1 -MaxRounds 1)
+        "dropped=$($d -join ',')"
+    } 'dropped=two,four'
+
+    C 'budget: a cap that is not reached drops nothing' {
+        $plan = @(
+            [pscustomobject]@{ id = 'one'; state = 'planned' }
+            [pscustomobject]@{ id = 'two'; state = 'planned' })
+        $d = @(Get-BudgetDropped -Planned $plan -Round 1 -MaxRounds 5)
+        "dropped=$($d.Count)"
+    } 'dropped=0'
 
 
     Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
