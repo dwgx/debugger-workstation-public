@@ -49,14 +49,11 @@ doc-facts / gate selftest / mission selftest / mission ablate / reachability / a
 27 capabilities: 23 observed · 2 absent · 1 planned · 1 blocked
 16 declare an invoke · 16 evidence families · 7 question axes
 registry-verify            REGISTRY CLEAN（**24 规则**，**66** 自测用例全触发）
-check-requires-tools       27 条 probe：20 ok · 0 wrong · 0 tool-fault · 3 skipped
-doc-facts                  **19** 条活声明 OK
-gate selftest              **32** refusals/grants behaved
+gate selftest              **33** refusals/grants behaved（2026-10-03 独立验收后；原 24）
 mission selftest           51 controls（N4 仍 unresolved —— 这是对的）
 mission ablate             7 + 6 load-bearing，0 unproved
 reachability               1 of 7 轴从未产出 fact；3 of 16 可调用从未产出 fact
-verify-all                 48.6 s 全绿
-```
+verify-all                 **55.3 s** 全绿
 
 ### 按轴（**这是该引用的数字，不是"可调用 16/24"**）
 
@@ -78,6 +75,27 @@ Q6.crypto   2/3   Q7.origin  3/5   Q5.vuln-shape 0/0   ← 唯一黑轴
 | `77142aa` | MCP 面声称自己不过门 | 文件头写着「Every call still goes through the same gate invocation」，而全文 `gate`/`grant`/`OwnerWord` 只出现 4 次，**全是那句话**。16 条可调用能力对任何 MCP 客户端、任何本机路径开放，没有 Owner word、没有 containment。现在每个工具必填 `case_dir`，执行前跑 `gate.ps1 -Action Check`。顺带修：argv 里残留的 `{input.function}` 之类占位符会**拒绝并点名**，不再把字面量塞进子进程 |
 
 四份 commit 全部先在真注册表上看到规则变红（R23/R24 报 11 条违规），再改数据。
+
+### 2b. 独立验收（2026-10-03，opus `verifier`）
+
+结论 **ACCEPT WITH FINDINGS**：每个数字被独立重新推导，每个新控制被变异测试（删掉被测机制，
+看控制是否变红）。**它抓到我 5 处错，已全部修正**（`38e87df`）：
+
+1. **HIGH · 我写的注释断言了假的安全属性**。`Get-RegistryPath` 曾说 `$script:RegistryOverride`
+   是「nothing outside this file can reach」。实测为假：PowerShell **点源**把被调方跑进**调用方**
+   的作用域，所以那里的 `$script:` 变量就是调用方的变量，`$script:RegistryOverride=<evil>;
+   . gate.ps1 -Action New ...` 铸出了全绿授权。**任何 script 级变量都挡不住点源。**
+   注释改成窄的真话，并加了一条**独立进程**的控制，钉住真正活下来的性质：伪造的授权活不过铸出它的进程。
+2. **MEDIUM · 一道永远不会触发的地板**：`assert-probes` 的 `len(results) < len(todo)` 在
+   `check()` 保证每条能力至少一条裁决的前提下不可满足。删掉它输出不变，删掉 `check()` 那道才变红。
+   死的那道已删——**两处地板、一处是死的 = 零处加一**，与今天 mission.ps1 的墓碑是同一条教训。
+3. **LOW · 墓碑两个行号写错**：应为 `:1218` / `:1234`。
+4. **LOW · 裁决文案说得比做到的多**：OK 文本原写「exit 也匹配」，而 4 条能力没声明 `expect_exit`。
+5. **INFO · R23 对一次改名报两条**。
+
+变异测试还抓到我**第二个自己的错误**：新控制第一版问 `RULE.THE.WORLD`（真注册表里不存在），
+于是它靠「能力未知」通过，删掉被测机制仍然绿。改成问 `native.ida.decompile`、并要求指名
+digest 拒绝之后，红/绿两向都测过。**「控制要以错误的原因通过为敌人」——只有变异测试抓得到。**
 
 ---
 
