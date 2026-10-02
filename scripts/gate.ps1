@@ -95,9 +95,25 @@ function Out-Json($o) { $o | ConvertTo-Json -Compress -Depth 8 }
 
 function Get-RegistryPath {
     # G10. The registry this gate reads is its OWN calibration, not a parameter. `-Registry`
-    # is now refused at every entry point (see Test-RegistrySubstitution below), so the only
-    # thing that can still redirect the gate is this script-scoped override, which
-    # Invoke-Selftest sets and nothing outside this file can reach.
+    # is refused at every entry point (see Test-RegistrySubstitution below), so the only thing
+    # that can still redirect the gate is this script-scoped override, which Invoke-Selftest
+    # sets and no other script in this repo sets.
+    #
+    # THE LIMIT, stated because an earlier version of this comment claimed "nothing outside this
+    # file can reach" and that was FALSE. Independent verification on 2026-10-03 measured it:
+    # PowerShell dot-sourcing runs the callee in the CALLER's scope, so `$script:RegistryOverride`
+    # here is the caller's own variable. Measured: `powershell -Command '$script:RegistryOverride=
+    # <evil>; . scripts\gate.ps1 -Action New ...'` minted a fully attested grant whose allowed set
+    # contained the forged capability and whose registry digest was the evil file's. That is a
+    # property of PowerShell's scoping, not of this variable -- no `script:`-scoped name is safe
+    # against a caller who dot-sources -- so the honest claim is the narrow one.
+    #
+    # What actually holds, and is pinned by the G10 control "a grant minted under the override
+    # does not survive a plain -File Check": every in-repo caller invokes gate.ps1 with `-File`,
+    # which runs it in its own scope, and a grant minted with the override records the OVERRIDE's
+    # digest, so a subsequent Check over `-File` re-derives the real registry's digest, finds a
+    # mismatch, and refuses with exit 6. The forgery is self-consistent only for a caller that
+    # dot-sources on both sides, and nothing in this repo does that.
     #
     # MEASURED 2026-10-03, red-team finding, and the reason this is not a style change: with
     # `-Registry` honoured at the MINT, a hand-written capabilities.json containing one extra
@@ -977,6 +993,35 @@ function Invoke-Selftest {
         return @{ ok = $true; exit = 0; error = 'none' }
     } 0 'none'
     $script:RegistryOverride = ''
+
+    # The control that makes the scoping claim in Get-RegistryPath's comment TRUE rather than
+    # merely plausible, and it has to be a SEPARATE PROCESS: `-File` runs the gate in its own
+    # scope, so the override cannot travel with it, while in-process `$script:RegistryOverride`
+    # is this very variable. Written in-process it would pass for the wrong reason -- which is the
+    # failure mode this suite exists to reject. Measured by the 2026-10-03 verifier: dot-sourcing
+    # this file DOES let a caller set the variable, so the surviving property is that a forged
+    # grant does not outlive the process that made it.
+    $cOverrideThenFile = Join-Path $tmp 'c-override-then-file'
+    New-Item -ItemType Directory -Path $cOverrideThenFile -Force | Out-Null
+    $script:RegistryOverride = $regEvilPath
+    New-Grant -Target $tgt -Provenance $Prov -OwnerWord 'analyze this exe' -CaseDir $cOverrideThenFile -Containment $Cont -Lane $L | Out-Null
+    $script:RegistryOverride = ''
+    # It must name a capability that EXISTS in the real registry. The first version of this
+    # control asked about RULE.THE.WORLD, which does not exist there, so it passed because the
+    # capability was unknown -- a control that passes for a reason other than the one it was
+    # written for, which is the failure this suite exists to reject. Mutation confirms the
+    # difference: deleting Test-Grant's registry-digest refusal leaves THIS control green and
+    # reddens only G7. Asking about a real capability is what makes it test the digest binding.
+    T 'G10: a grant minted under the override does not survive a plain -File Check' {
+        $out = & powershell -NoProfile -ExecutionPolicy Bypass -File $PSCommandPath -Action Check -CaseDir $cOverrideThenFile -Capability 'native.ida.decompile' 2>&1 | Out-String
+        if ($LASTEXITCODE -eq 0) {
+            return @{ ok = $false; exit = 0; error = 'a grant minted against a substituted registry checked ok:true from a SEPARATE process' }
+        }
+        if ("$out" -notmatch 'minted against a different capabilities registry') {
+            return @{ ok = $false; exit = 6; error = "refused, but NOT by the registry-digest binding this control exists for: $out" }
+        }
+        return @{ ok = $true; exit = 0; error = 'none' }
+    } 0 'none'
 
     # --- G8: the widening operation, with no word ------------------------------
     $cEsc = Join-Path $tmp 'c-escalate-word'

@@ -975,6 +975,11 @@ def r23_escalation_class_needs_a_reason(reg, doc):
                        f"reason is spelled `escalation_why`. The canonical key is "
                        f"`escalation_reason`; two spellings means whichever one a reader "
                        f"knows to look for is the one that is missing.")
+            # One defect, one message. Without this `continue` the same entry ALSO drew "no
+            # escalation_reason is recorded", which is true but reads as though the entry had
+            # never had a reason -- two complaints where the fix is one rename. (Independent
+            # verification, 2026-10-03, finding 6.)
+            continue
         why = str(g.get("escalation_reason") or "").strip()
         if not why:
             out.append(f"R23 {c.get('id','?')}: gate.escalation_class is '{cls}', which is the "

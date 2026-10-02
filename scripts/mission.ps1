@@ -1152,11 +1152,12 @@ function Invoke-Mission {
 
     # --- scope guard --------------------------------------------------------------
     # The `skip_exits` logic that used to sit HERE has been deleted, and the reason is worth
-    # keeping. It was an exact copy of the in-loop copy at :1115-1135, minus that copy's
-    # `gate_role -eq 'precondition'` test, and it sat AFTER the round loop closed -- so its
-    # `continue` was outside every loop in this function. `artifact.json` is written at :1200
-    # and the exit code at :1216, so anything that block skipped was skipped SILENTLY: no
-    # artifact, no trace, no message, and no non-zero exit to notice. It was dead today only
+    # keeping. It was a near-copy of the in-loop copy at :1115-1135 (same logic, slightly different
+    # wording), minus that copy's `gate_role -eq 'precondition'` test, and it sat AFTER the round
+    # loop closed -- so its `continue` was outside every loop in this function. `artifact.json` is
+    # written at :1218 and the exit code at :1234, so anything that block skipped was skipped
+    # SILENTLY: no artifact, no trace, no message, and no non-zero exit to notice. It was dead
+    # today only
     # because no capability's last step happened to match; the trigger was registry data, so
     # a one-line registry edit could have turned a mission into a silent no-op.
     #
