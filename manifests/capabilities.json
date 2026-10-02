@@ -746,9 +746,10 @@
       "consumes": {
         "inputs": [
           {
-            "name": "image",
-            "type": "path_ref",
-            "required": true
+            "name": "workdir",
+            "type": "lab_workdir",
+            "required": true,
+            "note": "CORRECTED 2026-10-02, and the declared type was simply WRONG. It read 'image', type path_ref, which asserts this analyser takes a forensic memory image. It does not. Measured: pointed at a PE it raised an unhandled ENOENT reading '<the pe>\\manifest.json' -- because the subject is a LAB WORK DIRECTORY, and the analyser appends manifest.json to whatever it is given. Pointed at the lab's own scenario directory it returns a full pslist (7 processes) and exits 0. The work directory is built by forensics-lab/tools/loop.mjs at %TEMP%/d12-forensics-lab/target, overridable with D12_FORENSICS_WORK. So this entry never took a caller-named artefact and never could."
           }
         ],
         "prior": []
@@ -824,7 +825,7 @@
         "fact_map": {
           "triage": "forensics.artefact.rows"
         },
-        "note": "P7: probe-only until now. The entry point is real -- analyze.mjs's main() (:294-299) takes --target <path> and --print-header, and --print-header prints JSON.stringify(r.triage) (:298), whose keys are pslist/psscan/netscan/malfind/handlescan (each {count, method, ...rows}). `triage` is bound to this capability's typed fact because that is the object the tool prints on that path. No --json flag exists on this tool, so the argv uses --print-header, which is the real machine-readable switch."
+        "note": "The invoke is correct AS FAR AS IT GOES and still cannot succeed in a mission, because {target} is a single caller-named artefact and this tool needs a lab scenario directory that only forensics-lab/tools/loop.mjs produces. It is left in place rather than removed: a caller who can name that directory should be able to use the capability, and the alternative is deleting a working analyser because no current caller wants it."
       },
       "negative_control": {
         "id": "forensics.memory.triangulation",
@@ -833,14 +834,16 @@
         "control_plan": "drop SRUM from the image and re-run",
         "kind": "plan",
         "plan_reason": "Requires deleting the SRUM table from the forensic image and re-running. That is image surgery on an E: fixture, which belongs to the lab, not to a registry command.",
-        "plan_note": "DECLARED A PLAN, NOT A CONTROL, ON 2026-10-02. Rule R21 refuses prose in negative_control.command, because a control nobody can execute cannot fail and therefore passes forever. The sentence is kept here rather than deleted: it is the negative design, which is real knowledge, and this project has been burned often enough by deleting things to keep. What this entry no longer claims is that it has a working control. It does not."
+        "plan_note": "DECLARED A PLAN, NOT A CONTROL, ON 2026-10-02. Rule R21 refuses prose in negative_control.command, because a control nobody can execute cannot fail and therefore passes forever. The sentence is kept here rather than deleted: it is the negative design, which is real knowledge, and this project has been burned often enough by deleting things to keep. What this entry no longer claims is that it has a working control. It does not.",
+        "measured": "measured 2026-10-02: with the clean refusal added, crackme-corpus/out/c01-stringobf.exe -> {ok:false, exit:2, error:'not a forensics lab work directory: no manifest.json under ...'} , TRUE_EXIT=2. BEFORE that change the same command produced an unhandled Node ENOENT stack trace and exit 1, which an orchestrator cannot distinguish from a crash. Against the real scenario directory the analyser still exits 0 and returns a 7-process pslist."
       },
       "provenance": {
         "source": "measured on this host 2026-09-30",
         "record": "forensics-lab/README.md"
       },
       "evidence_source": "artefact-parser",
-      "evidence_source_note": "host artefacts; refusals are results"
+      "evidence_source_note": "host artefacts; refusals are results",
+      "composition_note": "THIS IS A LAB ANALYSER, NOT A MISSION INSTRUMENT, and the registry said otherwise until 2026-10-02. Measured by asking the question the 'callable' number never asks: of the 12 capabilities declaring an invoke, 4 had NEVER SUCCEEDED inside any of the 32 mission artifacts on E:, and this was the worst of them because it did not merely fail -- it ran, and it crashed. Its declared subject was an image, its real subject is a lab scenario directory, and no caller has one.\n\nThat makes it the fifth 'callable' that is not callable, and the most insidious shape: an entry that is routable, runs, exits non-zero, and leaves a stack trace where a refusal belongs. It is kept as a lab rather than deleted, because the analyser genuinely works -- against the directory it was built for."
     },
     {
       "id": "managed.il.decompile",

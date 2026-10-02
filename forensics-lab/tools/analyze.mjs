@@ -292,6 +292,19 @@ function shaOf(img, off, len) {
 function main(argv) {
   const i = argv.indexOf('--target');
   const target = (i >= 0 ? argv[i + 1] : null) || path.join(process.env.TEMP || process.cwd(), 'd12-forensics-lab', 'target');
+  // REFUSE CLEANLY, DO NOT THROW. Measured 2026-10-02: pointed at a PE this script raised an
+  // unhandled ENOENT out of triage.mjs reading '<the pe>\manifest.json' and exited 1 with a Node
+  // stack trace. --target is a LAB WORK DIRECTORY containing manifest.json, not a forensic
+  // image, and a wrong --target is a user error deserving a sentence rather than a stack. The
+  // trace also cost a whole mission round: the orchestrator recorded exit=1 with no facts and no
+  // way to tell a crash from a refusal.
+  if (!fs.existsSync(path.join(target, 'manifest.json'))) {
+    console.error(JSON.stringify({ ok: false, exit: 2,
+      error: `not a forensics lab work directory: no manifest.json under ${target}`,
+      expects: 'a directory containing manifest.json, produced by forensics-lab/tools/loop.mjs',
+      note: 'this analyser does not take a raw memory image; the scenario directory is the subject' }));
+    return 2;
+  }
   if (argv.includes('--print-header')) {
     const r = analyze(target);
     if (!r.ok) { console.error(`analyze: ${r.error}`); return 3; }
