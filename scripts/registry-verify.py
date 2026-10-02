@@ -1224,6 +1224,41 @@ def r26_bare_braces_survive_the_shell(reg, doc):
     return out
 
 
+def r27_probe_exit_has_one_spelling(reg, doc):
+    """`probe.exit` is not read by anything. `probe.expect_exit` is. Only one may be written.
+
+    Found 2026-10-03 by a mutation sweep of every registry field (a copy in %TEMP%, one field
+    changed across all entries that carry it, the real validator run against the copy). Setting
+    `probe.exit` to 999 on all sixteen entries that declare it left the validator at exit 0,
+    REGISTRY CLEAN.
+
+    The measurement underneath it is sharper than "unchecked". This registry spells the same
+    contract two ways and the two spellings never meet: SIXTEEN entries declare `probe.exit` and
+    ELEVEN declare `probe.expect_exit`, and NOT ONE declares both. `assert-probes.py` reads
+    `expect_exit` and has never read `exit`. So `probe.exit` is not merely unchecked, it is the
+    spelling that means `state: observed` while quietly never being compared -- and `state:
+    observed` is the field gate.ps1 grants on.
+
+    This is the same disease as `escalation_why` / `escalation_reason`, which produced R23 on
+    2026-09-30: two spellings, a reader for one, silence for the other, and nothing to notice
+    because each spelling is individually well-formed. The lesson generalises past the field:
+    when two names exist for one contract, the check that closes the gap is to REFUSE the
+    unreadable one, not to start reading it as well.
+    """
+    out = []
+    for c in reg:
+        probe = c.get("probe") or {}
+        if "exit" not in probe:
+            continue
+        out.append(f"R27 {c.get('id','?')}: probe.exit is declared (={probe.get('exit')!r}) and "
+                   f"NOTHING reads it -- assert-probes.py compares probe.expect_exit, and no rule "
+                   f"in this file looks at probe.exit at all. Measured 2026-10-03: setting it to "
+                   f"999 on every entry that declares it leaves this validator at exit 0. Rename "
+                   f"it to probe.expect_exit, which is compared on every run. Two spellings of one "
+                   f"contract, and only one of them is a check.")
+    return out
+
+
 RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r4_fact_types_agree, r5_control_must_fail, r6_reach_needs_escalation, r7_ids,
          r8_reach_must_be_declared, r9_batch_must_account, r10_invoke_must_runnable,
@@ -1233,7 +1268,8 @@ RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r20_fact_map_declares, r21_control_command_runnable,
          r22_ungrantable_needs_a_reason, r23_escalation_class_needs_a_reason,
          r24_input_types_are_declared, r25_plan_needs_a_checkable_ref,
-         r26_bare_braces_survive_the_shell)
+         r26_bare_braces_survive_the_shell,
+         r27_probe_exit_has_one_spelling)
 
 
 # ---------------------------------------------------------------------------- core
@@ -1281,7 +1317,13 @@ def _good_entry() -> dict:
         # and the R2 probe-runnability half added below caught it -- the synthetic registry was
         # modelling something the real rule forbids. A fixture has to be a LEGAL registry or it
         # tests the wrong baseline; this one was polluting four other cases expectations.
-        "probe": {"command": "python scripts/example_selftest_probe.py", "expect": "ok", "exit": 0,
+        # FIXTURE, 2026-10-03: this said "exit". R27 refuses that spelling -- nothing in the
+        # harness reads it -- so a baseline written with it is no longer a legal registry and
+        # 17 cases failed for that reason alone. The right response to a new rule invalidating
+        # the fixture is to fix the fixture, never to relax the rule: every one of those 17 was
+        # reporting "your baseline is broken", not "your case is wrong".
+        "probe": {"command": "python scripts/example_selftest_probe.py", "expect": "ok",
+                  "expect_exit": 0,
                   "last_run": "2026-09-30",
                   "evidence_binding": {"status": "unverified",
                                        "reason": "probe output was summarised by hand and "
@@ -1581,6 +1623,16 @@ def selftest() -> int:
     case("R26 a bare brace in a probe command",
          lambda b: b[0]["probe"].__setitem__(
              "command", "python probe.py --flag FLAG{abc}"), "R26")
+    # R27: the mirror image of R23. Two spellings of one contract, a reader for one of them,
+    # and sixteen entries using the unreadable one. The case has to fire on the FIELD, not on a
+    # value, because every value in the registry is currently a correct 0 -- which is exactly why
+    # nobody noticed.
+    case("R27 the unreadable spelling probe.exit",
+         lambda b: b[0]["probe"].__setitem__("exit", 0), "R27")
+    case("R27 probe.exit with a deliberately wrong value",
+         lambda b: b[0]["probe"].__setitem__("exit", 999), "R27")
+    nocase("R27 probe.expect_exit alone is accepted",
+           lambda b: b[0]["probe"].__setitem__("expect_exit", 0), "R27")
     nocase("R26 braces inside a quoted span are accepted",
            lambda b: b[0]["negative_control"].__setitem__(
                "command", "frida.exe -e 'var m=Process.mainModule;console.log(`${m.base}`)'"),

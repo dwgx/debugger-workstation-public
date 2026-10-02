@@ -226,7 +226,7 @@
       "probe": {
         "command": "node native-lab/tools/loop.mjs --only=decompile",
         "expect": "LOOP CLOSED",
-        "exit": 0,
+        "expect_exit": 0,
         "last_run": "2026-09-30",
         "evidence_binding": {
           "status": "unverified",
@@ -375,7 +375,7 @@
       "probe": {
         "command": "node native-lab/tools/loop.mjs --only=list_funcs",
         "expect": "list_funcs enumerates functions",
-        "exit": 0,
+        "expect_exit": 0,
         "last_run": "2026-09-30",
         "evidence_binding": {
           "status": "unverified",
@@ -483,7 +483,7 @@
       "probe": {
         "command": "node web-reverse/tools/loop.mjs",
         "expect": "LOOP CLOSED",
-        "exit": 0,
+        "expect_exit": 0,
         "last_run": "2026-09-30",
         "run_log": "evidence/probes/web.js.cdp.probe.log",
         "sha256": "fb6d693a3b7be80df2572d5170a1abccc4819c4e28572a3e0135b48465bde1cf",
@@ -591,7 +591,7 @@
       "probe": {
         "command": "node crypto-lab/tools/loop.mjs",
         "expect": "JSON-SUMMARY {\"total\":17,\"pass\":17,\"fail\":0}",
-        "exit": 0,
+        "expect_exit": 0,
         "last_run": "2026-09-30",
         "run_log": "evidence/probes/crypto.jose.parse.probe.log",
         "sha256": "f923c2a0f598811e881baeb710b737cfa240d7aee7adec99c14c15685e175626",
@@ -726,7 +726,7 @@
       "probe": {
         "command": "node net-reverse/tools/loop.mjs",
         "expect": "LANE CLOSED",
-        "exit": 0,
+        "expect_exit": 0,
         "last_run": "2026-09-30",
         "run_log": "evidence/probes/net.pcap.analyse.probe.log",
         "sha256": "7bdb05704d681f6fc30014f9503fe260b944cd59dba843356c26480018535322",
@@ -851,7 +851,7 @@
       "probe": {
         "command": "node forensics-lab/tools/loop.mjs",
         "expect": "LOOP CLOSED",
-        "exit": 0,
+        "expect_exit": 0,
         "last_run": "2026-09-30",
         "run_log": "evidence/probes/forensics.memory.artefact.probe.log",
         "sha256": "76561502e6f39d308dec236acfedace23b97feeab878c8981e1f26cc43c00c12",
@@ -966,7 +966,7 @@
       "probe": {
         "command": "node managed-lab/tools/loop.mjs",
         "expect": "JSON-SUMMARY {\"total\":27,\"pass\":27,\"fail\":0}",
-        "exit": 0,
+        "expect_exit": 0,
         "last_run": "2026-09-30",
         "run_log": "evidence/probes/managed.il.decompile.probe.log",
         "sha256": "749d21ae8638901042cfb9d3b5a694149e3be398d841395ec8f373ada68420ef",
@@ -1079,7 +1079,7 @@
       "probe": {
         "command": "node mobile-lab/tools/loop.mjs",
         "expect": "LOOP CLOSED",
-        "exit": 0,
+        "expect_exit": 0,
         "last_run": "2026-09-30",
         "run_log": "evidence/probes/mobile.apk.static.probe.log",
         "sha256": "8a7698d6fdb129c296441a91029b589665a2464e10fe6ae31b2bc10318032ff2",
@@ -1198,7 +1198,7 @@
       "probe": {
         "command": "python crackme-corpus/tools/loop.py",
         "expect": "CORPUS CLOSED",
-        "exit": 0,
+        "expect_exit": 0,
         "last_run": "2026-09-30",
         "run_log": "evidence/probes/re.corpus.solve.probe.log",
         "sha256": "3e1642363b6ab7ca37393c447cf9da24fca3e1e4b4a6e2d0b4215f8f26ab3d6b",
@@ -1296,7 +1296,7 @@
       "probe": {
         "command": "adb devices",
         "expect": "no devices attached",
-        "exit": 0,
+        "expect_exit": 0,
         "last_run": "2026-09-30",
         "last_summary": "adb is not on PATH; no device and no emulator is installed"
       },
@@ -1438,7 +1438,7 @@
       "probe": {
         "command": "& 'D:\\Software\\Tool\\WorkStation\\debugger\\Mobile-Android\\objection\\.venv\\Scripts\\frida.exe' -f \"$env:TEMP\\fridaprobe\\target.exe\" -q -t 6 -e 'var m=Process.mainModule;console.log(`FRIDA_WIN module_base=${m.base}`);console.log(`FRIDA_WIN symbol_main=${DebugSymbol.fromName(`main`)}`);console.log(`FRIDA_WIN export_printf=${Module.getGlobalExportByName(`printf`)}`);console.log(`FRIDA_WIN rebased_main=${m.base.add(0x1080)}`);Interceptor.attach(m.base.add(0x1080),{onEnter:function(){console.log(`FRIDA_WIN HIT main`);}});'",
         "expect": "FRIDA_WIN symbol_main=0",
-        "exit": 0,
+        "expect_exit": 0,
         "prepare": "New-Item -ItemType Directory -Force -Path \"$env:TEMP\\fridaprobe\" | Out-Null; Copy-Item 'D:\\Software\\Tool\\WorkStation\\debugger\\crackme-corpus\\out\\c01-stringobf.exe' \"$env:TEMP\\fridaprobe\\target.exe\" -Force",
         "prepare_note": "The probe needs a target. It is the estate's own self-built crackme, copied to %TEMP% and never run from the repo directory. Run `prepare` first, or the probe fails for a reason that has nothing to do with Frida. The JavaScript uses backtick template literals on purpose: it is passed inside PowerShell single quotes, and embedded double quotes are stripped by the native argument builder, which turns this probe into a SyntaxError on the first attempt (measured).",
         "last_run": "2026-10-02",
@@ -1594,7 +1594,7 @@
       "probe": {
         "command": "node fuzz-lab/tools/loop.mjs --budget 40",
         "expect": "LOOP CLOSED",
-        "exit": 0,
+        "expect_exit": 0,
         "last_run": "2026-09-30",
         "run_log": "evidence/probes/fuzz.differential.parse.probe.log",
         "sha256": "c98d10ad9f75b20af0db4064f569b16f2a6e9607f2f5d1a496a027f3c2b41466",
@@ -1735,7 +1735,7 @@
       "probe": {
         "command": "powershell -File scripts\\ghidra-failopen-regress.ps1",
         "expect": "LOOP CLOSED",
-        "exit": 0,
+        "expect_exit": 0,
         "last_run": "2026-09-30",
         "run_log": "evidence/probes/native.ghidra.decompile.probe.log",
         "sha256": "701560039f5a8d6b904cf3c8dc51c755e9e94e10b93ee0de5bb732926cb3be18",
@@ -1875,7 +1875,7 @@
       "probe": {
         "command": "see scripts/ghidra-failopen.md reproduction section",
         "expect": "Auto Version Tracking Command completed successfully with no apply markup errors",
-        "exit": 0,
+        "expect_exit": 0,
         "last_run": "2026-09-30",
         "evidence_binding": {
           "status": "unverified",
@@ -1978,7 +1978,7 @@
       "probe": {
         "command": "powershell -File scripts\\il2cpp-probe.ps1",
         "expect": "IL2CPP ABSENT",
-        "exit": 0,
+        "expect_exit": 0,
         "last_run": "2026-09-30",
         "last_summary": "net6 build under DOTNET_ROLL_FORWARD=LatestMajor: no output, no exit within 12 s (killed). Runtime inventory: Microsoft.NETCore.App 8.0.31 and 10.0.11 only."
       },
@@ -2090,7 +2090,7 @@
       "probe": {
         "command": "powershell -File scripts\\emulation-probe.ps1",
         "expect": "PCODE EMULATION BLOCKED",
-        "exit": 0,
+        "expect_exit": 0,
         "last_run": "2026-09-30",
         "last_summary": "API reached, compiled, ran 15 p-code steps and returned to PC=0; output buffer 48 bytes all zero; ground truth FLAG{c01_string_table_xor} NOT recovered"
       },
