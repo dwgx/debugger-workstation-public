@@ -248,6 +248,52 @@ def r20_fact_map_declares(reg, doc):
     return out
 
 
+def r21_control_command_runnable(reg, doc):
+    """A negative control must be a COMMAND. A description of one cannot fail.
+
+    R2 applies exactly this test to `probe.command` and has done since the rule existed. The
+    control side had no equivalent, and the gap is not theoretical: measured 2026-10-02, 13 of
+    24 entries carry a `negative_control.command` that is English --
+
+        "oracle with an alg=none and a swapped-claims token"
+        "drop SRUM from the image and re-run"
+        "point the wrapper at a .txt file"
+        "m02's solver pointed at m01's assembly"
+
+    None of those can be executed, so none can fail, so all thirteen would pass forever. That
+    is the worst shape a control can have: it reads as evidence in the registry and is a
+    sentence in a file. Independent verification sampled 8 entries, met one of them, and
+    concluded there were "only two such entries" -- a sampling artefact, because the class is
+    defined by being uniform across the corpus rather than by being rare.
+
+    Prose is not worthless and is NOT deleted here: a good negative design is real knowledge,
+    and losing it would be the same 'only add, never subtract' rot this project keeps paying
+    for. It moves to `control_plan` where it is still readable, and the rule then requires it
+    to be declared a plan WITH A REASON -- so what remains is an explicit admission that this
+    entry has no executable control, which is a fact a reader can act on.
+    """
+    RUNNABLE = (".mjs", ".js", ".cjs", ".py", ".ps1", ".exe", ".bat", ".cmd", ".com")
+    out = []
+    for c in reg:
+        nc = c.get("negative_control")
+        if not isinstance(nc, dict):
+            continue
+        cmd = str(nc.get("command") or "").strip()
+        if not cmd:
+            continue
+        low = cmd.lower()
+        if any(t in low for t in RUNNABLE) or low.startswith(
+                ("node ", "python ", "powershell ", "cmd ", "uv ", "& ")):
+            continue
+        if nc.get("kind") == "plan" and str(nc.get("plan_reason") or "").strip():
+            continue
+        out.append(f"R21 {c.get('id','?')}: negative_control.command is prose -- {cmd[:64]!r}. "
+                   f"A control nobody can execute cannot fail, so it passes forever. Either "
+                   f"give it a command, or move the sentence to control_plan and set "
+                   f"kind='plan' with a plan_reason saying why it cannot be run.")
+    return out
+
+
 def r3_honesty_pair(reg, doc):
     """An entry that claims to work must say what it proves AND what it does not.
 
@@ -303,8 +349,19 @@ def r5_control_must_fail(reg, doc):
             out.append(f"R5 {c.get('id','?')}: no negative_control. A capability whose "
                        f"checks always pass is a check, not evidence.")
             continue
+        # A DECLARED PLAN is a legitimate answer to "what would refute this?", and R21 is what
+        # forces it to be declared rather than smuggled in as English. R5 used to refuse the
+        # same thing R21 now permits, so the two rules contradicted each other until this was
+        # fixed: the honest resolution is that a plan-control has no executable exit code, and
+        # saying so is better than inventing one. What R5 must NOT allow is a plan with no
+        # reason, because that is indistinguishable from a missing control.
+        if nc.get("kind") == "plan" and str(nc.get("plan_reason") or "").strip():
+            continue
         if not nc.get("command"):
-            out.append(f"R5 {c.get('id','?')}: negative_control has no command.")
+            out.append(f"R5 {c.get('id','?')}: negative_control has neither a command nor a "
+                       f"declared plan. A capability whose checks always pass is a check, not "
+                       f"evidence.")
+            continue
         exp = nc.get("expect_exit")
         if exp is None:
             out.append(f"R5 {c.get('id','?')}: negative_control has no expect_exit.")
@@ -861,7 +918,7 @@ RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r11_edge_target_exists, r12_edge_is_reachable, r13_question_types_declared,
          r14_no_island_capability, r15_artifacts_are_bound, r16_placeholders_resolve,
          r17_state_is_evidenced, r18_evidence_family_agrees, r19_probes_distinguish,
-         r20_fact_map_declares)
+         r20_fact_map_declares, r21_control_command_runnable)
 
 
 # ---------------------------------------------------------------------------- core
@@ -896,7 +953,8 @@ def _good_entry() -> dict:
         "root_reason": "takes the file from the Owner; nothing upstream produces one",
         "proves": ["that the example ran"],
         "does_not_prove": ["anything about a real target"],
-        "negative_control": {"id": "x", "command": "false", "expect_exit": 1, "why": "must fail"},
+        "negative_control": {"id": "x", "command": "python control.py --refuse",
+                           "expect_exit": 1, "why": "must fail"},
         "gate": {"lane": "debug", "escalation_class": "none"},
         # R8's floor is derived from what the entry DOES, so a baseline that runs a
         # probe has to declare proc_spawn. It is here rather than omitted precisely
@@ -1037,6 +1095,21 @@ def selftest() -> int:
     nocase("R20 a fact_map naming declared facts is accepted",
            lambda b: _with_fact_map(
                b, {"probe_out": b[0]["produces"]["facts"][0]["key"]}), "R20")
+    # R21: the control side, which had no equivalent of R2. A control that is prose cannot
+    # fail, so it passes forever -- 13 of 24 entries were in that state.
+    case("R21 a prose negative control",
+         lambda b: b[0]["negative_control"].__setitem__(
+             "command", "point the wrapper at a .txt file"), "R21")
+    nocase("R21 a runnable negative control is accepted",
+           lambda b: b[0]["negative_control"].__setitem__(
+               "command", "python control.py --refuse"), "R21")
+    nocase("R21 a declared plan with a reason is accepted",
+           lambda b: b[0]["negative_control"].update(
+               {"kind": "plan", "plan_reason": "needs an MCP session"})
+           or b[0]["negative_control"].pop("command"), "R21")
+    case("R21 a plan with NO reason is refused",
+         lambda b: b[0]["negative_control"].update({"kind": "plan", "plan_reason": ""})
+         or b[0]["negative_control"].__setitem__("command", "just do the wrong thing"), "R21")
     case("R3 missing does_not_prove", lambda b: b[0].__setitem__("does_not_prove", []), "R3")
     # --- per-half controls -------------------------------------------------------
     # R3 and R5 each have two independent halves, and deleting EITHER half alone
