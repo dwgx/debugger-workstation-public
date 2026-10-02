@@ -3024,7 +3024,23 @@
       },
       "evidence_source": "structural-parser",
       "evidence_source_note": "The SAME family as native.pe.container and crypto.jose.parse, and deliberately so: a self-describing container decoded without executing it. A certificate table is exactly that. Recorded explicitly so nobody reads this as a second opinion on a decompilation -- it is not, and adding it changes nothing about the independence gate, which already confirms on capstone plus IDA.",
-      "root_reason": "Genuine root. It is handed a path and answers a question about that file's signature surface before anything else is allowed to act on it. Nothing upstream produces a trust or signature fact, and nothing downstream may treat one as given. It declares no typed edge for the same reason native.pe.container and native.pe.packer do not: it consumes an input no other capability emits."
+      "root_reason": "Genuine root. It is handed a path and answers a question about that file's signature surface before anything else is allowed to act on it. Nothing upstream produces a trust or signature fact, and nothing downstream may treat one as given. It declares no typed edge for the same reason native.pe.container and native.pe.packer do not: it consumes an input no other capability emits.",
+      "invoke": {
+        "runner": "python",
+        "argv": [
+          "headless-lab/tools/authenticode.py",
+          "{target}"
+        ],
+        "stdout": "json",
+        "success_when": "parsed JSON with ok == true. NOTE: ok is true for an UNSIGNED binary too, and that is correct -- the fact is pe.signed = false, which is an answer, not a failure. The wrapper exits 2 on a truncated certificate table whose SECURITY offset points outside the file, and 0 otherwise.",
+        "fact_map": {
+          "signed": "pe.signed",
+          "security_offset": "pe.security_dir",
+          "win_certificate": "pe.cert_header"
+        },
+        "fact_map_note": "Measured before mapping, not guessed. On an UNSIGNED PE the tool emits {ok, exit, binary, file_size, security_va_is_a, security_offset, security_size, caveat, signed, reason} and NO win_certificate -- correctly, because there is no certificate header to read. On a signed fixture it adds win_certificate {header_offset, dwLength, wRevision, revision_is_2_0, wCertificateType}. So pe.cert_header is genuinely absent when unsigned, and a mission that requires all three facts of an unsigned binary is asking the wrong question.\n\nsecurity_offset is forwarded as pe.security_dir because that offset is a FILE OFFSET and not an RVA. That distinction is the entire point of the instrument and the thing the negative control checks: an analyser treating it as section-relative reads a plausible number and verifies nothing.",
+        "note": "ADDED 2026-10-02. This entry had a probe, three declared facts and a grantable gate, and every mission reported it as skipped_no_invoke -- visible in the route line of dozens of artifacts and read past every time, because 'no invoke' is a plausible-sounding reason rather than an alarming one. It matters because the entry declares Q6.crypto, which is one of the axes measured at 0 of 1: this is the only grantable, target-scoped capability on that axis, so Q6 was dark partly because the one candidate had never been wired."
+      }
     },
     {
       "id": "native.behaviour.capa",
