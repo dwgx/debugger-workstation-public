@@ -11,7 +11,7 @@
       "Q7.origin": "what changed between these two builds"
     },
     "baseline": {
-      "capability_count": 25,
+      "capability_count": 26,
       "note": "The validator pins this count. A capability may only leave capabilities[] by appearing in retired[] with a reason, because deleting an island used to make the registry validate CLEANER rather than louder.",
       "note_unused_fact_types": "MEASURED 2026-10-02, and it corrects a natural misreading. A query for declared fact types produced by no capability returns four: apk, pcap, token, evidence_source. The first three look like dead declarations, and it is tempting to conclude the three matching capabilities (mobile.apk.static, net.pcap.analyse, crypto.jose.parse) do not declare what they produce. They DO -- all three declare their facts, and all three now carry an invoke. The types are unused because the capabilities declaring them have never RUN IN A MISSION, not because their output is unspecified. evidence_source is a different thing entirely: it is a capability attribute used to count independent instruments, not an artifact any capability emits, so it must never be counted here.",
       "note_q5_unreachable": "MEASURED END TO END 2026-10-02, and it is a shape problem rather than a missing tool. Q5.vuln-shape has no reachable instrument. Its only target-scoped candidate, fuzz.differential.parse, declares two seed inputs whose producers are crypto.jose.parse and forensics.memory.artefact -- and both producers are observed and correctly wired. Verified on the real binaries rather than by reading: crypto.jose.parse invokes crypto-lab/tools/analyze.mjs --file {target} --json, and pointed at a PE it refuses with 'not a compact JWS: expected 3 dot-separated segments, got 2' and EXITS 3, which its own success_when already documents as bad input. Pointed at a real compact JWS it exits 0. forensics.memory.artefact invokes forensics-lab/tools/analyze.mjs --target {target}.\n\nSo neither producer is broken. They refuse correctly when handed the wrong KIND of thing, and that is the whole problem: mission.ps1 has one -Target, and this axis needs three different kinds of subject -- a JOSE token, a forensic memory image, and a lab target. Q5 is not dark because a tool is missing. It is dark because the mission can name exactly one artefact and Q5 needs three heterogeneous ones.\n\nTwo refutations are kept because both looked right first. First: 'these labs build their own fixtures, so no extra parameter is needed' is true of the LOOPS -- crypto-lab/tools/loop.mjs reads only --json and generates its own tokens, and forensics-lab/tools/loop.mjs:38 hardcodes const TARGET = path.join(WORK, 'target') -- but the invoke blocks point at the inner ANALYSERS, which do take an external subject. The loop and the instrument are different things and a mission calls the instrument. Second: 'fuzz.differential.parse wants two artefacts, so it needs a peer selector' is also true and also not the blocker, because its two missing inputs are not two paths; they are a token and a structure produced upstream.\n\nWhat would light the axis is now stated precisely: a mission able to name MORE THAN ONE artefact with HETEROGENEOUS types. A second path would not help -- native.function.match is the only capability that wants two of the same thing and it is not on this axis. Naming the shape exactly is what separates this from the speculative -Artefact parameter considered and correctly rejected earlier, when the premise had not been measured.\n\nThe misattribution risk was checked and does not exist: a PE substituted into the JOSE analyser exits 3, so a mission records a loud failure rather than crediting the lab's own token to the mission's target.",
@@ -32,7 +32,8 @@
       "differential-oracle": "compares two implementations of the same parser and treats a disagreement as the finding",
       "practice": "solving self-built exercises; proves technique, not transfer",
       "disassembler": "reconstructs a machine instruction stream WITHOUT lifting it to a high-level language: capstone and similar code-generation libraries. Distinct from 'decompiler' because it performs no lifting, no type recovery and no control-flow reconstruction -- it is the only family here that states an OPERAND WIDTH, which is measured, not assumed: see native.disasm.capstone's negative control and the pairing study. Added 2026-10-02 after measuring that capstone independently identified the exact addresses Ghidra left as unresolved DAT_ references AND carried the byte-vs-dword width that Ghidra's output omitted. THIS IS NOT THE static-analysis RELABEL ESCAPE: that escape re-declared ONE instrument under a second name, which R18 also blocks by instrument identity. capstone is a genuinely different library with no decompiler in its lineage. What it does NOT buy is confirmation of MEANING -- it corroborates structure and operands, not what the code does.",
-      "certificate-verifier": "A certificate-verifier decides whether a byte range is a valid encoding of a CERTIFICATE. It is not structural-parser: that family parses a PE IMAGE structure, while this decides whether the bytes inside the SECURITY directory are DER at all, using a different implementation (OpenSSL) from the one that located them (pefile). And it is not trust: no member of this family checks that a chain roots anywhere or that a digest matches a file. der_parsed:true means well-formed ASN.1, which is a far weaker statement than signed."
+      "certificate-verifier": "A certificate-verifier decides whether a byte range is a valid encoding of a CERTIFICATE. It is not structural-parser: that family parses a PE IMAGE structure, while this decides whether the bytes inside the SECURITY directory are DER at all, using a different implementation (OpenSSL) from the one that located them (pefile). And it is not trust: no member of this family checks that a chain roots anywhere or that a digest matches a file. der_parsed:true means well-formed ASN.1, which is a far weaker statement than signed.",
+      "packet-reader": "A packet-reader parses the capture FILE FORMAT itself -- global header, per-packet headers, then enough of the link and network layers to count. It is not capture-analysis, which means shelling out to a dissector, and not structural-parser, which means reading an executable image. Two readers agreeing on a capture is agreement between two implementations of the format, which is the only kind of agreement that is worth calling corroboration."
     }
   },
   "generated": "2026-09-30",
@@ -663,8 +664,9 @@
         "tools": [
           {
             "name": "tshark",
-            "probe": "tshark --version",
-            "expect": "TShark"
+            "probe": "\"Network-HTTP\\Wireshark\\portable\\App\\Wireshark\\tshark.exe\" --version",
+            "expect": "TShark (Wireshark)",
+            "note": "CORRECTED 2026-10-02: this probe read `tshark --version`, which FAILS on this station -- tshark is not on PATH. Verified: `where tshark` finds nothing and a bare `tshark --version` raises FileNotFoundError. The station ships a PORTABLE Wireshark at Network-HTTP/Wireshark/portable/App/Wireshark/tshark.exe, measured TShark (Wireshark) 4.6.8 (v4.6.8-0-ge677bf052328).\n\nnet-reverse/lab/tshark.mjs does its own discovery and is honest about it: it probes a list of candidates by absolute path, checks status==0 AND /^TShark/i against stdout, and reports which candidate it used plus its version. So the CAPABILITY was always correct and this registry field was the thing that was wrong -- a declaration that would have failed if anything had ever run it, which nothing did because requires.tools probes are not themselves executed by any gate."
           },
           {
             "name": "lab pcaps",
@@ -3312,6 +3314,124 @@
         "fact_map_note": "verifiable is tri-state on purpose and the fact map forwards the KEY, so null, true and false all travel. A wrapper that mapped only the true case would report an unsigned binary as though the check had been skipped, which is the always-green shape."
       },
       "root_reason": "A genuine root: it is handed a PE path and answers a question about the certificate bytes, and nothing upstream produces a DER verdict. Its subject is the same file native.pe.authenticode reads, but the fact is a different question about a different layer, which is why the absence of a typed edge to it is a decision and not an oversight."
+    },
+    {
+      "id": "net.pcap.selfparse",
+      "title": "Parse a pcap with no library and no tshark: counts packets, flows, ports and DNS direction",
+      "domains": [
+        "network",
+        "protocol",
+        "practice"
+      ],
+      "question_types": [
+        "Q4.data"
+      ],
+      "state": "observed",
+      "scope_note": "READS ONE FILE. No network, no execution, no writes, no temp files. It parses the 24-byte global header, the 16-byte per-packet headers, and then Ethernet / VLAN / IPv4 / IPv6 / TCP / UDP far enough to count.",
+      "composition_note": "ADDED FOR INDEPENDENCE, AND THE INDEPENDENCE IS REAL THIS TIME. net.pcap.analyse answers capture questions by shelling out to TShark 4.6.8, and it was the arsenal's ONLY capture-analysis instrument, so Q4.data measured one instrument in one family and the independence gate could never pass there. A second front-end over the same C library would have been one implementation held twice; this is a from-scratch reader in pure Python with no third-party dependency at all, so agreement between the two is corroboration rather than a restatement.\n\nMEASURED 2026-10-02, all five lab captures, both instruments, packets AND DNS direction:\n  dns-basic.pcap 4/4 dns 2/2 vs 2/2 | dns-txt.pcap 4/4 dns 2/2 vs 2/2 |\n  http-basic.pcap 10/10 dns 0/0 vs 0/0 | odd-port.pcap 26/26 dns 0/0 vs 0/0 |\n  tls-clienthello.pcap 14/14 dns 0/0 vs 0/0 -- ALL AGREE.\n\nAND THE FIRST COMPARISON ATTEMPT WAS WRONG, WHICH IS WORTH RECORDING. It reported a disagreement: tshark '0/0' against the reader's 2/2. The cause was the comparison script, not either instrument -- tshark's dns.flags.response prints the STRINGS 'False' and 'True', and the script compared them to '0' and '1', so it counted nothing and reported a phantom discrepancy. tshark in fact sees all four DNS rows and agrees exactly.\n\nThat is the 'an error is not a zero' trap in a new costume, and it nearly became a recorded finding about a working tool. A disagreement between instruments is the most interesting thing this pair could produce, which is precisely why a buggy comparator is dangerous here: it manufactures the interesting result.",
+      "consumes": {
+        "inputs": [
+          {
+            "name": "capture",
+            "type": "pcap",
+            "required": true,
+            "note": "a classic libpcap file. The corpus is GENERATED, not committed: net-reverse/lab/gen-pcaps.mjs writes five synthetic captures to %TEMP%\\net-reverse-lab\\pcaps (override NET_REVERSE_PCAP_DIR)."
+          }
+        ],
+        "prior": []
+      },
+      "produces": {
+        "facts": [
+          {
+            "key": "pcap.counts",
+            "type": "structure",
+            "note": "packets, bytes_on_wire, captured_bytes, frames_over_snaplen, ipv4, ipv6, tcp, udp, other_proto, distinct_flows, top_ports. Measured across the corpus: dns-basic 4 packets, http-basic 10, odd-port 26, tls-clienthello 14, dns-txt 4."
+          },
+          {
+            "key": "pcap.dns_direction",
+            "type": "verdict",
+            "note": "dns_queries and dns_responses counted from bit 15 of the DNS flags word. Measured: 2 queries and 2 responses on each of dns-basic and dns-txt, 0 and 0 on the other three. A COUNT TAKEN FROM A HEURISTIC, not from dissection: this reader matches on port 53 and reads two bytes. TShark dissects and agrees here, which is what makes the number worth having -- on a capture with a non-standard port or a malformed DNS header, only the dissector would be right."
+          }
+        ]
+      },
+      "requires": {
+        "runtime": "python",
+        "net": "none",
+        "admin": false,
+        "device": false,
+        "disk_mb": 0,
+        "ram_mb": 128,
+        "wall_minutes": 0.1,
+        "tools": [
+          {
+            "name": "python",
+            "probe": "python -c \"import struct, ipaddress\"",
+            "expect": "exit 0"
+          }
+        ],
+        "install_note": "NO THIRD-PARTY DEPENDENCY. struct and ipaddress are in the standard library, which is the whole point: scapy and dpkt are not installed on this station, and a second reader built on either would have had to be installed first. Runs in well under a second, which makes it the cheapest cross-check in the arsenal."
+      },
+      "reach": {
+        "fs_read": true,
+        "fs_write": false,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": false,
+        "db_write": false,
+        "proc_spawn_note": "CORRECTED BY R8, WHICH WAS RIGHT AND I WAS WRONG. This first read proc_spawn:false on the reasoning that nothing is shelled out to. That reasoning conflated two things: running `python pcap_reader.py` IS a child process, and R8's floor says exactly that -- any capability with a probe.command or an invoke.runner spawns something, precisely so that deleting the declaration makes it falsifiable.\n\nWhat actually distinguishes this entry is narrower and is the claim worth making: it spawns ONLY its own interpreter and no analysis tool. net.pcap.analyse spawns TShark; this spawns python and reads the bytes itself. That is why the two are independent rather than one implementation behind two front-ends."
+      },
+      "proves": [
+        "THAT Q4.data HAS A SECOND, GENUINELY INDEPENDENT IMPLEMENTATION. Measured on all five lab captures: packet counts agree with TShark 4.6.8 (4/4, 4/4, 10/10, 26/26, 14/14) and DNS query/response counts agree too (2/2, 2/2, and 0/0 on the three with no DNS). Two implementations written against the same file format in two languages is what corroboration means.",
+        "THAT A CAPTURE CAN BE READ WITHOUT ANY ANALYSIS TOOL. No tshark, no scapy, no dpkt, no subprocess. If TShark disappeared this capability would still answer."
+      ],
+      "does_not_prove": [
+        "ANYTHING ABOUT CONTENT. There is no reassembly and no TLS decode. A DNS name split across packets is not read, and an encrypted payload is not decoded. Agreement with TShark is corroboration of the COUNTS only, and neither instrument here says anything about what any packet contained.",
+        "THAT pcap.dns_direction IS A DISSECTION. It is a port-53 match plus one bit. On a capture using a non-standard DNS port, or carrying a malformed DNS header, this reader would be wrong and TShark would be right. The two agree on THIS corpus, which is a fact about the corpus and not a general property.",
+        "THAT THE CORPUS IS REPRESENTATIVE. All five captures are SYNTHETIC and generated by net-reverse/lab/gen-pcaps.mjs. Two readers agreeing on five generated files is evidence about the format and about those files; it is not evidence about real traffic.",
+        "THAT THE FIRST COMPARISON SHOWED A DISAGREEMENT. It did not. That was a bug in the comparison script and is recorded in composition_note so the phantom discrepancy is not rediscovered and mistaken for a finding."
+      ],
+      "gate": {
+        "lane": "debug",
+        "requires_verdict": true,
+        "escalation_class": "none"
+      },
+      "probe": {
+        "command": "python net-reverse\\tools\\pcap_reader.py \"%TEMP%\\net-reverse-lab\\pcaps\\dns-basic.pcap\"",
+        "expect": "\"dns_queries\": 2",
+        "expect_exit": 0,
+        "last_run": "2026-10-02",
+        "run_log": "dns-basic.pcap: {ok:true, exit:0, pcap:{version:'2.4', snaplen:262144, linktype:1, endian:'little'}, packets:4, bytes_on_wire:348, ipv4:4, dns_queries:2, dns_responses:2, distinct_flows:2}, TRUE_EXIT=0. TShark on the same file: 4 packets, dns.flags.response = False,True,False,True.",
+        "prepare": "node net-reverse\\lab\\gen-pcaps.mjs   # the corpus is GENERATED, not committed",
+        "expect_note": "The expectation is the DNS count rather than the packet count on purpose: the packet count is the easier thing for two readers to agree on by accident, since both are walking a length field. The DNS number requires both to locate port 53 AND read the flags word the same way."
+      },
+      "negative_control": {
+        "id": "net.pcap.selfparse.not_a_pcap_refused",
+        "command": "python net-reverse\\tools\\pcap_reader.py README.md",
+        "expect_exit": 2,
+        "expect_output": "not a pcap",
+        "measured": "README.md: {ok:false, exit:2, error:\"not a pcap: magic 0x4d5a206c is neither 0xa1b2c3d4 nor its byte-swapped twin\", first_bytes:'4d5a'}, TRUE_EXIT=2.",
+        "expect_output_note": "The control refuses on the MAGIC rather than on a parse failure partway through, and it names the magic it read. A reader that discovered the file was not a pcap only after a length field sent it somewhere absurd would be reporting a different failure, and 'this is not a pcap' and 'this pcap is broken' must not be the same error. 0x4d5a is 'MZ' -- the first two bytes of a PE, which is the exact confusion a network reader must not make."
+      },
+      "provenance": {
+        "source": "measured on this station 2026-10-02, written after Q4.data measured one capture family and the independence gate could not pass there",
+        "record": "wiki/CHARTER-ARSENAL.md"
+      },
+      "evidence_source": "packet-reader",
+      "evidence_source_note": "A NEW FAMILY, and deliberately not capture-analysis. That family means 'shells out to a dissector'; this means 'parses the file format itself'. If both were capture-analysis then adding this entry would have changed Q4's ratio without changing what is corroborated, which is the relabel escape R18 exists to stop.",
+      "invoke": {
+        "runner": "python",
+        "argv": [
+          "net-reverse/tools/pcap_reader.py",
+          "{target}"
+        ],
+        "stdout": "json",
+        "success_when": "parsed JSON with ok == true. A non-pcap is refused with exit 2 and a named magic.",
+        "fact_map": {
+          "counts": "pcap.counts",
+          "dns_queries": "pcap.dns_direction"
+        }
+      },
+      "root_reason": "A genuine root: it is handed a capture path and answers a question about its structure, and nothing upstream produces a packet count. Its subject is the same file net.pcap.analyse reads, but the fact comes from a different implementation, which is exactly why there is no typed edge to it."
     }
   ]
 }
