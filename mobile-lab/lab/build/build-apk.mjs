@@ -39,6 +39,7 @@
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -47,7 +48,16 @@ import { readZip, writeZip, entryData } from './zip.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const LAB = path.resolve(HERE, '..', '..');          /* mobile-lab/            */
-const WORK = path.join(LAB, 'work');
+/* PER-PROCESS work dir, and this is a measured fix rather than tidiness.
+ *
+ * `WORK` used to be `mobile-lab/work` for every build, and line 160 does
+ * `fs.rmSync(WORK, {recursive:true})` at the START of each build. Two concurrent builds
+ * therefore deleted each other's aapt2/d8 output mid-flight: measured 2026-10-03 as
+ * "Unable to open mobile-lab\work\apk\aligned.apk for verification / Build failed", exit 9,
+ * from a run that had nothing wrong with it. A gate checked twice in parallel reported a build
+ * failure instead of its own verdict. Keyed by pid, wiped on exit, no shared state. */
+const WORK = path.join(os.tmpdir(), `mobilelab-build-${process.pid}`);
+process.on('exit', () => { try { fs.rmSync(WORK, { recursive: true, force: true }); } catch { /* best effort */ } });
 const FW_RES = path.join(HERE, 'framework-res');
 
 /* ------------------------------------------------------------------ *

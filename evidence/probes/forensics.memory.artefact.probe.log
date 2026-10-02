@@ -1,7 +1,7 @@
 # assert-probes evidence: forensics.memory.artefact probe
 # command: node forensics-lab/tools/loop.mjs
 # exit: 0
-# seconds: 23.60
+# seconds: 8.51
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
 ------------------------------------------------------------------------

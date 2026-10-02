@@ -242,6 +242,7 @@ def check(cap: dict, timeout: int) -> list[tuple[str, str]]:
         return out
 
     crc, cblob, csecs = run(ccmd, timeout, (nc.get("env") or None))
+    save_evidence(cid, "control", ccmd, crc, csecs, cblob)
     cfault = tool_fault(crc, cblob, csecs)
     if cfault:
         out.append(("TOOL-FAULT", f"{cid} CONTROL {cfault} :: {ccmd[:60]}"))

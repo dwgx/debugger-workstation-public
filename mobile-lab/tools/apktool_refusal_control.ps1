@@ -36,8 +36,15 @@ $ErrorActionPreference = 'Continue'
 $root = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 Set-Location $root
 
-if (-not (Test-Path -LiteralPath $Apk))        { Write-Host "FAIL: no such APK: $Apk"; exit 0 }
-if (-not (Test-Path -LiteralPath $Apktool))    { Write-Host "FAIL: no such Apktool jar: $Apktool"; exit 0 }
+# EXIT 2 MEANS "THIS CONTROL COULD NOT RUN", and it is deliberately not 0. Independent acceptance
+# (2026-10-03) caught every failure branch here exiting 0, which made exit 0 ambiguous: under
+# -SkipTruncate the expected outcome IS 0, so "the falsifier proved the check is real" and "the
+# APK was missing" were indistinguishable to anything reading the code. Three states, three
+# codes: 1 = the decoder refused (the control fired); 0 = the decoder did not refuse (the
+# control did not fire); 2 = the control never got to ask.
+
+if (-not (Test-Path -LiteralPath $Apk))        { Write-Host "CANNOT RUN: no such APK: $Apk"; exit 2 }
+if (-not (Test-Path -LiteralPath $Apktool))    { Write-Host "CANNOT RUN: no such Apktool jar: $Apktool"; exit 2 }
 
 $t = Join-Path $env:TEMP ("apk-negctl-" + [guid]::NewGuid().ToString('N').Substring(0, 8))
 New-Item -ItemType Directory -Force -Path $t | Out-Null
@@ -60,21 +67,22 @@ try {
     Write-Host "apktool exit: $rc"
     if ($SkipTruncate) {
         if ($rc -eq 0) { Write-Host 'CONTROL FAILED AS IT SHOULD when falsified: an intact APK decodes, so the refusal requirement has no excuse.'; exit 0 }
-        Write-Host 'FAIL: the falsifier did not falsify -- apktool refused an INTACT APK.'
-        exit 0
+        Write-Host 'CANNOT RUN: the falsifier did not falsify -- apktool refused an INTACT APK, so the comparison below would prove nothing.'
+        exit 2
     }
 
-    # A refusal is the pass. Three ways to fail, all of them ways this project has been fooled:
+    # A refusal is the pass. Three ways NOT to fire, all of them ways this project has been
+    # fooled, and all of them exit 0 -- which is reserved for exactly that meaning.
     if ($rc -eq 0) {
-        Write-Host 'FAIL: apktool exited 0 on a truncated APK -- it decoded a container with no end-of-central-directory record.'
+        Write-Host 'DID NOT FIRE: apktool exited 0 on a truncated APK -- it decoded a container with no end-of-central-directory record.'
         exit 0
     }
     if (Test-Path (Join-Path $out 'AndroidManifest.xml')) {
-        Write-Host 'FAIL: a truncated APK produced an AndroidManifest.xml -- an empty answer read as an answer.'
+        Write-Host 'DID NOT FIRE: a truncated APK produced an AndroidManifest.xml -- an empty answer read as an answer.'
         exit 0
     }
     if ($log -notmatch 'NotAZipFileException|zip END header not found|not a zip') {
-        Write-Host 'FAIL: apktool failed, but not for a reason about the archive. A failure for the wrong reason is a control that cannot fire.'
+        Write-Host 'DID NOT FIRE: apktool failed, but not for a reason about the archive. A failure for the wrong reason is a control that cannot fire.'
         exit 0
     }
     Write-Host 'CONTROL FIRED: the second decoder refused the truncated APK, and refused it for a reason about the archive.'

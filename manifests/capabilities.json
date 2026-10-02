@@ -230,7 +230,7 @@
         "last_run": "2026-09-30",
         "evidence_binding": {
           "status": "unverified",
-          "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."
+          "reason": "Honest state, and now with the blocker NAMED rather than described. Re-measured 2026-10-03: `python scripts/assert-probes.py native.ida.decompile native.ida.list_functions --save-evidence ...` reports `SKIP  <id>: driven through the idalib-mcp MCP device, not a CLI command` -- so the runner never executes these two probes and there is nothing to hash. The instrument is reachable (the lab loop `node native-lab/tools/loop.mjs --only=decompile` runs it), but a loop a human starts by hand is not a probe the harness can re-run, and pretending otherwise is what R17 exists to refuse. Three ways out, none taken unilaterally: (a) an idalib CLI entry point that writes a JSON artifact, (b) a save-evidence path through the MCP device, or (c) demote the entry. Until one exists this entry's 'observed' rests on last_summary and the lab README in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this must be replaced, not left."
         },
         "last_summary": "JSON-SUMMARY {\"total\":15,\"pass\":15,\"fail\":0}",
         "distinct_probe_note": "SCOPED, and this replaced an IDENTICAL probe.command shared with the other IDA capability. Measured before: native.ida.decompile and native.ida.list_functions both pointed at `node native-lab/tools/loop.mjs`, which genuinely exercises both -- so neither was a false probe, but a break in `decompile` reddened BOTH entries and neither could be blamed. loop.mjs now takes --only=<tool>; verified both directions: --only=decompile runs the decompile assertions, --only=list_funcs runs ZERO of them while still proving its own two. The default with no flag still covers both, and remains the integration check. A shared probe is legal; a probe that cannot LOCALISE a fault is not much of a probe."
@@ -379,7 +379,7 @@
         "last_run": "2026-09-30",
         "evidence_binding": {
           "status": "unverified",
-          "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."
+          "reason": "Honest state, and now with the blocker NAMED rather than described. Re-measured 2026-10-03: `python scripts/assert-probes.py native.ida.decompile native.ida.list_functions --save-evidence ...` reports `SKIP  <id>: driven through the idalib-mcp MCP device, not a CLI command` -- so the runner never executes these two probes and there is nothing to hash. The instrument is reachable (the lab loop `node native-lab/tools/loop.mjs --only=decompile` runs it), but a loop a human starts by hand is not a probe the harness can re-run, and pretending otherwise is what R17 exists to refuse. Three ways out, none taken unilaterally: (a) an idalib CLI entry point that writes a JSON artifact, (b) a save-evidence path through the MCP device, or (c) demote the entry. Until one exists this entry's 'observed' rests on last_summary and the lab README in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this must be replaced, not left."
         },
         "last_summary": "362 functions enumerated. CORRECTED by independent verification 2026-10-02: this line previously said '300 functions enumerated', and 300 was loop.mjs's QUERY CAP ({count:300}), not a population. The verifier measured the real figure through list-funcs.mjs at {count:2000} as 362 -- the same number this registry already used in native.disasm.capstone's does_not_prove. Two numbers, one of them the cap, in two places. A cap quoted as a count is the most flattering possible error: it is always round, always small, and always looks like a real measurement.",
         "distinct_probe_note": "SCOPED, and this replaced an IDENTICAL probe.command shared with the other IDA capability. Measured before: native.ida.decompile and native.ida.list_functions both pointed at `node native-lab/tools/loop.mjs`, which genuinely exercises both -- so neither was a false probe, but a break in `decompile` reddened BOTH entries and neither could be blamed. loop.mjs now takes --only=<tool>; verified both directions: --only=decompile runs the decompile assertions, --only=list_funcs runs ZERO of them while still proving its own two. The default with no flag still covers both, and remains the integration check. A shared probe is legal; a probe that cannot LOCALISE a fault is not much of a probe."
@@ -485,10 +485,8 @@
         "expect": "LOOP CLOSED",
         "exit": 0,
         "last_run": "2026-09-30",
-        "evidence_binding": {
-          "status": "unverified",
-          "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."
-        },
+        "run_log": "evidence/probes/web.js.cdp.probe.log",
+        "sha256": "fb6d693a3b7be80df2572d5170a1abccc4819c4e28572a3e0135b48465bde1cf",
         "last_summary": "6 checks",
         "expect_note": "CORRECTED 2026-10-02 by assert-probes.py. This read '6/6', a tally the loop does not print. Measured output ends 'LOOP CLOSED: signature captured, algorithm recovered, request minted outside the browser, gate accepted it.' A tally is also the weaker assertion: it says a count but not WHICH checks, so a run that passed four and failed two could still be described as 4/6 by eye. The loop's own closing marker names what it actually proved."
       },
@@ -595,10 +593,8 @@
         "expect": "JSON-SUMMARY {\"total\":17,\"pass\":17,\"fail\":0}",
         "exit": 0,
         "last_run": "2026-09-30",
-        "evidence_binding": {
-          "status": "unverified",
-          "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."
-        },
+        "run_log": "evidence/probes/crypto.jose.parse.probe.log",
+        "sha256": "f923c2a0f598811e881baeb710b737cfa240d7aee7adec99c14c15685e175626",
         "last_summary": "17 checks",
         "env": {
           "CRYPTO_LAB_PORT": "8799"
@@ -732,10 +728,8 @@
         "expect": "LANE CLOSED",
         "exit": 0,
         "last_run": "2026-09-30",
-        "evidence_binding": {
-          "status": "unverified",
-          "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."
-        },
+        "run_log": "evidence/probes/net.pcap.analyse.probe.log",
+        "sha256": "6c9609cc2c9c95501585bb4eac7ada7b5cdbed598db69503937b8a04fcb08356",
         "last_summary": "16 questions, request/response rewriting and isolation checks passed"
       },
       "invoke": {
@@ -858,10 +852,8 @@
         "expect": "LOOP CLOSED",
         "exit": 0,
         "last_run": "2026-09-30",
-        "evidence_binding": {
-          "status": "unverified",
-          "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."
-        },
+        "run_log": "evidence/probes/forensics.memory.artefact.probe.log",
+        "sha256": "76561502e6f39d308dec236acfedace23b97feeab878c8981e1f26cc43c00c12",
         "last_summary": "37 checks (74 PASS lines -- each check prints a verdict and its evidence)"
       },
       "invoke": {
@@ -975,10 +967,8 @@
         "expect": "JSON-SUMMARY {\"total\":27,\"pass\":27,\"fail\":0}",
         "exit": 0,
         "last_run": "2026-09-30",
-        "evidence_binding": {
-          "status": "unverified",
-          "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."
-        },
+        "run_log": "evidence/probes/managed.il.decompile.probe.log",
+        "sha256": "749d21ae8638901042cfb9d3b5a694149e3be398d841395ec8f373ada68420ef",
         "last_summary": "27 checks (46 PASS lines -- count unique names, not rows)"
       },
       "not_callable": {
@@ -1090,10 +1080,8 @@
         "expect": "LOOP CLOSED",
         "exit": 0,
         "last_run": "2026-09-30",
-        "evidence_binding": {
-          "status": "unverified",
-          "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."
-        },
+        "run_log": "evidence/probes/mobile.apk.static.probe.log",
+        "sha256": "8a7698d6fdb129c296441a91029b589665a2464e10fe6ae31b2bc10318032ff2",
         "last_summary": "33 checks measured 2026-10-03 (was recorded as 31: the count moved because two cross-checks became a third state, SKIP, rather than a silent PASS). Includes 6 indicator controls: silence on our own clean APK, fire on a synthetic packer DEX, fire on load-bearing root/emulator paths, and weak-signal separation"
       },
       "invoke": {
@@ -1211,10 +1199,8 @@
         "expect": "CORPUS CLOSED",
         "exit": 0,
         "last_run": "2026-09-30",
-        "evidence_binding": {
-          "status": "unverified",
-          "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."
-        },
+        "run_log": "evidence/probes/re.corpus.solve.probe.log",
+        "sha256": "3e1642363b6ab7ca37393c447cf9da24fca3e1e4b4a6e2d0b4215f8f26ab3d6b",
         "last_summary": "20 checks, 5 negative controls"
       },
       "not_callable": {
@@ -1224,11 +1210,13 @@
         "id": "re.corpus.wrong_sample",
         "expect_exit": 1,
         "why": "a technique label must not be emitted for a sample it did not solve",
-        "command": "python crackme-corpus/challenges/c01-stringobf/solve.py --exe crackme-corpus/out/c01-stringobf.exe --ghidra-out crackme-corpus/out/c01-stringobf-ghidra --expect-password WRONG-ON-PURPOSE-0000 --expect-flag FLAG{c01_string_table_xor}",
+        "command": "python crackme-corpus/challenges/c01-stringobf/solve.py --exe crackme-corpus/out/c01-stringobf.exe --ghidra-out crackme-corpus/out/c01-stringobf-ghidra --expect-password WRONG-ON-PURPOSE-0000 --expect-flag \"FLAG{c01_string_table_xor}\"",
         "expect_output": "!= expected 'WRONG-ON-PURPOSE-0000'",
         "polarity": "SUCCESS IS EXIT 1. The RIGHT answer is recovered from the binary and the harness rejects the deliberately wrong expectation, which puts the harness's own comparison under test rather than the decoder.",
         "converted_on": "2026-10-03, replacing a `kind: plan` block whose reason said the corpus loop takes no such argument. The loop indeed does not, but the challenge's solver DOES: crackme-corpus/challenges/c01-stringobf/solve.py takes --exe, and the loop builds exactly that argv at tools/loop.py:155-161. The control is that argv with one value changed.",
         "measured": "2026-10-03, both directions re-run by the integrating agent from the crackme-corpus directory. CONTROL: exit 1 in 1.9 s, printing the recovered strings ('18 bytes @ 0x140017330 rot=11 mask=0x5a -> C01-TABLE-XOR-9F2A', '26 bytes @ 0x140017348 rot=5 mask=0x33 -> FLAG{c01_string_table_xor}'), then 'binary: rc=0 ACCEPTED | FLAG{c01_string_table_xor}' and 'FAIL password ... != expected WRONG-ON-PURPOSE-0000'. POSITIVE (same argv with the real password): exit 0 in 2.2 s, 'PASS c01 password=... flag=...'. Corpus-wide, measured the same day: `python crackme-corpus/tools/loop.py` -> 'CORPUS CLOSED: 5 challenge(s), 20 checks, 5 negative controls' in 120.7 s, exit 0.",
+        "brace_trap": "The flag value is QUOTED, and that is load-bearing rather than stylistic. `assert-probes.py` writes this string verbatim into a .ps1 and runs it with `powershell -File`, where a bare `{` in argument position starts a SCRIPT BLOCK: PowerShell evaluates `FLAG{...}` as a command, re-enters itself, and the child finally receives `-encodedCommand YwAwADEAXwBzAHQAcgBpAG4AZwBfAHQAYQBiAGwAZQBfAHgAbwByAA== -inputFormat xml -outputFormat text`, which decodes to `c01_string_uableble_hor`. Measured consequence: exit 2 (argparse 'unrecognized arguments') instead of the declared 1, and the recorded expect_output absent. Run by hand from a shell it works, which is exactly why it survived a hand-measured round. Rule R26 now refuses an unquoted brace in probe.command or negative_control.command; quoted spans are exempt, which is why the frida JavaScript payloads do not trip it.",
+        "measured_through_the_runner": "2026-10-03, the first sweep that ran this control THROUGH assert-probes rather than by hand reported 'CONTROL exit: recorded expect_exit=1, real=2' -- which is how the brace trap was found. After quoting, re-measured through the same path.",
         "filename_trap": "DO NOT write this control with the corpus table's own exe name. tools/loop.py's c01 row says exe 'c01_string_obf.exe' (underscores) while tools/build-c.ps1 writes $Id.exe with the id 'c01-stringobf' (hyphens), and the hyphen file is the one the build produces and the one this control uses. A worker auditing this measured 6 of 6 attempts to open the underscore file failing with radare2's 'Cannot open'; the underscore file is a stale leftover in out/ that a directory listing still shows. The full loop is unaffected -- it builds first and solves the built path."
       },
       "provenance": {
@@ -1454,10 +1442,8 @@
         "prepare_note": "The probe needs a target. It is the estate's own self-built crackme, copied to %TEMP% and never run from the repo directory. Run `prepare` first, or the probe fails for a reason that has nothing to do with Frida. The JavaScript uses backtick template literals on purpose: it is passed inside PowerShell single quotes, and embedded double quotes are stripped by the native argument builder, which turns this probe into a SyntaxError on the first attempt (measured).",
         "last_run": "2026-10-02",
         "last_summary": "target_sha256=2d59a3c5d3281782e254ed84d14f43768251096240cb85c492f56018b56fbf09 | Spawned `%USERPROFILE%\\AppData\\Local\\Temp\\fridaprobe\\target.exe`. Resuming main thread! | usage: ... <password> | FRIDA_WIN module_base=0x7ff7c3a30000 | FRIDA_WIN symbol_main=0 | FRIDA_WIN export_printf=0x7ffcf0e5d280 | FRIDA_WIN rebased_main=0x7ff7c3a31080 | Process terminated | PROBE EXIT=0 | NOTE: no `FRIDA_WIN HIT main` line was printed -- no callback fired, and does_not_prove says so.",
-        "evidence_binding": {
-          "status": "unverified",
-          "reason": "Honest state, not a gap papered over. The probe WAS run on this station by the agent that added this entry, from a clean %TEMP%\\fridaprobe each time, and the console output above is copied verbatim from a run of the command now sitting in this file rather than summarised from another session's transcript. What is NOT retained: no stdout log file, no hash of the run itself, nothing on disk that re-derives the numbers -- only the sha256 of the TARGET binary (2d59a3c5...), which pins what was probed and not what the probe printed. R17 accepts exactly this marker and no softer one, so the day a run writes its own output to a retained path this has to be replaced rather than left."
-        }
+        "run_log": "evidence/probes/dynamic.win.frida.probe.log",
+        "sha256": "9225f60bab29188ae5551bf284193ce78596bb9e017dc0be8152054f58ad5907"
       },
       "negative_control": {
         "id": "dynamic.win.frida.static_va_unrebased",
@@ -1609,10 +1595,8 @@
         "expect": "LOOP CLOSED",
         "exit": 0,
         "last_run": "2026-09-30",
-        "evidence_binding": {
-          "status": "unverified",
-          "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."
-        },
+        "run_log": "evidence/probes/fuzz.differential.parse.probe.log",
+        "sha256": "c98d10ad9f75b20af0db4064f569b16f2a6e9607f2f5d1a496a027f3c2b41466",
         "last_summary": "24/24 assertions, 480 inputs, 1 live reference finding, 12 flawed-twin findings, 6/6 regressions holding",
         "runtime_note": "SLOW: measured 2026-10-02 at ~634 s for --budget 40. scripts/assert-probes.py defaults to --timeout 180, which cuts this run off before it prints its closing marker and makes the missing 'LOOP CLOSED' look like a registry drift. It is not: rerun with --timeout 900. Recorded here because the tool now reports that case as TOOL-FAULT rather than DRIFT, and a reader who sees it should know to raise the budget instead of editing the string.",
         "expect_note": "VERIFIED against a live run 2026-10-02: the loop ends 'LOOP CLOSED: the corpus is stable, every input was executed under a hard ceiling, a real defect in this repository's own parsers was found from a mutated seed and reproduced from its recipe, the negative control confirms the harness catches a deliberately fragile parser, and every known finding now rejects instead of throwing.' The string is correct; the earlier DRIFT was a 180 s timeout, not a false claim."
@@ -1750,10 +1734,8 @@
         "expect": "LOOP CLOSED",
         "exit": 0,
         "last_run": "2026-09-30",
-        "evidence_binding": {
-          "status": "unverified",
-          "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."
-        },
+        "run_log": "evidence/probes/native.ghidra.decompile.probe.log",
+        "sha256": "6cd0ac365b19c682fe6ac89140088fc0281da8d0ac9c8d580fbd2299276aee28",
         "last_summary": "4/4; measured cost of one run on a 140.5 KB PE: 18.05 s wall, 1085.7 MB peak RAM, 673,090 B across 522 files"
       },
       "invoke": {

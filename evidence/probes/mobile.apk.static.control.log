@@ -1,0 +1,14 @@
+# assert-probes evidence: mobile.apk.static control
+# command: powershell -NoProfile -ExecutionPolicy Bypass -File mobile-lab/tools/apktool_refusal_control.ps1
+# exit: 1
+# seconds: 0.58
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+truncated mobile-lab\artifacts\mobilelab.apk : 25135 -> 12568 bytes
+java.exe : Exception in thread "main" com.android.tools.smali.dexlib2.dexbacked.ZipDexContainer$NotAZipFileException
+ | At D:\Software\Tool\WorkStation\debugger\mobile-lab\tools\apktool_refusal_control.ps1:64 char:13
+ | +     $log = (& java -jar $Apktool d -f -p (Join-Path $t 'fw') -o $out  ...
+
+apktool exit: 1
+CONTROL FIRED: the second decoder refused the truncated APK, and refused it for a reason about the archive.

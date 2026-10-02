@@ -1,7 +1,7 @@
 # assert-probes evidence: managed.il.decompile probe
 # command: node managed-lab/tools/loop.mjs
 # exit: 0
-# seconds: 17.09
+# seconds: 27.93
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
 ------------------------------------------------------------------------

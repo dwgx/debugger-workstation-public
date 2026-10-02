@@ -1,7 +1,7 @@
 # assert-probes evidence: net.pcap.analyse probe
 # command: node net-reverse/tools/loop.mjs
 # exit: 0
-# seconds: 8.38
+# seconds: 10.16
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
 ------------------------------------------------------------------------
@@ -92,8 +92,8 @@ replay — captured request re-injected into a loopback listener
   [1] POST /login HTTP/1.1
       captured 295 bytes, sha256:b6aac45aeec21f86264f19c87776b9ae
       carries the captured credential: password=lab-only-password-9f2c
-      replayed -> http://127.0.0.1:63145
-      server   POST /login from 127.0.0.1:63146
+      replayed -> http://127.0.0.1:60147
+      server   POST /login from 127.0.0.1:60148
                295 bytes received, sha256:b6aac45aeec21f86264f19c87776b9ae
       verdict  IDENTICAL — every captured byte arrived at the listener
       response HTTP/1.1 200 OK | Server: net-reverse-recorder/1.0 | Content-Type: application/json | Content-Length: 382
@@ -109,7 +109,7 @@ replay — captured request re-injected into a loopback listener
 
   [1] LAPP LAB-MARKER-7f3arole=analys
       captured 38 bytes, sha256:f8ba1b225b578ab00be1de592a165eeb
-      replayed -> http://127.0.0.1:63147
+      replayed -> http://127.0.0.1:60149
       server   (external listener on port 0: compare with its own log)
       response
 
@@ -117,14 +117,14 @@ replay — captured request re-injected into a loopback listener
 $ node tools/intercept.mjs 
 ------------------------------------------------------------------------------
 net-reverse interception — CDP Fetch domain against a loopback origin
-  target     http://127.0.0.1:63149 (in-process recorder, loopback only)
+  target     http://127.0.0.1:60151 (in-process recorder, loopback only)
   browser    C:/Program Files/Google/Chrome/Application/chrome.exe
-             disposable profile %USERPROFILE%\AppData\Local\Temp\web-reverse-net-interceptor-23328-t0q8p1
+             disposable profile %USERPROFILE%\AppData\Local\Temp\web-reverse-net-interceptor-42544-fz4k5u
   server log:
-    [echo-server] 2026-10-02T19:35:34.265Z GET /lab-page bytes=681 sha256=47d5ab38001f2ac2 x-lab-marker=null body=""
-    [echo-server] 2026-10-02T19:35:34.280Z GET /favicon.ico bytes=608 sha256=ab0c59a89f5a0268 x-lab-marker=null body=""
-    [echo-server] 2026-10-02T19:35:34.282Z POST /api/intercept bytes=723 sha256=69709f6312ceff72 x-lab-marker=rewritten-by-cdp body="{\"from\":\"page\",\"marker\":\"rewritten-by-cdp\",\"rewritten\":true}"
-    [echo-server] 2026-10-02T19:35:34.285Z GET /api/fulfill bytes=544 sha256=3bedf63b583b3841 x-lab-marker=null body=""
+    [echo-server] 2026-10-02T20:33:05.741Z GET /lab-page bytes=681 sha256=cb59a3fe79ae9a38 x-lab-marker=null body=""
+    [echo-server] 2026-10-02T20:33:05.758Z GET /favicon.ico bytes=608 sha256=ca8abfd8b18654cc x-lab-marker=null body=""
+    [echo-server] 2026-10-02T20:33:05.760Z POST /api/intercept bytes=723 sha256=b266d97026518c3a x-lab-marker=rewritten-by-cdp body="{\"from\":\"page\",\"marker\":\"rewritten-by-cdp\",\"rewritten\":true}"
+    [echo-server] 2026-10-02T20:33:05.762Z GET /api/fulfill bytes=544 sha256=30d70431c9b49af4 x-lab-marker=null body=""
 
   [1] request rewrite
       page sent     x-lab-marker: original-from-page
@@ -133,7 +133,7 @@ net-reverse interception — CDP Fetch domain against a loopback origin
                     body "{\"from\":\"page\",\"marker\":\"rewritten-by-cdp\",\"rewritten\":true}"
       SERVER SAW    x-lab-marker: rewritten-by-cdp
                     body "{\"from\":\"page\",\"marker\":\"rewritten-by-cdp\",\"rewritten\":true}"
-      page got back {"method":"POST","url":"/api/intercept","marker":"rewritten-by-cdp","body":"{\"from\":\"page\",\"marker\":\"rewritten-by-cdp\",\"rewritten\":true}","host":"127.0.0.1:63149","raw_sha256":"69709f6312ceff72e76937b0e1f4992d59c84c69f7253c4f30275159f8d7ff1d","body_sha256":"be330f227831213913452171a8c2bc02354d5fd638707d84232dccba847488e7"}
+      page got back {"method":"POST","url":"/api/intercept","marker":"rewritten-by-cdp","body":"{\"from\":\"page\",\"marker\":\"rewritten-by-cdp\",\"rewritten\":true}","host":"127.0.0.1:60151","raw_sha256":"b266d97026518c3a756335d85e47320daa2fb531d7b7a385213a18d2affec45d","body_sha256":"be330f227831213913452171a8c2bc02354d5fd638707d84232dccba847488e7"}
 
   [2] response rewrite (fulfillRequest)
       origin sent   200 with Server: net-reverse-recorder/1.0 — body ""
@@ -142,17 +142,17 @@ net-reverse interception — CDP Fetch domain against a loopback origin
 
   CDP calls used: 9
     Target.createTarget {"url":"about:blank"}
-    Target.attachToTarget {"targetId":"FCE4EC6093D0AC5356C6E12DAEE013D2","flatten":true}
+    Target.attachToTarget {"targetId":"0C488D1702554A877EFF6948A36F4EEA","flatten":true}
     Page.enable
     Runtime.enable
     Network.enable
     Fetch.enable {"patterns":[{"urlPattern":"*api/intercept*","requestStage":"Request"},{"urlPattern":"*api/fulfi
-    Page.navigate {"url":"http://127.0.0.1:63149/lab-page"}
+    Page.navigate {"url":"http://127.0.0.1:60151/lab-page"}
     Fetch.continueRequest {"requestId":"interception-job-3.0","headers":[{"name":"Accept","value":"*/*"},{"name":"Origin",
     Fetch.fulfillRequest {"requestId":"interception-job-4.0","responseCode":200,"responsePhrase":"OK (rewritten by CDP)",
 
-  summary (0.3s)
-    PASS  recorder captured the outbound POST                        POST /api/intercept 723 bytes sha256:69709f6312ce
+  summary (0.4s)
+    PASS  recorder captured the outbound POST                        POST /api/intercept 723 bytes sha256:b266d9702651
     PASS  request header rewritten in flight (server-side proof)     server saw x-lab-marker: rewritten-by-cdp (page sent original-from-page)
     PASS  request body rewritten in flight (server-side proof)       server decoded body "{\"from\":\"page\",\"marker\":\"rewritten-by-cdp\",\"rewritten\":true}"
     PASS  page received the server echo of the rewritten request     fetch result received.marker = rewritten-by-cdp
@@ -185,7 +185,7 @@ ISOLATION HELD: zero lab certificates in the machine/user root stores, no system
 net-reverse loop summary
 ==============================================================================
   PASS  corpus generated (5 synthetic captures, hash-labelled)   label -> %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\corpus.json
-  PASS  16 questions answered, negative controls held          16 question(s), 0 failed, 0 negative control(s) leaked  (6.3s)
+  PASS  16 questions answered, negative controls held          16 question(s), 0 failed, 0 negative control(s) leaked  (7.9s)
   PASS  captured POST re-injected byte-identically                 response HTTP/1.1 200 OK | Server: net-reverse-recorder/1.0 | Content-Type: application/js
   PASS  captured binary stream re-injected byte-identically        response
   PASS  request + response rewritten in flight over CDP      INTERCEPTION PROVED: a request and a response were rewritten in flight, on loopback, with no pro

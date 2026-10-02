@@ -20,6 +20,7 @@
 
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -31,8 +32,25 @@ import { runFridaSelfTest } from './frida-selftest-lib.mjs';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
 const STATION = path.resolve(ROOT, '..');
-const APK = path.join(ROOT, 'artifacts', 'mobilelab.apk');
-const OUT = path.join(ROOT, 'out');
+
+/* PER-RUN scratch, and this is a fix rather than a style choice.
+ *
+ * Measured 2026-10-03 by independent acceptance: two concurrent runs of this loop shared
+ * `mobile-lab/out` and the shared APK path, and the `--skip-jadx --skip-apktool` run came back
+ * exit 9 with "Unable to open mobile-lab\work\apk\aligned.apk for verification / Build failed".
+ * That is a CORRUPTED-BUILD failure, not the skip gate it was supposed to report -- so a gate
+ * that runs two loops at once reports a lie, and the natural way to check a gate is to run it
+ * twice. Each run now builds into its own directory under %TEMP% and publishes the finished APK
+ * to the canonical path with a single atomic rename at the end, so `artifacts/mobilelab.apk`
+ * (which the registry, the triage gate and apktool_refusal_control.ps1 all read) still exists,
+ * is still the same path, and is never observed half-written.
+ */
+const RUN = path.join(os.tmpdir(), `mobilelab-loop-${process.pid}-${Date.now().toString(36)}`);
+const APK_PUBLISHED = path.join(ROOT, 'artifacts', 'mobilelab.apk');
+const APK = path.join(RUN, 'mobilelab.apk');
+const OUT = path.join(RUN, 'out');
+fs.mkdirSync(RUN, { recursive: true });
+process.on('exit', () => { try { fs.rmSync(RUN, { recursive: true, force: true }); } catch { /* best effort */ } });
 
 const steps = [];
 const argv = process.argv.slice(2);
@@ -74,7 +92,8 @@ function banner(t) {
  * ------------------------------------------------------------------ */
 banner('mobile-lab loop');
 console.log(`  root   ${ROOT}`);
-console.log(`  apk    ${APK}`);
+console.log(`  apk    ${APK}   (this run only)`);
+console.log(`  pub    ${APK_PUBLISHED}   (written atomically when the build succeeds)`);
 
 let buildMs = 0;
 let built = null;
@@ -82,8 +101,15 @@ try {
   const t = Date.now();
   built = await buildApk({ out: APK, quiet: true });
   buildMs = Date.now() - t;
+  /* Publish atomically. rename() within a volume is the one write here that another process
+   * cannot observe half-finished; writing straight to artifacts/mobilelab.apk is how a parallel
+   * reader gets a truncated ZIP and reports "not a ZIP" about a perfectly good APK. */
+  fs.mkdirSync(path.dirname(APK_PUBLISHED), { recursive: true });
+  const staging = `${APK_PUBLISHED}.${process.pid}.tmp`;
+  fs.copyFileSync(APK, staging);
+  fs.renameSync(staging, APK_PUBLISHED);
   record('build a real signed APK from source (javac + d8 + aapt2 + zipalign + apksigner)',
-    true, `${built.bytes} bytes, sha256 ${built.sha256.slice(0, 16)}…`, buildMs);
+    true, `${built.bytes} bytes, sha256 ${built.sha256.slice(0, 16)}… -> published ${path.relative(ROOT, APK_PUBLISHED)}`, buildMs);
 } catch (e) {
   record('build a real signed APK from source', false, e.message.split('\n')[0]);
 }

@@ -1152,6 +1152,78 @@ def r24_input_types_are_declared(reg, doc):
     return out
 
 
+def r26_bare_braces_survive_the_shell(reg, doc):
+    """A command the runner executes VERBATIM may not contain an unquoted brace.
+
+    This rule exists because of one measured failure, and the failure is nastier than a
+    typo. `assert-probes.py` writes `probe.command` / `negative_control.command` byte-for-byte
+    into a .ps1 and runs it with `powershell -File`. PowerShell does not treat `{` as an ordinary
+    character in argument position: it starts a SCRIPT BLOCK. So
+
+        --expect-flag FLAG{c01_string_table_xor}
+
+    does not reach python as that string. PowerShell evaluates `FLAG{...}` as a command with a
+    script block, re-enters itself, and the child process is finally handed
+
+        -encodedCommand YwAwADEAXwBzAHQAcgBpAG4AZwBfAHQAYQBiAGwAZQBfAHgAbwByAA== -inputFormat xml ...
+
+    which base64/UTF-16LE-decodes to `c01_string_uableble_hor` -- a mangled fragment of the flag.
+    Measured: the control exits 2 (argparse "unrecognized arguments"), not the 1 it declares, and
+    the recorded expect_output is absent. R21 accepted the command as runnable, because as a
+    STRING it is perfectly runnable. Nothing was wrong with the text; everything was wrong with
+    what the shell did to it.
+
+    Quoted spans are exempt, and that exemption is what makes the rule usable: the frida
+    commands carry a whole JavaScript payload inside PowerShell SINGLE quotes, full of braces,
+    and they work. The scan therefore tracks both quote characters and skips their contents.
+
+    What this does NOT do: parse PowerShell. A backtick-escaped quote and a here-string are
+    handled, an unterminated quote is not diagnosed. It refuses the shape it has measured.
+    """
+    out = []
+    for c in reg:
+        for field, holder in (("probe", c.get("probe") or {}),
+                              ("negative_control", c.get("negative_control") or {})):
+            cmd = holder.get("command")
+            if not isinstance(cmd, str) or "{" not in cmd:
+                continue
+            quote = None
+            i = 0
+            hits = []
+            while i < len(cmd):
+                ch = cmd[i]
+                if ch == "`" and i + 1 < len(cmd):   # backtick escapes the next character
+                    i += 2
+                    continue
+                if quote:
+                    if ch == quote:
+                        quote = None
+                    i += 1
+                    continue
+                if ch in "\"'":
+                    quote = ch
+                    i += 1
+                    continue
+                if ch == "{":
+                    m = re.match(r"\{[A-Za-z0-9_.:]+\}", cmd[i:])
+                    hits.append(m.group(0) if m else "{")
+                    i += 1
+                    continue
+                i += 1
+            if hits:
+                out.append(f"R26 {c.get('id','?')}: {field}.command contains an UNQUOTED brace "
+                           f"({hits[0]}). The runner writes this string verbatim into a .ps1 and "
+                           f"runs it with `powershell -File`, where a bare '{{' in argument "
+                           f"position starts a script block: PowerShell re-enters itself and the "
+                           f"child gets `-encodedCommand <base64 of a mangled token>` instead. "
+                           f"Measured on re.corpus.solve: the control exited 2 (argparse "
+                           f"'unrecognized arguments') instead of the 1 it declares. Quote the "
+                           f"value -- \"FLAG{{...}}\" -- or stop putting a brace in argument "
+                           f"position. A brace inside quotes is fine, which is why the whole "
+                           f"frida JavaScript payload does not trip this.")
+    return out
+
+
 RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r4_fact_types_agree, r5_control_must_fail, r6_reach_needs_escalation, r7_ids,
          r8_reach_must_be_declared, r9_batch_must_account, r10_invoke_must_runnable,
@@ -1160,7 +1232,8 @@ RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r17_state_is_evidenced, r18_evidence_family_agrees, r19_probes_distinguish,
          r20_fact_map_declares, r21_control_command_runnable,
          r22_ungrantable_needs_a_reason, r23_escalation_class_needs_a_reason,
-         r24_input_types_are_declared, r25_plan_needs_a_checkable_ref)
+         r24_input_types_are_declared, r25_plan_needs_a_checkable_ref,
+         r26_bare_braces_survive_the_shell)
 
 
 # ---------------------------------------------------------------------------- core
@@ -1497,6 +1570,21 @@ def selftest() -> int:
     case("R14 observed producer with no edge and no root_reason", lambda b: b[0].pop(
         "root_reason"), "R14")
     case("R14 registry shrank below the pinned count", lambda b: b.pop(), "R14")
+    # R26: PowerShell reads a bare `{` in argument position as the start of a script block, so
+    # the text can be perfectly runnable and still deliver something else to the child. The
+    # negative case is the load-bearing half: the frida commands carry a whole JavaScript
+    # payload full of braces inside single quotes and they work, so a rule that flagged quoted
+    # spans would fire on working code and get switched off.
+    case("R26 a bare brace in a control command",
+         lambda b: b[0]["negative_control"].__setitem__(
+             "command", "python solve.py --expect-flag FLAG{c01_string_table_xor}"), "R26")
+    case("R26 a bare brace in a probe command",
+         lambda b: b[0]["probe"].__setitem__(
+             "command", "python probe.py --flag FLAG{abc}"), "R26")
+    nocase("R26 braces inside a quoted span are accepted",
+           lambda b: b[0]["negative_control"].__setitem__(
+               "command", "frida.exe -e 'var m=Process.mainModule;console.log(`${m.base}`)'"),
+           "R26")
     doc_case("R14 question-type enumeration removed from the schema",
              lambda d: d["schema"].pop("question_types"), "R13")
     doc_case("R14 retired entry with no reason",
