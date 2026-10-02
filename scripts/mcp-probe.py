@@ -30,8 +30,26 @@ HERE = Path(__file__).resolve().parent
 import os as _os
 SCRATCH = Path(_os.environ.get("ARSENAL_MCP_PROBE_DIR") or (_os.environ["TEMP"] + "\\arsenal-mcp-probe"))
 SCRATCH.mkdir(parents=True, exist_ok=True)
-REPO = Path(sys.argv[1]).resolve()
-SERVER = Path(sys.argv[2]).resolve() if len(sys.argv) > 2 else REPO / "scripts" / "arsenal_mcp_server.py"
+# ARGS, and why they are this forgiving. The first version read argv[1] as REPO and argv[2] as an
+# optional SERVER, so calling it with just the server path -- which is the obvious thing to do --
+# silently made REPO a FILE and produced
+#   '...\arsenal_mcp_server.py\scripts\gate.ps1' does not exist
+# with an exit code that looks like a crash (4294770688). A harness whose first argument can be
+# either thing must SAY which is which, or it will be called wrong by the next person and blamed
+# for it. Measured 2026-10-03, from scripts/verify-all.ps1.
+_a = [Path(x).resolve() for x in sys.argv[1:]]
+if not _a:
+    raise SystemExit("mcp-probe: pass the repository root, or the server script.")
+if _a[0].is_file():
+    SERVER = _a[0]
+    REPO = SERVER.parent.parent
+else:
+    REPO = _a[0]
+    SERVER = _a[1] if len(_a) > 1 else REPO / "scripts" / "arsenal_mcp_server.py"
+if not SERVER.is_file():
+    raise SystemExit(f"mcp-probe: no server script at {SERVER}")
+if not (REPO / "scripts" / "gate.ps1").is_file():
+    raise SystemExit(f"mcp-probe: {REPO} does not look like the station (no scripts/gate.ps1)")
 MISSIONS = SCRATCH / "missions"
 SENTINEL = SCRATCH / "EXECUTION_SENTINEL.txt"
 TARGET = REPO / "crackme-corpus" / "out" / "c01-stringobf.exe"

@@ -36,6 +36,36 @@ Step 'reachability'           { python scripts/reachability-report.py }
 #   python scripts/assert-probes.py native.pe.packer native.pe.hardening
 Step 'assert-probes --list'   { python scripts/assert-probes.py --list }
 
+# scripts/mcp-probe.py drives scripts/arsenal_mcp_server.py with a REAL MCP client over stdio and
+# proves two things nothing else here can: that a client which knows only a `mission_id` can run a
+# granted capability, and that a refusal executes NOTHING (a `node.cmd` PATH shim sits first on the
+# server's PATH and writes a sentinel instead of running). It was promoted into the repository on
+# 2026-10-03 and was, for one commit, a proof nothing ran -- which is the defect this file exists to
+# prevent, applied to itself.
+#
+# It is a Step and not a note because it takes ~8 s. It SKIPS, loudly and on the record, when the
+# `mcp` package is absent, because that is a missing prerequisite rather than a passing check; a
+# check that degrades to green when its instrument is missing is the failure mode doc-facts.py was
+# just changed to refuse. It writes only under %TEMP%.
+Step 'mcp surface' {
+    # SINGLE quotes on purpose. With double quotes the native argument builder strips them and
+    # python receives `-c import mcp`, which runs `import` as a statement and dies -- measured, and
+    # it reported itself as "the mcp package is not installed", which is a false diagnosis of a
+    # quoting bug. This is the same trap that made two frida controls SyntaxError earlier today.
+    & python -c 'import mcp' 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "SKIP: the mcp package is not installed, so the MCP surface cannot be driven." -ForegroundColor Yellow
+        Write-Host "      pip install mcp   # then re-run; a skipped proof is not a passing proof."
+        # NOT `exit 0`. `exit` inside a scriptblock invoked with & leaves the WHOLE script, which
+        # skipped the summary and returned 0 while a doc-facts failure was on the record -- a gate
+        # reporting green because of something I added to it, measured, and exactly the class of
+        # defect this file exists to catch.
+        $global:LASTEXITCODE = 0
+        return
+    }
+    python scripts/mcp-probe.py (Join-Path $repo 'scripts\arsenal_mcp_server.py')
+}
+
 Write-Host ""
 if ($script:fail.Count -eq 0) {
     Write-Host "VERIFY-ALL: every fast check passed. assert-probes still has to be run by hand." -ForegroundColor Green
