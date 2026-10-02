@@ -548,6 +548,10 @@ def main() -> int:
     ap.add_argument("ids", nargs="*", help="capability ids; default = every safe one")
     ap.add_argument("--timeout", type=int, default=180)
     ap.add_argument("--list", action="store_true", help="show what would run, run nothing")
+    ap.add_argument("--budget", type=int, default=0,
+                    help="stop starting new entries after this many seconds and NAME every entry "
+                         "that was not run. 0 means no budget. Nothing skipped is ever counted as "
+                         "a pass.")
     ap.add_argument("--save-evidence", metavar="DIR", default=None,
                     help="write each probe's and control's REAL output to DIR/<id>.<kind>.log")
     ap.add_argument("--require-produces", action="store_true",
@@ -578,8 +582,29 @@ def main() -> int:
 
     todo = [c for c in caps if not args.ids or c["id"] in args.ids]
     results: list[tuple[str, str]] = []
+    # A TIME BUDGET, and the reason it exists. Until 2026-10-03 this script was the ONLY reader of
+    # `probe.prepare`, `probe.expect` and `probe.expect_exit` -- and `verify-all.ps1` invoked it as
+    # `--list`, which runs nothing. So the three fields the North Star depends on were executed
+    # only when a human typed the command, while the entry point printed "VERIFY-ALL: every fast
+    # check passed" and exited 0. A check the aggregate does not run is the same defect as a check
+    # nobody wrote.
+    #
+    # The budget is honest about what it does NOT run: every skipped id is printed by name with
+    # the reason, and the summary counts only what actually ran. A partial sweep that says so is
+    # worth having; a partial sweep that reports a green whole is worse than no sweep.
+    deferred: list[str] = []
+    deadline = time.monotonic() + args.budget if args.budget else None
     for c in todo:
+        if deadline is not None and time.monotonic() >= deadline and c["id"] not in SKIP:
+            deferred.append(c["id"])
+            continue
         results.extend(check(c, args.timeout))
+    if deferred:
+        print(f"\nassert-probes: BUDGET SPENT after {len(results) and 'the entries above'} -- "
+              f"{len(deferred)} entr(ies) were NOT RUN and are NOT counted in any number below:")
+        for cid in deferred:
+            print(f"  NOT RUN  {cid}")
+        print("  Re-run them by id:  python scripts/assert-probes.py " + " ".join(deferred))
 
     counts: dict[str, int] = {}
     for s, _ in results:

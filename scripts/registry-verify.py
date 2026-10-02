@@ -2033,11 +2033,21 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--registry", type=pathlib.Path, default=DEFAULT)
     ap.add_argument("--selftest", action="store_true")
+    ap.add_argument("--count", action="store_true",
+                    help="print the live rule total and nothing else. Exists because this file's "
+                         "own header used to STATE its numbers in prose and a mutation sweep "
+                         "measured them stale: an instrument describing itself is the one "
+                         "description nothing checks.")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args()
 
     if a.selftest:
         return selftest()
+
+    if a.count:
+        numbered = sum(1 for r in RULES if r.__name__[1:2].isdigit())
+        print(f"RULES {len(RULES)} entries, {numbered} numbered")
+        return 0
 
     if not a.registry.exists():
         print(f"registry not found: {a.registry}")
