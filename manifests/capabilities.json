@@ -1361,6 +1361,9 @@
         "plan_ref": "undecidable:neither blocker is checkable from this repository -- there is no adb.exe anywhere in the tree (so an attach-time control cannot run) and no device is attached (so it would have nothing to attach to). Both are outside what a registry file can see, which is why this says so rather than pointing at a path.",
         "plan_note": "DECLARED A PLAN, NOT A CONTROL, ON 2026-10-02. Rule R21 refuses prose in negative_control.command, because a control nobody can execute cannot fail and therefore passes forever. The sentence is kept here rather than deleted: it is the negative design, which is real knowledge, and this project has been burned often enough by deleting things to keep. What this entry no longer claims is that it has a working control. It does not."
       },
+      "not_callable": {
+        "reason": "state is absent: there is no device on this host, so no entry point could be exercised even if one existed."
+      },
       "provenance": {
         "source": "measured 2026-09-30",
         "record": "docs/research/mobile-js-skill-map.md"
@@ -1552,6 +1555,9 @@
         "expect_output": "Error: access violation accessing 0x140001080",
         "expect_output_note": "expect_exit is the contract; this line is corroboration. It is written to frida's ERROR stream, so capture it with 2>&1 -- run unpiped, the line can be interleaved away while the exit code stays 1. Measured stable over four consecutive runs: exit 1 every time, line present every time when stderr was captured.",
         "why": "It must fail, and it must fail for its OWN reason. Measured, same binary, same run, seconds after the probe: `Error: access violation accessing 0x140001080`, exit 1. The reason is the address SPACE, not a typo: 0x140001080 is the genuine image-space address of main (PE ImageBase 0x140000000 + rva 0x1080, rva 0x1080 lying inside .text whose VA is 0x1000 with virtual size 0x156d0, and IDA recovering main there with size 0x17e), so it is unmapped only because DYNAMICBASE moved the image to 0x7ff7c3a30000. The probe, one command earlier, attached cleanly at base+0x1080. Two other obvious controls were rejected rather than shipped: an obviously bogus address such as 0xDEADBEEF would fault too, but it cannot tell 'you failed to rebase' from 'any bad address faults', so it would pass for an unrelated reason; and `frida-ps -ai` does not fail at all, it hangs, so it is not a control."
+      },
+      "not_callable": {
+        "reason": "NO invoke EXISTS, and this entry spent a page arguing that before writing this field. Measured 2026-10-03: the validator refuses all three honest shapes for an invoke here -- an argv carrying the instrumentation fails R16 because a JavaScript object literals braces read as a {placeholder}, a spaced JavaScript payload fails R10 as a joined command line, and a {scratch} path is not the problem at all. A permanently dead invoke is worse than none, which is the same sentence native.function.match wrote when R10 refused its own."
       },
       "provenance": {
         "source": "measured on this station 2026-10-02, by the agent that added this entry rather than copied from another session's transcript",
@@ -2092,6 +2098,9 @@
         "measured": "2026-10-03, both directions re-run by the integrating agent, not copied from the worker. DEFAULT: `powershell -File scripts/il2cpp-probe.ps1` -> exit 0, printing IL2CPP ABSENT and JSON-SUMMARY {\"total\":2,\"pass\":0,\"fail\":2}, with blockers 'net6 build; host has .NET 8.0.31 and 10.0.11 only' and 'no authorized IL2CPP artifact; third-party commercial binaries found on this host were deliberately not used'. CONTROL: the same script with -AsControl -> exit 1, printing 'CONTROL RESULT: FIRED -- exiting 1, and the exit 1 IS the pass.' 12.3 s per run (the probe's own hang budget is 12 s and it kills the hung process).",
         "falsifier": "run it against a host that HAS .NET 6 and an Owner-named IL2CPP binary: the control must then exit 0, because there would be nothing left to refuse. If it still exits 1, the control has stopped testing the claim."
       },
+      "not_callable": {
+        "reason": "state is absent: the capability needs an IL2CPP metadata dump this host does not have, so no entry point has ever run here."
+      },
       "provenance": {
         "source": "measured on this host 2026-09-30",
         "record": "scripts/il2cpp-probe.ps1"
@@ -2204,6 +2213,9 @@
         "measured": "2026-10-03, both directions re-run by the integrating agent. DEFAULT: `powershell -File scripts/emulation-probe.ps1` -> exit 0, printing 'PCODE EMULATION BLOCKED -- recorded, not claimed.', steps executed 15, decoded null, error 'emulator halted at PC=0x0', JSON-SUMMARY {\"total\":1,\"pass\":0,\"fail\":1}. CONTROL: with -AsControl -> exit 1, printing 'expected verdict : MATCHES_GROUND_TRUTH / observed verdict : ERROR'. Wall time 22.7 s per run (the harness step budget is the literal 200000 p-code instructions; the script's $BudgetMs is not wired to the harness and changes nothing -- recorded because a knob that does nothing is worse than no knob).",
         "falsifier": "on a host where the scratch stack is mapped and the decode returns a WRONG string, the control must exit 1 with 'observed verdict : MISMATCH' -- a different message and the same code. If it ever exits 0, the capability has started claiming success and the gate is what stopped it.",
         "still_blocked_on": "the scratch stack is not mapped, so writeStackValue does not take -- OUR bug, not a Ghidra limitation. And javac reports EmulatorHelper and DefaultEmulator as deprecated-and-marked-for-removal in 12.1.3, so the target Ghidra major is an Owner decision BEFORE the bug is fixed."
+      },
+      "not_callable": {
+        "reason": "state is blocked: the entry needs a runtime the registry does not have. It had no composition_note and said nothing about callability; this field is that sentence."
       },
       "provenance": {
         "source": "measured on this host 2026-09-30",
@@ -2387,6 +2399,9 @@
         "expect_output_note": "Was '\"max_issue_severity\": \"HIGH\"' -- JSON the tool does not emit. The SUBSTANCE was right and the FORMAT was not: the poisoned fixture really does draw HIGH findings, two of them 'HIGH: PE3 - Credential Access' plus one 'MEDIUM: E1 - External Transmission', at score 39/100, severity MEDIUM, recommendation CAUTION. A correct claim in the wrong shape still fails a substring check, so the shape is what had to be re-measured.",
         "measured": "re-measured 2026-10-02 by EXTRACTING this exact command string out of the registry and running it as a .ps1 file, not by retyping it: score 39/100, Severity MEDIUM, Recommendation CAUTION, exit 1. The identical binary and flags against the real skills/ directory give score 6/100 LOW and exit 0. A RETYPED version of this command scored only 6/100 and still exited 1 -- because PowerShell's double-quoted here-string ate the backticks around ~\\.ssh\\id_rsa and the exfiltration line lost its quoting, so the detector's Privilege Escalation patterns stopped matching. Worth recording: this control is SENSITIVE TO THE EXACT TEXT, and a plausible-looking retype silently weakened it while the exit code stayed reassuring. That is why the registry stores the command as one string and why it must be executed from the registry rather than rewritten by hand.",
         "expect_exit_note": "expect_exit=1 IS NOW OBSERVED, NOT ASPIRATIONAL. Run verbatim as a multi-statement string this control returned 0 whatever the tool did, because `powershell -File` discards the last command's exit code unless the script says `exit $LASTEXITCODE`. It is a file now for exactly that reason."
+      },
+      "not_callable": {
+        "reason": "THE DANGEROUS ONE, and dangerous precisely because nothing read the sibling field. state is observed, this entry had neither invoke nor not_callable, and its probe emits a BOX-DRAWN TEXT REPORT -- Recommendation SAFE, Score 0/100 -- with zero JSON bytes, so there is no machine value for a caller to receive and nothing that could be typed as a fact. Measured 2026-10-03 by running it. A planner reading only the two callability keys could not tell this apart from a capability that is callable through a driver nobody wrote."
       },
       "provenance": {
         "source": "measured on this station 2026-10-02 by the agent that added this entry, during a star-mining survey the Owner forced after eight keyword-only briefs all missed vxcontrol/pentagi",

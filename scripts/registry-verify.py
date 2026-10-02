@@ -1425,6 +1425,58 @@ def r30_requires_and_lane_are_declared(reg, doc):
     return out
 
 
+
+def r31_callability_is_declared(reg, doc):
+    """An entry must say whether it can be called, and `not_callable` must carry a reason.
+
+    Measured 2026-10-03: `not_callable` appears ZERO times outside the manifest. Six entries
+    declared it and nothing read it, so it was prose in a field shaped like a contract -- the same
+    species as `gate_must_not_delegate` before today, and it survived a whole day of fixing that
+    one. Meanwhile FIVE entries declared NEITHER `invoke` nor `not_callable`: three because they
+    are absent or blocked, and two that are `state: observed`.
+
+    The two observed ones are the finding. `ops.skill.security` is observed, has no invoke, has no
+    not_callable, and its probe emits a box-drawn TEXT report with zero JSON bytes -- so there is
+    no machine value for a caller to receive at all. A planner reading only the two callability
+    keys could not tell it apart from a capability that is callable through a driver nobody wrote.
+    `dynamic.win.frida` argues its own non-callability at length in a `composition_note` and then
+    leaves the machine-readable marker absent, which is the whole disease in one entry.
+
+    So: `state: observed` must declare EXACTLY ONE of the two. Zero means the registry is silent
+    about whether a granted capability can be driven at all; both means it contradicts itself.
+    Today's tree has zero entries declaring both, so forbidding it costs nothing. And
+    `not_callable.reason` must be a non-empty string, because a presence-only check is satisfied
+    by `{}` and this file exists because presence is not the question.
+
+    Why `observed` and not every state: an absent capability has no entry point to declare, and
+    forcing one would be forcing a sentence nobody can honestly write. All five now carry a
+    `not_callable` anyway -- three of them because the reason was true and unwritten.
+    """
+    out = []
+    for c in reg:
+        if c.get("state") != "observed":
+            continue
+        cid = c.get("id", "?")
+        inv = c.get("invoke")
+        nc = c.get("not_callable")
+        if inv is not None and nc is not None:
+            out.append(f"R31 {cid}: declares BOTH an invoke and a not_callable. An invoke makes "
+                       f"the capability callable and a not_callable says it is not; a reader "
+                       f"cannot honour both. Zero entries do this today, so nothing depends on "
+                       f"the combination being tolerated.")
+        elif inv is None and nc is None:
+            out.append(f"R31 {cid}: state=observed but declares NEITHER an invoke NOR a "
+                       f"not_callable, so the registry does not say whether a capability the gate "
+                       f"will happily grant can actually be driven. Declare one. If the answer is "
+                       f"that it cannot, say why in not_callable.reason -- a planner cannot infer "
+                       f"that from the absence of a field.")
+        if nc is not None and not str(nc.get("reason") or "").strip():
+            out.append(f"R31 {cid}: not_callable carries no reason. A presence-only check would be "
+                       f"satisfied by {{}}, and this field exists because presence is not the "
+                       f"question: WHY it cannot be called is the content.")
+    return out
+
+
 RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r4_fact_types_agree, r5_control_must_fail, r6_reach_needs_escalation, r7_ids,
          r8_reach_must_be_declared, r9_batch_must_account, r10_invoke_must_runnable,
@@ -1438,7 +1490,8 @@ RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r27_probe_exit_has_one_spelling,
          r28_evidence_is_tracked_not_merely_present,
          r29_fact_types_are_declared,
-         r30_requires_and_lane_are_declared)
+         r30_requires_and_lane_are_declared,
+         r31_callability_is_declared)
 
 
 # ---------------------------------------------------------------------------- core
@@ -1491,6 +1544,12 @@ def _good_entry() -> dict:
         # 17 cases failed for that reason alone. The right response to a new rule invalidating
         # the fixture is to fix the fixture, never to relax the rule: every one of those 17 was
         # reporting "your baseline is broken", not "your case is wrong".
+        # FIXTURE, 2026-10-03: R31 (added today) requires a `state: observed` entry to declare
+        # EXACTLY ONE of invoke / not_callable, and this baseline declared neither -- so 19 cases
+        # failed at once, every one of them reporting "your fixture is not a legal registry". Same
+        # response as when R27 invalidated the baseline: fix the fixture, never the rule.
+        "not_callable": {"reason": "the fixture entry has no invoke on purpose: a baseline that "
+                                   "carried one would be routed by R10 and R16 as well."},
         "probe": {"command": "python scripts/example_selftest_probe.py", "expect": "ok",
                   "expect_exit": 0,
                   "last_run": "2026-09-30",
@@ -1639,6 +1698,11 @@ def selftest() -> int:
         # demands a runner and a success_when, and a rule under test must not be
         # shadowed by a different rule refusing the same fixture.
         inv = b[0].setdefault("invoke", {})
+        # Adding an invoke makes the entry CALLABLE, so a fixture carrying both would be refused
+        # by R31 (added 2026-10-03) for a reason that has nothing to do with the rule under test.
+        # Two rules colliding over one field is a real cost of adding a rule, and the fix is to
+        # make the helper honest rather than to weaken R31.
+        b[0].pop("not_callable", None)
         inv.setdefault("argv", ["probe_of_this_entry"])
         inv.setdefault("runner", "python")
         inv.setdefault("success_when", "exit 0 and stdout parses as JSON")
@@ -1648,6 +1712,18 @@ def selftest() -> int:
     nocase("R20 a fact_map naming declared facts is accepted",
            lambda b: _with_fact_map(
                b, {"probe_out": b[0]["produces"]["facts"][0]["key"]}), "R20")
+    # R31 cases. The positive that matters is BOTH-keys: a reader cannot honour "callable" and
+    # "not callable" at once, and today nothing notices. The fixture had to give up its
+    # not_callable for this one, which is the collision two rules can have over one field.
+    case("R31 an observed entry declaring neither",
+         lambda b: b[0].pop("not_callable"), "R31")
+    case("R31 an observed entry declaring both",
+         lambda b: b[0].__setitem__("invoke", {"runner": "python", "argv": ["scripts/x.py"]}),
+         "R31")
+    case("R31 a not_callable with no reason",
+         lambda b: b[0]["not_callable"].__setitem__("reason", ""), "R31")
+    nocase("R31 an ABSENT entry needs neither",
+           lambda b: b[0].update(state="absent", proves=[]) or b[0].pop("not_callable"), "R31")
     # R21: the control side, which had no equivalent of R2. A control that is prose cannot
     # fail, so it passes forever -- 13 of 24 entries were in that state.
     case("R21 a prose negative control",
