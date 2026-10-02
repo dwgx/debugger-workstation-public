@@ -659,7 +659,19 @@
         "disk_mb": 20,
         "ram_mb": 256,
         "wall_minutes": 1,
-        "tools": []
+        "tools": [
+          {
+            "name": "tshark",
+            "probe": "tshark --version",
+            "expect": "TShark"
+          },
+          {
+            "name": "lab pcaps",
+            "probe": "node net-reverse\\lab\\gen-pcaps.mjs",
+            "expect": "corpus.json written to %TEMP%\\net-reverse-lab\\pcaps"
+          }
+        ],
+        "install_note": "tshark ships with Wireshark and is already on PATH. THE PCAPS ARE NOT INSTALLED, THEY ARE GENERATED: net-reverse/lab/gen-pcaps.mjs writes five synthetic captures plus corpus.json to %TEMP%\\net-reverse-lab\\pcaps (override with NET_REVERSE_PCAP_DIR). Measured 2026-10-02: asked against a freshly generated dns-txt.pcap, `pcap-lab.mjs ask --pcap <pcap> --question dns-query-count --json` returns {ok:true, asked:..., method:'counting rows: filter on dns.flags.response == 0, count the ids'} and exits 0. Asked against a path that is not a pcap it prints a usage block and exits 1.\n\nThis is why Q4.data was dark and it had nothing to do with the capability: unlike crypto.jose.parse and forensics.memory.artefact, a PCAP IS A FILE PATH, so this one really is target-scoped and a mission can point at it directly. Every previous Q4 attempt aimed it at a PE. Verified 2026-10-02: a Q4 mission with -Target on the generated dns-txt.pcap runs round 1 ok=true producing net.flow.summary."
       },
       "proves": [
         "what the recorded flows contained, and how the analyser classified them"
@@ -732,7 +744,8 @@
         "record": "net-reverse/README.md"
       },
       "evidence_source": "capture-analysis",
-      "evidence_source_note": "recorded flows only"
+      "evidence_source_note": "recorded flows only",
+      "composition_note": "THIS IS WHAT LIT Q4, AND THE FIX WAS NOT WIRING. Unlike crypto.jose.parse, whose subject is a token, and forensics.memory.artefact, whose subject is a lab scenario directory, a pcap IS A PATH. So this capability was correctly target-scoped from the start and every failure on Q4 was a mission aiming it at the wrong kind of file. Measured: aimed at a PE it exits 1 with a usage block; aimed at a generated lab pcap it exits 0 and answers.\n\nWorth stating plainly because the previous three turns attributed Q4's darkness to lab-shaped subjects, which was true of two of the three capabilities on that axis and false of this one. An axis-level diagnosis inherited from its members is only as good as its weakest member's actual wiring."
     },
     {
       "id": "forensics.memory.artefact",
