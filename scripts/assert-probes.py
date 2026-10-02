@@ -581,6 +581,14 @@ def main() -> int:
         return 0
 
     todo = [c for c in caps if not args.ids or c["id"] in args.ids]
+    # ORDERED BY DECLARED COST, and that is two things at once. It makes a bounded sweep cover
+    # more ground -- with declaration order a 150 s budget reached 13 of 27 entries and spent
+    # most of itself on the first slow one it met -- and it gives `requires.wall_minutes` its
+    # FIRST READER. A mutation sweep measured that field as decoration: set it to anything on all
+    # 27 entries and the validator stayed clean. A field that decides what runs first is read.
+    # Ties keep declaration order, so the ordering is deterministic.
+    if not args.ids:
+        todo.sort(key=lambda c: float((c.get("requires") or {}).get("wall_minutes") or 0))
     results: list[tuple[str, str]] = []
     # A TIME BUDGET, and the reason it exists. Until 2026-10-03 this script was the ONLY reader of
     # `probe.prepare`, `probe.expect` and `probe.expect_exit` -- and `verify-all.ps1` invoked it as
