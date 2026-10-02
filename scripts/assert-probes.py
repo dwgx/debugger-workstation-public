@@ -69,6 +69,7 @@ FAULT_MARKERS = ("is not recognized", "not recognized as an", "the term",
                  "stringnotexpanded", "was unexpected at this time", "syntaxerror")
 
 TOOL_FAULT_SECS = 0.5
+TIMEOUT_RC = -1          # what run() returns when subprocess.TimeoutExpired fires
 
 
 def load() -> list[dict]:
@@ -117,6 +118,15 @@ def run(cmd: str, timeout: int) -> tuple[int, str, float]:
 
 def tool_fault(rc: int, blob: str, secs: float) -> str | None:
     """Did this command fail to RUN, rather than run and fail? Never report that as DRIFT."""
+    # A TIMEOUT is this script's budget, not the registry's claim. fuzz-lab's loop needs ~634 s
+    # and was being cut off at 180 s, so its closing marker "LOOP CLOSED" was never captured and
+    # the missing string was reported as DRIFT -- naming the registry for this tool's impatience.
+    # That is the third time this script has blamed the registry for its own limit, which is
+    # enough to make it a named verdict rather than an occasional correction.
+    if rc == TIMEOUT_RC:
+        return (f"timed out after {secs:.0f}s, so no output was captured and NOTHING can be "
+                f"concluded about the expect string. THIS TOOL'S LIMIT: rerun with a larger "
+                f"--timeout. A truncated run is not evidence.")
     if rc == 0 or secs >= TOOL_FAULT_SECS:
         return None
     low = blob.lower()
