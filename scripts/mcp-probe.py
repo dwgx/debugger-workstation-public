@@ -5,11 +5,21 @@ and speaks JSON-RPC on its stdin/stdout, which is the only path a caller outside
 can take. Every result printed below came back over that wire.
 
 NEGATIVE CONTROL, and the reason this harness exists rather than `import arsenal_mcp_server`.
-"Refused before executing anything" is a claim about subprocesses, and the only way to measure it
-is to make execution observable. A `node.cmd` shim sits first on the PATH of the SERVER process,
-so any capability whose runner is `node` -- which is most of them -- writes a line to
-EXECUTION_SENTINEL.txt instead of running. A positive control proves the shim fires at all; then
-the sentinel is truncated and every refusal must leave it empty.
+"Refused before executing anything" is a claim about subprocesses.
+
+WHAT THE CONTROL ACTUALLY IS, after a correction on 2026-10-03. This file used to describe a
+`node.cmd` shim sitting first on the server's PATH so that any runner would write a sentinel
+instead of running. An independent audit found that nothing installed one -- the server does not
+honour ARSENAL_PROBE_SENTINEL either (zero hits) -- and when a real `.cmd` shim WAS installed here
+it never fired, because the launches the server makes are CreateProcess calls and a `.cmd` earlier
+on PATH is not what CreateProcess resolves. The sentinel is therefore still empty, and the control
+was removed rather than kept because it printed something.
+
+What stands is narrower and is stated rather than implied: a completed runner returns keys
+(raw, exit, image, mitigations, binary, caveats, facts), so a refusal payload containing NONE of
+them means no runner spoke. That observes the RESPONSE, not the process table. A positive control
+(A2, an allowed call) shows those keys present, so their absence is a real signal rather than a
+key that never appears.
 """
 from __future__ import annotations
 
@@ -262,7 +272,22 @@ async def main() -> int:
 
     print("\n=== SENTINEL AFTER ALL REFUSALS: %r ===" % sentinel())
     print("=== GATE SENTINEL (powershell invocations) ===")
-    print(GATE_SENTINEL.read_text(encoding="utf-8") or "(empty)")
+    gate_log = GATE_SENTINEL.read_text(encoding="utf-8").strip() if GATE_SENTINEL.exists() else ""
+    print(gate_log or "(empty)")
+    # Now an ASSERTION rather than a print. The gate sentinel is the observable for "the gate was
+    # actually consulted on the refusal path", which is the claim this harness exists to support
+    # and which was previously decoration: a refusal could have been produced with the gate never
+    # running and this line would have looked identical.
+    # NO ASSERTION IS MADE ON THIS LINE, and that is a measurement rather than an omission.
+    # This harness used to claim a `node.cmd` PATH shim sat first on the server's PATH so that
+    # any runner would write a sentinel instead of running, and an independent audit found that
+    # NOTHING installed one -- and that when a real `.cmd` shim WAS installed here, it never fired
+    # (`SENTINEL_FIRES=False`). subprocess launches the server makes are CreateProcess calls, and
+    # a `.cmd` earlier on PATH is not what CreateProcess picks up. So the execution sentinel cannot
+    # be built this way on this host, and a control that cannot fail was removed rather than kept
+    # because it printed something. The assertion that DOES stand is the key-leak check above: a
+    # refusal payload containing none of raw/exit/image/mitigations means no completed runner
+    # spoke. That observes the RESPONSE, not the process table, and is labelled as such.
     print("=== VERDICTS ===")
     for _label, _ok in results:
         print("  %-6s %s" % ("PASS" if _ok else "FAIL", _label))

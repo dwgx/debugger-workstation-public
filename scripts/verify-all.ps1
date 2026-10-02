@@ -34,6 +34,17 @@ Step 'reachability'           { python scripts/reachability-report.py }
 # assert-probes runs real tools and takes ~15 min for a full sweep, so it is listed rather than
 # run here and this command stays usable. Run it directly, or by id:
 #   python scripts/assert-probes.py native.pe.packer native.pe.hardening
+# assert-probes runs REAL tools. Until 2026-10-03 this line was `--list`, which runs nothing --
+# and assert-probes is the ONLY reader of probe.prepare, probe.expect and probe.expect_exit, so
+# the three fields the North Star rests on were executed only when a human typed the command while
+# this script printed "every fast check passed" and exited 0.
+#
+# It now runs for a BOUNDED time and names every entry it did not run. A partial sweep that says
+# so is worth having; a partial sweep that reports a green whole is worse than no sweep.
+# Raise the budget (or run the entry by id) when you want the rest.
+Step 'assert-probes (bounded)' { python scripts/assert-probes.py --budget 150 --timeout 120 }
+# The full sweep takes ~24 minutes on this host, dominated by fuzz.differential.parse. It is
+# listed, not run, and the list says which entry costs what is in the entry's own runtime_note.
 Step 'assert-probes --list'   { python scripts/assert-probes.py --list }
 
 # scripts/mcp-probe.py drives scripts/arsenal_mcp_server.py with a REAL MCP client over stdio and
@@ -68,7 +79,9 @@ Step 'mcp surface' {
 
 Write-Host ""
 if ($script:fail.Count -eq 0) {
-    Write-Host "VERIFY-ALL: every fast check passed. assert-probes still has to be run by hand." -ForegroundColor Green
+    Write-Host "VERIFY-ALL: every check passed, INCLUDING the bounded probe sweep above." -ForegroundColor Green
+    Write-Host "  The sweep is partial by design: read its NOT RUN list. The full sweep is" -ForegroundColor Yellow
+    Write-Host "  `python scripts/assert-probes.py` and takes ~24 min, dominated by the fuzz loop." -ForegroundColor Yellow
     exit 0
 }
 Write-Host "VERIFY-ALL: $($script:fail.Count) FAILED -> $($script:fail -join ', ')" -ForegroundColor Red

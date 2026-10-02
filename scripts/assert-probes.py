@@ -593,15 +593,24 @@ def main() -> int:
     # the reason, and the summary counts only what actually ran. A partial sweep that says so is
     # worth having; a partial sweep that reports a green whole is worse than no sweep.
     deferred: list[str] = []
-    deadline = time.monotonic() + args.budget if args.budget else None
+    ran: list[tuple[str, float]] = []
+    t_start = time.monotonic()
+    deadline = t_start + args.budget if args.budget else None
     for c in todo:
         if deadline is not None and time.monotonic() >= deadline and c["id"] not in SKIP:
             deferred.append(c["id"])
             continue
+        t0 = time.monotonic()
         results.extend(check(c, args.timeout))
+        ran.append((c["id"], time.monotonic() - t0))
+    elapsed = time.monotonic() - t_start
     if deferred:
-        print(f"\nassert-probes: BUDGET SPENT after {len(results) and 'the entries above'} -- "
-              f"{len(deferred)} entr(ies) were NOT RUN and are NOT counted in any number below:")
+        print(f"\nassert-probes: BUDGET SPENT. {len(ran)} of {len(todo)} entries ran in "
+              f"{elapsed:.0f}s; {len(deferred)} were NOT RUN and are counted in NO number below.")
+        print("  The budget stops STARTING new entries, so the last one that started can overrun it:")
+        if ran:
+            worst = max(ran, key=lambda r: r[1])
+            print(f"    longest entry was {worst[0]} at {worst[1]:.0f}s")
         for cid in deferred:
             print(f"  NOT RUN  {cid}")
         print("  Re-run them by id:  python scripts/assert-probes.py " + " ".join(deferred))
@@ -612,7 +621,13 @@ def main() -> int:
     for s, m in results:
         print(f"  {s:<11} {m}")
 
-    print(f"\nassert-probes: {len(todo)} checked, "
+    # THE COUNT IS WHAT RAN. The first version of --budget printed `len(todo)` here, so a run
+    # that executed 15 of 27 entries announced "27 checked" -- the precise defect the budget was
+    # added to prevent, committed by the fix itself. Caught by reading the output of my own
+    # change, which is the only place it could have been caught.
+    scope = (f"{len(ran)} of {len(todo)} entries ran in {elapsed:.0f}s"
+             if deferred else f"{len(todo)} entries")
+    print(f"\nassert-probes: {scope}; verdicts "
           + ", ".join(f"{v} {k}" for k, v in sorted(counts.items())) + ".")
     if counts.get("TOOL-FAULT"):
         print("\nTOOL-FAULT is this script's problem, not the registry's: those commands never\n"
