@@ -1,0 +1,194 @@
+# assert-probes evidence: net.pcap.analyse probe
+# command: node net-reverse/tools/loop.mjs
+# exit: 0
+# seconds: 8.38
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------------
+$ node lab/gen-pcaps.mjs 
+------------------------------------------------------------------------------
+net-reverse pcap corpus (synthetic, self-authored) -> %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps
+  dns-basic.pcap             4 packets     436 B  sha256:9bae23b350aaf821
+      teaches: DNS query/response shape for A and AAAA over UDP/53.
+  http-basic.pcap           10 packets    1783 B  sha256:8bfe86dacc753588
+      teaches: HTTP request/response with headers, bodies and a status line; a plaintext credential in a POST body.
+  tls-clienthello.pcap      14 packets    1554 B  sha256:3ad72cbff6ac0f30
+      teaches: TLS ClientHello internals: SNI, cipher list, extension list, groups — the inputs a JA3-shaped client fingerprint is built from.
+  odd-port.pcap             26 packets    2450 B  sha256:feb1c0cfbfcb090d
+      teaches: Which protocols need Decode As and which do not: NTP on 12345 and WHOIS on 4343 are invisible to the stock dissectors, HTTP on 4444 is not (4.6 ships an HTTP heuristic). Plus a binary stream whose payload only appears if you follow it.
+  dns-txt.pcap               4 packets     517 B  sha256:87cd733158befe3b
+      teaches: The value you want is often in a record type you did not filter for: an alias chain plus a multi-chunk TXT answer that Wireshark splits across dns.txt occurrences.
+  label -> %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\corpus.json
+
+------------------------------------------------------------------------------
+$ node tools/pcap-lab.mjs verify
+------------------------------------------------------------------------------
+pcap-lab verify — 16 question(s) against %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps
+tshark: TShark (Wireshark) 4.6.8 (v4.6.8-0-ge677bf052328).
+
+  idx  question                                     capture               verdict  observed
+    1  dns-a-record                       dns-basic.pcap        PASS     203.0.113.7
+       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\dns-basic.pcap -Y dns.a -T fields -e dns.a
+       negative control on dns-txt.pcap: held (did not answer) — 203.0.113.99
+    2  dns-aaaa-record                    dns-basic.pcap        PASS     2001:db8::7
+       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\dns-basic.pcap -Y dns.aaaa -T fields -e dns.aaaa
+       negative control on dns-txt.pcap: held (did not answer) — (no dns.aaaa)
+    3  dns-query-count                    dns-basic.pcap        PASS     2 query id(s)
+       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\dns-basic.pcap -Y dns.flags.response == 0 -T fields -e dns.id
+       negative control on http-basic.pcap: held (did not answer) — 0 query id(s)
+    4  http-plaintext-credential          http-basic.pcap       PASS     POST body decodes to username=lab-user&password=lab-only-password-9f2c
+       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\http-basic.pcap -Y http.request.method == POST -T fields -e http.request.uri -e http.file_data
+       negative control on dns-basic.pcap: held (did not answer) — body did not contain the credential (0 bytes decoded)
+    5  http-credential-is-not-in-headers  http-basic.pcap       PASS     no credential in URI/cookie/authorization
+       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\http-basic.pcap -Y http.request -T fields -e http.request.uri -e http.cookie -e http.authorization
+       negative control on http-basic.pcap: held (did not answer) — credential leaked into a header or URI
+    6  http-server-banner                 http-basic.pcap       PASS     200	lab-httpd/1.0 | 302	lab-httpd/1.0
+       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\http-basic.pcap -Y http.response -T fields -e http.response.code -e http.server
+       negative control on tls-clienthello.pcap: held (did not answer) — (no responses)
+    7  tls-sni                            tls-clienthello.pcap  PASS     shop.lab.test,api.lab.test
+       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\tls-clienthello.pcap -Y tls.handshake.type == 1 -T fields -e tls.handshake.extensions_server_name
+       negative control on http-basic.pcap: held (did not answer) — (no SNI)
+    8  tls-distinct-client-fingerprints   tls-clienthello.pcap  PASS     2 ClientHello(s) -> 2 distinct fingerprint(s): 751a0c3104b0, 0956a831b4c9
+       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\tls-clienthello.pcap -Y tls.handshake.type == 1 -T fields -e tls.record.version -e tls.handshake.ciphersuite -e tls.handshake.extension.type -e tls.handshake.extensions_supported_group -e tls.handshake.extensions_ec_point_format
+       negative control on dns-basic.pcap: held (did not answer) — 0 ClientHello(s) -> 0 distinct fingerprint(s): 
+    9  tls-no-server-secrets              tls-clienthello.pcap  PASS     absent as guaranteed (no ServerHello/certificate)
+       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\tls-clienthello.pcap -Y tls.handshake.type == 2 or tls.handshake.type == 11 -T fields -e tls.handshake.type
+       negative control on tls-clienthello.pcap: held (did not answer) — unexpected: 1,1
+   10  odd-ntp-decode-as                  odd-port.pcap         PASS     2	4c414200
+       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\odd-port.pcap -d udp.port==12345,ntp -Y ntp.flags.mode == 4 -T fields -e ntp.stratum -e ntp.refid
+       negative control on odd-port.pcap: held (did not answer) — (no NTP server packet)
+   11  odd-whois-decode-as                odd-port.pcap         PASS     query LAB-WHOIS-42 -> netname 203.0.113.0/24
+       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\odd-port.pcap -d tcp.port==4343,whois -Y whois.answer -T fields -e whois.query -e whois.answer
+       negative control on odd-port.pcap: held (did not answer) — answer text not found
+   12  odd-follow-stream-marker           odd-port.pcap         PASS     stream 1 payload decoded: LAPP frame with LAB-MARKER-7f3a
+       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\odd-port.pcap -q -z follow,tcp,ascii,1
+       negative control on odd-port.pcap: held (did not answer) — marker not present in the followed stream
+   13  odd-http-needs-no-decode-as        odd-port.pcap         PASS     /admin/status
+       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\odd-port.pcap -Y http.request and tcp.port == 4444 -T fields -e http.request.uri
+       negative control on odd-port.pcap: held (did not answer) — (not dissected)
+   14  odd-tcp-conversations              odd-port.pcap         PASS     3 conversation(s): 192.0.2.10:40010 <-> 203.0.113.10:4343 ; 192.0.2.10:40011 <-> 203.0.113.10:1337 ; 192.0.2.10:45678 <-> 203.0.113.10:4444
+       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\odd-port.pcap -q -z conv,tcp
+       negative control on http-basic.pcap: held (did not answer) — 1 conversation(s): 192.0.2.10:49812 <-> 203.0.113.10:80
+   15  dns-txt-record                     dns-txt.pcap          PASS     TXT answer set: decoy + LAB{tx-ball-42e1b8c9}
+       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\dns-txt.pcap -Y dns.resp.type == 16 -T fields -e dns.qry.name -e dns.txt
+       negative control on dns-basic.pcap: held (did not answer) — challenge value not in the TXT answer
+   16  dns-cname-chain                    dns-txt.pcap          PASS     www.lab.test -> edge.lab.test -> 203.0.113.99
+       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\dns-txt.pcap -Y dns.cname or dns.a -T fields -e dns.qry.name -e dns.cname -e dns.a
+       negative control on dns-basic.pcap: held (did not answer) — alias chain incomplete
+
+  16 question(s), 0 failed, 0 negative control(s) leaked
+
+------------------------------------------------------------------------------
+$ node tools/replay.mjs --pcap http-basic.pcap --message 2
+------------------------------------------------------------------------------
+replay — captured request re-injected into a loopback listener
+  capture    %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\http-basic.pcap
+  extract    $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\http-basic.pcap -Y tcp.stream == 0 and tcp.len > 0 -T fields -e ip.src -e tcp.srcport -e tcp.dstport -e tcp.payload -e frame.number
+  captured   TCP stream 0, frames 4,6 (192.0.2.10:49812 -> 80), 492 bytes, 2 complete message(s)
+  selection  message 2 of 2
+
+  [1] POST /login HTTP/1.1
+      captured 295 bytes, sha256:b6aac45aeec21f86264f19c87776b9ae
+      carries the captured credential: password=lab-only-password-9f2c
+      replayed -> http://127.0.0.1:63145
+      server   POST /login from 127.0.0.1:63146
+               295 bytes received, sha256:b6aac45aeec21f86264f19c87776b9ae
+      verdict  IDENTICAL — every captured byte arrived at the listener
+      response HTTP/1.1 200 OK | Server: net-reverse-recorder/1.0 | Content-Type: application/json | Content-Length: 382
+
+------------------------------------------------------------------------------
+$ node tools/replay.mjs --pcap odd-port.pcap --stream 1 --raw
+------------------------------------------------------------------------------
+replay — captured request re-injected into a loopback listener
+  capture    %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\odd-port.pcap
+  extract    $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\odd-port.pcap -Y tcp.stream == 1 and tcp.len > 0 -T fields -e ip.src -e tcp.srcport -e tcp.dstport -e tcp.payload -e frame.number
+  captured   TCP stream 1, frames 14 (192.0.2.10:40011 -> 1337), 38 bytes, 0 complete message(s)
+  selection  message 1 of 0
+
+  [1] LAPP LAB-MARKER-7f3arole=analys
+      captured 38 bytes, sha256:f8ba1b225b578ab00be1de592a165eeb
+      replayed -> http://127.0.0.1:63147
+      server   (external listener on port 0: compare with its own log)
+      response
+
+------------------------------------------------------------------------------
+$ node tools/intercept.mjs 
+------------------------------------------------------------------------------
+net-reverse interception — CDP Fetch domain against a loopback origin
+  target     http://127.0.0.1:63149 (in-process recorder, loopback only)
+  browser    C:/Program Files/Google/Chrome/Application/chrome.exe
+             disposable profile %USERPROFILE%\AppData\Local\Temp\web-reverse-net-interceptor-23328-t0q8p1
+  server log:
+    [echo-server] 2026-10-02T19:35:34.265Z GET /lab-page bytes=681 sha256=47d5ab38001f2ac2 x-lab-marker=null body=""
+    [echo-server] 2026-10-02T19:35:34.280Z GET /favicon.ico bytes=608 sha256=ab0c59a89f5a0268 x-lab-marker=null body=""
+    [echo-server] 2026-10-02T19:35:34.282Z POST /api/intercept bytes=723 sha256=69709f6312ceff72 x-lab-marker=rewritten-by-cdp body="{\"from\":\"page\",\"marker\":\"rewritten-by-cdp\",\"rewritten\":true}"
+    [echo-server] 2026-10-02T19:35:34.285Z GET /api/fulfill bytes=544 sha256=3bedf63b583b3841 x-lab-marker=null body=""
+
+  [1] request rewrite
+      page sent     x-lab-marker: original-from-page
+                    body "{\"from\":\"page\",\"marker\":\"original-from-page\"}"
+      CDP rewrote   x-lab-marker: rewritten-by-cdp
+                    body "{\"from\":\"page\",\"marker\":\"rewritten-by-cdp\",\"rewritten\":true}"
+      SERVER SAW    x-lab-marker: rewritten-by-cdp
+                    body "{\"from\":\"page\",\"marker\":\"rewritten-by-cdp\",\"rewritten\":true}"
+      page got back {"method":"POST","url":"/api/intercept","marker":"rewritten-by-cdp","body":"{\"from\":\"page\",\"marker\":\"rewritten-by-cdp\",\"rewritten\":true}","host":"127.0.0.1:63149","raw_sha256":"69709f6312ceff72e76937b0e1f4992d59c84c69f7253c4f30275159f8d7ff1d","body_sha256":"be330f227831213913452171a8c2bc02354d5fd638707d84232dccba847488e7"}
+
+  [2] response rewrite (fulfillRequest)
+      origin sent   200 with Server: net-reverse-recorder/1.0 — body ""
+      CDP replaced  status OK (rewritten by CDP) (x-lab-proxy: cdp-fulfill)
+      page read     {"fulfilled":true,"by":"cdp-fetch-fulfillRequest","server_never_wrote_this":true,"origin_status":200}
+
+  CDP calls used: 9
+    Target.createTarget {"url":"about:blank"}
+    Target.attachToTarget {"targetId":"FCE4EC6093D0AC5356C6E12DAEE013D2","flatten":true}
+    Page.enable
+    Runtime.enable
+    Network.enable
+    Fetch.enable {"patterns":[{"urlPattern":"*api/intercept*","requestStage":"Request"},{"urlPattern":"*api/fulfi
+    Page.navigate {"url":"http://127.0.0.1:63149/lab-page"}
+    Fetch.continueRequest {"requestId":"interception-job-3.0","headers":[{"name":"Accept","value":"*/*"},{"name":"Origin",
+    Fetch.fulfillRequest {"requestId":"interception-job-4.0","responseCode":200,"responsePhrase":"OK (rewritten by CDP)",
+
+  summary (0.3s)
+    PASS  recorder captured the outbound POST                        POST /api/intercept 723 bytes sha256:69709f6312ce
+    PASS  request header rewritten in flight (server-side proof)     server saw x-lab-marker: rewritten-by-cdp (page sent original-from-page)
+    PASS  request body rewritten in flight (server-side proof)       server decoded body "{\"from\":\"page\",\"marker\":\"rewritten-by-cdp\",\"rewritten\":true}"
+    PASS  page received the server echo of the rewritten request     fetch result received.marker = rewritten-by-cdp
+    PASS  origin response was served, then replaced (fulfillRequest) origin answered 200; recorder body ""
+    PASS  page read the fabricated response, not the origin body     page saw fulfilled=true by=cdp-fetch-fulfillRequest; x-lab-proxy header cdp-fulfill
+    PASS  no certificate or proxy involved                           plain HTTP over 127.0.0.1; Fetch domain only
+
+INTERCEPTION PROVED: a request and a response were rewritten in flight, on loopback, with no proxy and no certificate.
+
+------------------------------------------------------------------------------
+$ node tools/trustcheck.mjs 
+------------------------------------------------------------------------------
+isolation check — trust stores and proxy configuration (read-only)
+  host            dwgx
+  machine Root    15 certificate(s)
+  user Root       0 certificate(s)
+  lab CA          E:/<private-tree>-sandbox/tls/lab-ca.crt sha1:b94d97e115be06fc… -> present in a root store: false
+  proxy           WinINET ProxyEnable=0/absent; WinHTTP:     Direct access (no proxy server).
+
+  PASS  lab CA absent from the machine root store        lab CA sha1 b94d97e115be06fc… not found in 15 machine-root cert(s)
+  PASS  lab CA absent from the user root store           not found in 0 user-root cert(s)
+  PASS  no MITM-proxy-shaped CA in either root store     no mitmproxy/Reqable/Fiddler/Charles/Burp-shaped subject
+  PASS  Windows system proxy is off (WinINET)            HKCU ProxyEnable = 0 (or unset)
+  PASS  WinHTTP proxy is not configured                  Direct access (no proxy server).
+  PASS  no certificate landed since the baseline run     unchanged since 2026-10-02T19:35:19.992Z (machine 15, user 0)
+
+ISOLATION HELD: zero lab certificates in the machine/user root stores, no system proxy.
+
+==============================================================================
+net-reverse loop summary
+==============================================================================
+  PASS  corpus generated (5 synthetic captures, hash-labelled)   label -> %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\corpus.json
+  PASS  16 questions answered, negative controls held          16 question(s), 0 failed, 0 negative control(s) leaked  (6.3s)
+  PASS  captured POST re-injected byte-identically                 response HTTP/1.1 200 OK | Server: net-reverse-recorder/1.0 | Content-Type: application/js
+  PASS  captured binary stream re-injected byte-identically        response
+  PASS  request + response rewritten in flight over CDP      INTERCEPTION PROVED: a request and a response were rewritten in flight, on loopback, with no pro
+  PASS  no certificate in a root store, no system proxy      ISOLATION HELD: zero lab certificates in the machine/user root stores, no system proxy.
+
+LANE CLOSED: captures generated, questions answered and falsified, traffic replayed into loopback, requests and responses rewritten in flight, isolation intact.

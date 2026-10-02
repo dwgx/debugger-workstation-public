@@ -24,9 +24,33 @@
   work, not after.
 
   Recorded as state=blocked in manifests/capabilities.json rather than claimed.
+
+  CONTROL MODE (-AsControl), added 2026-10-03
+  ----------------------------------------
+  The probe above answers a RESEARCH question and always exits 0, because the
+  capability's own probe contract is `expect: "PCODE EMULATION BLOCKED", exit: 0`
+  -- the script's job is to RECORD the outcome, not to gate on it. That is why
+  this file could never serve as a negative control: a script that exits 0 in
+  both directions cannot fail.
+
+  -AsControl turns the SAME ground-truth comparison into the gate. The verdict
+  still comes from the harness, which compares the decoded string against
+  FLAG{c01_string_table_xor} -- deliberately, because c01 ships that string in
+  plaintext in .rdata as a decoy, so "looks like a flag" is not evidence. With
+  the switch:
+
+    verdict MATCHES_GROUND_TRUTH -> exit 0   (the capability really works)
+    anything else (MISMATCH / NO_OUTPUT / ERROR / no artifact) -> exit 1
+
+  Without the switch, behaviour is byte-for-byte unchanged.
 #>
 [CmdletBinding()]
-param([int]$BudgetMs = 300000)
+param(
+    [int]$BudgetMs = 300000,
+    [switch]$AsControl
+)
+
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
 
 $ErrorActionPreference = 'Continue'
 $RepoRoot = Split-Path -Parent $PSScriptRoot
@@ -37,6 +61,11 @@ $bin = Join-Path $RepoRoot 'crackme-corpus\out\c01-stringobf.exe'
 $out = Join-Path $env:TEMP 'emu-probe-out'
 $proj = Join-Path $env:TEMP ('emu-probe-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Force -Path $out, $proj | Out-Null
+# A control must not be able to pass on a PREVIOUS run's artifact. The harness
+# writes emulation.json into a fixed TEMP dir that survives across runs, so a run
+# in which Ghidra never started would otherwise read the last good verdict and
+# report success. Delete it first, then let the harness recreate it.
+Remove-Item (Join-Path $out 'emulation.json') -Force -ErrorAction SilentlyContinue
 
 # c01's main() calls sub_140001000(&unk_140017330, 18, 11, 90, Str2)
 & $ah $proj agent -import $bin -overwrite `
@@ -73,6 +102,15 @@ Write-Host ''
 Write-Host '  DEPRECATION, and this outranks the blocker: javac reports EmulatorHelper and'
 Write-Host '  DefaultEmulator as deprecated and marked for removal. Before fixing the'
 Write-Host '  setup, decide whether to build on an API Ghidra intends to delete.'
+if ($AsControl) {
+    Write-Host ''
+    Write-Host ('  NEGATIVE CONTROL native.ghidra.emulate.must_not_claim_success')
+    Write-Host ('  expected verdict : MATCHES_GROUND_TRUTH')
+    Write-Host ('  observed verdict : ' + $(if ($result) { $result.verdict } else { 'NO_ARTIFACT' }))
+    Write-Host ('  wall time        : ' + [math]::Round($sw.Elapsed.TotalSeconds, 1) + ' s  (harness step budget is the literal 200000 p-code instructions above; $BudgetMs is NOT wired to the harness and changes nothing)')
+    Write-Host '  exit 1 -- the capability is NOT allowed to claim success.'
+}
 Write-Host ('=' * 78)
 Write-Host 'JSON-SUMMARY {"total":1,"pass":0,"fail":1}'
+if ($AsControl) { exit 1 }
 exit 0

@@ -6,10 +6,16 @@
  *   ->  cross-check against a second tool (JADX / Apktool)  ->  negative control
  *
  * Every step is a tool an analyst would run by hand. This file only sequences them, checks
- * the expected outcome, and prints one PASS/FAIL table. Exit 0 means the loop closed on
+ * the expected outcome, and prints one PASS/FAIL/SKIP table. Exit 0 means the loop closed on
  * this machine, in this run.
  *
  *   node tools/loop.mjs [--skip-jadx] [--skip-apktool]
+ *
+ * Exit codes, three and not two, because "wrong" and "not run" are different facts:
+ *   0  every check ran and held
+ *   8  nothing failed, but at least one cross-check was SKIPPED -- so this run has no
+ *      independent corroboration of the manifest and the loop did NOT close
+ *   9  a check ran and was wrong
  */
 
 import { spawnSync } from 'node:child_process';
@@ -36,6 +42,27 @@ const skipApktool = argv.includes('--skip-apktool');
 function record(label, pass, detail, ms = 0) {
   steps.push({ label, pass, detail, ms });
   return pass;
+}
+
+/* THE THIRD STATE, and the reason it exists.
+ *
+ * Both cross-check sites used to call `record(label, true, 'skipped by flag')`, so a run
+ * with `--skip-jadx --skip-apktool` produced a table byte-identical to a run in which both
+ * decoders executed, exited 0, and printed a closing sentence asserting that "JADX and
+ * Apktool reproduced the same findings with their own decoders" -- for a run in which
+ * neither was ever invoked. The entry's `evidence_source_note` ("built APK inspected with
+ * independent decoders") was therefore OPTIONAL, and a skip read as agreement. Not-ran is
+ * not agreement: an unrun control cannot fail, which is the same always-green shape this
+ * whole file exists to catch.
+ *
+ * A skipped step prints as SKIP, is excluded from the pass tally, and holds the loop open
+ * exactly as a failure does. The distinct exit code is 8 rather than 9 because the two mean
+ * different things: 9 is "a check ran and was wrong", 8 is "a check did not run", and
+ * collapsing them would hide which one happened.
+ */
+function recordSkip(label, detail) {
+  steps.push({ label, pass: null, skipped: true, detail });
+  return false;
 }
 
 function banner(t) {
@@ -185,7 +212,8 @@ try {
 {
   const jadx = path.join(STATION, 'Mobile-Android', 'jadx', 'bin', 'jadx.bat');
   if (skipJadx) {
-    record('cross-check: JADX 1.5.6 decompiles the same APK', true, 'skipped by flag');
+    recordSkip('cross-check: JADX 1.5.6 decompiles the same APK',
+      'NOT RUN: --skip-jadx. No second decoder was consulted, so this is not agreement.');
   } else if (!fs.existsSync(jadx)) {
     record('cross-check: JADX decompiles the same APK', false, `jadx not found at ${jadx}`);
   } else {
@@ -237,7 +265,8 @@ try {
 {
   const apktoolJar = path.join(STATION, 'Mobile-Android', 'Apktool', 'apktool_3.0.3.jar');
   if (skipApktool) {
-    record('cross-check: Apktool decodes the manifest independently', true, 'skipped by flag');
+    recordSkip('cross-check: Apktool decodes the manifest independently',
+      'NOT RUN: --skip-apktool. No second AXML decoder was consulted, so this is not agreement.');
   } else if (!fs.existsSync(apktoolJar)) {
     record('cross-check: Apktool decodes the manifest independently', false, `apktool jar not found at ${apktoolJar}`);
   } else {
@@ -407,18 +436,105 @@ const negatives = [];
   });
 }
 
-for (const n of negatives) record(n.label, n.pass, n.detail);
+  /* (f) THE CONTROL FOR THE CROSS-CHECK ITSELF. The registry recorded this capability's
+     negative_control as a PLAN, on the stated ground that "no second decoder is installed".
+     That ground was false and is now measured: Apktool 3.0.3 and JADX 1.5.6 are both
+     installed and both run in section 5. So the cross-check exists -- and the question this
+     control answers is the one that was never asked: CAN IT DISAGREE?
+     A comparison fed only well-formed input has never disagreed with anything. Point both
+     decoders at a deliberately truncated APK and require that they REFUSE, non-zero, rather
+     than returning an empty permission set that would read as "both agree: none". That empty
+     set is the specific failure being pinned -- an empty answer and an absent answer are
+     different facts, and only one of them is corroboration. */
+  {
+    const apktoolJar = path.join(STATION, 'Mobile-Android', 'Apktool', 'apktool_3.0.3.jar');
+    if (!fs.existsSync(apktoolJar)) {
+      negatives.push({
+        label: 'NEGATIVE: AXML cross-check can disagree (truncated APK refused by both decoders)',
+        pass: false,
+        detail: `apktool jar not found at ${apktoolJar}; cannot run the control`,
+      });
+    } else {
+      /* Truncate to half: the ZIP end-of-central-directory record is gone, so this is not a
+         valid container and a decoder that answered would be inventing one. */
+      const good = fs.readFileSync(APK);
+      const brokenApk = path.join(OUT, 'truncated.apk');
+      fs.mkdirSync(OUT, { recursive: true });
+      fs.writeFileSync(brokenApk, good.subarray(0, good.length >> 1));
 
+      const aptDest = path.join(OUT, 'apktool-truncated');
+      const aptFw = path.join(OUT, 'apktool-truncated-fw');
+      fs.rmSync(aptDest, { recursive: true, force: true });
+      const a = spawnSync('cmd.exe', ['/d', '/s', '/c',
+        `java -jar ${apktoolJar} d -f -p ${aptFw} -o ${aptDest} ${brokenApk}`],
+      { encoding: 'utf8', timeout: 180000, windowsVerbatimArguments: true });
+      const aptRefused = a.status !== 0 && !fs.existsSync(path.join(aptDest, 'AndroidManifest.xml'));
+
+      const an = spawnSync(process.execPath, [path.join(HERE, 'analyze.mjs'), brokenApk, '--json'],
+        { encoding: 'utf8' });
+      const anRefused = an.status !== 0;
+
+      /* The strong half: they must refuse for DIFFERENT and named reasons. Apktool dies in
+         dexlib2 on the container; the analyser refuses at the ZIP layer and says so. Two
+         refusals that shared a cause would be one refusal counted twice. */
+      const aptSays = ((a.stdout || '') + (a.stderr || '')).includes('NotAZipFileException')
+        || ((a.stdout || '') + (a.stderr || '')).includes('Exception in thread "main"');
+      const anSays = ((an.stdout || '') + (an.stderr || '')).includes('not a ZIP');
+
+      negatives.push({
+        label: 'NEGATIVE: AXML cross-check can disagree (truncated APK refused by both decoders)',
+        pass: aptRefused && anRefused && aptSays && anSays,
+        detail: `apktool exit ${a.status} (manifest produced=${fs.existsSync(path.join(aptDest, 'AndroidManifest.xml'))}), `
+          + `analyze.mjs exit ${an.status}; refusal named by apktool=${aptSays}, by analyzer=${anSays}`,
+      });
+
+      /* And the same comparison must still AGREE on the real APK, or the control above would
+         pass for a pair of decoders that never agree on anything -- including a correct APK. */
+      const okApk = path.join(OUT, 'apktool-agree');
+      fs.rmSync(okApk, { recursive: true, force: true });
+      const okFw = path.join(OUT, 'apktool-agree-fw');
+      const aok = spawnSync('cmd.exe', ['/d', '/s', '/c',
+        `java -jar ${apktoolJar} d -f -p ${okFw} -o ${okApk} ${APK}`],
+      { encoding: 'utf8', timeout: 180000, windowsVerbatimArguments: true });
+      let apktoolPerms = [];
+      const okMf = path.join(okApk, 'AndroidManifest.xml');
+      if (aok.status === 0 && fs.existsSync(okMf)) {
+        apktoolPerms = [...fs.readFileSync(okMf, 'utf8')
+          .matchAll(/<uses-permission android:name="([^"]+)"/g)].map(m => m[1]).sort();
+      }
+      /* Our own analyser, asked the same question over the same bytes. */
+      const okAn = spawnSync(process.execPath, [path.join(HERE, 'analyze.mjs'), APK, '--json'],
+        { encoding: 'utf8' });
+      let ourPerms = [];
+      try { ourPerms = [...(JSON.parse(okAn.stdout).manifest.permissions || [])].sort(); } catch { /* recorded below */ }
+      negatives.push({
+        label: 'NEGATIVE: the two decoders AGREE on the real APK (so refusal above is not reflex)',
+        pass: apktoolPerms.length > 0
+          && apktoolPerms.length === ourPerms.length
+          && apktoolPerms.every((p, i) => p === ourPerms[i]),
+        detail: `apktool ${apktoolPerms.length} perm(s) [${apktoolPerms.join(', ')}] vs `
+          + `analyzer ${ourPerms.length} [${ourPerms.join(', ')}]`,
+      });
+    }
+  }
+
+for (const n of negatives) record(n.label, n.pass, n.detail);
 /* ------------------------------------------------------------------ *
  * Summary
  * ------------------------------------------------------------------ */
-const failed = steps.filter(s => !s.pass);
+const failed = steps.filter(s => s.pass === false);
+const skipped = steps.filter(s => s.skipped);
 banner('mobile-lab loop summary');
 for (const s of steps) {
-  console.log(`  ${s.pass ? 'PASS' : 'FAIL'}  ${s.label.padEnd(58)} ${s.detail}${s.ms ? `  (${(s.ms / 1000).toFixed(1)}s)` : ''}`);
+  const tag = s.skipped ? 'SKIP' : (s.pass ? 'PASS' : 'FAIL');
+  console.log(`  ${tag}  ${s.label.padEnd(58)} ${s.detail}${s.ms ? `  (${(s.ms / 1000).toFixed(1)}s)` : ''}`);
 }
 console.log('');
-if (failed.length === 0) {
+
+/* The closing sentence names JADX and Apktool by name, so it may only be printed when both
+   actually ran. Printing it after a skip is the same defect in prose form that recordSkip
+   fixes in the table. */
+if (failed.length === 0 && skipped.length === 0) {
   console.log('LOOP CLOSED: a real APK was built from source, its native library agreed with an');
   console.log('             independent ELF implementation, the static analyser resolved every JNI');
   console.log('             boundary and all four pinning mechanisms, JADX and Apktool reproduced the');
@@ -427,8 +543,21 @@ if (failed.length === 0) {
   console.log('');
   console.log('NOT PROVEN (no device on this box): attaching, live TLS interception, ART accepting');
   console.log('             these scripts, and disassembly of the sample .so.');
+  process.exit(0);
+} else if (failed.length === 0) {
+  console.log(`LOOP NOT CLOSED: ${skipped.length} step(s) SKIPPED and nothing failed. A skipped`);
+  console.log('             cross-check is not an agreeing one -- the second decoder was never asked,');
+  console.log('             so this run carries NO independent corroboration of the manifest.');
+  for (const s of skipped) console.log(`  - SKIPPED ${s.label}: ${s.detail}`);
+  console.log('');
+  console.log('Run without the skip flags to close the loop.');
+  process.exit(8);
 } else {
   console.log(`${failed.length} step(s) FAILED:`);
   for (const f of failed) console.log(`  - ${f.label}: ${f.detail}`);
+  if (skipped.length) {
+    console.log(`${skipped.length} further step(s) SKIPPED (also not agreement):`);
+    for (const s of skipped) console.log(`  - SKIPPED ${s.label}: ${s.detail}`);
+  }
+  process.exit(9);
 }
-process.exit(failed.length === 0 ? 0 : 9);

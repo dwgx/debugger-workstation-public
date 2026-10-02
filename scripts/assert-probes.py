@@ -72,6 +72,29 @@ FAULT_MARKERS = ("is not recognized", "not recognized as an", "the term",
 TOOL_FAULT_SECS = 0.5
 TIMEOUT_RC = -1          # what run() returns when subprocess.TimeoutExpired fires
 
+# `--save-evidence DIR` writes what each probe ACTUALLY printed, per capability, so a run can be
+# retained on disk instead of remembered. Added 2026-10-03 for a measured reason: every one of
+# the eleven `probe.run_log` values in the registry turned out to be PROSE ("measured 2026-10-02
+# in this session, ..."), and R17 accepted any non-empty string as proof that `state: observed`
+# is bound to a run -- which is the field gate.ps1 filters on when it decides what a grant may
+# contain. A retained file is the smallest thing that makes that binding real.
+EVIDENCE_DIR: "pathlib.Path | None" = None
+
+
+def save_evidence(cid: str, kind: str, cmd: str, rc: int, secs: float, blob: str) -> None:
+    """Write one run's output verbatim, with enough header to re-run it."""
+    if EVIDENCE_DIR is None:
+        return
+    EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
+    head = (f"# assert-probes evidence: {cid} {kind}\n"
+            f"# command: {cmd}\n"
+            f"# exit: {rc}\n"
+            f"# seconds: {secs:.2f}\n"
+            f"# captured by: python scripts/assert-probes.py --save-evidence <dir>\n"
+            f"# re-run the command above; this file is OUTPUT, not a claim about it.\n"
+            f"{'-' * 72}\n")
+    (EVIDENCE_DIR / f"{cid}.{kind}.log").write_text(head + blob, encoding="utf-8")
+
 
 def load() -> list[dict]:
     return json.load(open(REG, encoding="utf-8"))["capabilities"]
@@ -159,11 +182,24 @@ def check(cap: dict, timeout: int) -> list[tuple[str, str]]:
     if not cmd or prose(cmd):
         return [("SKIP", f"{cid}: probe.command is not executable ({cmd[:50]!r})")]
 
+    # `probe.prepare` NOW RUNS, on the evidence of 2026-10-03: eleven entries declared it and
+    # NOTHING read it. The clearest case is net.pcap.selfparse, whose probe reads a capture its
+    # own prepare command generates -- so on a clean machine the probe cannot run at all, and
+    # the recorded run could only have happened after something else made the file appear. A
+    # declared dependency nobody executes is the same defect as a declared expectation nobody
+    # checks. A prepare that fails is a TOOL-FAULT, not a DRIFT: the probe never got its input.
+    prep = str(probe.get("prepare") or "").strip()
+    if prep:
+        prc, pblob, psecs = run(prep, timeout, (probe.get("env") or None))
+        if prc != 0:
+            out.append(("TOOL-FAULT", f"{cid} PREPARE failed (exit {prc}) after {psecs:.1f}s :: "
+                                       f"{prep[:60]} :: {(pblob or '').strip()[:120]}"))
     # probe.env exists because crypto.jose.parse needs CRYPTO_LAB_PORT: its lab's default
     # port 8791 is held by ANOTHER of the Owner's projects, so without this the checker
     # reports a DRIFT on every run for a reason that is not the registry's. A checker that
     # cries wolf gets switched off, so teaching it to set the variable is the fix.
     rc, blob, secs = run(cmd, timeout, (probe.get("env") or None))
+    save_evidence(cid, "probe", cmd, rc, secs, blob)
     fault = tool_fault(rc, blob, secs)
     if fault:
         out.append(("TOOL-FAULT", f"{cid} PROBE {fault} :: {cmd[:60]}"))
@@ -249,7 +285,14 @@ def main() -> int:
     ap.add_argument("ids", nargs="*", help="capability ids; default = every safe one")
     ap.add_argument("--timeout", type=int, default=180)
     ap.add_argument("--list", action="store_true", help="show what would run, run nothing")
+    ap.add_argument("--save-evidence", metavar="DIR", default=None,
+                    help="write each probe's and control's REAL output to DIR/<id>.<kind>.log")
     args = ap.parse_args()
+    if args.save_evidence:
+        global EVIDENCE_DIR
+        EVIDENCE_DIR = Path(args.save_evidence)
+        if not EVIDENCE_DIR.is_absolute():
+            EVIDENCE_DIR = REPO / EVIDENCE_DIR
 
     caps = load()
     known = {c["id"] for c in caps}

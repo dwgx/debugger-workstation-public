@@ -129,6 +129,14 @@ notes/2026-09-01-full-tool-download.md
 .vscode/
 .idea/
 *.log
+
+# EXCEPTION, and it is the only one. Rule R17 binds each probe to `evidence/probes/<id>.probe.log`
+# by path AND sha256, which is the whole point: a hash of a file git refuses to carry is a hash
+# the next window and the next machine cannot check. Measured 2026-10-03 -- 11 probes, 11 files
+# present, 11 hashes matching, 0 untracked-but-referenced. `assert-probes.py --save-evidence`
+# writes here, and nothing else does.
+!evidence/probes/
+!evidence/probes/*.probe.log
 Thumbs.db
 desktop.ini
 .DS_Store

@@ -20,7 +20,12 @@
  *
  * Exit 0 means the loop closed on this machine, in this run. Non-zero means one of the
  * assertions above did not hold, and the failing step says which.
+ *
+ * `--control=<name>` runs ONE section on its own exit code, so a registry probe can point
+ * at a control instead of at the whole loop. It prints `CONTROL ... ONLY` and a summary
+ * line that says so, and it never prints LOOP CLOSED.
  */
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -47,9 +52,44 @@ function step(label, pass, detail) {
 const sha256 = (b) => crypto.createHash('sha256').update(b).digest('hex');
 const line = (s = '', n = 78) => console.log(`${'-'.repeat(n)}\n${s}\n${'-'.repeat(n)}`);
 
-console.log('D12 forensics lab loop');
-console.log(`  work        ${WORK}`);
-console.log(`  ground truth ${path.relative(LAB_ROOT, path.join(LAB_ROOT, 'lab', 'spec.mjs'))} (read only by this file)`);
+
+/* ------------------------------------------------------------------ selector */
+
+/* `--control=<name>` runs ONE section and exits on that section alone. The loop's own exit
+ * code spoke for all eleven sections at once -- `process.exit(failed.length === 0 ? 0 : 9)`
+ * at the bottom of this file -- so control C could not be pointed at on its own, and this
+ * capability's negative_control could only be a plan. */
+const CONTROL = (process.argv.slice(2).find((a) => a.startsWith('--control=')) || '').slice('--control='.length) || null;
+/* `--expect <finding-id>` is the same section in the shape the registry's R5 requires: it
+ * DEMANDS the finding from a real analyze.mjs process and exits non-zero when the analyser
+ * refuses. Without it a control here would have to expect exit 0, and R5 refuses exactly
+ * that, because a control that must succeed proves nothing. */
+const CONTROL_EXPECT = (() => {
+  const i = process.argv.indexOf('--expect');
+  return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : null;
+})();
+
+/* The loop banner is suppressed under `--control`, not merely followed by a correction: a
+ * one-section run that opens with "D12 forensics lab loop" is precisely what makes a
+ * control indistinguishable from the thing it has to be separable from. */
+if (!CONTROL) {
+  console.log('D12 forensics lab loop');
+  console.log(`  work        ${WORK}`);
+  console.log(`  ground truth ${path.relative(LAB_ROOT, path.join(LAB_ROOT, 'lab', 'spec.mjs'))} (read only by this file)`);
+} else {
+  console.log(`D12 forensics lab — CONTROL ${CONTROL} ONLY. This is NOT the full loop run.`);
+  console.log(`  work        ${WORK}`);
+  console.log('  sections 1-9 and 11 are NOT executed; the exit code below is this section alone.');
+}
+
+if (CONTROL) {
+  if (CONTROL !== 'srum') {
+    console.error(`loop.mjs: unknown --control='${CONTROL}'. This build ships exactly one control: srum.`);
+    process.exit(64);
+  }
+  controlSrum({ demand: CONTROL_EXPECT });
+  summarizeControl(CONTROL_EXPECT);
+}
 
 /* ------------------------------------------------------------------ 1 BUILD */
 
@@ -231,28 +271,12 @@ line('[9] NEGATIVE CONTROL B — a tampered image must LOSE the finding');
 /* ------------------------------------------------------------------ 10 CONTROL C */
 
 line('[10] NEGATIVE CONTROL C — the independence gate must actually gate');
-{
-  /* Drop SRUM, the source that corroborates the injection, and the finding must fall
-     back to POSSIBLE. If it stays INFERRED, the gate is decorative. */
-  const soloDir = path.join(WORK, 'single-source');
-  generate(soloDir);
-  const srumFile = path.join(soloDir, 'artifacts', 'Srum.txt');
-  const original = fs.readFileSync(srumFile, 'utf8');
-  fs.writeFileSync(srumFile, original.split(/\r?\n/).filter((l) => !l.includes('svchost.exe')).join('\n'), 'utf8');
-  const solo = analyze(soloDir);
-  fs.writeFileSync(srumFile, original, 'utf8');
-  const f = solo.findings.find((x) => x.id === 'INJECTED_PRIVATE_RWX_REGION');
-  const u = solo.unconfirmed.find((x) => x.id === 'INJECTED_PRIVATE_RWX_REGION');
-  step('removing SRUM demotes the injection to UNCONFIRMED', !f && Boolean(u), f ? `still INFERRED from ${f.groups.join('+')} (BAD)` : u ? `now ${u.tier}: ${u.verdictReason}` : 'claim vanished entirely (BAD)');
-  step('the demoted claim still cites MEM as its only source', Boolean(u) && u.groups.length === 1 && u.groups[0] === 'MEM', u ? u.groups.join('+') : 'no claim');
-  step('the unlinked process is UNAFFECTED by removing SRUM (PF+AM+MEM still agree)', solo.findings.some((x) => x.id === 'UNLINKED_PROCESS'), solo.findings.filter((x) => x.id === 'UNLINKED_PROCESS').map((x) => x.groups.join('+')).join('+') || 'lost it (BAD)');
-}
+controlSrum();
 
 /* ------------------------------------------------------------------ 11 CONTROL D */
 
 line('[11] NEGATIVE CONTROL D — the --expect guard must fail on a wrong set');
 {
-  const { spawnSync } = await import('node:child_process');
   const wrong = spawnSync(process.execPath, [path.join(HERE, 'analyze.mjs'), '--target', TARGET, '--expect', 'NOT_A_REAL_FINDING'], { encoding: 'utf8', windowsHide: true });
   step('analyze --expect <wrong set> exits non-zero', wrong.status !== 0, `exit ${wrong.status}  ${(wrong.stderr || '').trim()}`);
   const right = spawnSync(process.execPath, [path.join(HERE, 'analyze.mjs'), '--target', TARGET, '--expect', got.join(',')], { encoding: 'utf8', windowsHide: true });
@@ -277,6 +301,82 @@ function locateContentRegion(buf, payloadSha) {
     if (createHash('sha256').update(slice).digest('hex') === payloadSha) return i;
   }
   return -1;
+}
+
+/* CONTROL C as a function, so the loop and `--control=srum` run the SAME control. Two
+ * copies of a control is how a control stops guarding anything. `demand` is the id of a
+ * finding the analyser is asked to produce from the SRUM-dropped scenario; it must refuse,
+ * and it must refuse as a real process exit code rather than an in-process check. */
+function controlSrum({ demand = null } = {}) {
+  /* Drop SRUM, the source that corroborates the injection, and the finding must fall
+     back to POSSIBLE. If it stays INFERRED, the gate is decorative. */
+  const soloDir = path.join(WORK, 'single-source');
+  generate(soloDir);
+  const srumFile = path.join(soloDir, 'artifacts', 'Srum.txt');
+  const original = fs.readFileSync(srumFile, 'utf8');
+  fs.writeFileSync(srumFile, original.split(/\r?\n/).filter((l) => !l.includes('svchost.exe')).join('\n'), 'utf8');
+  const solo = analyze(soloDir);
+  /* Asked while the rows are still dropped, and asked of a real process: the library
+     agreeing with itself is not what an orchestrator will run. */
+  const refusal = demand
+    ? spawnSync(process.execPath, [path.join(HERE, 'analyze.mjs'), '--target', soloDir, '--expect', demand], { encoding: 'utf8', windowsHide: true })
+    : null;
+  fs.writeFileSync(srumFile, original, 'utf8');
+  const f = solo.findings.find((x) => x.id === 'INJECTED_PRIVATE_RWX_REGION');
+  const u = solo.unconfirmed.find((x) => x.id === 'INJECTED_PRIVATE_RWX_REGION');
+  step('removing SRUM demotes the injection to UNCONFIRMED', !f && Boolean(u), f ? `still INFERRED from ${f.groups.join('+')} (BAD)` : u ? `now ${u.tier}: ${u.verdictReason}` : 'claim vanished entirely (BAD)');
+  step('the demoted claim still cites MEM as its only source', Boolean(u) && u.groups.length === 1 && u.groups[0] === 'MEM', u ? u.groups.join('+') : 'no claim');
+  step('the unlinked process is UNAFFECTED by removing SRUM (PF+AM+MEM still agree)', solo.findings.some((x) => x.id === 'UNLINKED_PROCESS'), solo.findings.filter((x) => x.id === 'UNLINKED_PROCESS').map((x) => x.groups.join('+')).join('+') || 'lost it (BAD)');
+  if (refusal) {
+    /* Exit 4 AND the demanded id named as MISSING. Exit 4 alone is not enough, and
+     * measuring proved why: against a broken analyser the run still exited 4, but for the
+     * wrong reason -- `missing=[] unexpected=[UNLINKED_PROCESS]` -- because the single
+     * --expect argument suppresses nothing, so a second mismatch can manufacture the very
+     * exit this step reads as a refusal. Asserting the id appears in `missing=[...]` makes
+     * the refusal the guarded property rather than any non-zero code. */
+    const err = (refusal.stderr || '').trim();
+    const namedMissing = err.includes(`missing=[${demand}]`);
+    step(`analyze REFUSES ${demand} specifically once SRUM is gone`, refusal.status === 4 && namedMissing,
+      `exit ${refusal.status}  ${err}${namedMissing ? '' : (refusal.status === 4 ? '  -- exited 4 but NOT because the demand was missing (BAD)' : '')}`);
+  }
+  return { solo, finding: f, unconfirmed: u, refusal };
+}
+
+/* NOT summarize(): that prints "loop summary" and the LOOP CLOSED line, which is exactly
+ * what a one-section run must not be mistaken for. */
+function summarizeControl(demand) {
+  const failed = steps.filter((s) => !s.pass);
+  console.log(`\n${'='.repeat(78)}\nD12 forensics lab — CONTROL srum summary (one section, NOT a loop run)\n${'='.repeat(78)}`);
+  for (const s of steps) console.log(`  ${s.pass ? 'PASS' : 'FAIL'}  ${s.label.padEnd(56)} ${s.detail}`);
+  console.log('');
+  const notLoop = 'THIS WAS NOT A FULL LOOP RUN: sections 1-9 and 11 were not executed.';
+  if (demand) {
+    if (failed.length === 0) {
+      console.log('CONTROL srum: the independence gate held, and a real analyze.mjs process REFUSED the');
+      console.log(`             demand for ${demand} after the svchost.exe SRUM rows were dropped.`);
+      console.log(notLoop);
+      console.log('CONTROL srum: PASS — SUCCESS IS EXIT 4. The refusal IS the control passing; a control that');
+      console.log('             has to exit 0 proves nothing (registry rule R5).');
+      process.exit(4);
+    }
+    console.log(`CONTROL srum: FAIL — the control did not hold. ${failed.length} check(s) failed:`);
+    for (const s of failed) console.log(`  - ${s.label}: ${s.detail}`);
+    console.log(notLoop);
+    process.exit(9);
+  }
+  if (failed.length === 0) {
+    console.log('CONTROL srum: the independence gate held. INJECTED_PRIVATE_RWX_REGION was demoted to');
+    console.log('             POSSIBLE on MEM alone once the SRUM rows were dropped, and UNLINKED_PROCESS');
+    console.log('             survived, because it never depended on SRUM.');
+    console.log(notLoop);
+    console.log('CONTROL srum: PASS — exit 0, self-test shape. Pass --expect <finding-id> for the registry');
+    console.log("             refusal shape, whose success is a NON-ZERO exit.");
+    process.exit(0);
+  }
+  console.log(`CONTROL srum: FAIL — the gate did not hold. ${failed.length} check(s) failed:`);
+  for (const s of failed) console.log(`  - ${s.label}: ${s.detail}`);
+  console.log(notLoop);
+  process.exit(9);
 }
 
 function summarize() {

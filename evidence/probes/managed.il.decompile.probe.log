@@ -1,0 +1,73 @@
+# assert-probes evidence: managed.il.decompile probe
+# command: node managed-lab/tools/loop.mjs
+# exit: 0
+# seconds: 17.09
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+managed-lab loop -- .NET / managed reverse engineering, known-answer corpus
+====================================================================================================
+
+
+  solve + independent cross-check
+  sample  solver  answer                                        cross-check against the sample's own output
+  ------------------------------------------------------------------------------------------------
+  PASS  m01    exit 0  the quick brown fox jumps over the lazy dog   matches the sample output exactly
+  PASS  m02    exit 0  dbb9c662                                      matches the sample output exactly
+  PASS  m03    exit 0  ae5ee44b7f198f47106fd52f1d17f72e804144598480  matches the sample output exactly
+  PASS  m04    exit 0  MSTR v3 records=5 total=0x00000080 hdrcheck=  matches the sample output exactly
+  PASS  m05    exit 0  M05-BRIDGE-KEY                                verdict ACCEPT / wrong key -> verdict REJECT
+
+  raw IL, headless (ilspycmd -il) -- the same facts, one layer lower
+  PASS  m01    ilspycmd -il  ciphertext is an ldstr, the key stream is a call
+  PASS  m02    ilspycmd -il  the dispatcher is a brfalse chain, not a switch opcode; the dead state 43 is a plain literal
+  PASS  m03    ilspycmd -il  the payload is not in the IL at all -- only the suffix and the seed are
+  PASS  m04    ilspycmd -il  the integrity constants are IL immediates -- 0x811C9DC5 prints signed, as -2128831035
+  PASS  m05    ilspycmd -il  the managed/native boundary is one pinvokeimpl line
+
+  negative controls -- each solver in the mode that breaks it
+  PASS  m01    exit 4  layers applied in the wrong order
+  PASS  m02    exit 1  dead edges trusted (naive case-body parse)
+  PASS  m02    exit 4  wrong entry state (a complete, confident, wrong answer)
+  PASS  m03    exit 4  resource extracted but left masked
+  PASS  m04    exit 1  CRC32 substituted for the recovered FNV-1a/32
+  PASS  m04    exit 1  alignment padding ignored
+  PASS  m05    exit 4  forward transform used instead of its inverse
+  PASS  m05    exit 4  masked table left masked
+
+  PASS  tool   exit 1  m01's solver pointed at m02's assembly refuses instead of guessing
+
+  checks
+  PASS  ilspycmd on PATH via the station tree            ilspycmd: 11.0.0.9375
+ ICSharpCode.Decompiler: 11.0.0.9375
+  PASS  dotnet SDK available                             dotnet 10.0.400
+  PASS  built m01                                        m01_stringobf.dll + m01_stringobf.exe
+  PASS  built m02                                        m02_flatten.dll + m02_flatten.exe
+  PASS  built m03                                        m03_resource.dll + m03_resource.exe
+  PASS  built m04                                        m04_struct.dll + m04_struct.exe
+  PASS  built m05                                        m05_bridge.dll + m05_bridge.exe
+  PASS  m04 artifact on disk                             128 bytes
+  PASS  m01 solve + cross-check                          recovered and confirmed by the sample  [string encryption -- per-index keystream XOR + odd-index byte swap]
+  PASS  m02 solve + cross-check                          recovered and confirmed by the sample  [control-flow flattening + opaque predicates + a decoy block]
+  PASS  m03 solve + cross-check                          recovered and confirmed by the sample  [base64 payload in an embedded resource, seed derived from the resource name]
+  PASS  m04 solve + cross-check                          recovered and confirmed by the sample  [hand-rolled 16-byte header + length-prefixed records, FNV-1a/32, 4-byte aligned]
+  PASS  m05 solve + cross-check                          recovered and confirmed by the sample  [P/Invoke boundary: the answer is in the DLL, not in the managed code]
+  PASS  m01 IL facts readable headlessly                 ciphertext is an ldstr, the key stream is a call
+  PASS  m02 IL facts readable headlessly                 the dispatcher is a brfalse chain, not a switch opcode; the dead state 43 is a plain literal
+  PASS  m03 IL facts readable headlessly                 the payload is not in the IL at all -- only the suffix and the seed are
+  PASS  m04 IL facts readable headlessly                 the integrity constants are IL immediates -- 0x811C9DC5 prints signed, as -2128831035
+  PASS  m05 IL facts readable headlessly                 the managed/native boundary is one pinvokeimpl line
+  PASS  m01 control: layers applied in the wrong order   exit 4 (non-zero, as required)
+  PASS  m02 control: dead edges trusted (naive case-body parse) exit 1 (non-zero, as required)
+  PASS  m02 control: wrong entry state (a complete, confident, wrong answer) exit 4 (non-zero, as required)
+  PASS  m03 control: resource extracted but left masked  exit 4 (non-zero, as required)
+  PASS  m04 control: CRC32 substituted for the recovered FNV-1a/32 exit 1 (non-zero, as required)
+  PASS  m04 control: alignment padding ignored           exit 1 (non-zero, as required)
+  PASS  m05 control: forward transform used instead of its inverse exit 4 (non-zero, as required)
+  PASS  m05 control: masked table left masked            exit 4 (non-zero, as required)
+  PASS  control: a solver given the wrong sample refuses exit 1 -- solve-m01: no KeyStream method in the decompilation
+
+====================================================================================================
+LOOP CLOSED: every sample was recovered from its decompilation alone, every recovery was confirmed
+             against the sample's own output, and every negative control failed as it must.
+JSON-SUMMARY {"total":27,"pass":27,"fail":0}

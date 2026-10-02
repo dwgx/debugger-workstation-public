@@ -1,0 +1,97 @@
+# assert-probes evidence: ops.skill.security probe
+# command: & "$env:USERPROFILE\.local\bin\skillspector.exe" scan skills --no-llm --fail-on-findings --fail-on-incomplete
+# exit: 0
+# seconds: 5.86
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+Warning: Found 2 skills in this directory. Use --recursive to scan each 
+independently.
+
+┌──────────────────────────────────────────────────────────────────────────────
+┐
+│ SkillSpector Security Report                                                 
+│
+└────────────────────────────────── v2.12.0 
+───────────────────────────────────┘
+
+Skill: unknown
+Source: D:\Software\Tool\WorkStation\debugger\skills
+Scanned: 2026-10-02 19:57:01 UTC
+
+
+    Risk Assessment    
+ Score           0/100 
+ Severity        LOW   
+ Recommendation  SAFE  
+
+
+                                 Components (6)                                
+┌──────────────────────────────────────────────┬──────────┬───────┬────────────
+┐
+│ File                                         │ Type     │ Lines │ Executable 
+│
+├──────────────────────────────────────────────┼──────────┼───────┼────────────
+┤
+│ debugger-review/SKILL.md                     │ markdown │    36 │ No         
+│
+│ debugger-workstation/SKILL.md                │ markdown │    50 │ No         
+│
+│ debugger-workstation/references/agent-cli.md │ markdown │    29 │ No         
+│
+│ debugger-workstation/references/arsenal.md   │ markdown │    34 │ No         
+│
+│ debugger-workstation/references/mcp-router.… │ markdown │    45 │ No         
+│
+│ debugger-workstation/references/triage.md    │ markdown │    34 │ No         
+│
+└──────────────────────────────────────────────┴──────────┴───────┴────────────
+┘
+
+No security issues detected.
+
+
+     Inspection Completeness      
+ Execution             successful 
+ Status                complete   
+ Coverage              100.0%     
+ Fully inspected       6          
+ Partially inspected   0          
+ Entirely uninspected  0          
+Analyzer statuses
+  - completed : 
+  - no_applicable_files : No files matched this analyzer's applicability 
+contract.
+  - no_applicable_files : No files matched this analyzer's applicability 
+contract.
+  - no_applicable_files : No files matched this analyzer's applicability 
+contract.
+  - manifest_absent : No compatible manifest was present for this analyzer.
+  - completed : 
+  - manifest_absent : No compatible manifest was present for this analyzer.
+  - no_applicable_files : No files matched this analyzer's applicability 
+contract.
+  - disabled_by_configuration : Analyzer was disabled by the requested 
+configuration.
+  - disabled_by_configuration : Analyzer was disabled by the requested 
+configuration.
+  - disabled_by_configuration : Analyzer was disabled by the requested 
+configuration.
+  - completed : 
+  - completed : 
+  - completed : 
+  - completed : 
+  - completed : 
+  - completed : 
+  - completed : 
+  - completed : 
+  - completed : 
+  - completed : 
+  - completed : 
+  - completed : 
+  - completed : 
+  - completed : 
+  - completed : 
+  - completed : 
+Executable scripts: No
+

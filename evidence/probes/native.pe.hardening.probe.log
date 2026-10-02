@@ -1,0 +1,8 @@
+# assert-probes evidence: native.pe.hardening probe
+# command: python native-lab\tools\hardening_probe.py crackme-corpus\out\c01-stringobf.exe
+# exit: 0
+# seconds: 0.34
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+{"ok": true, "exit": 0, "binary": "crackme-corpus\\out\\c01-stringobf.exe", "image": {"arch": "x86", "bits": "64", "class": "PE32+", "bintype": "pe", "baddr": "0x140000000", "binsz": "143872", "endian": "little", "machine": "AMD 64", "os": "windows", "subsys": "Windows CUI", "compiler": null, "lang": "c"}, "mitigations": {"canary": "true", "injprot": "false", "retguard": "false", "nx": "true", "pic": "true", "relocs": "false", "stripped": "false", "crypto": "false"}, "caveats": "THESE ARE PRESENCE FLAGS FROM ONE IMPLEMENTATION, NOT A HARDENING ASSESSMENT. `canary true` means a stack-protection cookie symbol was found; it does not mean the buffer it protects is bounded. `nx` is reported by rabin2 but is NOT included in the mitigation dict above as a boolean because its value needs reading rather than trusting: a PE can carry the NX-compatible bit and still be marked executable. `crypto true` means a signature directory is PRESENT -- which is a trigger to ask native.pe.authenticode or native.signature.certverify, never a statement that anything is trusted."}

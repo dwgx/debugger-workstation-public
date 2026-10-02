@@ -1,0 +1,144 @@
+# assert-probes evidence: forensics.memory.artefact probe
+# command: node forensics-lab/tools/loop.mjs
+# exit: 0
+# seconds: 23.60
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+D12 forensics lab loop
+  work        %USERPROFILE%\AppData\Local\Temp\d12-forensics-lab
+  ground truth lab\spec.mjs (read only by this file)
+------------------------------------------------------------------------------
+[1] BUILD — generate the synthetic target
+------------------------------------------------------------------------------
+%USERPROFILE%\AppData\Local\Temp\d12-forensics-lab\target\d12-lab-image.raw
+  image       151552 bytes  sha256 35a6a51d5cc607afd6fd3208d32a2fdeb460bb9bdc1e06c29b6706e163a203ea
+  payload     msvc  104448 bytes  sha256 38b127a6c8108d914e6c806351b9861066335e836e47290be3b5aebc8da5c75b
+  regions     HEADER@0x0  STRINGS@0x1000  CONTENT@0x2000  POOL@0x22000  VADS@0x23000  OBJECTS@0x24000
+  processes   8 in pool, 7 reachable from the list head
+  artifacts   9  (Amcache 1, Prefetch 7, Srum 1)
+  PASS  image built and hashed                                   151552 bytes
+------------------------------------------------------------------------------
+[2] PRESERVE — the fixture must be byte-reproducible, or "deterministic" is a claim
+------------------------------------------------------------------------------
+  PASS  regenerating the image produces identical bytes          35a6a51d5cc607af… == 35a6a51d5cc607af…
+  PASS  two analyses of the same image are byte-identical        68f8a8bf03e97740…
+------------------------------------------------------------------------------
+[3] TRIAGE — run the plugin set over the target
+------------------------------------------------------------------------------
+  pslist      7 processes: 4:System 620:smss.exe 744:csrss.exe 1204:winlogon.exe 1880:lsass.exe 4120:svchost.exe 5500:spoolsv.exe
+  psscan      8 processes
+  netscan     4 connections, chain intact true
+  malfind     1 suspicious of 3 candidates
+  handlescan  5 handles
+  PASS  pslist reaches exactly the linked processes              7 == 7
+  PASS  psscan finds strictly more than the list walk            8 > 7 (the DKOM signal)
+  PASS  malfind keeps the executable+unbacked region             1 suspicious
+------------------------------------------------------------------------------
+[4] NARROW / [5] VERIFY — triangulate, then compare against the ground truth
+------------------------------------------------------------------------------
+  rule: a single artifact lies; a conclusion needs two or more independent sources (>= 2 independent source groups)
+
+  FINDING     INJECTED_PRIVATE_RWX_REGION        MEM+SRUM  (2 sources)
+              PID 4120 has a private EXECUTE_READWRITE region holding a PE32+ that no load-list module explains
+  FINDING     OUTBOUND_CONNECTION:pid-4120       MEM+SRUM  (2 sources)
+              PID 4120 holds an established connection 10.0.0.42:49812 -> 203.0.113.23:8443
+  FINDING     UNLINKED_PROCESS                   AM+MEM+PF+SRUM  (4 sources)
+              PID 6692 (lsass-helper.exe) is resident in the pool but not reachable from the EPROCESS list
+  PASS  findings set matches the ground truth exactly            INJECTED_PRIVATE_RWX_REGION, OUTBOUND_CONNECTION:pid-4120, UNLINKED_PROCESS
+  PASS  INJECTED_PRIVATE_RWX_REGION cites MEM+SRUM               support: MEM:malfind(pid 4120 0x7ff60000)  MEM:netscan(10.0.0.42:49812 -> 203.0.113.23:8443)  SRUM:C:\Windows\System32\svchost.exe
+  PASS  OUTBOUND_CONNECTION:pid-4120 cites MEM+SRUM              support: MEM:netscan(10.0.0.42:49812 -> 203.0.113.23:8443)  SRUM:C:\Windows\System32\svchost.exe
+  PASS  UNLINKED_PROCESS cites MEM+PF+AM                         support: AM:C:\ProgramData\D12Lab\lsass-helper.exe  MEM:pslist(absent)  MEM:psscan(pid 6692)  PF:LSASS_HELPER.EXE-9C1FE432.pf  SRUM:C:\ProgramData\D12Lab\lsass-helper.exe
+------------------------------------------------------------------------------
+[6] THE DECOY — one artifact, and it must NOT become a finding
+------------------------------------------------------------------------------
+  PASS  decoy C:\Users\Public\D12LabStage\stage-updater.exe      single source: SRUM
+  PASS    ... is NOT in the findings set                         absent from findings
+  PASS    ... is reported as UNCONFIRMED                         POSSIBLE, 1 source: SRUM
+  PASS    ... names every source that does NOT have it           no process in the image runs this path; no Amcache execution record; no prefetch run history
+  PASS    ... is still reported, not discarded                   C:\Users\Public\D12LabStage\stage-updater.exe transferred 44040192 bytes at 2026-03-14T02:14:33.000Z, and one source says so
+  PASS  region 0x210000 in PID 744 is not reported as an injection REJECTED: region is not executable
+  PASS  region 0x7ff70000 in PID 4120 is not reported as an injection REJECTED: region is explained by a load-list module
+  PASS  every rejected signal is explained rather than dropped   4120:region is explained by a load-list module  744:region is not executable
+------------------------------------------------------------------------------
+[7] CORRELATE — independent implementations on the carved bytes, and the Volatility probe
+------------------------------------------------------------------------------
+  PASS  carved the injected region out of the image              pid 4120  0x7ff60000  104448 bytes  sha256 38b127a6c8108d91…
+  PASS  diec agrees the carved bytes are the lab payload         exit 0  PE64
+  PASS  yr agrees the carved bytes are the lab payload           exit 0  D12_LabPayload %USERPROFILE%\AppData\Local\Temp\d12-forensics-lab\carved\carved-pid4120-0x7ff60000.bin
+  PASS  real Volatility 3 was invoked on the image               vol.exe windows.pslist
+  PASS  real Volatility 3 REFUSES pslist on a synthetic image    exit 1  "plugins.PsList.kernel.layer_name:"
+  Tool agreement raises confidence in an OBSERVED value. It does not add a source group: all three implementations are reading the same bytes of the same file, so no claim's independent-source count changes because of anything in this section.
+------------------------------------------------------------------------------
+[8] NEGATIVE CONTROL A — a clean image must produce NO findings
+------------------------------------------------------------------------------
+  PASS  clean image built without the injection or the decoy     45056 bytes, sha256 differs
+  PASS  clean image yields NO injected-region finding            1 finding(s) total
+  PASS  clean image yields NO decoy claim at all                 0 unconfirmed
+  PASS  the unlinked process is STILL found on a clean image     it does not depend on the injection, which is the point: two findings, two causes
+------------------------------------------------------------------------------
+[9] NEGATIVE CONTROL B — a tampered image must LOSE the finding
+------------------------------------------------------------------------------
+  PASS  one-byte tamper changed the image                        0x2000: 4D 5A -> 41 41, sha256 now differs
+  PASS  tampering REMOVES the injected-region finding            was a finding; now gone
+  PASS  tampering leaves the unlinked-process finding intact     an independent finding is unaffected, as it should be
+  PASS  the tampered region is no longer counted a PE candidate  candidates 3 -> 2
+  PASS  the tampered image hash no longer matches the built one  35a6a51d5cc607af… -> f5201ed33b9fe96e…
+------------------------------------------------------------------------------
+[10] NEGATIVE CONTROL C — the independence gate must actually gate
+------------------------------------------------------------------------------
+  PASS  removing SRUM demotes the injection to UNCONFIRMED       now POSSIBLE: only 1 independent source (MEM); 2 are required for a finding
+  PASS  the demoted claim still cites MEM as its only source     MEM
+  PASS  the unlinked process is UNAFFECTED by removing SRUM (PF+AM+MEM still agree) AM+MEM+PF+SRUM
+------------------------------------------------------------------------------
+[11] NEGATIVE CONTROL D — the --expect guard must fail on a wrong set
+------------------------------------------------------------------------------
+  PASS  analyze --expect <wrong set> exits non-zero              exit 4  analyze: --expect mismatch  missing=[NOT_A_REAL_FINDING] unexpected=[INJECTED_PRIVATE_RWX_REGION,OUTBOUND_CONNECTION:pid-4120,UNLINKED_PROCESS]
+  PASS  analyze --expect <correct set> exits zero                exit 0
+
+==============================================================================
+D12 forensics lab — loop summary
+==============================================================================
+  PASS  image built and hashed                                   151552 bytes
+  PASS  regenerating the image produces identical bytes          35a6a51d5cc607af… == 35a6a51d5cc607af…
+  PASS  two analyses of the same image are byte-identical        68f8a8bf03e97740…
+  PASS  pslist reaches exactly the linked processes              7 == 7
+  PASS  psscan finds strictly more than the list walk            8 > 7 (the DKOM signal)
+  PASS  malfind keeps the executable+unbacked region             1 suspicious
+  PASS  findings set matches the ground truth exactly            INJECTED_PRIVATE_RWX_REGION, OUTBOUND_CONNECTION:pid-4120, UNLINKED_PROCESS
+  PASS  INJECTED_PRIVATE_RWX_REGION cites MEM+SRUM               support: MEM:malfind(pid 4120 0x7ff60000)  MEM:netscan(10.0.0.42:49812 -> 203.0.113.23:8443)  SRUM:C:\Windows\System32\svchost.exe
+  PASS  OUTBOUND_CONNECTION:pid-4120 cites MEM+SRUM              support: MEM:netscan(10.0.0.42:49812 -> 203.0.113.23:8443)  SRUM:C:\Windows\System32\svchost.exe
+  PASS  UNLINKED_PROCESS cites MEM+PF+AM                         support: AM:C:\ProgramData\D12Lab\lsass-helper.exe  MEM:pslist(absent)  MEM:psscan(pid 6692)  PF:LSASS_HELPER.EXE-9C1FE432.pf  SRUM:C:\ProgramData\D12Lab\lsass-helper.exe
+  PASS  decoy C:\Users\Public\D12LabStage\stage-updater.exe      single source: SRUM
+  PASS    ... is NOT in the findings set                         absent from findings
+  PASS    ... is reported as UNCONFIRMED                         POSSIBLE, 1 source: SRUM
+  PASS    ... names every source that does NOT have it           no process in the image runs this path; no Amcache execution record; no prefetch run history
+  PASS    ... is still reported, not discarded                   C:\Users\Public\D12LabStage\stage-updater.exe transferred 44040192 bytes at 2026-03-14T02:14:33.000Z, and one source says so
+  PASS  region 0x210000 in PID 744 is not reported as an injection REJECTED: region is not executable
+  PASS  region 0x7ff70000 in PID 4120 is not reported as an injection REJECTED: region is explained by a load-list module
+  PASS  every rejected signal is explained rather than dropped   4120:region is explained by a load-list module  744:region is not executable
+  PASS  carved the injected region out of the image              pid 4120  0x7ff60000  104448 bytes  sha256 38b127a6c8108d91…
+  PASS  diec agrees the carved bytes are the lab payload         exit 0  PE64
+  PASS  yr agrees the carved bytes are the lab payload           exit 0  D12_LabPayload %USERPROFILE%\AppData\Local\Temp\d12-forensics-lab\carved\carved-pid4120-0x7ff60000.bin
+  PASS  real Volatility 3 was invoked on the image               vol.exe windows.pslist
+  PASS  real Volatility 3 REFUSES pslist on a synthetic image    exit 1  "plugins.PsList.kernel.layer_name:"
+  PASS  clean image built without the injection or the decoy     45056 bytes, sha256 differs
+  PASS  clean image yields NO injected-region finding            1 finding(s) total
+  PASS  clean image yields NO decoy claim at all                 0 unconfirmed
+  PASS  the unlinked process is STILL found on a clean image     it does not depend on the injection, which is the point: two findings, two causes
+  PASS  one-byte tamper changed the image                        0x2000: 4D 5A -> 41 41, sha256 now differs
+  PASS  tampering REMOVES the injected-region finding            was a finding; now gone
+  PASS  tampering leaves the unlinked-process finding intact     an independent finding is unaffected, as it should be
+  PASS  the tampered region is no longer counted a PE candidate  candidates 3 -> 2
+  PASS  the tampered image hash no longer matches the built one  35a6a51d5cc607af… -> f5201ed33b9fe96e…
+  PASS  removing SRUM demotes the injection to UNCONFIRMED       now POSSIBLE: only 1 independent source (MEM); 2 are required for a finding
+  PASS  the demoted claim still cites MEM as its only source     MEM
+  PASS  the unlinked process is UNAFFECTED by removing SRUM (PF+AM+MEM still agree) AM+MEM+PF+SRUM
+  PASS  analyze --expect <wrong set> exits non-zero              exit 4  analyze: --expect mismatch  missing=[NOT_A_REAL_FINDING] unexpected=[INJECTED_PRIVATE_RWX_REGION,OUTBOUND_CONNECTION:pid-4120,UNLINKED_PROCESS]
+  PASS  analyze --expect <correct set> exits zero                exit 0
+
+LOOP CLOSED: the fixture is deterministic, the parser found the planted injection and the
+             unlinked process against the ground truth, the single-source decoy was held at
+             POSSIBLE, two independent implementations agreed the carved region is a PE,
+             real Volatility 3 was invoked and its refusal recorded, and all four negative
+             controls failed the way a detector is supposed to fail.

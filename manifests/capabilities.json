@@ -499,6 +499,7 @@
         "id": "web.js.cdp.trust",
         "why": "the CA must not be trusted outside the lab instance; ISOLATION HELD is the passing state and a broken pin must not",
         "kind": "plan",
+        "plan_ref": "undecidable:nothing here is missing -- this is an unwritten GAP, not a blocker, and R25 exists precisely because 'no obstacle claimed' and 'blocked by X' read identically in a sentence. What is missing is a written control, and the containment check below is the nearest falsifiable thing this entry has.",
         "kind_note": "THIS ENTRY HAS NO NEGATIVE CONTROL, AND SAYS SO. The thing that used to sit here was not one. It has been moved to `isolation_check`, where it is still checked and still run.",
         "isolation_check": {
           "command": "node net-reverse/tools/trustcheck.mjs",
@@ -756,10 +757,13 @@
         "note": "P7: probe-only until now. The entry point is real -- pcap-lab.mjs's own usage (:5,126) is 'ask --pcap <file> --question <id> [--json]', and --json prints {ok, question, asked, pcap, method, command, stdout, detail, guarantee} (:136-142). `detail` carries the analyser's verdict detail and is the field bound to this capability's typed fact. The question id is NOT a guess: it was read back out of the tool itself (`node net-reverse/tools/pcap-lab.mjs list --json` -> dns-a-record, dns-aaaa-record, dns-query-count, http-plaintext-credential, ...). An earlier draft used an invented 'protocol-summary', which does not exist -- precisely the plausible-looking id that yields a confident empty answer instead of an error."
       },
       "negative_control": {
-        "id": "net.pcap.trust",
-        "why": "isolation must fail loudly if the lab CA is trusted outside its instance",
-        "kind": "plan",
-        "kind_note": "THIS ENTRY HAS NO NEGATIVE CONTROL, AND SAYS SO. The thing that used to sit here was not one. It has been moved to `isolation_check`, where it is still checked and still run.",
+        "id": "net.pcap.wrong_capture_must_not_answer",
+        "command": "node net-reverse/tools/pcap-lab.mjs ask --pcap dns-txt.pcap --question dns-a-record",
+        "expect_exit": 3,
+        "expect_output": "NOT FOUND",
+        "why": "a protocol reader that answers from a capture that cannot answer is worse than one that answers nothing: the question 'what IPv4 address does lab.example.test resolve to' has a guaranteed answer ONLY in dns-basic.pcap, and asking the TXT capture must return NOT FOUND. The corpus is GENERATED per run by net-reverse/lab/gen-pcaps.mjs into %TEMP%\\net-reverse-lab\\pcaps, so this needs no fixture on disk.",
+        "polarity": "SUCCESS IS EXIT 3. `ask` returns 3 when the capture does not contain the answer, and that refusal IS the control passing. `verify` -- which runs all 16 questions with their own negatives -- exits 0 on a healthy station, so verify is this capability's PROBE and this single question is its CONTROL.",
+        "converted_on": "2026-10-03, replacing a `kind: plan` block whose plan_reason said no control had been written. The isolation check that also lived here is untouched below: it is an invariant, not a control, and it was moved out of this field for exactly that reason.",
         "isolation_check": {
           "command": "node net-reverse/tools/trustcheck.mjs",
           "expect_exit": 0,
@@ -767,8 +771,7 @@
           "polarity": "SUCCESS IS EXIT 0. Do not compare this to a negative control; it asserts that the station is uncontaminated, and its failure is an emergency rather than a finding.",
           "note": "ISOLATION INVARIANT, NOT A NEGATIVE CONTROL, AND IT WAS FILED AS ONE. trustcheck.mjs answers a different question from every other control in this registry: not 'what would make this capability wrong' but 'has the station been contaminated'. It asserts that zero lab certificates reached the machine and user root stores and that the Windows system proxy is unconfigured. It exits 0 when the isolation HELD, which is the opposite polarity from a control, and the registry recorded expect_exit=1 against it -- meaning the one moment this project most needs to hear from it, a silent success would have been recorded as a failure.\n\nIt was ALSO attached to two capabilities at once (web.js.cdp and net.pcap.analyse), so even on its own terms it could not localise which one was implicated. That is R19's argument applied to a control, and R19 never had a control-side half.\n\nMeasured: exit 0, printing 'PASS WinHTTP proxy is not configured  Direct access (no proxy server).', 'PASS no certificate landed since the baseline run  unchanged since <ts> (machine 15, user 0)' and 'ISOLATION HELD: zero lab certificates in the machine/user root stores, no system proxy.'"
         },
-        "plan_reason": "OPEN GAP, NOT AN OBSTACLE: no negative control has been written for this capability. The registry previously carried trustcheck.mjs here, which asserts MACHINE ISOLATION (no lab certificate installed, no system proxy) and exits 0 when the isolation held. That is not a negative control -- its polarity is inverted -- and attaching one isolation check to two capabilities also meant it could not localise which was implicated. It now lives in isolation_check, where it is still run. What remains here is the honest admission: this capability can produce evidence and has nothing yet that could refute it.",
-        "control_plan": "none written yet"
+        "measured": "2026-10-03, both directions. FAILING DIRECTION (this is the control): `node net-reverse/tools/pcap-lab.mjs ask --pcap dns-txt.pcap --question dns-a-record` -> observed 203.0.113.99, guarantee 'lab.example.test resolves to A 203.0.113.7 (TTL 300)', verdict NOT FOUND, TRUE_EXIT=3, 0.9 s. OPPOSITE DIRECTION, measured so the control is not vacuous: the same question against dns-basic.pcap answers 203.0.113.7 and exits 0; and the full suite `node net-reverse/tools/pcap-lab.mjs verify --json` reports '16 question(s), 0 failed, 0 negative control(s) leaked', exit 0, 8.8 s. A doctored corpus (dns-txt.pcap replaced by a copy of dns-basic.pcap) makes verify exit 4, 'CONTROL FAILED (also passed)' -- measured, and it is why this control asks one question rather than trusting the suite's own negatives."
       },
       "provenance": {
         "source": "measured on this host 2026-09-30",
@@ -878,13 +881,15 @@
       },
       "negative_control": {
         "id": "forensics.memory.triangulation",
-        "expect_exit": 1,
+        "expect_exit": 4,
         "why": "the conclusion must degrade from confirmed to possible, proving the triangulation rule is live",
-        "control_plan": "drop SRUM from the image and re-run",
-        "kind": "plan",
-        "plan_reason": "Requires deleting the SRUM table from the forensic image and re-running. That is image surgery on an E: fixture, which belongs to the lab, not to a registry command.",
-        "plan_note": "DECLARED A PLAN, NOT A CONTROL, ON 2026-10-02. Rule R21 refuses prose in negative_control.command, because a control nobody can execute cannot fail and therefore passes forever. The sentence is kept here rather than deleted: it is the negative design, which is real knowledge, and this project has been burned often enough by deleting things to keep. What this entry no longer claims is that it has a working control. It does not.",
-        "measured": "measured 2026-10-02: with the clean refusal added, crackme-corpus/out/c01-stringobf.exe -> {ok:false, exit:2, error:'not a forensics lab work directory: no manifest.json under ...'} , TRUE_EXIT=2. BEFORE that change the same command produced an unhandled Node ENOENT stack trace and exit 1, which an orchestrator cannot distinguish from a crash. Against the real scenario directory the analyser still exits 0 and returns a 7-process pslist."
+        "command": "node forensics-lab/tools/loop.mjs --control=srum --expect INJECTED_PRIVATE_RWX_REGION",
+        "expect_output": "CONTROL srum: PASS",
+        "polarity": "SUCCESS IS EXIT 4. The refusal IS the control passing; a control that has to exit 0 proves nothing, which is why R5 refuses an expect_exit of 0. The demanded id must also appear in analyze's `missing=[...]` -- measuring is what forced that second condition, because exit 4 alone was reproducible against a BROKEN analyser for the wrong reason (`unexpected=[UNLINKED_PROCESS]`).",
+        "converted_on": "2026-10-03, replacing a `kind: plan` block whose plan_reason said the control 'requires deleting the SRUM table from the forensic image'. False in three separate ways, each checked against the tree: the work directory is %TEMP%/d12-forensics-lab (loop.mjs:42), never an E: image; Srum.txt is GENERATED by mkimage.mjs buildSrum() (:445-454), so there is no image to surgery; and the control ALREADY EXISTED as section [10] (loop.mjs:271) with all four checks. What it genuinely lacked was separability and an exit code -- the loop's exit spoke for all eleven sections at once, so no registry command could point at one control. `--control=srum` runs that one section and exits on it alone, and `--expect <id>` puts it in the refusal shape R5 requires.",
+        "measured": "2026-10-03, both shapes re-run by the integrating agent. `--control=srum --expect INJECTED_PRIVATE_RWX_REGION` -> exit 4 in 0.146 s, 9 PASS rows, 'removing SRUM demotes the injection to UNCONFIRMED  now POSSIBLE: only 1 independent source (MEM); 2 are required for a finding', 'analyze REFUSES INJECTED_PRIVATE_RWX_REGION specifically once SRUM is gone  exit 4  missing=[INJECTED_PRIVATE_RWX_REGION]', and 'UNLINKED_PROCESS  AM+MEM+PF+SRUM' surviving the removal, which is what shows the rule is triangulating rather than deleting. The banner is suppressed and the summary prints 'THIS WAS NOT A FULL LOOP RUN: sections 1-9 and 11 were not executed.' -- a one-section run that opens with the loop banner is a control indistinguishable from the thing it must be separable from. The self-test shape `--control=srum` with no --expect exits 0 and says so in its own output. The full loop is unregressed: `node forensics-lab/tools/loop.mjs` -> exit 0, LOOP CLOSED.",
+        "prior_measured_note": "This block previously carried a `measured` paragraph about a DIFFERENT command (crackme-corpus/out/c01-stringobf.exe -> {ok:false, exit:2, error:'not a forensics lab work directory: no manifest.json under ...'}, TRUE_EXIT=2; before that it produced an unhandled Node ENOENT stack trace and exit 1, which an orchestrator cannot distinguish from a crash). That measurement is real and still explains why the analyser refuses a wrong target, so it is kept -- relabelled rather than deleted, because a paragraph sitting under negative_control.measured that describes another command is how the next reader measures the wrong thing.",
+        "plan_note": "DECLARED A PLAN, NOT A CONTROL, ON 2026-10-02. Rule R21 refuses prose in negative_control.command, because a control nobody can execute cannot fail and therefore passes forever. The sentence is kept here rather than deleted: it is the negative design, which is real knowledge, and this project has been burned often enough by deleting things to keep. This entry no longer claims a plan; it has a control, and the plan_note is what it replaced."
       },
       "provenance": {
         "source": "measured on this host 2026-09-30",
@@ -1089,7 +1094,7 @@
           "status": "unverified",
           "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."
         },
-        "last_summary": "31 checks including 6 indicator controls: silence on our own clean APK, fire on a synthetic packer DEX, fire on load-bearing root/emulator paths, and weak-signal separation"
+        "last_summary": "33 checks measured 2026-10-03 (was recorded as 31: the count moved because two cross-checks became a third state, SKIP, rather than a silent PASS). Includes 6 indicator controls: silence on our own clean APK, fire on a synthetic packer DEX, fire on load-bearing root/emulator paths, and weak-signal separation"
       },
       "invoke": {
         "runner": "node",
@@ -1111,10 +1116,14 @@
         "id": "mobile.apk.wrong_decoder",
         "expect_exit": 1,
         "why": "one decoder agreeing with itself is not corroboration; pyelftools already caught a real sh_link bug this way",
-        "control_plan": "cross-check AXML with a second independent decoder",
-        "kind": "plan",
-        "plan_reason": "Requires a SECOND independent AXML decoder to cross-check against. No second decoder is installed, so this control cannot be written without first adding one -- a real gap, recorded as one.",
-        "plan_note": "DECLARED A PLAN, NOT A CONTROL, ON 2026-10-02. Rule R21 refuses prose in negative_control.command, because a control nobody can execute cannot fail and therefore passes forever. The sentence is kept here rather than deleted: it is the negative design, which is real knowledge, and this project has been burned often enough by deleting things to keep. What this entry no longer claims is that it has a working control. It does not."
+        "command": "powershell -NoProfile -ExecutionPolicy Bypass -File mobile-lab/tools/apktool_refusal_control.ps1",
+        "expect_output": "NotAZipFileException",
+        "falsifier": "powershell -NoProfile -ExecutionPolicy Bypass -File mobile-lab/tools/apktool_refusal_control.ps1 -SkipTruncate",
+        "falsifier_note": "MEASURED both directions today, because a control that cannot be made to fail is a control that cannot fire: truncated -> exit 1, 'apktool exit: 1', 'CONTROL FIRED ... refused it for a reason about the archive'. Intact (-SkipTruncate) -> exit 0, 'apktool exit: 0', 'CONTROL FAILED AS IT SHOULD when falsified'. The script also refuses a failure for the WRONG reason (java errored, but nothing about the archive), because exit 1 on its own proves nothing about what refused.",
+        "polarity": "SUCCESS IS NON-ZERO. Apktool must REFUSE a truncated APK rather than return an empty permission set -- an empty answer and an absent answer are different facts, and only one of them is corroboration.",
+        "converted_on": "2026-10-03, replacing a `kind: plan` block whose reason said 'No second decoder is installed'. That was false and had been false for a day: Mobile-Android/Apktool/apktool_3.0.3.jar and Mobile-Android/jadx/bin/jadx.bat are both on disk, and mobile-lab/tools/loop.mjs already ran BOTH as a cross-check. The real defect the plan was hiding is recorded below.",
+        "fail_open_closed": "While measuring this, the loop was found recording a SKIPPED cross-check as a PASS: `--skip-jadx` and `--skip-apktool` both produced 'PASS ... skipped by flag', so the entry's evidence_source_note ('built APK inspected with independent decoders') was true only when nobody opted out. loop.mjs now records a skipped cross-check as a THIRD state, prints SKIP, and exits 8 with 'LOOP NOT CLOSED'; measured both directions today (default exit 0 with LOOP CLOSED, 33 checks; --skip-jadx --skip-apktool exit 8 with no LOOP CLOSED anywhere). A skip is not an agreement.",
+        "measured": "2026-10-03, re-run by the integrating agent. `node mobile-lab/tools/loop.mjs` -> exit 0, 33 PASS rows, LOOP CLOSED. `node mobile-lab/tools/loop.mjs --skip-jadx --skip-apktool` -> exit 8, two SKIP rows reading 'NOT RUN: ... No second decoder was consulted, so this is not agreement.', and 'LOOP NOT CLOSED: 2 step(s) SKIPPED and nothing failed.'"
       },
       "provenance": {
         "source": "measured on this host 2026-09-30",
@@ -1215,10 +1224,12 @@
         "id": "re.corpus.wrong_sample",
         "expect_exit": 1,
         "why": "a technique label must not be emitted for a sample it did not solve",
-        "control_plan": "c01's solver pointed at c02's binary",
-        "kind": "plan",
-        "plan_reason": "Requires invoking c01's solver on c02's binary. The corpus loop takes no such argument, so the negative is currently a design rather than a command.",
-        "plan_note": "DECLARED A PLAN, NOT A CONTROL, ON 2026-10-02. Rule R21 refuses prose in negative_control.command, because a control nobody can execute cannot fail and therefore passes forever. The sentence is kept here rather than deleted: it is the negative design, which is real knowledge, and this project has been burned often enough by deleting things to keep. What this entry no longer claims is that it has a working control. It does not."
+        "command": "python crackme-corpus/challenges/c01-stringobf/solve.py --exe crackme-corpus/out/c01-stringobf.exe --ghidra-out crackme-corpus/out/c01-stringobf-ghidra --expect-password WRONG-ON-PURPOSE-0000 --expect-flag FLAG{c01_string_table_xor}",
+        "expect_output": "!= expected 'WRONG-ON-PURPOSE-0000'",
+        "polarity": "SUCCESS IS EXIT 1. The RIGHT answer is recovered from the binary and the harness rejects the deliberately wrong expectation, which puts the harness's own comparison under test rather than the decoder.",
+        "converted_on": "2026-10-03, replacing a `kind: plan` block whose reason said the corpus loop takes no such argument. The loop indeed does not, but the challenge's solver DOES: crackme-corpus/challenges/c01-stringobf/solve.py takes --exe, and the loop builds exactly that argv at tools/loop.py:155-161. The control is that argv with one value changed.",
+        "measured": "2026-10-03, both directions re-run by the integrating agent from the crackme-corpus directory. CONTROL: exit 1 in 1.9 s, printing the recovered strings ('18 bytes @ 0x140017330 rot=11 mask=0x5a -> C01-TABLE-XOR-9F2A', '26 bytes @ 0x140017348 rot=5 mask=0x33 -> FLAG{c01_string_table_xor}'), then 'binary: rc=0 ACCEPTED | FLAG{c01_string_table_xor}' and 'FAIL password ... != expected WRONG-ON-PURPOSE-0000'. POSITIVE (same argv with the real password): exit 0 in 2.2 s, 'PASS c01 password=... flag=...'. Corpus-wide, measured the same day: `python crackme-corpus/tools/loop.py` -> 'CORPUS CLOSED: 5 challenge(s), 20 checks, 5 negative controls' in 120.7 s, exit 0.",
+        "filename_trap": "DO NOT write this control with the corpus table's own exe name. tools/loop.py's c01 row says exe 'c01_string_obf.exe' (underscores) while tools/build-c.ps1 writes $Id.exe with the id 'c01-stringobf' (hyphens), and the hyphen file is the one the build produces and the one this control uses. A worker auditing this measured 6 of 6 attempts to open the underscore file failing with radare2's 'Cannot open'; the underscore file is a stale leftover in out/ that a directory listing still shows. The full loop is unaffected -- it builds first and solves the built path."
       },
       "provenance": {
         "source": "measured on this host 2026-09-30",
@@ -1307,6 +1318,7 @@
         "control_plan": "any Frida attach while adb reports no device",
         "kind": "plan",
         "plan_reason": "state=absent: there is no device, so nothing can be run at all. Not a control that is hard to write -- a control that cannot exist yet.",
+        "plan_ref": "undecidable:neither blocker is checkable from this repository -- there is no adb.exe anywhere in the tree (so an attach-time control cannot run) and no device is attached (so it would have nothing to attach to). Both are outside what a registry file can see, which is why this says so rather than pointing at a path.",
         "plan_note": "DECLARED A PLAN, NOT A CONTROL, ON 2026-10-02. Rule R21 refuses prose in negative_control.command, because a control nobody can execute cannot fail and therefore passes forever. The sentence is kept here rather than deleted: it is the negative design, which is real knowledge, and this project has been burned often enough by deleting things to keep. What this entry no longer claims is that it has a working control. It does not."
       },
       "provenance": {
@@ -1615,6 +1627,7 @@
         "control_plan": "run the campaign against each target's deliberately flawed twin",
         "kind": "plan",
         "plan_reason": "Requires running the campaign against each target's deliberately flawed twin, which is a lab sweep rather than a single command.",
+        "plan_ref": "missing:fuzz-lab/tools/*no-oracle*",
         "plan_note": "DECLARED A PLAN, NOT A CONTROL, ON 2026-10-02. Rule R21 refuses prose in negative_control.command, because a control nobody can execute cannot fail and therefore passes forever. The sentence is kept here rather than deleted: it is the negative design, which is real knowledge, and this project has been burned often enough by deleting things to keep. What this entry no longer claims is that it has a working control. It does not."
       },
       "provenance": {
@@ -1894,6 +1907,7 @@
         "control_plan": "run the tracker with the source and destination set to the SAME program",
         "kind": "plan",
         "plan_reason": "state=planned: the comparison command does not exist yet, so there is nothing to point a control at.",
+        "plan_ref": "missing:headless-lab/tools/crosscompare-ghidra.ps1",
         "plan_note": "DECLARED A PLAN, NOT A CONTROL, ON 2026-10-02. Rule R21 refuses prose in negative_control.command, because a control nobody can execute cannot fail and therefore passes forever. The sentence is kept here rather than deleted: it is the negative design, which is real knowledge, and this project has been burned often enough by deleting things to keep. What this entry no longer claims is that it has a working control. It does not."
       },
       "provenance": {
@@ -1986,10 +2000,12 @@
         "id": "native.il2cpp.absent_is_reported",
         "expect_exit": 1,
         "why": "must report the tool as absent rather than letting an installed binary imply a working capability. Also the gate check: IL2CPP binaries found on this host belong to third-party commercial software, which fails the provenance test -- 'it runs on my PC' is not ownership.",
-        "control_plan": "probe the runtime inventory and the tool's start-up behaviour",
-        "kind": "plan",
-        "plan_reason": "state=absent: needs an extracted IL2CPP metadata dump that does not exist on this station.",
-        "plan_note": "DECLARED A PLAN, NOT A CONTROL, ON 2026-10-02. Rule R21 refuses prose in negative_control.command, because a control nobody can execute cannot fail and therefore passes forever. The sentence is kept here rather than deleted: it is the negative design, which is real knowledge, and this project has been burned often enough by deleting things to keep. What this entry no longer claims is that it has a working control. It does not."
+        "command": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/il2cpp-probe.ps1 -AsControl",
+        "expect_output": "CONTROL RESULT: FIRED",
+        "polarity": "SUCCESS IS EXIT 1. This capability is ABSENT, so the correct behaviour is an honest refusal and the exit 1 IS the control passing. A run that exits 0 here would mean the probe had stopped being able to fail -- which is why the probe keeps its own exit 0 without the switch, because the registry's probe.command depends on it.",
+        "converted_on": "2026-10-03, replacing a `kind: plan` block. The plan reason said the blocker was a missing metadata dump; the real blockers are a .NET runtime (net6 build against a host with 8.0.31 and 10.0.11 only) and an authorisation decision, and NEITHER is a missing file -- which is what scripts/il2cpp-probe.ps1 already measured: global-metadata.dat files DO exist on this host, inside third-party commercial software, and are deliberately unused.",
+        "measured": "2026-10-03, both directions re-run by the integrating agent, not copied from the worker. DEFAULT: `powershell -File scripts/il2cpp-probe.ps1` -> exit 0, printing IL2CPP ABSENT and JSON-SUMMARY {\"total\":2,\"pass\":0,\"fail\":2}, with blockers 'net6 build; host has .NET 8.0.31 and 10.0.11 only' and 'no authorized IL2CPP artifact; third-party commercial binaries found on this host were deliberately not used'. CONTROL: the same script with -AsControl -> exit 1, printing 'CONTROL RESULT: FIRED -- exiting 1, and the exit 1 IS the pass.' 12.3 s per run (the probe's own hang budget is 12 s and it kills the hung process).",
+        "falsifier": "run it against a host that HAS .NET 6 and an Owner-named IL2CPP binary: the control must then exit 0, because there would be nothing left to refuse. If it still exits 1, the control has stopped testing the claim."
       },
       "provenance": {
         "source": "measured on this host 2026-09-30",
@@ -2096,10 +2112,13 @@
         "id": "native.ghidra.emulate.must_not_claim_success",
         "expect_exit": 1,
         "why": "the harness reports MATCHES_GROUND_TRUTH / MISMATCH / NO_OUTPUT / ERROR, never a bare success. A decode that returned a plausible-looking wrong string would fail this, which is the point: c01 ships a plaintext FLAG{...} decoy in .rdata, so 'looks like a flag' is not evidence.",
-        "control_plan": "run the harness and require the ground-truth comparison to decide the verdict",
-        "kind": "plan",
-        "plan_reason": "state=blocked: the harness needs a runtime the registry does not have, so its ground-truth comparison cannot run.",
-        "plan_note": "DECLARED A PLAN, NOT A CONTROL, ON 2026-10-02. Rule R21 refuses prose in negative_control.command, because a control nobody can execute cannot fail and therefore passes forever. The sentence is kept here rather than deleted: it is the negative design, which is real knowledge, and this project has been burned often enough by deleting things to keep. What this entry no longer claims is that it has a working control. It does not."
+        "command": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/emulation-probe.ps1 -AsControl",
+        "expect_output": "observed verdict : ERROR",
+        "polarity": "SUCCESS IS EXIT 1. The capability is blocked and must not claim a decode; the exit 1 IS the control passing. The probe keeps its own exit 0 without the switch, because this entry's probe contract depends on it.",
+        "converted_on": "2026-10-03, replacing a `kind: plan` block whose reason said the harness needs a runtime this station does not have. FALSE: Ghidra 12.1.3 is installed and is already used by native.ghidra.decompile, and scripts/emulation-probe.ps1 was ALREADY running the ground-truth comparison -- it passes FLAG{c01_string_table_xor} as the expected value and branches on $result.verdict. The only thing that stopped it being a control was that it exited 0 unconditionally.",
+        "measured": "2026-10-03, both directions re-run by the integrating agent. DEFAULT: `powershell -File scripts/emulation-probe.ps1` -> exit 0, printing 'PCODE EMULATION BLOCKED -- recorded, not claimed.', steps executed 15, decoded null, error 'emulator halted at PC=0x0', JSON-SUMMARY {\"total\":1,\"pass\":0,\"fail\":1}. CONTROL: with -AsControl -> exit 1, printing 'expected verdict : MATCHES_GROUND_TRUTH / observed verdict : ERROR'. Wall time 22.7 s per run (the harness step budget is the literal 200000 p-code instructions; the script's $BudgetMs is not wired to the harness and changes nothing -- recorded because a knob that does nothing is worse than no knob).",
+        "falsifier": "on a host where the scratch stack is mapped and the decode returns a WRONG string, the control must exit 1 with 'observed verdict : MISMATCH' -- a different message and the same code. If it ever exits 0, the capability has started claiming success and the gate is what stopped it.",
+        "still_blocked_on": "the scratch stack is not mapped, so writeStackValue does not take -- OUR bug, not a Ghidra limitation. And javac reports EmulatorHelper and DefaultEmulator as deprecated-and-marked-for-removal in 12.1.3, so the target Ghidra major is an Owner decision BEFORE the bug is fixed."
       },
       "provenance": {
         "source": "measured on this host 2026-09-30",
@@ -2223,7 +2242,10 @@
         "evidence_binding": {
           "status": "verified"
         },
-        "run_log": "measured 2026-10-02 in this session, output pasted into the parent transcript and summarised in docs/research/ecosystem-2026-10-02.md: risk_assessment {score 0, severity LOW, recommendation SAFE, max_issue_severity NONE}, issues [], analysis_completeness {total_components 6, scanned_components 6, coverage_percent 100.0, is_complete true, execution_successful true, fully_inspected_files 6, partially_inspected_files 0, entirely_uninspected_files 0}. Negative control in the same session: exit 1, score 39, MEDIUM, CAUTION, max_issue_severity HIGH, 3 issues."
+        "run_log": "evidence/probes/ops.skill.security.probe.log",
+        "sha256": "2542e17e8ce11584f0726ae16aab422a4591729b7a6a75424567303d0b6a2496",
+        "run_summary": "measured 2026-10-02 in that session, output pasted into the parent transcript and summarised in docs/research/ecosystem-2026-10-02.md: risk_assessment {score 0, severity LOW, recommendation SAFE, max_issue_severity NONE}, issues [], analysis_completeness {total_components 6, scanned_components 6, coverage_percent 100.0, is_complete true, execution_successful true, fully_inspected_files 6, partially_inspected_files 0, entirely_uninspected_files 0}. Negative control in the same session: exit 1, score 39, MEDIUM, CAUTION, max_issue_severity HIGH, 3 issues.",
+        "run_summary_note": "MOVED HERE 2026-10-03. This text WAS the value of run_log, and R17 accepted any non-empty string there as proof that state=observed is bound to a run -- which is the field gate.ps1 filters on when it decides what a grant may contain. A sentence is not a run. The file above is the run; this is what somebody read in it, which is a different claim and now says so."
       },
       "negative_control": {
         "id": "ops.skill.security.planted_poison",
@@ -2353,7 +2375,9 @@
         "expect": "verdict=INTERCEPT-PROVEN",
         "expect_exit": 0,
         "last_run": "2026-10-02",
-        "run_log": "run from the committed recipe at native-lab/tools/frida_spawn_gate.py: [pe] magic 0x20b entry_rva 5584 size_of_image 163840; [spawn] pid=46292 suspended=True; [js] module target.exe base 0x7ff79e010000 size 163840; [js] rebase ok=true target 0x7ff79e0115d0 inImage=true; [js] attached; [load] script loaded while main thread suspended; [resu] main thread resumed; ACCEPTED; FLAG{c01_string_table_xor}; [js] HIT at 0x7ff79e0115d0 tid 44248; [end] hit count=1; [end] verdict=INTERCEPT-PROVEN; exit 0",
+        "run_log": "evidence/probes/dynamic.win.frida.intercept.probe.log",
+        "sha256": "9006f67a6407c718ad78931a268e5b8a4fe4bbb4386783dbd26054721c73e81e",
+        "run_summary": "run from the committed recipe at native-lab/tools/frida_spawn_gate.py: [pe] magic 0x20b entry_rva 5584 size_of_image 163840; [spawn] pid=46292 suspended=True; [js] module target.exe base 0x7ff79e010000 size 163840; [js] rebase ok=true target 0x7ff79e0115d0 inImage=true; [js] attached; [load] script loaded while main thread suspended; [resu] main thread resumed; ACCEPTED; FLAG{c01_string_table_xor}; [js] HIT at 0x7ff79e0115d0 tid 44248; [end] hit count=1; [end] verdict=INTERCEPT-PROVEN; exit 0",
         "prepare": "cd 'D:\\Software\\Tool\\WorkStation\\debugger'",
         "expect_note": "expect is the CONTRACT and it is deliberately a verdict string rather than the word HIT: a hook firing on some other address would still print HIT and still mean nothing. INTERCEPT-PROVEN is printed only after hit count>0 AND inImage true AND the address equals base+entry_rva. Read the [load] line too -- it is the ordering this entry exists to prove."
       },
@@ -2489,7 +2513,9 @@
         "expect": "0x140000000 0x15d0 0x8160",
         "expect_exit": 0,
         "last_run": "2026-10-02",
-        "run_log": "python -c \"import pefile,hashlib;b=open('crackme-corpus/out/c01-stringobf.exe','rb').read();print(hashlib.sha256(b).hexdigest());pe=pefile.PE(data=b);print(hex(pe.OPTIONAL_HEADER.ImageBase),hex(pe.OPTIONAL_HEADER.AddressOfEntryPoint),hex(pe.OPTIONAL_HEADER.DllCharacteristics),bool(pe.OPTIONAL_HEADER.DllCharacteristics&0x40))\" -> sha256 2d59a3c5d3281782e254ed84d14f43768251096240cb85c492f56018b56fbf09, 0x140000000 0x15d0 0x8160 True; .text 0x1000 -> 0x166d0 and main 0x1080 inside True. 0.14 s.",
+        "run_log": "evidence/probes/native.pe.container.probe.log",
+        "sha256": "b8bc67a395bd1c446ad9ed1f0a474aa9ce4552ec5bd65ef7578d46e06a71d1ed",
+        "run_summary": "python -c \"import pefile,hashlib;b=open('crackme-corpus/out/c01-stringobf.exe','rb').read();print(hashlib.sha256(b).hexdigest());pe=pefile.PE(data=b);print(hex(pe.OPTIONAL_HEADER.ImageBase),hex(pe.OPTIONAL_HEADER.AddressOfEntryPoint),hex(pe.OPTIONAL_HEADER.DllCharacteristics),bool(pe.OPTIONAL_HEADER.DllCharacteristics&0x40))\" -> sha256 2d59a3c5d3281782e254ed84d14f43768251096240cb85c492f56018b56fbf09, 0x140000000 0x15d0 0x8160 True; .text 0x1000 -> 0x166d0 and main 0x1080 inside True. 0.14 s.",
         "prepare": "cd 'D:\\Software\\Tool\\WorkStation\\debugger'",
         "expect_note": "Three values, all of which other entries depend on. DllCharacteristics 0x8160 with bit 0x40 set is the ASLR claim, and it is now confirmed by a parser rather than inferred from hook behaviour."
       },
@@ -2637,7 +2663,9 @@
         "expect": "\"match_rate\":37.6",
         "expect_exit": 0,
         "last_run": "2026-10-02",
-        "run_log": "identity control (same content, two filenames): ok=true src_fns 511 dst_fns 511 matched 511 rate 100%, ~30 s. negative control (c01-stringobf.exe vs c03_antidebug.exe): src_fns 511 dst_fns 515 matched 192 rate 37.6%, ~48 s. refusal: a non-PE file returns {ok:false, exit:2, 'Ghidra produced no function-hash table for at least one input'} and TRUE_EXIT=2; a missing path returns TRUE_EXIT=1.",
+        "run_log": "evidence/probes/native.function.match.probe.log",
+        "sha256": "768bc07e200cab4f20a494d07743ba34a47a90cbcb09ee75389b9e2a5b1a2a41",
+        "run_summary": "identity control (same content, two filenames): ok=true src_fns 511 dst_fns 511 matched 511 rate 100%, ~30 s. negative control (c01-stringobf.exe vs c03_antidebug.exe): src_fns 511 dst_fns 515 matched 192 rate 37.6%, ~48 s. refusal: a non-PE file returns {ok:false, exit:2, 'Ghidra produced no function-hash table for at least one input'} and TRUE_EXIT=2; a missing path returns TRUE_EXIT=1.",
         "prepare": "cd 'D:\\Software\\Tool\\WorkStation\\debugger'",
         "expect_note": "CORRECTED 2026-10-02, and this is the SECOND entry carrying the same defect as native.pe.packer: expect read '\"match_rate\": 37.6' with a space while the tool emits compact JSON, '\"match_rate\":37.6'. Two entries invented the same spacing means the space was a habit rather than a measurement, which is the real lesson -- and it is why assert-probes.py now exists instead of relying on the next reader to notice."
       },
@@ -2771,7 +2799,9 @@
         "expect": "\"packed\":false",
         "expect_exit": 0,
         "last_run": "2026-10-02",
-        "run_log": "ok:true exit:0 target c01-stringobf.exe size 143872 die_score 6.15091 die_verdict 'not packed' packed false score_is_advisory true. Control: README.md -> ok:false exit:2 first_bytes '2320', TRUE_EXIT=2. Raw diec.exe on the same README.md returns 'Total 5.26547: not packed' with exit 0, which is the defect this wrapper exists to fix. Re-measured 2026-10-02 for the expect correction: stdout carries prose plus \"not packed\",\"packed\":false,\"die_verdict\":... -- compact JSON, no space after the colon.",
+        "run_log": "evidence/probes/native.pe.packer.probe.log",
+        "sha256": "99e868031a85e5d9d11b1263cbebe78bfed937ef5e9ca758df2584885253f3c2",
+        "run_summary": "ok:true exit:0 target c01-stringobf.exe size 143872 die_score 6.15091 die_verdict 'not packed' packed false score_is_advisory true. Control: README.md -> ok:false exit:2 first_bytes '2320', TRUE_EXIT=2. Raw diec.exe on the same README.md returns 'Total 5.26547: not packed' with exit 0, which is the defect this wrapper exists to fix. Re-measured 2026-10-02 for the expect correction: stdout carries prose plus \"not packed\",\"packed\":false,\"die_verdict\":... -- compact JSON, no space after the colon.",
         "prepare": "cd 'D:\\Software\\Tool\\WorkStation\\debugger'",
         "expect_note": "CORRECTED 2026-10-02. This read '\"packed\": false' with a space, and the tool emits PowerShell's ConvertTo-Json form with NO space -- measured output contains \"packed\":false. A literal substring check against the old string FAILS on a perfectly healthy probe, which is the worst kind of registry defect: it trains you to distrust your own instrument. Separately, this probe prints human prose as well as JSON, so the assertion has to be a substring of the JSON island and not of the whole stream."
       },
@@ -2938,7 +2968,9 @@
         "expect": "\"addr\": \"0x140001080\"",
         "expect_exit": 0,
         "last_run": "2026-10-02",
-        "run_log": "ok:true rva 0x1080 file_offset 0x480 count 40. RIP-REL operands: 0x140022080 dword 769630770; 0x140022000 dword 1734439797; 0x140017342 width=byte byte=90 dword=734042; 0x140017344 width=dword byte=11 dword=11; 0x140017330 dword 41361174; 0x140017343 width=byte byte=51 dword=2867; 0x140017364 width=dword byte=5 dword=5; 0x140017348 dword 1096567660; 0x140017368 dword 1195461702; 0x140022018 dword 1162495314. 0.18 s. Re-measured 2026-10-02 for the expect correction: --rva 0x1080 --count 40 returns ok:true, image_base 0x140000000, first insn {addr: 0x140001080, mnemonic: mov}, and zero 'width=byte' fields.",
+        "run_log": "evidence/probes/native.disasm.capstone.probe.log",
+        "sha256": "63214a692238babb71bdb6db15ef70c587cd82742b76335522aeba11273fe55d",
+        "run_summary": "ok:true rva 0x1080 file_offset 0x480 count 40. RIP-REL operands: 0x140022080 dword 769630770; 0x140022000 dword 1734439797; 0x140017342 width=byte byte=90 dword=734042; 0x140017344 width=dword byte=11 dword=11; 0x140017330 dword 41361174; 0x140017343 width=byte byte=51 dword=2867; 0x140017364 width=dword byte=5 dword=5; 0x140017348 dword 1096567660; 0x140017368 dword 1195461702; 0x140022018 dword 1162495314. 0.18 s. Re-measured 2026-10-02 for the expect correction: --rva 0x1080 --count 40 returns ok:true, image_base 0x140000000, first insn {addr: 0x140001080, mnemonic: mov}, and zero 'width=byte' fields.",
         "prepare": "cd 'D:\\Software\\Tool\\WorkStation\\debugger'",
         "expect_note": "CORRECTED 2026-10-02 by assert-probes.py. This read '0x140017342 width=byte', but the recorded probe disassembles --rva 0x1080, and that invocation emits NO width= field at all: measured, grep -c 'width=byte' over its real output returns 0. The old string came from a DIFFERENT invocation, so the entry asserted a fact about a run it does not name. Worse, the value it asserted -- the operand WIDTH that Ghidra's DAT_ loses -- is the whole reason this instrument exists, so the string that got checked was not even the property worth checking. The replacement is what this command really emits: the first instruction at 0x140001080."
       },
@@ -3079,7 +3111,9 @@
         "expect": "\"signed\": false",
         "expect_exit": 0,
         "last_run": "2026-10-02",
-        "run_log": "crackme-corpus/out/c01-stringobf.exe: security_va_is_a 'FILE OFFSET (not an RVA)', security_offset 0, security_size 0, signed false, reason 'no certificate table: IMAGE_DIRECTORY_ENTRY_SECURITY is empty'. exit 0. All seven corpus binaries measured identical. Self-authored fixture: security_offset 143872, signed true, dwLength 48, revision_is_2_0 true, type_is_pkcs_signed_data true, blob_ascii_head 'ARSENAL-FIXTURE-NOT-A-REAL-SIGNATURE'. non-PE README.md: exit 1.",
+        "run_log": "evidence/probes/native.pe.authenticode.probe.log",
+        "sha256": "b9869e6f21c93380775f66fc022f1784b94e62a422033fed5d6b8a0e015d6b7c",
+        "run_summary": "crackme-corpus/out/c01-stringobf.exe: security_va_is_a 'FILE OFFSET (not an RVA)', security_offset 0, security_size 0, signed false, reason 'no certificate table: IMAGE_DIRECTORY_ENTRY_SECURITY is empty'. exit 0. All seven corpus binaries measured identical. Self-authored fixture: security_offset 143872, signed true, dwLength 48, revision_is_2_0 true, type_is_pkcs_signed_data true, blob_ascii_head 'ARSENAL-FIXTURE-NOT-A-REAL-SIGNATURE'. non-PE README.md: exit 1.",
         "prepare": "cd 'D:\\Software\\Tool\\WorkStation\\debugger'",
         "expect_note": "expect asserts ABSENCE, which is the honest reading for this corpus and the opposite of what the negative control asserts. A gate whose positive case had to be asserted would be asserting a result this corpus cannot produce; the two-sided control is what carries the meaning."
       },
@@ -3206,7 +3240,9 @@
         "expect": "\"rules_matched\": 14",
         "expect_exit": 0,
         "last_run": "2026-10-02",
-        "run_log": "ok:true rules_matched 14, namespaces {linking/runtime-linking:1, (none):4, load-code/pe:1, host-interaction/process/terminate:1, data-manipulation/compression:1, host-interaction/file-system/files/list:1, host-interaction/environment-variable:2, host-interaction/file-system/write:1, host-interaction/file-system/meta:1, anti-analysis:1}, exit 0, ~33 s. Control README.md: {ok:false, exit:2, first_bytes '2320'}, TRUE_EXIT=2.",
+        "run_log": "evidence/probes/native.behaviour.capa.probe.log",
+        "sha256": "e95d4fbd549a66e2361f3510096e7d4456bafc9523504be6103bf50b3bfe08aa",
+        "run_summary": "ok:true rules_matched 14, namespaces {linking/runtime-linking:1, (none):4, load-code/pe:1, host-interaction/process/terminate:1, data-manipulation/compression:1, host-interaction/file-system/files/list:1, host-interaction/environment-variable:2, host-interaction/file-system/write:1, host-interaction/file-system/meta:1, anti-analysis:1}, exit 0, ~33 s. Control README.md: {ok:false, exit:2, first_bytes '2320'}, TRUE_EXIT=2.",
         "prepare": "cd 'D:\\Software\\Tool\\WorkStation\\debugger'",
         "expect_note": "expect asserts the measured count for THIS binary against THIS rule set. It is not a threshold and must not be reused as one -- a rule-set update would change it."
       },
@@ -3333,7 +3369,9 @@
         "expect": "\"der_parsed\": false",
         "expect_exit": 0,
         "last_run": "2026-10-02",
-        "run_log": "fixture: {ok:true, exit:0, security_offset:143872, win_certificate:{dwLength:48, wRevision:'0x200', wCertificateType:'0x2', revision_is_2_0:true, is_pkcs_signed_data:true, body_bytes:40}, der_parsed:false, verifiable:false, cert_state:'not_der'}, TRUE_EXIT=0.\n\nThe 7-digit prefix on OpenSSL's error line is TRANSIENT (the audit saw '182B0000:...' where an earlier run recorded 'ECB80000:...') and is deliberately NOT quoted here. Only the stable parts are recorded: the 0680009B code, the 'ASN1_get_object:too long' text and der_parsed:false. Storing a per-process prefix as if it were reproducible is how a volatile value becomes a false claim the next time the library is rebuilt.",
+        "run_log": "evidence/probes/native.signature.certverify.probe.log",
+        "sha256": "0a1a9ed15aaf1414b586c01a4bcfe2f63c22c809a2de27ad9dacebc17745684b",
+        "run_summary": "fixture: {ok:true, exit:0, security_offset:143872, win_certificate:{dwLength:48, wRevision:'0x200', wCertificateType:'0x2', revision_is_2_0:true, is_pkcs_signed_data:true, body_bytes:40}, der_parsed:false, verifiable:false, cert_state:'not_der'}, TRUE_EXIT=0.\n\nThe 7-digit prefix on OpenSSL's error line is TRANSIENT (the audit saw '182B0000:...' where an earlier run recorded 'ECB80000:...') and is deliberately NOT quoted here. Only the stable parts are recorded: the 0680009B code, the 'ASN1_get_object:too long' text and der_parsed:false. Storing a per-process prefix as if it were reproducible is how a volatile value becomes a false claim the next time the library is rebuilt.",
         "prepare": "python headless-lab\\tools\\authenticode.py crackme-corpus\\out\\c01-stringobf.exe --make-control \"$env:TEMP\\signed-fixture.exe\"   # the fixture is GENERATED, not committed",
         "expect_note": "This is the one probe in the registry whose expectation is a REFUSAL, and that is the point rather than an embarrassment: the capability under test is 'can this tell DER from non-DER', and the fixture is a known non-DER body. If the fixture is ever replaced with a real signature this expectation must become true, and that is the correct time to notice.",
         "prepare_note": "$env:TEMP, NOT %TEMP%. assert-probes.py runs each recorded command by writing it to a .ps1 and invoking `powershell -File`, and %TEMP% is a CMD token PowerShell does not expand -- so the probe pointed at a literal path named '%TEMP%\\signed-fixture.exe', which does not exist. It failed with exit 2 and assert-probes correctly reported BOTH a wrong exit and a missing expect string. This is the third %TEMP%/%env:TEMP% confusion in this registry (native.pe.hardening's rabin2 probe would have hit it too had it used one), and the fix is the PowerShell spelling."
@@ -3449,11 +3487,14 @@
         "escalation_class": "none"
       },
       "probe": {
-        "command": "python net-reverse\\tools\\pcap_reader.py \"%TEMP%\\net-reverse-lab\\pcaps\\dns-basic.pcap\"",
+        "command": "python net-reverse\\tools\\pcap_reader.py \"$env:TEMP\\net-reverse-lab\\pcaps\\dns-basic.pcap\"",
         "expect": "\"dns_queries\": 2",
         "expect_exit": 0,
         "last_run": "2026-10-02",
-        "run_log": "dns-basic.pcap: {ok:true, exit:0, pcap:{version:'2.4', snaplen:262144, linktype:1, endian:'little'}, packets:4, bytes_on_wire:348, ipv4:4, dns_queries:2, dns_responses:2, distinct_flows:2}, TRUE_EXIT=0. TShark on the same file: 4 packets, dns.flags.response = False,True,False,True.",
+        "run_log": "evidence/probes/net.pcap.selfparse.probe.log",
+        "sha256": "f06a25118e6578e8cec19dd8067bf033c9819e9174c5c768f223632f36cd33ab",
+        "run_summary": "dns-basic.pcap: {ok:true, exit:0, pcap:{version:'2.4', snaplen:262144, linktype:1, endian:'little'}, packets:4, bytes_on_wire:348, ipv4:4, dns_queries:2, dns_responses:2, distinct_flows:2}, TRUE_EXIT=0. TShark on the same file: 4 packets, dns.flags.response = False,True,False,True.",
+        "run_summary_note": "This entry's probe could not run at all until 2026-10-03, for TWO reasons that were both sitting in the registry as text: the command used %TEMP%, which is cmd.exe syntax and does NOT expand inside the .ps1 the runner writes -- the station's own environment-trap list says so, and says it had already caused one false DRIFT -- and the capture it reads is GENERATED by probe.prepare, a field eleven entries declared and NOTHING executed. Both fixed: $env:TEMP, and assert-probes.py now runs probe.prepare before the probe. TOOL-FAULT ('no such file') became OK in 0.86 s.",
         "prepare": "node net-reverse\\lab\\gen-pcaps.mjs   # the corpus is GENERATED, not committed",
         "expect_note": "The expectation is the DNS count rather than the packet count on purpose: the packet count is the easier thing for two readers to agree on by accident, since both are walking a length field. The DNS number requires both to locate port 53 AND read the flags word the same way."
       },
@@ -3572,7 +3613,9 @@
         "expect": "\"canary\": \"true\"",
         "expect_exit": 0,
         "last_run": "2026-10-02",
-        "run_log": "c01-stringobf.exe: {ok:true, exit:0, image:{arch:'x86', bits:'64', class:'PE32+', bintype:'pe', baddr:'0x140000000', binsz:'143872'}, mitigations:{canary:'true', injprot:'false', retguard:'false', nx:'true', pic:'true', relocs:'false', stripped:'false', crypto:'false'}}, TRUE_EXIT=0, ~0.4 s.",
+        "run_log": "evidence/probes/native.pe.hardening.probe.log",
+        "sha256": "0a3ead4b88f7cf0794676bccef36cfe774d287a9d02ec8747da20953a4959bf7",
+        "run_summary": "c01-stringobf.exe: {ok:true, exit:0, image:{arch:'x86', bits:'64', class:'PE32+', bintype:'pe', baddr:'0x140000000', binsz:'143872'}, mitigations:{canary:'true', injprot:'false', retguard:'false', nx:'true', pic:'true', relocs:'false', stripped:'false', crypto:'false'}}, TRUE_EXIT=0, ~0.4 s.",
         "expect_note": "canary is chosen over crypto or nx deliberately: it is the mitigation whose value this corpus actually varies, and crypto:false here would make the expectation pass for the wrong reason on any unsigned binary."
       },
       "negative_control": {

@@ -120,6 +120,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import hashlib
 import json
 import pathlib
 import re
@@ -293,6 +294,75 @@ def r21_control_command_runnable(reg, doc):
                    f"A control nobody can execute cannot fail, so it passes forever. Either "
                    f"give it a command, or move the sentence to control_plan and set "
                    f"kind='plan' with a plan_reason saying why it cannot be run.")
+    return out
+
+
+def r25_plan_needs_a_checkable_ref(reg, doc):
+    """A declared plan must point at something a machine can check, or admit it cannot.
+
+    This is the rule that the 2026-10-03 audit of the ten plan-only controls asked for, and
+    the audit is the reason it exists: **six of those ten `plan_reason` strings were
+    contradicted by the tree they sat in.** `mobile.apk.static` said "no second AXML decoder
+    is installed" while Apktool 3.0.3 and JADX 1.5.6 were both on disk and both already being
+    run by the lab; `native.il2cpp.symbols` said the blocker was a missing metadata dump when
+    the real blocker is a .NET runtime and an authorisation decision; `native.ghidra.emulate`
+    said the runtime was missing while Ghidra 12.1.3 is installed and already used by another
+    entry. R21 and R5 accept `kind: plan` on the sole condition that `plan_reason` is a
+    non-empty STRING, so a false blocker costs nothing to write and nothing to catch.
+
+    Three reference forms, and the third is the honest one:
+
+      file:<path>        the reason is "this artefact does not exist". It MUST exist -- a
+                         `file:` ref that resolves is a plan whose reason is already false.
+      missing:<glob>     the reason is "nothing matches this". The repo-relative glob MUST
+                         match nothing.
+      undecidable:<why>  the blocker is outside the repository (a tool on PATH, a device, a
+                         runtime, an Owner decision). Allowed, but only with a sentence saying
+                         why it cannot be checked here -- so "nobody checked" is visible as a
+                         claim rather than hidden inside prose.
+
+    What this rule does NOT do: decide whether a plan is justified. It only refuses a plan
+    whose stated blocker was never pointed at, which is the part that was silently wrong.
+    """
+    out = []
+    for c in reg:
+        nc = c.get("negative_control") or {}
+        if nc.get("kind") != "plan":
+            continue
+        cid = c.get("id", "?")
+        ref = str(nc.get("plan_ref") or "").strip()
+        if not ref:
+            out.append(f"R25 {cid}: negative_control.kind='plan' with no plan_ref. A plan "
+                       f"reason is a sentence, and a sentence cannot be checked: six of the "
+                       f"ten plans in this registry were contradicted by the tree they sat "
+                       f"in. Add plan_ref as file:<path> (and it must exist), "
+                       f"missing:<glob> (and it must match nothing), or "
+                       f"undecidable:<why> (and say why it cannot be checked here).")
+            continue
+        if ref.startswith("file:"):
+            p = pathlib.Path(ref[5:].strip())
+            if not p.is_absolute():
+                p = REPO_ROOT / p
+            if not p.exists():
+                out.append(f"R25 {cid}: plan_ref file:{ref[5:].strip()} does not exist. The "
+                           f"plan says something is missing and points at it; if the thing is "
+                           f"missing, the path is a real blocker to record -- if it is NOT "
+                           f"missing, the plan_reason is false and the control is writable now.")
+        elif ref.startswith("missing:"):
+            hits = list(REPO_ROOT.glob(ref[8:].strip()))
+            if hits:
+                out.append(f"R25 {cid}: plan_ref missing:{ref[8:].strip()} MATCHES "
+                           f"{len(hits)} existing path(s), first {hits[0].name!r}. The plan "
+                           f"says nothing is there and something is; the blocker is stale.")
+        elif ref.startswith("undecidable:"):
+            if len(ref[12:].strip()) < 12:
+                out.append(f"R25 {cid}: plan_ref undecidable: with no reason. If the blocker "
+                           f"cannot be checked from this repository -- a tool on PATH, a "
+                           f"device, an Owner decision -- SAY WHICH, in a sentence. 'nobody "
+                           f"checked' is a claim; it has to be visible as one.")
+        else:
+            out.append(f"R25 {cid}: plan_ref {ref[:40]!r} is not one of the three forms: "
+                       f"file:<path>, missing:<glob>, undecidable:<why>.")
     return out
 
 
@@ -855,6 +925,43 @@ def r17_state_is_evidenced(reg, doc):
                        f"is not a run; either record when it ran or stop claiming it did.")
             continue
         if probe.get("sha256") or probe.get("run_log"):
+            # HARDENED 2026-10-03, and this is the deepest instance of the disease this file
+            # exists to catch. The branch used to `continue` on ANY non-empty string, and all
+            # eleven `probe.run_log` values in this registry turned out to be PROSE -- "measured
+            # 2026-10-02 in this session, ...", "identity control (same content, two filenames):
+            # ok=true ...". `state: observed` is not a documentation field: gate.ps1's
+            # Get-GrantableIds grants a capability only where `state == observed`, so a sentence
+            # in a run_log was enough to make a capability RUNNABLE. A run_log is now a path to
+            # a file that exists, and a sha256 must be that file's hash.
+            #
+            # What this does NOT claim: that the file was produced by the instrument. A stub
+            # which prints the recorded strings can also write those strings to a file. That
+            # limit is written down rather than papered over -- the same sentence appears in
+            # assert-probes.py's OK verdict.
+            rl = str(probe.get("run_log") or "").strip()
+            want = str(probe.get("sha256") or "").strip().lower()
+            if not rl:
+                out.append(f"R17 {cid}: probe.sha256 is recorded but probe.run_log is not, so "
+                           f"there is nothing to hash. A hash of nothing is a decoration.")
+                continue
+            p = pathlib.Path(rl)
+            if not p.is_absolute():
+                p = REPO_ROOT / p
+            if not p.is_file():
+                out.append(f"R17 {cid}: probe.run_log {rl!r} is not a file that exists. A run_log "
+                           f"is the retained OUTPUT of a run; a sentence describing one is not "
+                           f"evidence, and state=observed is what decides what a grant may "
+                           f"contain. Either point it at the file a real run wrote "
+                           f"(`python scripts/assert-probes.py --save-evidence evidence/probes` "
+                           f"writes one per capability), or record "
+                           f"evidence_binding={{'status':'unverified','reason':...}} and say what "
+                           f"is not retained.")
+                continue
+            if want and hashlib.sha256(p.read_bytes()).hexdigest() != want:
+                out.append(f"R17 {cid}: probe.sha256 does not match {rl}. The retained run has "
+                           f"changed under the registry, so the claim and the evidence have come "
+                           f"apart. Re-run the probe and record the new hash, or say why the old "
+                           f"run is still the one being claimed.")
             continue
         ev = probe.get("evidence_binding")
         if not isinstance(ev, dict) or ev.get("status") != "unverified":
@@ -1053,7 +1160,7 @@ RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r17_state_is_evidenced, r18_evidence_family_agrees, r19_probes_distinguish,
          r20_fact_map_declares, r21_control_command_runnable,
          r22_ungrantable_needs_a_reason, r23_escalation_class_needs_a_reason,
-         r24_input_types_are_declared)
+         r24_input_types_are_declared, r25_plan_needs_a_checkable_ref)
 
 
 # ---------------------------------------------------------------------------- core
@@ -1251,9 +1358,13 @@ def selftest() -> int:
     nocase("R21 a runnable negative control is accepted",
            lambda b: b[0]["negative_control"].__setitem__(
                "command", "python control.py --refuse"), "R21")
-    nocase("R21 a declared plan with a reason is accepted",
+    # `plan_ref` rides along because R25 (2026-10-03) narrowed what "accepted" means for a plan:
+    # a reason plus a checkable reference. Without it this case went red on R25 -- correctly,
+    # since the mutation really does leave a plan nobody can check.
+    nocase("R21 a declared plan with a reason and a checkable reference is accepted",
            lambda b: b[0]["negative_control"].update(
-               {"kind": "plan", "plan_reason": "needs an MCP session"})
+               {"kind": "plan", "plan_reason": "needs an MCP session",
+                "plan_ref": "undecidable:the MCP device is not on this host's PATH"})
            or b[0]["negative_control"].pop("command"), "R21")
     case("R21 a plan with NO reason is refused",
          lambda b: b[0]["negative_control"].update({"kind": "plan", "plan_reason": ""})
@@ -1292,6 +1403,27 @@ def selftest() -> int:
            lambda b: b[0]["consumes"].update(
                {"inputs": [{"name": "capture", "type": "path_ref", "required": True}]})
            or b[0]["reach"].update({"fs_read": True}), "R24")
+
+    # R25: a plan whose stated blocker was never pointed at. Written after an audit measured
+    # that six of the ten real plan_reason strings are contradicted by the tree they sit in --
+    # `mobile.apk.static` claiming no second AXML decoder while Apktool 3.0.3 sits on disk and
+    # the lab already runs it. `missing:scripts/*.py` is the load-bearing case here: it is the
+    # one that says "the thing your plan says is not there, IS there".
+    def _plan(ref=None, reason="needs a thing that is not here"):
+        def mutate(b):
+            nc = b[0]["negative_control"]
+            nc.update({"kind": "plan", "plan_reason": reason, "command": ""})
+            nc.pop("plan_ref", None)
+            if ref is not None:
+                nc["plan_ref"] = ref
+        return mutate
+    case("R25 a plan with no machine-checkable reference", _plan(), "R25")
+    case("R25 a file: reference that does not exist", _plan("scripts/no-such-file.ps1"), "R25")
+    case("R25 a missing: reference that MATCHES something", _plan("missing:scripts/*.py"), "R25")
+    case("R25 undecidable: with no reason", _plan("undecidable:"), "R25")
+    case("R25 a reference in a form nobody defined", _plan("probably fine"), "R25")
+    nocase("R25 a file: reference that resolves is accepted",
+           _plan("file:scripts/registry-verify.py"), "R25")
     case("R3 missing does_not_prove", lambda b: b[0].__setitem__("does_not_prove", []), "R3")
     # --- per-half controls -------------------------------------------------------
     # R3 and R5 each have two independent halves, and deleting EITHER half alone
@@ -1387,6 +1519,20 @@ def selftest() -> int:
         "evidence_binding"), "R17")
     case("R17 unverified marker with no reason", lambda b: b[0]["probe"].__setitem__(
         "evidence_binding", {"status": "unverified"}), "R17")
+    # R17, hardened 2026-10-03: the eleven real `run_log` values in this registry were all PROSE,
+    # and a prose run_log was enough to make a capability grantable, because gate.ps1 filters on
+    # `state == observed`. The file used below is this validator's own source, which exists by
+    # construction -- so the "accepted" case cannot rot the way a fixture path would.
+    case("R17 a run_log that is a sentence, not a file", lambda b: b[0]["probe"].update(
+        {"run_log": "measured 2026-09-30 in that session, output pasted into the wiki"}), "R17")
+    case("R17 a run_log naming a file that does not exist", lambda b: b[0]["probe"].update(
+        {"run_log": "evidence/probes/nothing-was-ever-written-here.log"}), "R17")
+    case("R17 a sha256 that does not match the file it names", lambda b: b[0]["probe"].update(
+        {"run_log": "scripts/registry-verify.py", "sha256": "0" * 64}), "R17")
+    case("R17 a sha256 with no run_log to hash", lambda b: b[0]["probe"].update(
+        {"sha256": "a" * 64, "run_log": ""}), "R17")
+    nocase("R17 a run_log naming a file that exists is accepted", lambda b: b[0]["probe"].update(
+        {"run_log": "scripts/registry-verify.py"}), "R17")
 
     # --- R18: the evidence family a label claims --------------------------------
     # The measured case: two capabilities driving ONE instrument (idalib-mcp) were

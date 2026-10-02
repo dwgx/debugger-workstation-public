@@ -1,0 +1,34 @@
+# assert-probes evidence: re.corpus.solve probe
+# command: python crackme-corpus/tools/loop.py
+# exit: 0
+# seconds: 134.20
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+
+==============================================================================
+crackme-corpus
+==============================================================================
+  PASS  build c01                          {"ok":true,"id":"c01-stringobf","exe":"out\\c01-stringobf.exe","obj":"out\\c01-stringobf.obj","compiler":"cl.exe (MSVC)","vcvars":"C:\\Program Files\\
+  PASS  decompile c01                      GHIDRA "D:\Software\Tool\WorkStation\debugger\Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\support\analyzeHeadless.bat" %USERPROFILE%\AppData\Local\T
+  PASS  solve c01                               decoy string in .rdata was NOT the answer (strings|grep FLAG is a trap)
+  PASS  negative control c01               exit 1 (want non-zero)
+  PASS  build c02                          {"ok":true,"id":"c02-cff-dispatch","exe":"out\\c02-cff-dispatch.exe","obj":"out\\c02-cff-dispatch.obj","compiler":"cl.exe (MSVC)","vcvars":"C:\\Progra
+  PASS  decompile c02                      GHIDRA "D:\Software\Tool\WorkStation\debugger\Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\support\analyzeHeadless.bat" %USERPROFILE%\AppData\Local\T
+  PASS  solve c02                          PASS c02 password='FL4T-STATE-7B' flag='FLAG{c02_flattened_state_machine}'
+  PASS  negative control c02               exit 1 (want non-zero)
+  PASS  build c03                          {"ok":true,"id":"c03_antidebug","exe":"out\\c03_antidebug.exe","obj":"out\\c03_antidebug.obj","compiler":"cl.exe (MSVC)","vcvars":"C:\\Program Files\\
+  PASS  decompile c03                      GHIDRA "D:\Software\Tool\WorkStation\debugger\Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\support\analyzeHeadless.bat" %USERPROFILE%\AppData\Local\T
+  PASS  solve c03                               a flag captured with a debugger attached is not evidence.
+  PASS  negative control c03               exit 1 (want non-zero)
+  PASS  build c04                          Time Elapsed 00:00:02.46
+  PASS  decompile c04                      Latest version is '11.1.0.9782' (yours is '11.0.0.9375')
+  PASS  solve c04                               managed code decompiled to source; string table unmasked; opcode permutation inverted; control flow honoured.
+  PASS  negative control c04               exit 1 (want non-zero)
+  PASS  build c05                          {"ok":true,"id":"c05-binary-format","exe":"out\\c05-binary-format.exe","obj":"out\\c05-binary-format.obj","compiler":"cl.exe (MSVC)","vcvars":"C:\\Pro
+  PASS  decompile c05                      GHIDRA "D:\Software\Tool\WorkStation\debugger\Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\support\analyzeHeadless.bat" %USERPROFILE%\AppData\Local\T
+  PASS  solve c05                               layout from two tools: 6 fields (0:2B, 4:4B, 8:2B, 10:4B, 14:4B, 18:2B), 20-byte records, digest over [0..13], key over [4..17], decoy bit 0x02
+  PASS  negative control c05               exit 1 (want non-zero)
+
+CORPUS CLOSED: 5 challenge(s), 20 checks, 5 negative controls, 134.0s
+Every challenge solved from its binary, and every solver was shown to reject a wrong answer.

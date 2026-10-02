@@ -26,12 +26,26 @@
 .EXAMPLE
   powershell -File scripts\il2cpp-probe.ps1
 
+.EXAMPLE
+  powershell -File scripts\il2cpp-probe.ps1 -AsControl
+  Same probe, control polarity: exits 1 BECAUSE the capability is ABSENT. The
+  negative direction of this capability is a host where the capability is missing,
+  so the only honest way to assert it is to fail when it is correctly absent.
+
 .NOTES
   Exit 0 with `IL2CPP ABSENT` when unavailable, non-zero only when the probe itself
   cannot determine an answer. Absence is a finding, not an error.
+
+  -AsControl changes nothing except the exit code: the findings, the JSON summary
+  and the 12 s hang budget are identical, so the default run stays byte-identical.
+  The default exit code is left alone because the capability entry's probe.command
+  runs this file with no arguments and depends on exit 0.
 #>
 [CmdletBinding()]
-param([int]$HangBudgetSec = 12)
+param(
+    [int]$HangBudgetSec = 12,
+    [switch]$AsControl
+)
 
 $ErrorActionPreference = 'Continue'
 $RepoRoot = Split-Path -Parent $PSScriptRoot
@@ -117,5 +131,33 @@ Write-Host ('JSON-SUMMARY {"total":2,"pass":0,"fail":2}')
     )
     unblocked_by  = 'the Owner naming an IL2CPP binary they own'
 } | ConvertTo-Json -Depth 5
+
+# --- 4. control polarity -------------------------------------------------------
+# R5 refuses a negative_control whose expect_exit is 0, because a control that must
+# SUCCEED proves nothing. This capability is ABSENT, and for an absent capability the
+# passing state IS the absence -- so the only way to make that state observable
+# through an exit code is to FAIL when it is correct. Hence the inversion below.
+#
+# It lives behind a switch rather than replacing the default exit because the
+# capability entry's own probe.command runs this same file with no arguments and
+# depends on exit 0. Two polarities, one file, no second script to drift.
+if ($AsControl) {
+    if ($available) {
+        Write-Host 'CONTROL RESULT: DID NOT FIRE -- IL2CPP reported AVAILABLE; exiting 0.'
+        Write-Host '  A gate expecting exit 1 will reject this run. That rejection is the'
+        Write-Host '  control working: the probe answered "available" when it should have'
+        Write-Host '  answered "absent", or the host acquired a 6.x runtime and an'
+        Write-Host '  authorized target and this control no longer describes the station.'
+        exit 0
+    }
+    Write-Host ''
+    Write-Host 'CONTROL RESULT: FIRED -- exiting 1, and the exit 1 IS the pass.'
+    Write-Host '  What is under test: an installed Il2CppDumper.exe sitting on disk must not'
+    Write-Host '  read as a working capability. The probe asks the runtime and the target'
+    Write-Host '  instead of counting the .exe, and answers ABSENT.'
+    Write-Host '  A run that exits 0 here would mean the tool started and a target existed'
+    Write-Host '  -- i.e. that the probe had stopped being able to fail.'
+    exit 1
+}
 
 exit 0

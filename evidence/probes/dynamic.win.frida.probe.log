@@ -1,0 +1,8 @@
+# assert-probes evidence: dynamic.win.frida probe
+# command: & 'D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\frida.exe' -f "$env:TEMP\fridaprobe\target.exe" -q -t 6 -e 'var m=Process.mainModule;console.log(`FRIDA_WIN module_base=${m.base}`);console.log(`FRIDA_WIN symbol_main=${DebugSymbol.fromName(`main`)}`);console.log(`FRIDA_WIN export_printf=${Module.getGlobalExportByName(`printf`)}`);console.log(`FRIDA_WIN rebased_main=${m.base.add(0x1080)}`);Interceptor.attach(m.base.add(0x1080),{onEnter:function(){console.log(`FRIDA_WIN HIT main`);}});'
+# exit: 1
+# seconds: 1.10
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+Failed to spawn: unable to find executable at '%USERPROFILE%\AppData\Local\Temp\fridaprobe\target.exe'

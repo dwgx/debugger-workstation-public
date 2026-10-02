@@ -1,0 +1,19 @@
+# assert-probes evidence: native.pe.authenticode probe
+# command: python headless-lab\tools\authenticode.py crackme-corpus\out\c01-stringobf.exe
+# exit: 0
+# seconds: 0.23
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+{
+ "ok": true,
+ "exit": 0,
+ "binary": "crackme-corpus\\out\\c01-stringobf.exe",
+ "file_size": 143872,
+ "security_va_is_a": "FILE OFFSET (not an RVA) -- true for IMAGE_DIRECTORY_ENTRY_SECURITY",
+ "security_offset": 0,
+ "security_size": 0,
+ "caveat": "THIS DOES NOT VERIFY ANYTHING. It reports whether a certificate table is present and decodes its header. 'signed: true' means 'there is a WIN_CERTIFICATE here', NOT 'this binary is trusted' -- no chain is built, no revocation is checked, and a self-authored fixture will read as signed.",
+ "signed": false,
+ "reason": "no certificate table: IMAGE_DIRECTORY_ENTRY_SECURITY is empty"
+}

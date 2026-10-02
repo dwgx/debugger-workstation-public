@@ -1,0 +1,293 @@
+# assert-probes evidence: native.disasm.capstone probe
+# command: python native-lab\tools\disasm.py crackme-corpus\out\c01-stringobf.exe --rva 0x1080 --count 40
+# exit: 0
+# seconds: 0.30
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+{
+ "ok": true,
+ "exit": 0,
+ "binary": "crackme-corpus\\out\\c01-stringobf.exe",
+ "image_base": "0x140000000",
+ "rva": "0x1080",
+ "file_offset": "0x480",
+ "count": 40,
+ "insns": [
+  {
+   "addr": "0x140001080",
+   "mnemonic": "mov",
+   "op_str": "qword ptr [rsp + 0x10], rdx"
+  },
+  {
+   "addr": "0x140001085",
+   "mnemonic": "mov",
+   "op_str": "dword ptr [rsp + 8], ecx"
+  },
+  {
+   "addr": "0x140001089",
+   "mnemonic": "sub",
+   "op_str": "rsp, 0x98"
+  },
+  {
+   "addr": "0x140001090",
+   "mnemonic": "mov",
+   "op_str": "rax, qword ptr [rip + 0x20fe9]"
+  },
+  {
+   "addr": "0x140001097",
+   "mnemonic": "xor",
+   "op_str": "rax, rsp"
+  },
+  {
+   "addr": "0x14000109a",
+   "mnemonic": "mov",
+   "op_str": "qword ptr [rsp + 0x80], rax"
+  },
+  {
+   "addr": "0x1400010a2",
+   "mnemonic": "cmp",
+   "op_str": "dword ptr [rsp + 0xa0], 2"
+  },
+  {
+   "addr": "0x1400010aa",
+   "mnemonic": "je",
+   "op_str": "0x1400010d7"
+  },
+  {
+   "addr": "0x1400010ac",
+   "mnemonic": "mov",
+   "op_str": "eax, 8"
+  },
+  {
+   "addr": "0x1400010b1",
+   "mnemonic": "imul",
+   "op_str": "rax, rax, 0"
+  },
+  {
+   "addr": "0x1400010b5",
+   "mnemonic": "mov",
+   "op_str": "rcx, qword ptr [rsp + 0xa8]"
+  },
+  {
+   "addr": "0x1400010bd",
+   "mnemonic": "mov",
+   "op_str": "rdx, qword ptr [rcx + rax]"
+  },
+  {
+   "addr": "0x1400010c1",
+   "mnemonic": "lea",
+   "op_str": "rcx, [rip + 0x20f38]"
+  },
+  {
+   "addr": "0x1400010c8",
+   "mnemonic": "call",
+   "op_str": "0x140001260"
+  },
+  {
+   "addr": "0x1400010cd",
+   "mnemonic": "mov",
+   "op_str": "eax, 2"
+  },
+  {
+   "addr": "0x1400010d2",
+   "mnemonic": "jmp",
+   "op_str": "0x1400011e6"
+  },
+  {
+   "addr": "0x1400010d7",
+   "mnemonic": "lea",
+   "op_str": "rax, [rsp + 0x38]"
+  },
+  {
+   "addr": "0x1400010dc",
+   "mnemonic": "mov",
+   "op_str": "qword ptr [rsp + 0x20], rax"
+  },
+  {
+   "addr": "0x1400010e1",
+   "mnemonic": "movzx",
+   "op_str": "r9d, byte ptr [rip + 0x16259]"
+  },
+  {
+   "addr": "0x1400010e9",
+   "mnemonic": "mov",
+   "op_str": "r8d, dword ptr [rip + 0x16254]"
+  },
+  {
+   "addr": "0x1400010f0",
+   "mnemonic": "mov",
+   "op_str": "edx, 0x12"
+  },
+  {
+   "addr": "0x1400010f5",
+   "mnemonic": "lea",
+   "op_str": "rcx, [rip + 0x16234]"
+  },
+  {
+   "addr": "0x1400010fc",
+   "mnemonic": "call",
+   "op_str": "0x140001000"
+  },
+  {
+   "addr": "0x140001101",
+   "mnemonic": "lea",
+   "op_str": "rax, [rsp + 0x58]"
+  },
+  {
+   "addr": "0x140001106",
+   "mnemonic": "mov",
+   "op_str": "qword ptr [rsp + 0x20], rax"
+  },
+  {
+   "addr": "0x14000110b",
+   "mnemonic": "movzx",
+   "op_str": "r9d, byte ptr [rip + 0x16230]"
+  },
+  {
+   "addr": "0x140001113",
+   "mnemonic": "mov",
+   "op_str": "r8d, dword ptr [rip + 0x1624a]"
+  },
+  {
+   "addr": "0x14000111a",
+   "mnemonic": "mov",
+   "op_str": "edx, 0x1a"
+  },
+  {
+   "addr": "0x14000111f",
+   "mnemonic": "lea",
+   "op_str": "rcx, [rip + 0x16222]"
+  },
+  {
+   "addr": "0x140001126",
+   "mnemonic": "call",
+   "op_str": "0x140001000"
+  },
+  {
+   "addr": "0x14000112b",
+   "mnemonic": "mov",
+   "op_str": "eax, 8"
+  },
+  {
+   "addr": "0x140001130",
+   "mnemonic": "imul",
+   "op_str": "rax, rax, 1"
+  },
+  {
+   "addr": "0x140001134",
+   "mnemonic": "mov",
+   "op_str": "rcx, qword ptr [rsp + 0xa8]"
+  },
+  {
+   "addr": "0x14000113c",
+   "mnemonic": "mov",
+   "op_str": "rcx, qword ptr [rcx + rax]"
+  },
+  {
+   "addr": "0x140001140",
+   "mnemonic": "call",
+   "op_str": "0x140016110"
+  },
+  {
+   "addr": "0x140001145",
+   "mnemonic": "mov",
+   "op_str": "qword ptr [rsp + 0x30], rax"
+  },
+  {
+   "addr": "0x14000114a",
+   "mnemonic": "lea",
+   "op_str": "rcx, [rip + 0x16217]"
+  },
+  {
+   "addr": "0x140001151",
+   "mnemonic": "call",
+   "op_str": "0x140016110"
+  },
+  {
+   "addr": "0x140001156",
+   "mnemonic": "mov",
+   "op_str": "rcx, qword ptr [rsp + 0x30]"
+  },
+  {
+   "addr": "0x14000115b",
+   "mnemonic": "cmp",
+   "op_str": "rcx, rax"
+  }
+ ],
+ "rip_operands": [
+  {
+   "at": "0x140001090",
+   "text": "mov rax, qword ptr [rip + 0x20fe9]",
+   "target": "0x140022080",
+   "width": "dword",
+   "byte": 50,
+   "dword": 769630770
+  },
+  {
+   "at": "0x1400010c1",
+   "text": "lea rcx, [rip + 0x20f38]",
+   "target": "0x140022000",
+   "width": "dword",
+   "byte": 117,
+   "dword": 1734439797
+  },
+  {
+   "at": "0x1400010e1",
+   "text": "movzx r9d, byte ptr [rip + 0x16259]",
+   "target": "0x140017342",
+   "width": "byte",
+   "byte": 90,
+   "dword": 734042
+  },
+  {
+   "at": "0x1400010e9",
+   "text": "mov r8d, dword ptr [rip + 0x16254]",
+   "target": "0x140017344",
+   "width": "dword",
+   "byte": 11,
+   "dword": 11
+  },
+  {
+   "at": "0x1400010f5",
+   "text": "lea rcx, [rip + 0x16234]",
+   "target": "0x140017330",
+   "width": "dword",
+   "byte": 22,
+   "dword": 41361174
+  },
+  {
+   "at": "0x14000110b",
+   "text": "movzx r9d, byte ptr [rip + 0x16230]",
+   "target": "0x140017343",
+   "width": "byte",
+   "byte": 51,
+   "dword": 2867
+  },
+  {
+   "at": "0x140001113",
+   "text": "mov r8d, dword ptr [rip + 0x1624a]",
+   "target": "0x140017364",
+   "width": "dword",
+   "byte": 5,
+   "dword": 5
+  },
+  {
+   "at": "0x14000111f",
+   "text": "lea rcx, [rip + 0x16222]",
+   "target": "0x140017348",
+   "width": "dword",
+   "byte": 108,
+   "dword": 1096567660
+  },
+  {
+   "at": "0x14000114a",
+   "text": "lea rcx, [rip + 0x16217]",
+   "target": "0x140017368",
+   "width": "dword",
+   "byte": 70,
+   "dword": 1195461702
+  }
+ ],
+ "caveat": "A DISASSEMBLER IS NOT A DECOMPILER. These are instructions, not recovered logic: no lifting, no type recovery, no control-flow reconstruction. It corroborates structure and resolves operands the decompilers leave as references, and it cannot tell you what the code MEANS."
+}

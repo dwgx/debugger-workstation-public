@@ -1,0 +1,21 @@
+# assert-probes evidence: native.ghidra.decompile probe
+# command: powershell -File scripts\ghidra-failopen-regress.ps1
+# exit: 0
+# seconds: 28.19
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+================================================================================================
+ghidra-headless fail-open regression -- exit code must not be able to mean success
+================================================================================================
+
+  PASS  NEGATIVE: non-binary input exits non-zero                exit=1
+  PASS  NEGATIVE: no summary.json was produced for a bad input   exists=False
+  PASS  POSITIVE: a real binary still exits 0                    exit=0
+  PASS  POSITIVE: summary.json is produced                       exists=True
+
+================================================================================================
+LOOP CLOSED: a failed import can no longer be reported as exit 0.
+JSON-SUMMARY {"pass":4,"fail":0,"total":4}
+GHIDRA "D:\Software\Tool\WorkStation\debugger\Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\support\analyzeHeadless.bat" %USERPROFILE%\AppData\Local\Temp\ghidra-proj-3d1f4d92989e475788498626ae7c5193 agent -import %USERPROFILE%\AppData\Local\Temp\gh-regress-notabinary.txt -overwrite -scriptPath D:\Software\Tool\WorkStation\debugger\scripts\ghidra -deleteProject -postScript ExportDecompile.java %USERPROFILE%\AppData\Local\Temp\gh-regress-bad
+GHIDRA "D:\Software\Tool\WorkStation\debugger\Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\support\analyzeHeadless.bat" %USERPROFILE%\AppData\Local\Temp\ghidra-proj-53c7e979208b4be198d7b7b47094d9f9 agent -import D:\Software\Tool\WorkStation\debugger\crackme-corpus\out\c01-stringobf.exe -overwrite -scriptPath D:\Software\Tool\WorkStation\debugger\scripts\ghidra -deleteProject -postScript ExportDecompile.java %USERPROFILE%\AppData\Local\Temp\gh-regress-good

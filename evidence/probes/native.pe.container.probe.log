@@ -1,0 +1,8 @@
+# assert-probes evidence: native.pe.container probe
+# command: python -c "import pefile;pe=pefile.PE(r'crackme-corpus\out\c01-stringobf.exe');print(hex(pe.OPTIONAL_HEADER.ImageBase),hex(pe.OPTIONAL_HEADER.AddressOfEntryPoint),hex(pe.OPTIONAL_HEADER.DllCharacteristics))"
+# exit: 0
+# seconds: 0.20
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+0x140000000 0x15d0 0x8160

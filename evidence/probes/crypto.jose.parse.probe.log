@@ -1,0 +1,100 @@
+# assert-probes evidence: crypto.jose.parse probe
+# command: node crypto-lab/tools/loop.mjs
+# exit: 0
+# seconds: 5.79
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+
+crypto-lab loop — token analysis, weakness recognition, independent cross-check
+================================================================================================
+
+  classification cases
+  PASS  strong           alg=RS256  sig=valid                          exp=valid
+        findings  (none)
+        verifier  strict:accept   checks=[alg-from-config, sig, exp, nbf, iss, aud, required-claims]
+        oracle    jsonwebtoken v9.0.3  key=rsa-public algs=RS256        -> verified (want verified)
+        oracle    PyJWT  v2.15.1  key=rsa-public algs=RS256        -> verified (want verified)
+  PASS  none             alg=none   sig=unsigned                       exp=valid
+        findings  ALG_NONE
+        verifier  none-accepting:accept   checks=[alg-from-token-header, exp, aud]
+        oracle    jsonwebtoken v9.0.3  key=none       algs=none         -> verified (want verified)
+        oracle    jsonwebtoken v9.0.3  key=rsa-public algs=RS256        -> signature-required (want signature-required)
+        oracle    PyJWT  v2.15.1  key=rsa-public algs=RS256        -> alg-not-allowed (want alg-not-allowed)
+  PASS  confusion        alg=HS256  sig=valid-as-hmac-over-public-key  exp=valid
+        findings  ALG_CONFUSION_CONFIRMED, ALG_CONFUSION_RISK, ALG_SYMMETRIC
+        verifier  confused:accept   checks=[alg-from-token-header, exp]
+        oracle    jsonwebtoken v9.0.3  key=rsa-public algs=HS256        -> refused-key-type (want refused-key-type)
+        oracle    PyJWT  v2.15.1  key=rsa-public algs=HS256        -> refused-key-type (want refused-key-type)
+        oracle    jsonwebtoken v9.0.3  key=rsa-public algs=RS256        -> alg-not-allowed (want alg-not-allowed)
+  PASS  weak-claims      alg=RS256  sig=valid                          exp=absent
+        findings  MISSING_EXP, SENSITIVE_CLAIM, MISSING_AUD, PII_CLAIM, MISSING_JTI, MISSING_NBF
+        verifier  naive:accept   checks=[alg-from-config, sig]
+        oracle    jsonwebtoken v9.0.3  key=rsa-public algs=RS256        -> verified (want verified)
+        oracle    PyJWT  v2.15.1  key=rsa-public algs=RS256        -> missing-claim (want missing-claim)
+  PASS  weak-secret      alg=HS256  sig=valid                          exp=valid
+        findings  SIG_WEAK_SECRET, ALG_SYMMETRIC
+        verifier  naive:reject(alg-not-allowed)   checks=[]
+        oracle    jsonwebtoken v9.0.3  key=secret     algs=HS256        -> verified (want verified)
+        oracle    PyJWT  v2.15.1  key=secret     algs=HS256        -> verified (want verified)
+        oracle    jsonwebtoken v9.0.3  key=secret     algs=HS256        -> rejected (want rejected)
+  PASS  expired          alg=RS256  sig=valid                          exp=expired
+        findings  EXPIRED
+        verifier  strict:reject(expired)   checks=[]
+        oracle    jsonwebtoken v9.0.3  key=rsa-public algs=RS256        -> expired (want expired)
+        oracle    PyJWT  v2.15.1  key=rsa-public algs=RS256        -> expired (want expired)
+  PASS  exp-too-far      alg=RS256  sig=valid                          exp=too-far
+        findings  EXP_TOO_FAR
+        verifier  strict:accept   checks=[alg-from-config, sig, exp, nbf, iss, aud, required-claims]
+        oracle    jsonwebtoken v9.0.3  key=rsa-public algs=RS256        -> verified (want verified)
+  PASS  jku-header       alg=RS256  sig=valid                          exp=valid
+        findings  JKU_HEADER
+        verifier  strict:accept   checks=[alg-from-config, sig, exp, nbf, iss, aud, required-claims]
+        oracle    jsonwebtoken v9.0.3  key=rsa-public algs=RS256        -> verified (want verified)
+  PASS  tampered         alg=RS256  sig=invalid                        exp=valid
+        findings  SIG_INVALID
+        verifier  strict:reject(bad-signature)   checks=[]
+        oracle    jsonwebtoken v9.0.3  key=rsa-public algs=RS256        -> rejected (want rejected)
+        oracle    PyJWT  v2.15.1  key=rsa-public algs=RS256        -> rejected (want rejected)
+  PASS  claim-injection  alg=RS256  sig=valid                          exp=valid
+        findings  CLAIM_INJECTION
+        verifier  strict:accept   checks=[alg-from-config, sig, exp, nbf, iss, aud, required-claims]
+        oracle    jsonwebtoken v9.0.3  key=rsa-public algs=RS256        -> verified (want verified)
+  PASS  unverified       alg=RS256  sig=unverified                     exp=valid
+        findings  SIG_UNVERIFIED
+        verifier  strict:accept   checks=[alg-from-config, sig, exp, nbf, iss, aud, required-claims]
+  PASS  jwe              alg=5-segment sig=not-applicable                 exp=-
+        findings  JWE_UNSUPPORTED
+        verifier  (not a JWS — no verifier call)   checks=[]
+
+  verifier matrix  (rows = issuance profile, cols = verifier bug)
+                strict                        confused                      none-accepting                naive                         
+  strong        ACCEPT                        ACCEPT                        ACCEPT                        ACCEPT                        
+  weak-claims   reject:missing-exp            reject:missing-exp            reject:missing-exp            ACCEPT                        
+  none          reject:alg-not-allowed        ACCEPT                        ACCEPT                        reject:alg-not-allowed        
+  confusion     reject:alg-not-allowed        ACCEPT                        reject:bad-signature          reject:alg-not-allowed        
+  weak-secret   reject:alg-not-allowed        reject:bad-signature          reject:bad-signature          reject:alg-not-allowed        
+
+  checks
+  PASS  lab target up  http://127.0.0.1:8799  kid=lab-rsa-81389a63dd7331bd  RSA-2048 key reused (crypto-lab/keys/, gitignored)
+  PASS  oracle dependency present  crypto-lab/node_modules/jsonwebtoken
+  PASS  python oracle interpreter  D:\Software\Tool\WorkStation\debugger\crypto-lab\.venv\Scripts\python.exe
+  PASS  case strong: the control: correct algorithm, complete claims, real key  classified as expected  [findings: none]  [verifier: strict:accept]
+  PASS  case none: unsigned token (alg=none) honored by an allowlist-free verifier  classified as expected  [findings: ALG_NONE]  [verifier: none-accepting:accept]
+  PASS  case confusion: algorithm confusion: HS256 keyed on the RSA public key  classified as expected  [findings: ALG_CONFUSION_CONFIRMED,ALG_CONFUSION_RISK,ALG_SYMMETRIC]  [verifier: confused:accept]
+  PASS  case weak-claims: cryptographically valid, semantically naked  classified as expected  [findings: MISSING_EXP,SENSITIVE_CLAIM,MISSING_AUD,PII_CLAIM,MISSING_JTI,MISSING_NBF]  [verifier: naive:accept]
+  PASS  case weak-secret: HMAC token signed with a dictionary secret  classified as expected  [findings: SIG_WEAK_SECRET,ALG_SYMMETRIC]  [verifier: naive:reject(alg-not-allowed)]
+  PASS  case expired: expired, but only a verifier that checks `exp` notices  classified as expected  [findings: EXPIRED]  [verifier: strict:reject(expired)]
+  PASS  case exp-too-far: a 30-day bearer token  classified as expected  [findings: EXP_TOO_FAR]  [verifier: strict:accept]
+  PASS  case jku-header: the token nominates where its own verification key lives  classified as expected  [findings: JKU_HEADER]  [verifier: strict:accept]
+  PASS  case tampered: the payload was edited after signing  classified as expected  [findings: SIG_INVALID]  [verifier: strict:reject(bad-signature)]
+  PASS  case claim-injection: control characters inside a claim value  classified as expected  [findings: CLAIM_INJECTION]  [verifier: strict:accept]
+  PASS  case unverified: no key material supplied: an explicit limit, not a verdict  classified as expected  [findings: SIG_UNVERIFIED]  [verifier: strict:accept]
+  PASS  case jwe: an encrypted token (JWE), which this tool does not read  classified as expected  [findings: JWE_UNSUPPORTED]  [verifier: (not a JWS — no verifier call)]
+  PASS  verifier matrix (5 profiles x 4 verifiers)  every cell matched the expected acceptance table
+  PASS  negative control: analyzer --expect refuses a wrong set  exit 4 (want 4) — the guard is live, so the comparisons above mean something
+
+LOOP CLOSED: every weakness class was classified as expected, every verifier behaved as its bug implies,
+             and jsonwebtoken + PyJWT agreed with the analyzer on every case they could express.
+
+JSON-SUMMARY {"total":17,"pass":17,"fail":0}

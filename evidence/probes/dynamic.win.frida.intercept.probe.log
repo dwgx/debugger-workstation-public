@@ -1,0 +1,21 @@
+# assert-probes evidence: dynamic.win.frida.intercept probe
+# command: $py='D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\python.exe'; $d=Join-Path $env:TEMP 'fridagate'; New-Item -ItemType Directory -Force -Path $d | Out-Null; Copy-Item 'D:\Software\Tool\WorkStation\debugger\crackme-corpus\out\c01-stringobf.exe' (Join-Path $d 'target.exe'); & $py 'D:\Software\Tool\WorkStation\debugger\native-lab\tools\frida_spawn_gate.py' (Join-Path $d 'target.exe') positive
+# exit: 0
+# seconds: 1.33
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+{"ok": true, "exit": 0, "mode": "positive", "target": "%USERPROFILE%\\AppData\\Local\\Temp\\fridagate-kcnviwce\\target.exe", "verdict": "INTERCEPT-PROVEN", "runtime_hook_hit": {"at": "0x7ff6548615d0", "count": 1, "tid": 45112}, "instrument_ordering": "spawn(suspended) -> create_script -> load -> resume. The CLI does the opposite and therefore cannot intercept; this ordering is the whole entry.", "caveat": "SELF-BUILT CORPUS TARGETS ONLY, run from a %TEMP% copy -- the repository original is staged and never executed. Instrumenting your own program on your own machine is not running a sample; running an UNTRUSTED one here is a STOP."}
+[stage] copied to %TEMP% %USERPROFILE%\AppData\Local\Temp\fridagate-kcnviwce\target.exe (143872 bytes); the repository original is never executed
+[pe  ] {"magic": "0x20b", "entry_rva": 5584, "size_of_image": 163840}
+[spawn] pid=44044 suspended=True
+[js  ] {"kind": "module", "name": "target.exe", "base": "0x7ff654860000", "size": 163840, "path": "%USERPROFILE%\\AppData\\Local\\Temp\\fridagate-kcnviwce\\target.exe"}
+[js  ] {"kind": "rebase", "ok": true, "target": "0x7ff6548615d0", "inImage": true}
+[js  ] {"kind": "attached", "target": "0x7ff6548615d0"}
+[load] script loaded while main thread suspended
+[resu] main thread resumed
+[js  ] {"kind": "HIT", "at": "0x7ff6548615d0", "tid": 45112}
+[end] hit count=1 at=0x7ff6548615d0
+[end] verdict=INTERCEPT-PROVEN
+ACCEPTED
+FLAG{c01_string_table_xor}

@@ -1,0 +1,8 @@
+# assert-probes evidence: fuzz.differential.parse probe
+# command: node fuzz-lab/tools/loop.mjs --budget 40
+# exit: -1
+# seconds: 1065.63
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+<timeout after 900s>
