@@ -11,7 +11,7 @@
       "Q7.origin": "what changed between these two builds"
     },
     "baseline": {
-      "capability_count": 23,
+      "capability_count": 24,
       "note": "The validator pins this count. A capability may only leave capabilities[] by appearing in retired[] with a reason, because deleting an island used to make the registry validate CLEANER rather than louder."
     },
     "retired": [],
@@ -2932,6 +2932,131 @@
       "evidence_source": "structural-parser",
       "evidence_source_note": "The SAME family as native.pe.container and crypto.jose.parse, and deliberately so: a self-describing container decoded without executing it. A certificate table is exactly that. Recorded explicitly so nobody reads this as a second opinion on a decompilation -- it is not, and adding it changes nothing about the independence gate, which already confirms on capstone plus IDA.",
       "root_reason": "Genuine root. It is handed a path and answers a question about that file's signature surface before anything else is allowed to act on it. Nothing upstream produces a trust or signature fact, and nothing downstream may treat one as given. It declares no typed edge for the same reason native.pe.container and native.pe.packer do not: it consumes an input no other capability emits."
+    },
+    {
+      "id": "native.behaviour.capa",
+      "title": "Match known behavioural rule patterns in a self-built Windows PE with capa 8.x, headless",
+      "domains": [
+        "native",
+        "practice"
+      ],
+      "question_types": [
+        "Q1.identify",
+        "Q3.behaviour"
+      ],
+      "state": "observed",
+      "scope_note": "SELF-BUILT CORPUS TARGETS ONLY. It reads the binary and matches rules; it never executes it, never touches the network, and writes only to stdout.",
+      "composition_note": "REGISTERED BECAUSE AN AUDIT FOUND IT MISSING ENTIRELY. capa is installed and works headlessly, and searching the registry for the string 'capa' returned all 23 entries -- because the word appears inside 'capabilit*y*'. It had no entry at all. What makes it worth registering is the property this registry has been short of: it is TARGET-SCOPED. It takes a path, so a mission can actually route it, unlike the five capabilities whose subject is a token, a pcap, an APK, a loopback URL or a lab artefact.\n\nAND IT IS DELIBERATELY NOT Q5.vuln-shape, which is the axis currently dark. Wiring it there would have lit Q5 up on paper while answering a different question. Measured on c01-stringobf.exe, its 14 hits are 'change memory protection', 'PEB access', 'create or open file' -- those are BEHAVIOURS present in the code, not trust boundaries. Putting a rule matcher on the 'where does it trust something it should not' axis is precisely the relabel escape R18 exists to prevent, and the entry would have been false the moment it was written.",
+      "consumes": {
+        "inputs": [
+          {
+            "name": "binary",
+            "type": "path_ref",
+            "required": true,
+            "note": "a Windows PE. Measured: crackme-corpus/out/c01-stringobf.exe."
+          }
+        ],
+        "prior": []
+      },
+      "produces": {
+        "facts": [
+          {
+            "key": "behav.pattern",
+            "type": "structure",
+            "note": "matched rules as {rule, namespace, lib}, plus a per-namespace count. Measured on c01-stringobf.exe: 14 rules over 10 namespaces including linking/runtime-linking, load-code/pe, anti-analysis, host-interaction/environment-variable (x2), host-interaction/file-system/write, and data-manipulation/compression."
+          },
+          {
+            "key": "behav.count",
+            "type": "verdict",
+            "note": "integer count of matched rules. Measured 14. A COUNT IS NOT A FINDING: it says how many patterns were present, not how many are concerning, and it is not comparable across binaries without a per-binary rule-set baseline."
+          }
+        ]
+      },
+      "requires": {
+        "runtime": "python",
+        "net": "none",
+        "admin": false,
+        "device": false,
+        "disk_mb": 0,
+        "ram_mb": 1024,
+        "wall_minutes": 2,
+        "tools": [
+          {
+            "name": "capa",
+            "probe": "Test-Path 'Static-Reversing\\capa\\capa.exe'",
+            "expect": "True"
+          }
+        ],
+        "install_note": "Already installed, no download. Measured ~33 s per run on this corpus binary, which is the slowest instrument in native-lab and is dominated by rule loading."
+      },
+      "reach": {
+        "fs_read": true,
+        "fs_write": false,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": false,
+        "db_write": false,
+        "proc_spawn_note": "Declared because the probe and control invoke the capa.exe binary as a child process. Nothing else spawns and exec_target stays false: capa reads the file."
+      },
+      "proves": [
+        "THAT A TARGET-SCOPED BEHAVIOURAL INSTRUMENT EXISTS IN THIS ARSENAL, which the audit said otherwise. Measured end to end: 14 rules matched on c01-stringobf.exe across 10 namespaces, in one command, with no network and no execution.",
+        "THAT THE WRAPPER REFUSES A NON-PE CHEAPLY AND PLAINLY. Measured: README.md returns {ok:false, exit:2, first_bytes:'2320'} in well under a second, against capa's own behaviour of exiting 16 after about three seconds of engine start with a formatted banner that is not parseable."
+      ],
+      "does_not_prove": [
+        "THAT ANYTHING IS MALICIOUS. capa MATCHES A RULE; it does not prove behaviour, and it certainly does not prove intent. 'change memory protection' says the instructions are present, not that they were used.",
+        "THAT THE BINARY IS TRUSTWORTHY WHEN NO RULE MATCHES. Absence of a match is absence of a known pattern, not evidence of safety -- the same shape as 'not packed' meaning no signature matched.",
+        "ANYTHING ABOUT TRUST BOUNDARIES. This is NOT a Q5 instrument and is not offered as one.",
+        "THAT THE 14 RULES ARE ALARMING. They are what a CRT-linked Windows binary normally matches. The count is only meaningful against a per-binary baseline, and none exists yet."
+      ],
+      "gate": {
+        "lane": "debug",
+        "requires_verdict": true,
+        "escalation_class": "none"
+      },
+      "gate_must_not_delegate": [
+        "capa_probe.py against any binary this repository did not author",
+        "reporting rules_matched as a risk score, a severity, or a count comparable across binaries",
+        "reporting a rule hit as observed behaviour rather than as a pattern present in the code"
+      ],
+      "gate_must_not_delegate_why": "Measured or read. (1) The target side is a red line. (2) The count has no denominator: 14 hits on a plain CRT binary is unremarkable, and quoting it as a number without a baseline is the confident-wrong-number failure this project keeps finding. (3) A rule match is a static pattern; the gap between 'the code can do this' and 'it did this' is exactly what dynamic.win.frida.intercept exists to close.",
+      "probe": {
+        "command": "python native-lab\\tools\\capa_probe.py crackme-corpus\\out\\c01-stringobf.exe",
+        "expect": "\"rules_matched\": 14",
+        "expect_exit": 0,
+        "last_run": "2026-10-02",
+        "run_log": "ok:true rules_matched 14, namespaces {linking/runtime-linking:1, (none):4, load-code/pe:1, host-interaction/process/terminate:1, data-manipulation/compression:1, host-interaction/file-system/files/list:1, host-interaction/environment-variable:2, host-interaction/file-system/write:1, host-interaction/file-system/meta:1, anti-analysis:1}, exit 0, ~33 s. Control README.md: {ok:false, exit:2, first_bytes '2320'}, TRUE_EXIT=2.",
+        "prepare": "cd 'D:\\Software\\Tool\\WorkStation\\debugger'",
+        "expect_note": "expect asserts the measured count for THIS binary against THIS rule set. It is not a threshold and must not be reused as one -- a rule-set update would change it."
+      },
+      "negative_control": {
+        "id": "native.behaviour.capa.non_pe_refused",
+        "command": "python native-lab\\tools\\capa_probe.py README.md",
+        "expect_exit": 2,
+        "expect_output": "not a PE",
+        "expect_output_note": "THE CONTROL IS THE REFUSAL, and it is the one worth having here: a rule matcher pointed at something it cannot read must SAY NO rather than return zero findings. Zero rules on a markdown file would be indistinguishable from a clean binary, which is the always-green shape this project treats as worse than no tool. Measured: exit 2 naming the actual first two bytes. Running capa itself on the same file exits 16 after roughly three seconds of engine start and prints a formatted banner rather than anything parseable -- so the wrapper's refusal is both cheaper and legible, which is the point of having one.",
+        "measured": "README.md: {ok:false, exit:2, error:\"not a PE: first two bytes are 2320, expected 4d5a ('MZ')\", first_bytes:'2320'}, TRUE_EXIT=2. Raw capa.exe -j README.md exits 16 with a banner."
+      },
+      "provenance": {
+        "source": "measured on this station 2026-10-02 by the agent that added this entry, after an audit for the string 'capa' returned every entry and the tool turned out to have none",
+        "record": "docs/research/arsenal-inventory.md"
+      },
+      "evidence_source": "disassembler",
+      "evidence_source_note": "THE SAME FAMILY AS native.disasm.capstone, and that is deliberate and honest: capa's rules run over Vivisect disassembly, so it is an instruction-level instrument with no lifting and no type recovery. Sharing the family means a chain of capstone plus capa is ONE opinion, not corroboration -- the rule is that families are counted once per INSTRUMENT, and this entry is a different instrument in the same family. It adds reach, not independence. Note the neat trap this sits next to: searching the registry for the string 'capa' matches every entry, because the word appears inside 'capability'.",
+      "root_reason": "Genuine root, and it is the second one in the native domain that is not a leaf: it is handed a path and answers a question about that binary's instruction-level behaviour. Nothing upstream produces a behavioural rule match, and nothing downstream may treat one as an observation. It declares no typed edge for the same reason native.pe.container and native.pe.packer do not -- it consumes an input no other capability emits, so the absence of an edge is a decision rather than an oversight.",
+      "invoke": {
+        "runner": "python",
+        "argv": [
+          "native-lab/tools/capa_probe.py",
+          "{target}"
+        ],
+        "stdout": "json",
+        "success_when": "parsed JSON has ok == true AND rules_matched is an integer. Zero matched rules is a LEGITIMATE ANSWER for a clean binary and must not be read as a failure; a non-PE is refused by the wrapper with exit 2",
+        "fact_map": {
+          "matches": "behav.pattern",
+          "rules_matched": "behav.count"
+        },
+        "note": "Added immediately after registration because a capability with only a probe is exactly the state this registry spent the last pass measuring as unreachable -- and the mission said so out loud on its first run: \"native.behaviour.capa skipped_no_invoke -- the registry declares no invoke block, so the loop cannot call it with arguments\". The wrapper writes PURE JSON to stdout and is silent on stderr, because mission.ps1 merges the two and a tool that decorates stderr corrupts the JSON it declared. ctypes maps capa's own non-zero exit on a non-PE to a clean refusal, and the wrapper checks the DOS magic FIRST so the refusal costs under a second instead of capa's ~3 s of engine start."
+      }
     }
   ]
 }
