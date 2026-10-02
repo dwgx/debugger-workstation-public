@@ -1022,6 +1022,26 @@ function Invoke-Mission {
         # Without this the loop could only express EVIDENCE, so a packed binary would have been
         # decompiled anyway and the only trace would be a note nobody reads.
         if ("$($cap.invoke.gate_role)" -eq 'precondition' -and -not $declaredOk) {
+            # NOT MY SUBJECT IS NOT A GATED-SHUT TARGET. A precondition may exit a code the
+            # registry lists in invoke.skip_exits, meaning "I am not the right instrument for this
+            # file" rather than "I checked and you must not proceed". The two were
+            # indistinguishable, and the cost was concrete: native.pe.packer refused an APK with
+            # the same exit 2 it uses for a missing diec, the loop read that as the target being
+            # gated shut, and every downstream round was skipped -- including mobile.apk.static,
+            # which analyses that APK correctly. A gate that blocks on a file it does not
+            # understand is not a gate; it is a wall, and it walls off the very capabilities that
+            # do understand the file. Nothing about the PACKED case is relaxed: a packed PE exits
+            # 0 with ok:false, and that still breaks the loop.
+            $skipExits = @($cap.invoke.skip_exits)
+            if ($skipExits -and ($skipExits -contains $rc)) {
+                Say ''
+                Say "  PRECONDITION NOT APPLICABLE: $($step.id) -- this target is not its subject (exit $rc)."
+                Say "    Not a refusal of the target, so downstream rounds still run."
+                $trace += [ordered]@{ round = $round; capability = $step.id
+                                      event = 'precondition_not_applicable'; exit = $rc
+                                      blocks = 'nothing' }
+                continue
+            }
             $preconditionBlock = $step.id
             Say ''
             Say "  PRECONDITION FAILED: $($step.id) -- every remaining round is SKIPPED, not attempted."
@@ -1040,6 +1060,25 @@ function Invoke-Mission {
     $verdict = Get-Verdict -Claim $Claim -QuestionType $qt -Evidence $evidence -Registry $reg -DischargedIn $Discharged
 
     # --- scope guard --------------------------------------------------------------
+            # NOT MY SUBJECT IS NOT A GATED-SHUT TARGET. A precondition can now exit a code the
+            # registry lists in invoke.skip_exits, meaning "I am not the right instrument for this
+            # file" rather than "I checked and you must not proceed". The two used to be
+            # indistinguishable and the cost was concrete: native.pe.packer refused an APK with
+            # the same exit 2 it uses for a missing diec, the loop read that as the target being
+            # gated shut, and every downstream round was skipped -- including
+            # mobile.apk.static, which analyses that APK correctly. A gate that blocks on a file
+            # it does not understand is not a gate; it is a wall, and it walls off the very
+            # capabilities that do understand the file.
+            $skipExits = @($cap.invoke.skip_exits)
+            if ($skipExits -and ($skipExits -contains $rc)) {
+                Say ''
+                Say "  PRECONDITION NOT APPLICABLE: $($step.id) -- this target is not its subject (exit $rc)."
+                Say "    That is not a refusal of the target, so downstream rounds still run."
+                $trace += [ordered]@{ round = $round; capability = $step.id
+                                      event = 'precondition_not_applicable'; exit = $rc
+                                      blocks = 'nothing' }
+                continue
+            }
     $after = Get-TreeHash $RepoRoot
     $scopeOk = ($after -eq $baseline)
     if (-not $scopeOk) {

@@ -60,7 +60,19 @@ $bytes = [System.IO.File]::ReadAllBytes((Resolve-Path -LiteralPath $Target).Path
 # with; Die will happily score a file without it, which is the whole reason this line exists.
 if ($bytes.Length -lt 2 -or $bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) {
     $magic = if ($bytes.Length -ge 2) { '{0:X2}{1:X2}' -f $bytes[0], $bytes[1] } else { 'too-short' }
-    Refuse 2 "not a PE: first two bytes are $magic, expected 4D5A ('MZ'). Die would have scored this anyway and said 'not packed'." @{ first_bytes = $magic; size = $bytes.Length }
+    # EXIT 3 MEANS "NOT MY SUBJECT", AND IT IS A NEW CODE FOR A REASON. This refusal used to be
+    # exit 2 -- the same code as "diec.exe not found" and "diec produced no parseable output" --
+    # three unrelated situations sharing one number. That mattered because mission.ps1 treats a
+    # PRECONDITION's failure as "this target is gated shut, skip everything downstream", so a
+    # mission aimed at an APK was told its target was unsafe to analyse when the truth was that a
+    # PE packer gate had nothing to say about an APK. Measured: aimed at mobile-lab/artifacts/
+    # mobilelab.apk this gate refused with exit 2 and the mission stopped after round 1, with
+    # mobile.apk.static -- which analyses that APK perfectly well, verified exit 0 -- never run.
+    #
+    # 3 is safe to act on differently because it is unambiguous: a genuinely PACKED PE exits 0
+    # with ok:false, and that path is untouched. Nothing about the packed case is relaxed; only
+    # "I am not the right instrument for this file" is now distinguishable from "I could not run".
+    Refuse 3 "not a PE: first two bytes are $magic, expected 4D5A ('MZ'). Die would have scored this anyway and said 'not packed'." @{ first_bytes = $magic; size = $bytes.Length; not_my_subject = $true }
 }
 
 # Die writes its result to stdout and its noise to stderr; a stderr line here is NOT a failure.

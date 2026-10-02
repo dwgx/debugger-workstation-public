@@ -1072,7 +1072,8 @@
           "manifest": "mobile.manifest.summary",
           "pinning": "mobile.tls.pinning"
         },
-        "note": "P7: this entry had a probe and no invoke, so it could never take arguments or return a typed fact. The entry point is real and takes exactly this shape -- analyze.mjs's own usage line is 'node tools/analyze.mjs <apk> [--json]' (:663) and --json prints the whole report object whose root keys include `manifest` (:393) and `pinning` (:581), so both fact_map bindings resolve against fields the tool really emits. argv is an array and is never joined."
+        "note": "AN APK IS A PATH, SO THIS WAS ALWAYS TARGET-SCOPED. Measured against a PE it refuses with 'not a ZIP: no end-of-central-directory record' and exits 3 -- correctly. Measured against the in-tree mobile-lab/artifacts/mobilelab.apk it exits 0 and answers.\n\nThe history is the lesson. This entry was ROUTED 22 TIMES across the mission artifacts on E: and succeeded ZERO times, and nobody noticed for several turns because a capability that consistently fails looks like an instrument that is simply hard, not one that has never been aimed correctly. A capability that fails on every single attempt should be read as a targeting question before a capability question.",
+        "fact_map_note": "Measured, not guessed. Against mobile-lab/artifacts/mobilelab.apk the analyser emits {schema:'mobile-lab/analysis@1', input, manifest, resources, indicators, dex, native, jni, pinning, strings, findings, limits, verdict} on stdout and exits 0. The entry declared mobile.manifest.summary and mobile.tls.pinning and forwarded NEITHER: its fact_map was absent, so even when the round succeeded it produced no facts and could never form a chain."
       },
       "negative_control": {
         "id": "mobile.apk.wrong_decoder",
@@ -2734,10 +2735,10 @@
       "negative_control": {
         "id": "native.pe.packer.non_pe_refused",
         "command": "powershell -NoProfile -ExecutionPolicy Bypass -File headless-lab\\tools\\triage-packer.ps1 -Target README.md",
-        "expect_exit": 2,
-        "expect_output": "not a PE: first two bytes are 2320",
-        "expect_output_note": "THE CONTROL IS THE REFUSAL, and it is the one this capability most needs. The defect being fixed is an instrument that returns a confident clean verdict for input it cannot read, so the control must fail loudly instead. Measured: TRUE_EXIT=2 with ok:false and the offending bytes named, against TRUE_EXIT=0 with die_verdict 'not packed' for the same file one layer down. The point is that the refusal is DISTINGUISHABLE from a clean result -- an operator who gets ok:false knows the check did not run, which is the opposite of what raw diec.exe told them.",
-        "measured": "README.md: {ok:false, exit:2, error:\"not a PE: first two bytes are 2320, expected 4D5A ('MZ'). Die would have scored this anyway and said 'not packed'.\", first_bytes:'2320', size:7354}, TRUE_EXIT=2. Raw diec.exe -e README.md: 'Total 5.26547: not packed', exit 0."
+        "expect_exit": 3,
+        "expect_output": "not a PE",
+        "expect_output_note": "The refusal must still name the FIRST TWO BYTES, because a packer gate that said only 'not a PE' would pass on a truncated or unreadable file. That is the same property the first draft of this control was missing.",
+        "measured": "measured 2026-10-02, exit code CORRECTED from 2 to 3. README.md: {ok:false, exit:3, error:\"not a PE: first two bytes are 2320, expected 4D5A ('MZ')\", first_bytes:'2320', size:7354, not_my_subject:true}, TRUE_EXIT=3.\n\nThe control is unchanged in MEANING and changed in EXIT CODE, which is exactly the point: the property being controlled is 'this gate refuses a file that is not a PE', and the new code says so to the orchestrator as well as to a reader. Nothing else about the gate moved -- a packed PE still exits 0 with ok:false and still blocks, and a missing diec.exe still exits 2 and still blocks."
       },
       "provenance": {
         "source": "measured on this station 2026-10-02 by the agent that added this entry and wrote headless-lab/tools/triage-packer.ps1 the same hour",
@@ -2766,7 +2767,11 @@
         },
         "gate_role": "precondition",
         "note": "THE FIRST CAPABILITY WITH invoke.gate_role = 'precondition', and the reason it exists is that the loop could previously express EVIDENCE only. skills/debugger-workstation/references/triage.md says to detect a packer BEFORE decompiling and never to analyse a stub, but with no gate_role that was advice: a packed target would have been decompiled anyway and the only trace would have been a note in a document. Now the packer check runs as a round whose `ok` decides whether the decompile round happens at all, and a failure is recorded as precondition_failed and NAMES what it blocked.",
-        "fact_map_note": "Corrected by independent verification 2026-10-02. The old map had two defects and neither was caught by any rule: die_verdict pointed at pe.packer_verdict, which this entry never declared, and the boolean packed -> pe.packed was absent entirely, so the precondition's own verdict was dropped on the floor. A fact_map that forwards nothing is a capability that cannot hand its answer on."
+        "fact_map_note": "Corrected by independent verification 2026-10-02. The old map had two defects and neither was caught by any rule: die_verdict pointed at pe.packer_verdict, which this entry never declared, and the boolean packed -> pe.packed was absent entirely, so the precondition's own verdict was dropped on the floor. A fact_map that forwards nothing is a capability that cannot hand its answer on.",
+        "skip_exits": [
+          3
+        ],
+        "skip_exits_note": "EXIT 3 IS 'NOT MY SUBJECT' AND IS DISTINGUISHABLE FROM EVERY FAILURE. Measured 2026-10-02: this refusal used to be exit 2, shared with 'diec.exe not found' and 'diec produced no parseable output' -- three unrelated situations on one number. mission.ps1 treats a PRECONDITION's failure as 'the target is gated shut, skip everything downstream', so a mission aimed at an APK was halted after round 1 with mobile.apk.static never running, even though that capability analyses the APK correctly (verified exit 0 on mobile-lab/artifacts/mobilelab.apk).\n\nThe packed path is deliberately untouched: a genuinely packed PE exits 0 with ok:false, so it still breaks the loop and still blocks every downstream round. Exit 2, an instrument failure, also still blocks -- which is the conservative behaviour and the reason the distinction had to be made in the TOOL rather than in the orchestrator: two different causes shared one code, and only the tool knows which cause it hit."
       }
     },
     {
