@@ -625,6 +625,14 @@ function Refuse($code, $message, $detail) {
     if ($detail) { Write-Host "[mission]   $detail" -ForegroundColor Red }
     throw [MissionRefusal]::new($code, $message, $detail)
 }
+function Get-Sha256Hex {
+    param([string]$Path)
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        ([BitConverter]::ToString($sha.ComputeHash([IO.File]::ReadAllBytes($Path))) -replace '-','')
+    } finally { $sha.Dispose() }
+}
+
 function Invoke-Gate {
     param([string]$gateAction, [hashtable]$extra)
     $gate = Join-Path $RepoRoot 'scripts\gate.ps1'
@@ -765,6 +773,26 @@ function Invoke-Mission {
     }
     $grant = $g.obj.grant
     Say "  grant         $($grant.grant_sha256.Substring(0,16))…  $($g.obj.allowed_count) capabilities allowed"
+
+    # A PLAN IS A CLAIM ABOUT WORLD STATE AT ONE INSTANT, AND NOTHING HERE BOUND IT.
+    # Adopted from Terraform's plan/apply split: `plan -out=FILE` saves a speculative plan and
+    # `apply FILE` refuses a stale one rather than warning about it, because the vendor's own
+    # words are that "other changes made to the target system in the meantime might cause the
+    # final effect ... to be different than what an earlier speculative plan indicated". A grant
+    # hash was already recorded and it is not enough: it says the GRANT did not change, while the
+    # authorisation decision was computed FROM the registry, and the registry is a plain file any
+    # sibling agent or the Owner can edit mid-flight.
+    #
+    # So the registry is hashed at plan time and re-hashed before every round. A change is a
+    # REFUSAL, not a warning -- the alternative is executing an authorisation decision computed
+    # from a registry that no longer exists, which is reviewing a change and having the code
+    # edited underneath you.
+    # .NET, NOT Get-FileHash. gate.ps1 already hit this exact trap and wrote the reason down at
+    # :173-176: that cmdlet lives in a module which is not loaded in this context, and it fails
+    # with "CommandNotFoundException" under a name that LOOKS like a built-in. Repeating the
+    # mistake because the obvious spelling was the wrong one cost one mission run.
+    $regHash = Get-Sha256Hex (Join-Path $PSScriptRoot '..\manifests\capabilities.json')
+    Say "  registry      $($regHash.Substring(0,16))…  bound into this plan; a mid-flight edit is refused"
     $planned = @(Resolve-PlanSteps -Route $route -Allowed @($grant.allowed) -Registry $reg -Seeded @($SeedFact))
     $runnable = @($planned | Where-Object { $_.state -eq 'planned' }).Count
 
@@ -867,10 +895,28 @@ function Invoke-Mission {
     $trace = @()
     $round = 0
 
+    $regStale = $false
     foreach ($step in $planned) {
         if ($round -ge $MaxRounds) { break }
         if ($step.state -ne 'planned') { continue }
         $round++
+
+        # REGISTRY RE-CHECK, EVERY ROUND -- and this one REFUSES where the grant check HALTS.
+        # The grant can be unaltered while the registry it was computed FROM is edited, and the
+        # authorisation decision then rests on a file that no longer exists. Terraform treats a
+        # stale plan the same way: the saved artefact is a claim about world state at one instant,
+        # and the answer to "the world moved" is to discard and re-plan, never "carry on anyway".
+        $nowReg = Get-Sha256Hex (Join-Path $PSScriptRoot '..\manifests\capabilities.json')
+        if ($nowReg -ne $regHash) {
+            Say "  round $round  REFUSED: manifests/capabilities.json changed mid-mission."
+            Say "            planned against $($regHash.Substring(0,16))… and it is now $($nowReg.Substring(0,16))…"
+            Say "            every remaining step was routed from the old registry. Re-plan."
+            $trace += [ordered]@{ round = $round; capability = $step.id
+                event = 'registry_changed_midflight'
+                planned_against = $regHash; found = $nowReg; blocks = 'every remaining round' }
+            $regStale = $true
+            break
+        }
 
         # GRANT RE-CHECK, EVERY ROUND. Not at intake. This is the invariant.
         $gc = Invoke-Gate 'Check' @{ '-CaseDir' = $caseDir; '-Capability' = $step.id }
@@ -1153,6 +1199,11 @@ function Invoke-Mission {
         question   = [ordered]@{ type = $qt; text = $Question }
         containment = $Containment
         grant_sha256 = $grant.grant_sha256
+        # The plan is bound to the registry it was routed from. If that file changed
+        # mid-mission the remaining steps are stale by construction, and the artifact has
+        # to say so rather than leave a reader to assume the plan still holds.
+        registry_sha256 = $regHash
+        registry_stale = $regStale
         rounds     = $round
         chain      = @($trace | Where-Object { $_.capability } | ForEach-Object { [ordered]@{ round = $_.round; capability = $_.capability; ok = $_.ok; facts = ($_.facts | ForEach-Object { $_.key }) } })
         verdict    = $verdict
