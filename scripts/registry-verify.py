@@ -912,13 +912,46 @@ def r18_evidence_family_agrees(reg, doc):
     return out
 
 
+def r22_ungrantable_needs_a_reason(reg, doc):
+    """A capability that declares itself outside every grant must say why.
+
+    `gate.Get-GrantableIds` grants a capability only where `requires_verdict` is true --
+    its docstring reads "same lane, THE GRANT IS THE VERDICT, AND state observed". So
+    `requires_verdict: false` does not mean "this one is safe"; it means **a grant does not
+    authorise this at all**, and no mission can ever run it.
+
+    Measured 2026-10-02: three capabilities carry that flag -- crypto.jose.parse,
+    re.corpus.solve and fuzz.differential.parse -- and **none had a reason recorded**. One of
+    them is the sole target-scoped candidate for Q5.vuln-shape, so an entire axis is dark
+    because of three characters in a JSON field nobody wrote a sentence about.
+
+    This rule deliberately does NOT ask whether the flag should be true. That is an Owner
+    decision, and a validator that could flip a safety marker would be a validator that
+    improves metrics by weakening gates. It asks only that the exclusion be deliberate --
+    an exclusion with no stated reason reads as an oversight, and this registry has learned
+    twice today that an unexamined field is a field that is wrong.
+    """
+    out = []
+    for c in reg:
+        g = c.get("gate") or {}
+        if g.get("requires_verdict") is False:
+            why = str(g.get("requires_verdict_reason") or "").strip()
+            if not why:
+                out.append(f"R22 {c.get('id','?')}: gate.requires_verdict is false, which keeps this "
+                           f"capability outside EVERY grant -- no mission can run it -- and no "
+                           f"requires_verdict_reason is recorded. State why. (Do NOT flip the flag "
+                           f"to make a metric improve: that is an Owner decision, not a fix.)")
+    return out
+
+
 RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r4_fact_types_agree, r5_control_must_fail, r6_reach_needs_escalation, r7_ids,
          r8_reach_must_be_declared, r9_batch_must_account, r10_invoke_must_runnable,
          r11_edge_target_exists, r12_edge_is_reachable, r13_question_types_declared,
          r14_no_island_capability, r15_artifacts_are_bound, r16_placeholders_resolve,
          r17_state_is_evidenced, r18_evidence_family_agrees, r19_probes_distinguish,
-         r20_fact_map_declares, r21_control_command_runnable)
+         r20_fact_map_declares, r21_control_command_runnable,
+         r22_ungrantable_needs_a_reason)
 
 
 # ---------------------------------------------------------------------------- core
@@ -1110,6 +1143,15 @@ def selftest() -> int:
     case("R21 a plan with NO reason is refused",
          lambda b: b[0]["negative_control"].update({"kind": "plan", "plan_reason": ""})
          or b[0]["negative_control"].__setitem__("command", "just do the wrong thing"), "R21")
+    # R22: an exclusion that is not explained reads as an oversight. It does NOT ask whether
+    # the flag should be true -- that is an Owner decision -- only that the exclusion is deliberate.
+    case("R22 ungrantable with no recorded reason",
+         lambda b: b[0]["gate"].update({"requires_verdict": False}), "R22")
+    nocase("R22 ungrantable WITH a reason is accepted",
+           lambda b: b[0]["gate"].update({"requires_verdict": False,
+                                             "requires_verdict_reason": "a grant does not authorise this"}), "R22")
+    nocase("R22 a grantable capability needs no reason",
+           lambda b: b[0]["gate"].update({"requires_verdict": True}), "R22")
     case("R3 missing does_not_prove", lambda b: b[0].__setitem__("does_not_prove", []), "R3")
     # --- per-half controls -------------------------------------------------------
     # R3 and R5 each have two independent halves, and deleting EITHER half alone

@@ -14,7 +14,8 @@
       "capability_count": 24,
       "note": "The validator pins this count. A capability may only leave capabilities[] by appearing in retired[] with a reason, because deleting an island used to make the registry validate CLEANER rather than louder.",
       "note_unused_fact_types": "MEASURED 2026-10-02, and it corrects a natural misreading. A query for declared fact types produced by no capability returns four: apk, pcap, token, evidence_source. The first three look like dead declarations, and it is tempting to conclude the three matching capabilities (mobile.apk.static, net.pcap.analyse, crypto.jose.parse) do not declare what they produce. They DO -- all three declare their facts, and all three now carry an invoke. The types are unused because the capabilities declaring them have never RUN IN A MISSION, not because their output is unspecified. evidence_source is a different thing entirely: it is a capability attribute used to count independent instruments, not an artifact any capability emits, so it must never be counted here.",
-      "note_q5_unreachable": "MEASURED END TO END 2026-10-02, and it is a shape problem rather than a missing tool. Q5.vuln-shape has no reachable instrument. Its only target-scoped candidate, fuzz.differential.parse, declares two seed inputs whose producers are crypto.jose.parse and forensics.memory.artefact -- and both producers are observed and correctly wired. Verified on the real binaries rather than by reading: crypto.jose.parse invokes crypto-lab/tools/analyze.mjs --file {target} --json, and pointed at a PE it refuses with 'not a compact JWS: expected 3 dot-separated segments, got 2' and EXITS 3, which its own success_when already documents as bad input. Pointed at a real compact JWS it exits 0. forensics.memory.artefact invokes forensics-lab/tools/analyze.mjs --target {target}.\n\nSo neither producer is broken. They refuse correctly when handed the wrong KIND of thing, and that is the whole problem: mission.ps1 has one -Target, and this axis needs three different kinds of subject -- a JOSE token, a forensic memory image, and a lab target. Q5 is not dark because a tool is missing. It is dark because the mission can name exactly one artefact and Q5 needs three heterogeneous ones.\n\nTwo refutations are kept because both looked right first. First: 'these labs build their own fixtures, so no extra parameter is needed' is true of the LOOPS -- crypto-lab/tools/loop.mjs reads only --json and generates its own tokens, and forensics-lab/tools/loop.mjs:38 hardcodes const TARGET = path.join(WORK, 'target') -- but the invoke blocks point at the inner ANALYSERS, which do take an external subject. The loop and the instrument are different things and a mission calls the instrument. Second: 'fuzz.differential.parse wants two artefacts, so it needs a peer selector' is also true and also not the blocker, because its two missing inputs are not two paths; they are a token and a structure produced upstream.\n\nWhat would light the axis is now stated precisely: a mission able to name MORE THAN ONE artefact with HETEROGENEOUS types. A second path would not help -- native.function.match is the only capability that wants two of the same thing and it is not on this axis. Naming the shape exactly is what separates this from the speculative -Artefact parameter considered and correctly rejected earlier, when the premise had not been measured.\n\nThe misattribution risk was checked and does not exist: a PE substituted into the JOSE analyser exits 3, so a mission records a loud failure rather than crediting the lab's own token to the mission's target."
+      "note_q5_unreachable": "MEASURED END TO END 2026-10-02, and it is a shape problem rather than a missing tool. Q5.vuln-shape has no reachable instrument. Its only target-scoped candidate, fuzz.differential.parse, declares two seed inputs whose producers are crypto.jose.parse and forensics.memory.artefact -- and both producers are observed and correctly wired. Verified on the real binaries rather than by reading: crypto.jose.parse invokes crypto-lab/tools/analyze.mjs --file {target} --json, and pointed at a PE it refuses with 'not a compact JWS: expected 3 dot-separated segments, got 2' and EXITS 3, which its own success_when already documents as bad input. Pointed at a real compact JWS it exits 0. forensics.memory.artefact invokes forensics-lab/tools/analyze.mjs --target {target}.\n\nSo neither producer is broken. They refuse correctly when handed the wrong KIND of thing, and that is the whole problem: mission.ps1 has one -Target, and this axis needs three different kinds of subject -- a JOSE token, a forensic memory image, and a lab target. Q5 is not dark because a tool is missing. It is dark because the mission can name exactly one artefact and Q5 needs three heterogeneous ones.\n\nTwo refutations are kept because both looked right first. First: 'these labs build their own fixtures, so no extra parameter is needed' is true of the LOOPS -- crypto-lab/tools/loop.mjs reads only --json and generates its own tokens, and forensics-lab/tools/loop.mjs:38 hardcodes const TARGET = path.join(WORK, 'target') -- but the invoke blocks point at the inner ANALYSERS, which do take an external subject. The loop and the instrument are different things and a mission calls the instrument. Second: 'fuzz.differential.parse wants two artefacts, so it needs a peer selector' is also true and also not the blocker, because its two missing inputs are not two paths; they are a token and a structure produced upstream.\n\nWhat would light the axis is now stated precisely: a mission able to name MORE THAN ONE artefact with HETEROGENEOUS types. A second path would not help -- native.function.match is the only capability that wants two of the same thing and it is not on this axis. Naming the shape exactly is what separates this from the speculative -Artefact parameter considered and correctly rejected earlier, when the premise had not been measured.\n\nThe misattribution risk was checked and does not exist: a PE substituted into the JOSE analyser exits 3, so a mission records a loud failure rather than crediting the lab's own token to the mission's target.",
+      "note_q5_three_reasons": "Q5.vuln-shape is dark for THREE INDEPENDENT REASONS, and the third is the one that matters. (1) Its only target-scoped candidate, fuzz.differential.parse, declares its subject a lab_target. (2) Its two seed producers are lab analysers whose subjects are lab-built scenario directories, verified by measurement rather than by reading. (3) THAT CANDIDATE DECLARES ITSELF NOT COVERABLE BY A GRANT -- gate.requires_verdict is false, and gate.Get-GrantableIds grants only where it is true. Measured: crypto.jose.parse hit exactly this wall, refused as skipped_not_in_grant with a correct invoke and a correctly seeded fact.\n\nReason (3) is not an engineering problem and must not be solved as one. Flipping the flag would be weakening a safety marker to improve a metric, which is the error this project has refused all session. It is recorded as an OWNER DECISION on the three capabilities carrying it -- crypto.jose.parse, re.corpus.solve and fuzz.differential.parse -- and none of them had a reason recorded until now, which is itself the defect R22 closes: a capability can declare itself unrunnable by a grant without saying why."
     },
     "retired": [],
     "evidence_families": {
@@ -561,7 +562,9 @@
       "gate": {
         "lane": "debug",
         "requires_verdict": false,
-        "escalation_class": "none"
+        "escalation_class": "none",
+        "requires_verdict_reason": "DECLARED NOT COVERABLE BY A GRANT, AND THE REASON IS RECORDED HERE BECAUSE NONE WAS. gate.Get-GrantableIds filters on requires_verdict being true -- its own docstring says 'same lane, THE GRANT IS THE VERDICT, AND state observed' -- so False means a grant does not authorise this capability at all, and no mission can ever run it. Measured 2026-10-02: with {input.token} correctly bound and -SeedFact supplying a real compact JWS, Q6.crypto still refuses with 'route 0 of 2 routed capability/capabilities are invocable', crypto.jose.parse [skipped_not_in_grant]. The binding works; the grant is what blocks it.\n\nThis is deliberately NOT being flipped to true here. Turning a safety marker on so a metric improves is the exact error this project keeps refusing, and 'the axis is dark' is not an argument for weakening a gate. It is an OWNER DECISION: either the capability earns a grant, or it stays outside one.",
+        "owner_decision_required": true
       },
       "probe": {
         "command": "node crypto-lab/tools/loop.mjs",
@@ -578,8 +581,9 @@
         "runner": "node",
         "argv": [
           "crypto-lab/tools/analyze.mjs",
-          "--file",
-          "{target}",
+          "--token",
+          "{input.token}",
+          "--quiet",
           "--json"
         ],
         "stdout": "json",
@@ -587,7 +591,7 @@
         "fact_map": {
           "claims": "crypto.jose.claims"
         },
-        "note": "P7: probe-only until now. The entry point is real -- analyze.mjs's usage (:654-656) is '--token <jws> | --file <path> | --stdin', and --json prints the result object (:618-640) whose root keys include ok, algorithm, header, claims, weaknessClasses, findings, summary. `claims` is the field this capability's own fact describes, so the binding is to a key the tool really emits. --file rather than --token because argv is positional-safe and the target path is attacker-influenced by definition."
+        "note": "REBOUND 2026-10-02. It used to be ['crypto-lab/tools/analyze.mjs', '--file', '{target}', '--json'], which passed the mission's single artefact to a flag whose subject is a TOKEN. That cannot succeed: measured, pointing it at a PE refuses with 'not a compact JWS: expected 3 dot-separated segments, got 2' and exits 3. The entry always DECLARED a token input -- it simply never bound it, so the declaration and the invoke disagreed and the disagreement was invisible because nothing static compares an input name against a placeholder.\n\nIt now binds {input.token}, which makes the token a HARD edge: a mission satisfies it either with -SeedFact \"token=<jwt>\" or with an earlier round that produces it. Q6.crypto has been dark in every measurement taken so far -- 0 of 1 declared callable, never worked -- and this is the first wiring that could plausibly light it."
       },
       "negative_control": {
         "id": "crypto.jose.alg_confusion",
@@ -603,7 +607,8 @@
         "record": "crypto-lab/README.md"
       },
       "evidence_source": "structural-parser",
-      "evidence_source_note": "token structure decoded without acceptance"
+      "evidence_source_note": "token structure decoded without acceptance",
+      "composition_note": "THE SUBJECT IS A TOKEN, AND THE REGISTRY NOW SAYS SO IN THE PLACE THAT MATTERS. crypto.jose.parse is one of the five capabilities whose subject is not a path, which is why Q6 stayed dark while the entry read 'observed': observed means a probe ran, and the probe is crypto-lab/tools/loop.mjs, which generates its own tokens. Routing it requires the caller to NAME a token, which is what -SeedFact and the {input.token} binding together provide.\n\nMeasured 2026-10-02, the token path works: analyze.mjs --token <compact JWS> --quiet --json returns {ok:true, schema:'crypto-lab/analysis@1', algorithm:{alg:'none', family:'none (unsecured JWS)'}, header, claims, expiry, weaknessClasses, findings, summary} and exits 0. The top-level 'claims' key is what invoke.fact_map forwards to crypto.jose.claims."
     },
     {
       "id": "net.pcap.analyse",
@@ -1142,7 +1147,9 @@
       "gate": {
         "lane": "debug",
         "requires_verdict": false,
-        "escalation_class": "none"
+        "escalation_class": "none",
+        "requires_verdict_reason": "DECLARED NOT COVERABLE BY A GRANT, AND THE REASON IS RECORDED HERE BECAUSE NONE WAS. gate.Get-GrantableIds filters on requires_verdict being true -- its own docstring says 'same lane, THE GRANT IS THE VERDICT, AND state observed' -- so False means a grant does not authorise this capability at all, and no mission can ever run it. Measured 2026-10-02: with {input.token} correctly bound and -SeedFact supplying a real compact JWS, Q6.crypto still refuses with 'route 0 of 2 routed capability/capabilities are invocable', crypto.jose.parse [skipped_not_in_grant]. The binding works; the grant is what blocks it.\n\nThis is deliberately NOT being flipped to true here. Turning a safety marker on so a metric improves is the exact error this project keeps refusing, and 'the axis is dark' is not an argument for weakening a gate. It is an OWNER DECISION: either the capability earns a grant, or it stays outside one.",
+        "owner_decision_required": true
       },
       "probe": {
         "command": "python crackme-corpus/tools/loop.py",
@@ -1533,7 +1540,9 @@
       "gate": {
         "lane": "debug",
         "requires_verdict": false,
-        "escalation_class": "none"
+        "escalation_class": "none",
+        "requires_verdict_reason": "DECLARED NOT COVERABLE BY A GRANT, AND THE REASON IS RECORDED HERE BECAUSE NONE WAS. gate.Get-GrantableIds filters on requires_verdict being true -- its own docstring says 'same lane, THE GRANT IS THE VERDICT, AND state observed' -- so False means a grant does not authorise this capability at all, and no mission can ever run it. Measured 2026-10-02: with {input.token} correctly bound and -SeedFact supplying a real compact JWS, Q6.crypto still refuses with 'route 0 of 2 routed capability/capabilities are invocable', crypto.jose.parse [skipped_not_in_grant]. The binding works; the grant is what blocks it.\n\nThis is deliberately NOT being flipped to true here. Turning a safety marker on so a metric improves is the exact error this project keeps refusing, and 'the axis is dark' is not an argument for weakening a gate. It is an OWNER DECISION: either the capability earns a grant, or it stays outside one.",
+        "owner_decision_required": true
       },
       "probe": {
         "command": "node fuzz-lab/tools/loop.mjs --budget 40",
