@@ -85,6 +85,7 @@ param(
     [string]$CaseRoot = 'E:\missions',
     [string]$CaseId = '',
     [int]$MaxRounds = 6,
+    [string[]]$SeedFact = @(),
     [string]$Registry = '',
     [switch]$Json
 )
@@ -454,18 +455,29 @@ function Resolve-PlanSteps {
     <#
       The route annotated with what this mission can actually DO about each step: does the
       registry declare an `invoke` block, is the id inside the grant, and can every `{input.x}`
-      slot be filled from a fact some earlier step produces. A step that cannot run is
-      RECORDED with its reason and never absorbed -- "a stage that did not run is an unasked
-      question" -- and the reasons stay distinguishable, because "nothing could serve this
-      question" and "nothing you are permitted to run" are different failures with
-      different fixes.
+      slot be filled from a fact some earlier step produces OR from a fact the caller seeded
+      with -SeedFact. A step that cannot run is RECORDED with its reason and never absorbed --
+      "a stage that did not run is an unasked question" -- and the reasons stay
+      distinguishable, because "nothing could serve this question" and "nothing you are
+      permitted to run" are different failures with different fixes.
+
+      The seeded keys matter here and not only in the loop: the planner decides which steps are
+      runnable BEFORE the fact store exists, so a caller-supplied fact that the planner cannot
+      see would leave its capability permanently skipped. That was the first thing the
+      demonstration caught.
     #>
-    param($Route, [string[]]$Allowed, $Registry)
+    param($Route, [string[]]$Allowed, $Registry, [string[]]$Seeded = @())
 
     $produced = @{}
     foreach ($s in $Route.steps) {
         $c = $Registry.capabilities | Where-Object { $_.id -eq $s.id } | Select-Object -First 1
         foreach ($k in @(Get-CapabilityFacts $c)) { $produced[$k] = $true }
+    }
+    # A caller-supplied fact is available to the planner for the same reason it is available to
+    # the loop. Marked apart in the artifact; treated identically when deciding what can run.
+    foreach ($sd in @($Seeded)) {
+        $sk = ("$sd" -split '=', 2)[0]
+        if ($sk) { $produced[[string]$sk] = $true }
     }
 
     $out = @()
@@ -708,7 +720,7 @@ function Invoke-Mission {
     }
     $grant = $g.obj.grant
     Say "  grant         $($grant.grant_sha256.Substring(0,16))…  $($g.obj.allowed_count) capabilities allowed"
-    $planned = @(Resolve-PlanSteps -Route $route -Allowed @($grant.allowed) -Registry $reg)
+    $planned = @(Resolve-PlanSteps -Route $route -Allowed @($grant.allowed) -Registry $reg -Seeded @($SeedFact))
     $runnable = @($planned | Where-Object { $_.state -eq 'planned' }).Count
 
     Say "  route         $runnable of $(@($route.steps).Count) routed capability/capabilities are invocable under this grant"
@@ -785,6 +797,28 @@ function Invoke-Mission {
     # --- the loop ---------------------------------------------------------------
     $evidence = @()
     $facts = @{}          # typed fact key -> value, so a later round can consume it
+    # CALLER-SEEDED FACTS. The loop names exactly one artefact: -Target. Everything else a
+    # capability consumes has to arrive from an earlier round, which is why the only chains
+    # that run are the ones whose first link reads the target. Measured 2026-10-02: Q5.vuln-shape
+    # has no reachable instrument for precisely this reason -- its chain wants a JOSE token, a
+    # forensic memory image and a lab target, and none of those is the target.
+    #
+    # -SeedFact lets the caller supply facts directly, so a mission can begin with artefacts the
+    # caller already holds. It is deliberately a PURE ADDITION: with no -SeedFact the dictionary
+    # is still empty and every existing code path is untouched, which is the only honest way to
+    # add a parameter to a loop whose 51 selftest controls already pass.
+    #
+    # Seeded facts are recorded in the artifact as caller-supplied, never as measured. A fact
+    # that came from the operator is an input to the reasoning, not a result of it.
+    $seeded = @{}
+    foreach ($s in @($SeedFact)) {
+        $k, $v = "$s" -split '=', 2
+        if ($k -and $null -ne $v) { $facts[[string]$k] = [string]$v; $seeded[[string]$k] = [string]$v }
+    }
+    if ($seeded.Count -gt 0) {
+        Say "  seeded     $($seeded.Count) caller-supplied fact(s): $(($seeded.Keys | Sort-Object) -join ', ')"
+        Say "            an input to the reasoning, not a result of it; marked as such in the artifact"
+    }
     $trace = @()
     $round = 0
 
@@ -1040,6 +1074,13 @@ function Invoke-Mission {
         verdict    = $verdict
         termination = $term
         scope_guard = [ordered]@{ baseline = $baseline.Substring(0,16); after = $after.Substring(0,16); intact = $scopeOk }
+        # Recorded under its own key and never mixed into the measured chain. An artifact that
+        # cannot tell a measured fact from an operator-supplied one is an artifact that will be
+        # read as evidence for a claim nobody measured.
+        caller_supplied_facts = [ordered]@{
+            note = 'Facts the caller passed with -SeedFact. These are INPUTS to this mission, not results. No round produced them and no instrument checked them.'
+            keys = @($seeded.Keys | Sort-Object)
+        }
         stop_note  = [ordered]@{
             note = 'A stage that did not run is an unasked question, not a clean answer -- and it is the one gap that produces no error to notice.'
             not_run = $notRun

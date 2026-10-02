@@ -57,7 +57,15 @@ function Quote-Arg([string]$a) {
 }
 $joined = ($argList | ForEach-Object { Quote-Arg $_ }) -join ' '
 $cmd = "`"$ah`" $joined"
-Write-Host "GHIDRA $cmd" -ForegroundColor DarkGray
+# THIS LINE USED TO BE Write-Host, AND THAT BROKE THE CONTRACT. Write-Host writes to the host,
+# which in a piped context is stdout, so the command echo landed ahead of the summary JSON and
+# stdout could never be parsed: measured, piping this script's stdout into json.load fails with
+# 'Expecting value: line 1 column 1'. The entry declares invoke.stdout = "json", and a mission
+# that honours that parses stdout and records ok=false with no facts -- so the tool SUCCEEDED
+# (exit 0, summary.json with ok:true, 512 functions decompiled) and was recorded as having failed.
+# A working instrument reported as broken is the worst failure mode there is, because it teaches
+# you to distrust the one thing that was right. A log line belongs on stderr, so it goes there.
+[Console]::Error.WriteLine("GHIDRA $cmd")
 $outLog = Join-Path $OutDir 'analyzeHeadless.log'
 if ($Http) {
     $p = Start-Process -FilePath 'cmd.exe' -ArgumentList @('/c', $cmd) -NoNewWindow -PassThru -RedirectStandardOutput $outLog -RedirectStandardError "$outLog.err"

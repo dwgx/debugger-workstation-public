@@ -1700,12 +1700,13 @@
         "stdout": "json",
         "success_when": "summary.json exists and ok == true; the exit code is NOT the signal",
         "fact_map": {
+          "summary": "native.ghidra.summary",
           "outdir": "native.ghidra.outdir"
         },
         "passed": [],
         "note": "argv is an array and is never joined. The success test is declared in words because it cannot be reduced to an exit code -- see envelope.success_when.",
         "placeholder_note": "P2: this was `-OutDir {outdir}`, and mission.ps1 substitutes only {target} and {input.<name>}, so the literal string {outdir} reached the command line and the wrapper created a directory NAMED '{outdir}'. It is now {input.outdir}, which is a declared input, so R16 can prove the substitution exists. The wrapper's own fallback (scripts/ghidra-headless.ps1:26-28) picks %TEMP%\\ghidra-out-<guid> when -OutDir is empty, so an unresolved outdir degrades to a temp dir rather than to a literal-brace path.",
-        "fact_map_note": "P8: native.ghidra.c was bound by no fact_map. It is now bound to `outdir`, which is the field the summary really carries -- ExportDecompile.java:93 writes \"outdir\" into summary.json and the per-function .c files are written beside it (:67)."
+        "fact_map_note": "Corrected TWICE on 2026-10-02. R20 first caught it forwarding outdir to 'native.ghidra.c', a key this entry never declared. Fixing that DROPPED the summary mapping by accident, leaving native.ghidra.summary declared but never forwarded -- and assert-probes could not see it, because a missing mapping only misbehaves when a mission runs. A rule that validates the shape of a thing does not validate that the thing still works; the demonstration run is what caught this one, and it is a reminder that adding a rule is not the same as having run the code."
       },
       "negative_control": {
         "id": "native.ghidra.decompile.not_a_binary",
