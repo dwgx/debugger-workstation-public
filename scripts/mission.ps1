@@ -164,6 +164,17 @@ function Get-ArgvSlots {
     $src = "$($Capability.invoke.consumes_fact)"
     $slots = @()
     foreach ($a in @($Capability.invoke.argv)) {
+        if ("$a" -match '^\{scratch:([A-Za-z0-9_-]+)\}$') {
+            # `{scratch:<name>}` is RUNNER-PROVIDED, added 2026-10-03. It is a directory the
+            # loop creates inside the mission's own case dir, not evidence: nothing produces it
+            # and no round consumes it. It exists because native.ghidra.decompile needed an
+            # output directory, declared one as an input, and so bound a fact nobody produces --
+            # which made the round permanently `skipped_unmet_input`. Its source is itself, so
+            # Resolve-PlanSteps' "is this fact produced?" question does not apply to it; it is
+            # listed with source `runner:scratch` so a reader of the plan can see WHO supplies it.
+            $slots += [ordered]@{ slot = "scratch:$($Matches[1])"; source = 'runner:scratch' }
+            continue
+        }
         if ("$a" -match '\{input\.([^}]+)\}') {
             $name = $Matches[1]
             $slots += [ordered]@{ slot = $name; source = $(if ($src) { $src } else { $name }) }
@@ -530,7 +541,7 @@ function Resolve-PlanSteps {
         $c = $Registry.capabilities | Where-Object { $_.id -eq $s.id } | Select-Object -First 1
         $slots = @(Get-ArgvSlots $c)
         # ABLATE-ANCHOR argv-slot
-        $unresolvedSlots = @($slots | Where-Object { -not $produced.ContainsKey($_.source) })
+        $unresolvedSlots = @($slots | Where-Object { ($_.source -ne 'runner:scratch') -and (-not $produced.ContainsKey($_.source)) })
         $state = 'planned'
         $why = $s.why
         if (-not $c.invoke) {
@@ -937,7 +948,15 @@ function Invoke-Mission {
         foreach ($a in $cap.invoke.argv) {
             $v = $a
             $v = $v -replace '\{target\}', (Resolve-Path -LiteralPath $Target).Path
-            if ($v -match '\{input\.([^}]+)\}') {
+            if ($v -match '^\{scratch:([A-Za-z0-9_-]+)\}$') {
+                # The loop's own directory, created here and named here. Inside the case dir on
+                # purpose: the wrapper ALSO writes a Ghidra project under %TEMP% whatever we do
+                # (measured), but the capability's own OUTPUT belongs to the mission, so the
+                # entry's `write_scope: case_dir` stays true instead of becoming a courtesy.
+                $sd = Join-Path $caseDir ('scratch-' + $Matches[1])
+                if (-not (Test-Path -LiteralPath $sd)) { New-Item -ItemType Directory -Path $sd -Force | Out-Null }
+                $v = $sd
+            } elseif ($v -match '\{input\.([^}]+)\}') {
                 # Resolve the CONSUMED FACT, then apply the declared selector to narrow it.
                 # The produced fact is usually a whole table; binding that array straight into
                 # a placeholder that wants one name is how a chain skips itself. The selector
@@ -2351,18 +2370,38 @@ function Invoke-Selftest {
     } 'routed=False reason=unproduced_required_input'
 
     C 'route: an argv slot nothing produces is VISIBLE in the plan, not run and not hidden' {
-        # The prediction is the loop's own: `Get-ArgvSlots` resolves `{input.x}` exactly the
-        # way the substitution loop does, so a capability whose runner binds a fact no
-        # earlier step publishes is skipped in the PLAN rather than discovered mid-run.
-        # `native.ghidra.decompile` binds `{input.outdir}` and no capability publishes a
-        # fact called `outdir`, so it cannot run -- and that is stated, not absorbed.
+        # The subject is the PLANNER's behaviour, not one entry's data. The first version used
+        # native.ghidra.decompile as its example, which was right until 2026-10-03, when that
+        # entry's unproducible `{input.outdir}` became a runner-provided `{scratch:...}` -- and
+        # the control went red for having lost its example rather than because anything broke.
+        # A control bound to one entry's registry content tests that entry, not the mechanism.
+        # So the unproducible slot is planted here, where it cannot be edited out from under it.
         $reg = Get-Registry
+        foreach ($c in $reg.capabilities) {
+            if ($c.id -eq 'native.ghidra.decompile') {
+                $c.invoke.argv = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
+                    'scripts/ghidra-headless.ps1', '-Sample', '{target}', '-OutDir', '{input.outdir}')
+            }
+        }
         $r = Get-Route -Registry $reg -QuestionType 'Q2.locate'
         $allowAll = @($reg.capabilities | ForEach-Object { $_.id })   # grant must not be the reason
         $steps = @(Resolve-PlanSteps -Route $r -Allowed $allowAll -Registry $reg)
         $gh = @($steps | Where-Object { $_.id -eq 'native.ghidra.decompile' })[0]
         "state=$($gh.state) reason-stated=$("$($gh.why)" -match 'outdir')"
     } 'state=skipped_unmet_input reason-stated=True'
+
+    C 'route: a runner-provided scratch dir is PLANNED, not skipped for want of a producer' {
+        # The other half of the same change. `{scratch:<name>}` is supplied by the loop, so
+        # asking "does an earlier round produce this?" is the wrong question and the planner
+        # must not ask it. Before this existed, native.ghidra.decompile had been callable for a
+        # day and had never run, because it waited for a producer nobody was.
+        $reg = Get-Registry
+        $r = Get-Route -Registry $reg -QuestionType 'Q2.locate'
+        $allowAll = @($reg.capabilities | ForEach-Object { $_.id })
+        $steps = @(Resolve-PlanSteps -Route $r -Allowed $allowAll -Registry $reg)
+        $gh = @($steps | Where-Object { $_.id -eq 'native.ghidra.decompile' })[0]
+        "state=$($gh.state)"
+    } 'state=planned'
 
     C 'route: a capability is in the mission for a STATED reason, and the order is stable' {
         $reg = Get-Registry

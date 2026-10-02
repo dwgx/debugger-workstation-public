@@ -810,13 +810,25 @@ def r16_placeholders_resolve(reg, doc):
                 m = re.fullmatch(r"input\.([A-Za-z0-9_]+)", ph)
                 if m and m.group(1) in declared:
                     continue
+                # `{scratch:<name>}` is the third source, added 2026-10-03: the ORCHESTRATOR
+                # provides it, as a directory it creates inside the mission's own case dir. It
+                # exists because `native.ghidra.decompile` needed an output directory, declared one
+                # as an input, and therefore bound a fact NOBODY produces -- so the round was
+                # permanently `skipped_unmet_input` and the capability could never run. Both
+                # alternative fixes are worse: dropping the placeholder makes the entry's
+                # `write_scope: case_dir` a lie (the wrapper falls back to %TEMP%, measured), and
+                # inventing a producer capability for a directory is new machinery.
+                # A scratch dir is not evidence: nothing produces it, so it must never be typed
+                # as a fact and must never appear in consumes_fact.
+                if re.fullmatch(r"scratch:[A-Za-z0-9_-]+", ph):
+                    continue
                 if ph in passed:
                     continue
                 out.append(f"R16 {c.get('id','?')}: placeholder {{{ph}}} in invoke.argv has "
-                           f"no substitution source. The loop substitutes only {{target}} "
-                           f"and {{input.x}} for a declared input "
-                           f"{sorted(n for n in declared if n)}, so this literal string "
-                           f"would reach the command line verbatim.")
+                           f"no substitution source. The loop substitutes {{target}}, "
+                           f"{{input.x}} for a declared input {sorted(n for n in declared if n)}, "
+                           f"and {{scratch:name}} as a directory it creates in the case dir, so this "
+                           f"literal string would reach the command line verbatim.")
     return out
 
 
