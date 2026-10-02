@@ -2657,7 +2657,7 @@
       ],
       "state": "observed",
       "scope_note": "READ-ONLY on the target file. It reads the DOS magic itself and only then invokes diec.exe, which writes nothing. Corpus binaries only.",
-      "composition_note": "WHY IT IS ENFORCING AN ORDER, NOT ADDING A TOOL. skills/debugger-workstation/references/triage.md already sequences this correctly -- line 10 runs diec.exe first, line 19 says 'entropy high / UPX / Themida | unpack first ... Do not decompile the stub', and line 25 only reaches Ghidra when there is 'PE native, no packer'. The ordering was right and the CHECK WAS NOT. Running the documented command against a file that is not a PE returns 'Total 5.26547: not packed' and exit 0: a markdown file was scored as a clean unpacked binary. So the step that was supposed to send a wrong file back actually waved it through, and a triage gate that always passes is worse than no gate at all. The fix is not a new instrument, it is making the existing instruction refuse.",
+      "composition_note": "THE PACKED ARM NOW EXISTS AND HAS RUN. An inventory audit found UPX 5.2.1 installed and already in this registry's own tool list, and used it to build the packed control this entry had long claimed it could not build. The gate's positive branch has now executed once, on a real UPX-packed target, and behaved as claimed. Detection was always sound; what was missing was any way to PROVE it.",
       "consumes": {
         "inputs": [
           {
@@ -2706,6 +2706,13 @@
             "name": "diec",
             "probe": "Test-Path 'Static-Reversing\\die_win64_portable_3.21_x64\\die\\diec.exe'",
             "expect": "True"
+          },
+          {
+            "name": "upx",
+            "probe": "& \"Unpackers-Game\\upx\\upx-5.2.1-win64\\upx.exe\" -t crackme-corpus\\out\\c01-stringobf.exe",
+            "expect_exit": 2,
+            "expect": "not packed by UPX",
+            "note": "ADDED AS THE PACKED ARM OF THIS CAPABILITY'S OWN CONTROL, not as a peer capability. UPX packing is a TRANSFORM on an input rather than a new question, so wiring it as its own entry would have been a second instance of one family. Inside this entry it closes a hole instead.\n\nMeasured: `upx -t <corpus pe>` prints 'UPX 5.2.1' then 'NotPackedException: not packed by UPX', 'Tested 0 files.', EXIT=2 -- so unlike DiE it gives a USABLE exit code, which is rarer than it should be. The positive arm is equally measured: `upx --best` on the same binary took it from 143872 to 72192 bytes, and triage-packer.ps1 on THAT file returns ok:false with exit 0, which is not in skip_exits [3], so the loop breaks."
           }
         ],
         "install_note": "Detect It Easy 3.21 portable is already under Static-Reversing. No install, no disk cost. One run measured at ~13.5 s cold including engine start."
@@ -2726,7 +2733,7 @@
       "does_not_prove": [
         "THAT THE BINARY IS PROVEN UNPACKED. 'not packed' means no packer SIGNATURE matched. A custom, modified or novel packer matches nothing, and the absence of a signature is not the absence of a packer. This is a green light to look, never proof, and no score improves it.",
         "THAT DIE'S SCORE MEANS ANYTHING AS A THRESHOLD. MEASURED, AND THIS IS THE LESSON. The first draft computed packed as ($score -ge 5.0) with a hand-picked threshold, and the first probe proved it wrong: the binary is emphatically not packed, Die says so, and it scores 6.15091 -- so the threshold reported packed:true and would have blocked EVERY decompilation in the arsenal. The score is now advisory and nothing branches on it. A confident number with no denominator behind it is the same defect as a scanner scoring our own router 100/100 CRITICAL.",
-        "THAT A PACKED BINARY WOULD BE CAUGHT HERE. NOW MEASURED, and the excuse this entry used to give was itself false. It previously read: 'no packer is available on this host to build a packed control -- there is no UPX anywhere'. UPX 5.2.1 has been on this station the whole time, at Unpackers-Game/upx/upx-5.2.1-win64/upx.exe. Measured 2026-10-02: 'upx --best' on a corpus binary took it from 143872 to 72192 bytes, and triage-packer.ps1 on that packed file returns ok:false with exit 0. Since exit 0 is not in skip_exits [3], the loop breaks and downstream rounds are blocked.\n\nSo the packer DETECTION was always sound. What was broken was WHEN IT RAN -- see gates_applies_to_note.",
+        "THAT 'NOT PACKED' MEANS MORE THAN 'NO DIE SIGNATURE MATCHED'. STILL TRUE, BUT NOW TESTABLE BOTH WAYS. DiE's verdict is a signature match, so its negative arm was long unprovable. UPX 5.2.1 was on this station the whole time at Unpackers-Game/upx/upx-5.2.1-win64/upx.exe, so the excuse this entry used to give was false. Measured 2026-10-02: `upx --best` packed a corpus binary from 143872 to 72192 bytes and triage-packer.ps1 reported ok:false on it with exit 0, which breaks the loop; the unpacked original still passes. The POSITIVE branch of this gate has now run.\n\nWhat remains true and must not be confused with that: a custom, modified or novel packer matches no signature, and UPX round-trips only UPX. This capability detects THE PACKERS IT KNOWS.",
         "THAT A CLEAN RESULT PERMITS SKIPPING THE REST OF TRIAGE. It is one gate in a sequence, not a replacement for the entropy and section signals triage.md also lists."
       ],
       "gate": {
