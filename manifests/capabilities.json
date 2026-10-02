@@ -1554,13 +1554,21 @@
               "functions",
               "decompiled"
             ]
+          },
+          {
+            "key": "native.ghidra.outdir",
+            "type": "path_ref",
+            "note": "Where Ghidra wrote its project. REGISTERED BECAUSE THE VERIFIER FOUND A THIRD INSTANCE: fact_map sent outdir to 'native.ghidra.c', a key this entry never declared. The verifier sampled 8 of 20 and still found three -- which is the argument for making R20 mechanical rather than re-auditing by hand."
           }
         ],
         "artifacts": [
           {
             "key": "native.ghidra.c",
             "type": "path_ref",
-            "glob": "*.c"
+            "glob": "*.c",
+            "unbound": {
+              "reason": "UNBOUND, AND THE PREVIOUS 'BOUND' WAS FALSE. R20 forced this entry to admit it. The artifact used to look bound because invoke.fact_map sent outdir to 'native.ghidra.c' -- but this entry never declared that fact key, so the binding pointed at nothing. Independent verification on 2026-10-02 found it; the registry had reported REGISTRY CLEAN throughout. This artifact is written by the Ghidra analyzeHeadless path (scripts/ghidra/ExportDecompile.java:67 writes safeName(name)+'.c'), not by the decompile.mjs this invoke drives -- and P8 measured that decompile.mjs performs NO fs.write at all, its entire output being stdout JSON. So while the Ghidra route can produce it, the capability a mission actually calls cannot, and binding it would promise a file the routed path never writes."
+            }
           }
         ],
         "invalidates_on": [
@@ -1643,8 +1651,7 @@
         "stdout": "json",
         "success_when": "summary.json exists and ok == true; the exit code is NOT the signal",
         "fact_map": {
-          "summary": "native.ghidra.summary",
-          "outdir": "native.ghidra.c"
+          "outdir": "native.ghidra.outdir"
         },
         "passed": [],
         "note": "argv is an array and is never joined. The success test is declared in words because it cannot be reduced to an exit code -- see envelope.success_when.",
@@ -2569,6 +2576,11 @@
             "key": "pe.magic",
             "type": "structure",
             "note": "the first two bytes, read here rather than by Die. Measured on the corpus binary 4D5A; measured on README.md 2320, which is what triggers the refusal."
+          },
+          {
+            "key": "pe.packer_verdict",
+            "type": "string",
+            "note": "DiE's verdict string verbatim, e.g. 'Not packed' or a format name. REGISTERED BECAUSE THE VERIFIER FOUND IT MAPPED-BUT-NOT-DECLARED: the fact_map forwarded die_verdict to 'pe.packer_verdict' while the entry never declared that key, so the verdict was forwarded to nothing. The boolean pe.packed was worse -- it was not in fact_map AT ALL, so the one value the precondition decision actually rests on was never forwarded downstream."
           }
         ]
       },
@@ -2658,11 +2670,13 @@
         "stdout": "json",
         "success_when": "parsed JSON has ok == true, which means Die's own verdict is 'not packed'. A PACKED target returns ok:false and the loop skips every downstream round",
         "fact_map": {
+          "packed": "pe.packed",
           "die_verdict": "pe.packer_verdict",
           "die_score": "pe.die_score"
         },
         "gate_role": "precondition",
-        "note": "THE FIRST CAPABILITY WITH invoke.gate_role = 'precondition', and the reason it exists is that the loop could previously express EVIDENCE only. skills/debugger-workstation/references/triage.md says to detect a packer BEFORE decompiling and never to analyse a stub, but with no gate_role that was advice: a packed target would have been decompiled anyway and the only trace would have been a note in a document. Now the packer check runs as a round whose `ok` decides whether the decompile round happens at all, and a failure is recorded as precondition_failed and NAMES what it blocked."
+        "note": "THE FIRST CAPABILITY WITH invoke.gate_role = 'precondition', and the reason it exists is that the loop could previously express EVIDENCE only. skills/debugger-workstation/references/triage.md says to detect a packer BEFORE decompiling and never to analyse a stub, but with no gate_role that was advice: a packed target would have been decompiled anyway and the only trace would have been a note in a document. Now the packer check runs as a round whose `ok` decides whether the decompile round happens at all, and a failure is recorded as precondition_failed and NAMES what it blocked.",
+        "fact_map_note": "Corrected by independent verification 2026-10-02. The old map had two defects and neither was caught by any rule: die_verdict pointed at pe.packer_verdict, which this entry never declared, and the boolean packed -> pe.packed was absent entirely, so the precondition's own verdict was dropped on the floor. A fact_map that forwards nothing is a capability that cannot hand its answer on."
       }
     },
     {
@@ -2805,8 +2819,8 @@
         "stdout": "json",
         "success_when": "parsed JSON has ok == true AND count > 0 AND the rip_operands array is present; a zero-instruction run is a MAPPING FAILURE and exits 3, never ok",
         "fact_map": {
-          "insns": "native.insn.stream",
-          "rip_operands": "native.insn.rip_operand"
+          "insns": "insn.stream",
+          "rip_operands": "insn.rip_operand"
         },
         "consumes_fact": "native.func.addr",
         "note": "This is the consumer half of the arsenal's first chain that spans TWO evidence FAMILIES. native.ida.list_functions produces native.func.addr as a hex string; this entry consumes that key and hands it to --hex unchanged. The conversion from image-space address to RVA happens INSIDE the wrapper, never in this argv, because R10 exists precisely to refuse commands assembled by string concatenation and because ImageBase differs per binary -- 0x140000000 here -- so a caller computing it would be baking a per-target constant into a shared command.",
@@ -2814,7 +2828,8 @@
           "by_name": "main",
           "element_path": "addr",
           "note": "SELECTED BY NAME, NOT BY POSITION. The first version of this entry used index 1, which I verified by hand was `main` on this binary -- and nothing in the chain checked it. Two instruments agreeing about an address they were both handed by position corroborates the bytes at that address, not the claim. select.by_name fails loudly instead: if no function carries that name the round is SKIPPED and named, rather than falling through to whatever sits at index 1. A gate that picks the wrong thing is worse than one that refuses. The remaining limit is honest: `main` is a registry-side hypothesis about which function the claim is about. It is checked against the analyser's own recovered name, which is the strongest available check without a semantic claim-to-function binding, and that binding is not built."
-        }
+        },
+        "fact_map_note": "Corrected by independent verification 2026-10-02: the values carried a 'native.' prefix the entry's own produces block never used, so both landed on undeclared keys. The rule added alongside is R20."
       }
     },
     {

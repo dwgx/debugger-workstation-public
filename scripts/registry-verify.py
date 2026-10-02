@@ -217,6 +217,37 @@ def r19_probes_distinguish(reg, doc):
     return out
 
 
+def r20_fact_map_declares(reg, doc):
+    """invoke.fact_map must forward to facts the SAME entry declares.
+
+    Found by independent verification on 2026-10-02, which sampled 8 of 20 entries and still
+    found THREE live mismatches. R11 checks the consume side of an edge; nothing had ever
+    checked the produce side of a fact_map. So a capability could declare its facts in
+    `produces`, forward to a key that does not exist, and the registry reported REGISTRY CLEAN.
+
+    The packer case is the one that matters: `die_verdict` went to an undeclared
+    `pe.packer_verdict`, and the boolean `packed` -> `pe.packed` was not in fact_map AT ALL --
+    so the single value the precondition decision rests on was never forwarded to anything.
+    A fact_map that forwards nothing is a capability that cannot hand its answer on, and no
+    amount of a clean registry changes that.
+    """
+    out = []
+    for c in reg:
+        fm = ((c.get("invoke") or {}).get("fact_map")) or {}
+        if not fm:
+            continue
+        declared = {f.get("key") for f in (c.get("produces") or {}).get("facts") or []}
+        missing = {}
+        for src, dst in fm.items():
+            if dst not in declared:
+                missing.setdefault(dst, []).append(src)
+        for dst, srcs in sorted(missing.items()):
+            out.append(f"R20 {c.get('id')}: invoke.fact_map forwards {sorted(srcs)} to "
+                       f"{dst!r}, which this entry does not declare in produces.facts. "
+                       f"Declare it, or forward to a key that exists.")
+    return out
+
+
 def r3_honesty_pair(reg, doc):
     """An entry that claims to work must say what it proves AND what it does not.
 
@@ -829,7 +860,8 @@ RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r8_reach_must_be_declared, r9_batch_must_account, r10_invoke_must_runnable,
          r11_edge_target_exists, r12_edge_is_reachable, r13_question_types_declared,
          r14_no_island_capability, r15_artifacts_are_bound, r16_placeholders_resolve,
-         r17_state_is_evidenced, r18_evidence_family_agrees, r19_probes_distinguish)
+         r17_state_is_evidenced, r18_evidence_family_agrees, r19_probes_distinguish,
+         r20_fact_map_declares)
 
 
 # ---------------------------------------------------------------------------- core
@@ -988,6 +1020,23 @@ def selftest() -> int:
          lambda b: b[1]["probe"].__setitem__("command", b[0]["probe"]["command"]), "R19")
     nocase("R19 distinct probes are accepted",
            lambda b: b[1]["probe"].__setitem__("command", "python other_probe.py"), "R19")
+    # R20: the produce side of a fact_map, which R11 never checked -- it validates the
+    # CONSUME side of an edge only, so three live fact_map mismatches sat behind a clean
+    # registry. The nocase is what catches a rule that merely refuses everything.
+    def _with_fact_map(b, mapping):
+        # The fixture entry may have no invoke at all, so build a LEGAL one: R10 also
+        # demands a runner and a success_when, and a rule under test must not be
+        # shadowed by a different rule refusing the same fixture.
+        inv = b[0].setdefault("invoke", {})
+        inv.setdefault("argv", ["probe_of_this_entry"])
+        inv.setdefault("runner", "python")
+        inv.setdefault("success_when", "exit 0 and stdout parses as JSON")
+        inv["fact_map"] = mapping
+    case("R20 fact_map forwards to an undeclared fact",
+         lambda b: _with_fact_map(b, {"probe_out": "never.declared.by.this.entry"}), "R20")
+    nocase("R20 a fact_map naming declared facts is accepted",
+           lambda b: _with_fact_map(
+               b, {"probe_out": b[0]["produces"]["facts"][0]["key"]}), "R20")
     case("R3 missing does_not_prove", lambda b: b[0].__setitem__("does_not_prove", []), "R3")
     # --- per-half controls -------------------------------------------------------
     # R3 and R5 each have two independent halves, and deleting EITHER half alone
