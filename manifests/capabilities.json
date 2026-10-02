@@ -3816,14 +3816,9 @@
       "produces": {
         "facts": [
           {
-            "key": "pcap.counts",
-            "type": "structure",
-            "note": "packets, bytes_on_wire, captured_bytes, frames_over_snaplen, ipv4, ipv6, tcp, udp, other_proto, distinct_flows, top_ports. Measured across the corpus: dns-basic 4 packets, http-basic 10, odd-port 26, tls-clienthello 14, dns-txt 4."
-          },
-          {
-            "key": "pcap.dns_direction",
-            "type": "verdict",
-            "note": "dns_queries and dns_responses counted from bit 15 of the DNS flags word. Measured: 2 queries and 2 responses on each of dns-basic and dns-txt, 0 and 0 on the other three. A COUNT TAKEN FROM A HEURISTIC, not from dissection: this reader matches on port 53 and reads two bytes. TShark dissects and agrees here, which is what makes the number worth having -- on a capture with a non-standard port or a malformed DNS header, only the dissector would be right."
+            "key": "pcap.dns_query_count",
+            "type": "number",
+            "note": "dns_queries and dns_responses counted from bit 15 of the DNS flags word. Measured: 2 queries and 2 responses on each of dns-basic and dns-txt, 0 and 0 on the other three. A COUNT TAKEN FROM A HEURISTIC, not from dissection: this reader matches on port 53 and reads two bytes. TShark dissects and agrees here, which is what makes the number worth having -- on a capture with a non-standard port or a malformed DNS header, only the dissector would be right. RE-TYPED and RENAMED 2026-10-03. The old name said direction and the old type said verdict; the emitted value is an INTEGER COUNT: measured live, dns_queries = 2 and dns_responses = 2 on dns-basic.pcap, and pcap_reader.py counts them flat (dns_queries at :68, :123, :144, :166). A verdict is one of confirmed/likely/speculative/unresolved/refused and an integer count is none of those, so the fact was claiming an evidence class it could never carry. The packet counts this entry used to publish as `pcap.counts` are DELETED rather than retyped: fact_map bound them to a stdout key `counts` that pcap_reader.py never emits -- measured by running it, the emitted keys are bytes_on_wire, captured_bytes, distinct_flows, dns_queries, dns_responses, exit, file, frames_over_snaplen, ipv4, ipv6, limits, ok, other_proto, packets, pcap, tcp, top_ports, udp -- so the fact was unreachable, and a fact nobody can produce is worse than no fact. The flat counter list is preserved here as what the emitter actually gives."
           }
         ]
       },
@@ -3903,8 +3898,7 @@
         "stdout": "json",
         "success_when": "parsed JSON with ok == true. A non-pcap is refused with exit 2 and a named magic.",
         "fact_map": {
-          "counts": "pcap.counts",
-          "dns_queries": "pcap.dns_direction"
+          "dns_queries": "pcap.dns_query_count"
         }
       },
       "root_reason": "A genuine root: it is handed a capture path and answers a question about its structure, and nothing upstream produces a packet count. Its subject is the same file net.pcap.analyse reads, but the fact comes from a different implementation, which is exactly why there is no typed edge to it."
