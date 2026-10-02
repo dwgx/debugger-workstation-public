@@ -27,8 +27,28 @@ A portable reverse-engineering / security-analysis / debugging / unpacking / mob
 - This repo ships: the in-tree MCP router (`mcp/debugger-router`), wrapper scripts (`mcp/bin`), templates, manifests, and docs.
 - See `README.md` and `DISCLAIMER.md`.
 
----
+### This station is one half of a two-tree system — read this before planning anything
 
+**This tree is `debugger-workstation`. It is not the project.** The project is one capability
+system split across two git trees with one owner, and neither tree is complete alone:
+
+| | This tree (`debugger-workstation`) | `<private-tree>` |
+|---|---|---|
+| Owns | *with what* — tools, router, registry, mission loop, verdict gates | *why we may* — charter, policy, wiki, dossier, research |
+
+- **North Star, verbatim** (`<private-tree>\wiki\CHARTER-ARSENAL.md:15`):
+  *every capability this project claims, one command proves it runs — and the proof is written
+  down where the next window can re-run it.*
+- **The coupling is mechanical, not editorial**: `scripts/doc-facts.py` validates wiki prose
+  numbers against `manifests/capabilities.json` **in this tree**. Editing one side turns the
+  other red until both are fixed. The tree wins — re-measure, do not edit the number.
+- **Before a capability mission, read** `<private-tree>\wiki\methods\START.md` (read order)
+  and `<private-tree>\AGENTS.md` (the execution contract and the red lines). They bind
+  station design.
+- **An agent booting from this file alone will not find the charter, the gate, or the bounty
+  lane.** That is why this subsection exists. Measured gap recorded 2026-10-02.
+
+---
 ## 1. Clone owner (this git tree)
 
 This repository is a **reference skeleton**. The person at the keyboard of **this clone** is the owner. They already have (or will have) their own tools, editors, and prompts. Do not assume the template author's machine, paths, or user-global MCP.

@@ -26,8 +26,27 @@
 - 本仓库自带：MCP 路由（`mcp/debugger-router`）、包装脚本（`mcp/bin`）、模板、清单、文档。
 - 见 `README.zh-CN.md` 与 `DISCLAIMER.zh-CN.md`。
 
----
+### 这台工作站只是两棵树之一 —— 动手规划之前先读这段
 
+**这棵是 `debugger-workstation`。它不是项目本身。** 项目是一个能力系统，拆在两棵 git 树上、
+同一个主人，两棵都不完整：
+
+| | 这棵树（`debugger-workstation`） | `<private-tree>` |
+|---|---|---|
+| 负责 | *拿什么做* —— 工具、路由、注册表、任务循环、裁决门 | *凭什么能做* —— 章程、策略、wiki、档案、研究 |
+
+- **北极星，原文**（`<private-tree>\wiki\CHARTER-ARSENAL.md:15`）：
+  *every capability this project claims, one command proves it runs — and the proof is written
+  down where the next window can re-run it.*
+- **耦合是机械的，不是文字上的**：`scripts/doc-facts.py` 用**这棵树**里的
+  `manifests/capabilities.json` 去验 wiki 正文里的数字。改一边，另一边就红，直到两边都改对。
+  树说了算 —— 重新量，不要去改那个数字。
+- **接能力类任务之前先读** `<private-tree>\wiki\methods\START.md`（阅读顺序）
+  和 `<private-tree>\AGENTS.md`（执行契约与红线）。它们约束工作站的计。
+- **只读这份文件启动的 agent 找不到章程、找不到门、也找不到 bounty 通道。**
+  这段小节就是为了补这个缺口。缺口实测于 2026-10-02。
+
+---
 ## 1. 克隆主人（就是这棵 git 树）
 
 本仓库是**参考骨架**。坐在**本 clone** 键盘前的人是主人。他们已有（或将有）自己的工具、编辑器和提示词。不要假设模板作者的机器、路径或用户全局 MCP。
