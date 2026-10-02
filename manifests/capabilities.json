@@ -179,6 +179,44 @@
         "http:POST /config"
       ],
       "gate_must_not_delegate_why": "Measured on this host, not read: on a worker started WITHOUT --unsafe (py_eval absent from tools/list), one unauthenticated loopback form POST -- POST /config with apply_profile=1&profile_text=py_eval -- made py_eval callable and it returned 2. http.py:93 snapshots ORIGINAL_TOOLS at import time, BEFORE idalib_server.py:285-289 deletes the unsafe tools, and http.py:442-446 rebuilds tools.methods from that stale snapshot; _check_api_request (mcp.py:303-328) accepts any request carrying no Origin header, so no token is needed. The result is persisted into the IDB netnode $ ida_mcp.enabled_tools (http.py:447), so the policy travels inside the sample's .i64. Two further holes: idb_open/idb_list are `protected` from --profile (idalib_server.py:57-60), and the supervisor never applies --profile to its own registry (idalib_supervisor.py:1498-1499 only forwards it to workers), so a 'read-only' profile still grants arbitrary-path file access. Our gate enforces this; the server's own flags do not.",
+      "gate_prohibitions": [
+        {
+          "code": "no_forbidden_argv_token",
+          "covers": [
+            "server flag --unsafe"
+          ],
+          "operand": {
+            "forbidden_argv_tokens": [
+              "--unsafe"
+            ]
+          }
+        },
+        {
+          "code": "no_forbidden_argv_token",
+          "covers": [
+            "server flag --profile"
+          ],
+          "operand": {
+            "forbidden_argv_tokens": [
+              "--profile"
+            ]
+          }
+        },
+        {
+          "code": "no_forbidden_argv_token",
+          "covers": [
+            "http:POST /config"
+          ],
+          "operand": {
+            "forbidden_argv_tokens": [
+              "POST"
+            ],
+            "forbidden_substrings": [
+              "/config"
+            ]
+          }
+        }
+      ],
       "envelope": {
         "success_when": "body.code is non-null AND body.error is absent",
         "item_error_field": "error",
@@ -1439,6 +1477,54 @@
         "Interceptor.replace, Memory.patchCode: altering the target's code or memory rather than observing it"
       ],
       "gate_must_not_delegate_why": "Measured, not read. (1) This host ASLRs the image (DllCharacteristics 0x8160, DYNAMICBASE=True), so an address handed over without rebasing does not silently hook the wrong thing -- it faults, which is exactly what the negative control shows and exactly why the rebasing rule is a boundary rather than a style preference. (2) `frida-ps -ai` on a device-less host does not fail, it HANGS for 300 s and never returns, so a lane that is supposed to refuse must never be entered through that command: a hang is not a refusal. (3) The target side is a red line, not a policy knob -- an untrusted sample run on this host is a STOP, and the measured reach here is exactly one named, self-built process under station_under_named_process_rule. (4) The CLI's own resume-before-load ordering is an instrument defect, and it is the dangerous kind: it makes a probe look like a working hook when no callback fired. That is the instrument being wrong, not the subject, and no verdict may lean on this entry until the ordering is under the analyst's control.",
+      "gate_prohibitions": [
+        {
+          "code": "target_must_be_self_authored",
+          "covers": [
+            "frida -f on any binary this repository did not author"
+          ],
+          "operand": {
+            "require": "repo_or_temp"
+          }
+        },
+        {
+          "code": "no_forbidden_argv_token",
+          "covers": [
+            "frida -U, frida-remote, frida-ps -ai: any remote or device session"
+          ],
+          "operand": {
+            "forbidden_argv_tokens": [
+              "-U",
+              "frida-remote",
+              "frida-ps"
+            ]
+          }
+        },
+        {
+          "code": "no_forbidden_argv_token",
+          "covers": [
+            "frida -p <pid> / -n <name>: attaching to a process this station did not spawn"
+          ],
+          "operand": {
+            "forbidden_argv_tokens": [
+              "-p",
+              "-n"
+            ]
+          }
+        },
+        {
+          "code": "no_forbidden_argv_token",
+          "covers": [
+            "Interceptor.replace, Memory.patchCode: altering the target's code or memory rather than observing it"
+          ],
+          "operand": {
+            "forbidden_substrings": [
+              "Interceptor.replace",
+              "Memory.patchCode"
+            ]
+          }
+        }
+      ],
       "probe": {
         "command": "& 'D:\\Software\\Tool\\WorkStation\\debugger\\Mobile-Android\\objection\\.venv\\Scripts\\frida.exe' -f \"$env:TEMP\\fridaprobe\\target.exe\" -q -t 6 -e 'var m=Process.mainModule;console.log(`FRIDA_WIN module_base=${m.base}`);console.log(`FRIDA_WIN symbol_main=${DebugSymbol.fromName(`main`)}`);console.log(`FRIDA_WIN export_printf=${Module.getGlobalExportByName(`printf`)}`);console.log(`FRIDA_WIN rebased_main=${m.base.add(0x1080)}`);Interceptor.attach(m.base.add(0x1080),{onEnter:function(){console.log(`FRIDA_WIN HIT main`);}});'",
         "expect": "FRIDA_WIN symbol_main=0",
@@ -2222,6 +2308,53 @@
         "scanning any directory that contains .venv, __pycache__, node_modules or site-packages: measured, that is what turns a 0-issue scan into a 4,916-finding CRITICAL verdict with every finding attributed to no file at all"
       ],
       "gate_must_not_delegate_why": "Measured, not read. (1) The transitive fetch is the difference between reading text and executing a download pipeline on the host; this arsenal's charter treats an untrusted third-party artefact on the station as the isolated_vm lane or a stop. (2) --transitive has its own flag precisely so the fetch is opt-in, and leaving it on for a URL scan means unpacking code we have not reviewed. (3) The [mcp] extra would put a NEW server on this station's MCP surface, and today's measured position is that the estate's MCP exposure is closed and worth keeping closed. (4) A provider key is money and egress, and the semantic analyzers are the half of the tool that has never produced a finding here. (5) This is measured rather than feared. The trigger was located by bisection, not assumed: 2 files 0 issues, 40 ordinary modules 0, a synthetic skill with 30 dependencies 0, and a directory with 3,601 venv files 4,916 unattributed findings at CRITICAL. The rule follows the measurement, and it is why the probe passes the skills DIRECTORY rather than the repository root -- a probe pointed at the repo root would score this estate's own router 100/100 on the day it was registered.",
+      "gate_prohibitions": [
+        {
+          "code": "no_forbidden_argv_token",
+          "covers": [
+            "skillspector scan <url> or any git repo with --transitive left enabled: pulls and unpacks third-party code on this host"
+          ],
+          "operand": {
+            "forbidden_argv_tokens": [
+              "--transitive"
+            ]
+          }
+        },
+        {
+          "code": "unenforceable_prose",
+          "covers": [
+            "scanning any path outside this repository without an Owner-named reason"
+          ]
+        },
+        {
+          "code": "no_forbidden_argv_token",
+          "covers": [
+            "installing the optional [mcp] extra, which pulls mcp>=1.29.0 and would put a skill-scanning service on this station's own MCP surface"
+          ],
+          "operand": {
+            "forbidden_substrings": [
+              "skillspector[mcp]"
+            ]
+          }
+        },
+        {
+          "code": "no_forbidden_argv_token",
+          "covers": [
+            "supplying an LLM provider key to enable the semantic analyzers without the Owner's word"
+          ],
+          "operand": {
+            "forbidden_argv_tokens": [
+              "--llm"
+            ]
+          }
+        },
+        {
+          "code": "unenforceable_prose",
+          "covers": [
+            "scanning any directory that contains .venv, __pycache__, node_modules or site-packages: measured, that is what turns a 0-issue scan into a 4,916-finding CRITICAL verdict with every finding attributed to no file at all"
+          ]
+        }
+      ],
       "probe": {
         "command": "& \"$env:USERPROFILE\\.local\\bin\\skillspector.exe\" scan skills --no-llm --fail-on-findings --fail-on-incomplete",
         "expect": "Recommendation  SAFE",
@@ -2360,6 +2493,52 @@
         "frida.get_remote_device(), frida.get_usb_device(), any attach to a process this station did not spawn"
       ],
       "gate_must_not_delegate_why": "Measured. (1) The target side is a red line, not a policy knob: host-process instrumentation hands untrusted code this user's identity, network and files with no containment verifiable after the fact, so running an untrusted sample here is a STOP. (2) replace/patchCode writes the target rather than reading it, which changes what a measurement means -- the 'does not prove' above assumes observation only. (3) The corpus original holds the IDA database, and a stray write there would destroy the artefact other capabilities depend on. (4) Remote and USB devices leave this station's blast-radius accounting entirely, and frida-ps -ai already measured a 300 s hang on a device-less host, so a hang is not a refusal.",
+      "gate_prohibitions": [
+        {
+          "code": "target_must_be_self_authored",
+          "covers": [
+            "frida_spawn_gate.py against any binary this repository did not author"
+          ],
+          "operand": {
+            "require": "repo_or_temp"
+          }
+        },
+        {
+          "code": "no_forbidden_argv_token",
+          "covers": [
+            "Interceptor.replace, Memory.patchCode: altering the target rather than observing it"
+          ],
+          "operand": {
+            "forbidden_substrings": [
+              "Interceptor.replace",
+              "Memory.patchCode"
+            ]
+          }
+        },
+        {
+          "code": "target_must_be_temp_copy",
+          "covers": [
+            "any run against a corpus path other than a %TEMP% copy of a self-authored challenge"
+          ],
+          "operand": {
+            "require": "temp"
+          }
+        },
+        {
+          "code": "no_forbidden_argv_token",
+          "covers": [
+            "frida.get_remote_device(), frida.get_usb_device(), any attach to a process this station did not spawn"
+          ],
+          "operand": {
+            "forbidden_substrings": [
+              "frida.get_remote_device",
+              "frida.get_usb_device",
+              "get_remote_device",
+              "get_usb_device"
+            ]
+          }
+        }
+      ],
       "probe": {
         "command": "$py='D:\\Software\\Tool\\WorkStation\\debugger\\Mobile-Android\\objection\\.venv\\Scripts\\python.exe'; $d=Join-Path $env:TEMP 'fridagate'; New-Item -ItemType Directory -Force -Path $d | Out-Null; Copy-Item 'D:\\Software\\Tool\\WorkStation\\debugger\\crackme-corpus\\out\\c01-stringobf.exe' (Join-Path $d 'target.exe'); & $py 'D:\\Software\\Tool\\WorkStation\\debugger\\native-lab\\tools\\frida_spawn_gate.py' (Join-Path $d 'target.exe') positive",
         "expect": "verdict=INTERCEPT-PROVEN",
@@ -2498,6 +2677,36 @@
         "handing pe.image_base or a disassembly address to Interceptor.attach, Memory.patchCode, or any runtime hook"
       ],
       "gate_must_not_delegate_why": "Measured or read, not assumed. (1) pefile is a PE parser; given a ZIP it will not refuse cleanly, and this project already learned today that a correct refusal inside a loop crashed the mission -- see mission.ps1:861, fixed -- so a parser that cannot say no must never be placed where a refusal is expected. (2) Section names are attacker-controlled, so reporting them as findings would let a target name its own section 'decrypted_payload'. (3) ImageBase is the exact value the frida entries measure and refuse to hardcode, because DYNAMICBASE is set; passing it to a hook is the neg-badaddr control.",
+      "gate_prohibitions": [
+        {
+          "code": "container_must_be_pe",
+          "covers": [
+            "parsing an APK, DEX or any non-PE container and reporting the result as PE structure: pefile is lenient and will produce plausible nonsense"
+          ],
+          "operand": {
+            "require": "pe"
+          }
+        },
+        {
+          "code": "unenforceable_prose",
+          "covers": [
+            "using a parsed section name as evidence of what a section contains"
+          ]
+        },
+        {
+          "code": "no_forbidden_argv_token",
+          "covers": [
+            "handing pe.image_base or a disassembly address to Interceptor.attach, Memory.patchCode, or any runtime hook"
+          ],
+          "operand": {
+            "forbidden_substrings": [
+              "Interceptor.attach",
+              "Interceptor.replace",
+              "Memory.patchCode"
+            ]
+          }
+        }
+      ],
       "probe": {
         "command": "python -c \"import pefile;pe=pefile.PE(r'crackme-corpus\\out\\c01-stringobf.exe');print(hex(pe.OPTIONAL_HEADER.ImageBase),hex(pe.OPTIONAL_HEADER.AddressOfEntryPoint),hex(pe.OPTIONAL_HEADER.DllCharacteristics))\"",
         "expect": "0x140000000 0x15d0 0x8160",
@@ -2648,6 +2857,39 @@
         "-KeepProjects against a path outside %TEMP%"
       ],
       "gate_must_not_delegate_why": "Measured or read, not assumed. (1) The target side is a red line, not a policy knob. (2) The hash is over bytes, so a recompile moves every hash -- treating a miss as a semantic difference would invent findings, which is the failure mode this whole project exists to prevent. (3) match_rate is dominated by shared runtime code and was measured on exactly one pair, so a threshold built from it would be a number with no denominator. (4) -KeepProjects leaves Ghidra project state on disk outside the scratch area, which is how a stale project later gets correlated against the wrong binary.",
+      "gate_prohibitions": [
+        {
+          "code": "target_must_be_self_authored",
+          "covers": [
+            "match-functions.ps1 against any binary this repository did not author"
+          ],
+          "operand": {
+            "require": "repo_or_temp"
+          }
+        },
+        {
+          "code": "unenforceable_prose",
+          "covers": [
+            "reading a match miss as evidence that code CHANGED -- it is only evidence that it is not byte-identical"
+          ]
+        },
+        {
+          "code": "unenforceable_prose",
+          "covers": [
+            "using match_rate as a pass/fail threshold across unrelated binary pairs"
+          ]
+        },
+        {
+          "code": "target_must_be_temp_copy",
+          "covers": [
+            "-KeepProjects against a path outside %TEMP%"
+          ],
+          "operand": {
+            "require": "temp"
+          },
+          "only_when_token": "-KeepProjects"
+        }
+      ],
       "probe": {
         "command": "powershell -NoProfile -ExecutionPolicy Bypass -File headless-lab\\tools\\match-functions.ps1 -Source crackme-corpus\\out\\c01-stringobf.exe -Dest crackme-corpus\\out\\c03_antidebug.exe",
         "expect": "\"match_rate\":37.6",
@@ -2784,6 +3026,40 @@
         "raising PackedAtOrAbove to force a particular answer: the parameter is retained only so the mistake is visible in the source, and nothing branches on it"
       ],
       "gate_must_not_delegate_why": "Measured or read, not assumed. (1) The target side is a red line, not a policy knob. (2) The signature-absence limit is in Die's own semantics and is the whole reason the caveat is on the record rather than implied. (3) triage.md lists entropy and section shape as separate signals; collapsing them into one boolean would discard evidence. (4) The threshold parameter is the trap that already caught this author once -- it is kept visible so the next reader sees where the wrong number went instead of finding a clean-looking gate that silently blocks everything.",
+      "gate_prohibitions": [
+        {
+          "code": "target_must_be_self_authored",
+          "covers": [
+            "triage-packer.ps1 against any binary this repository did not author"
+          ],
+          "operand": {
+            "require": "repo_or_temp"
+          }
+        },
+        {
+          "code": "unenforceable_prose",
+          "covers": [
+            "treating a low Die score as proof the binary is unpacked"
+          ]
+        },
+        {
+          "code": "unenforceable_prose",
+          "covers": [
+            "treating packed:false as permission to skip triage.md's remaining checks"
+          ]
+        },
+        {
+          "code": "no_forbidden_argv_token",
+          "covers": [
+            "raising PackedAtOrAbove to force a particular answer: the parameter is retained only so the mistake is visible in the source, and nothing branches on it"
+          ],
+          "operand": {
+            "forbidden_substrings": [
+              "PackedAtOrAbove"
+            ]
+          }
+        }
+      ],
       "probe": {
         "command": "powershell -NoProfile -ExecutionPolicy Bypass -File headless-lab\\tools\\triage-packer.ps1 -Target crackme-corpus\\out\\c01-stringobf.exe",
         "expect": "\"packed\":false",
@@ -2953,6 +3229,40 @@
         "using an instruction count as a measure of function size: count stops at --count, not at the ret"
       ],
       "gate_must_not_delegate_why": "Measured or read. (1) The target side is a red line. (2) --force is the one path that defeats the executable-section gate, and it exists for packed or self-modifying code where the section flags genuinely lie; used casually it restores exactly the garbage-out-of-data behaviour the gate exists to stop. (3) Reachability is a runtime property: native.crosscompare.ghidra and the frida entries both measured that the address being decodable and the address being executed are different questions. (4) --count truncates arbitrarily, so the count says nothing about the function's extent.",
+      "gate_prohibitions": [
+        {
+          "code": "target_must_be_self_authored",
+          "covers": [
+            "disasm.py against any binary this repository did not author"
+          ],
+          "operand": {
+            "require": "repo_or_temp"
+          }
+        },
+        {
+          "code": "no_forbidden_argv_token",
+          "covers": [
+            "passing --force on a section that is merely suspicious rather than known to hold unpacked code"
+          ],
+          "operand": {
+            "forbidden_argv_tokens": [
+              "--force"
+            ]
+          }
+        },
+        {
+          "code": "unenforceable_prose",
+          "covers": [
+            "reading decoded instructions as recovered logic, or their presence as evidence a function is reachable"
+          ]
+        },
+        {
+          "code": "unenforceable_prose",
+          "covers": [
+            "using an instruction count as a measure of function size: count stops at --count, not at the ret"
+          ]
+        }
+      ],
       "probe": {
         "command": "python native-lab\\tools\\disasm.py crackme-corpus\\out\\c01-stringobf.exe --rva 0x1080 --count 40",
         "expect": "\"addr\": \"0x140001080\"",
@@ -3096,6 +3406,40 @@
         "running --make-control over a real signed binary to 'see what it looks like': it rewrites the directory entry and would produce a fixture claiming to be signed by nothing"
       ],
       "gate_must_not_delegate_why": "Measured or read. (1) The target side is a red line. (2) The verifies-nothing limitation is the single largest in this registry, and a caller who reads signed:true as integrity is worse off than one with no tool at all -- that is why the caveat travels in every payload as well as here. (3) A stripped certificate table is indistinguishable from a never-signed one without external provenance. (4) The fixture generator APPENDS to the file and REWRITES the directory entry, so pointed at a real signed binary it produces something that claims to be signed by nothing, which is the most dangerous artefact this tool can make.",
+      "gate_prohibitions": [
+        {
+          "code": "target_must_be_self_authored",
+          "covers": [
+            "authenticode.py against any binary this repository did not author"
+          ],
+          "operand": {
+            "require": "repo_or_temp"
+          }
+        },
+        {
+          "code": "unenforceable_prose",
+          "covers": [
+            "reporting pe.signed as a trust or integrity result, or as evidence a binary is unmodified"
+          ]
+        },
+        {
+          "code": "unenforceable_prose",
+          "covers": [
+            "treating pe.signed:false as evidence a binary was never signed rather than possibly stripped"
+          ]
+        },
+        {
+          "code": "no_forbidden_argv_token",
+          "covers": [
+            "running --make-control over a real signed binary to 'see what it looks like': it rewrites the directory entry and would produce a fixture claiming to be signed by nothing"
+          ],
+          "operand": {
+            "forbidden_argv_tokens": [
+              "--make-control"
+            ]
+          }
+        }
+      ],
       "probe": {
         "command": "python headless-lab\\tools\\authenticode.py crackme-corpus\\out\\c01-stringobf.exe",
         "expect": "\"signed\": false",
@@ -3225,6 +3569,29 @@
         "reporting a rule hit as observed behaviour rather than as a pattern present in the code"
       ],
       "gate_must_not_delegate_why": "Measured or read. (1) The target side is a red line. (2) The count has no denominator: 14 hits on a plain CRT binary is unremarkable, and quoting it as a number without a baseline is the confident-wrong-number failure this project keeps finding. (3) A rule match is a static pattern; the gap between 'the code can do this' and 'it did this' is exactly what dynamic.win.frida.intercept exists to close.",
+      "gate_prohibitions": [
+        {
+          "code": "target_must_be_self_authored",
+          "covers": [
+            "capa_probe.py against any binary this repository did not author"
+          ],
+          "operand": {
+            "require": "repo_or_temp"
+          }
+        },
+        {
+          "code": "unenforceable_prose",
+          "covers": [
+            "reporting rules_matched as a risk score, a severity, or a count comparable across binaries"
+          ]
+        },
+        {
+          "code": "unenforceable_prose",
+          "covers": [
+            "reporting a rule hit as observed behaviour rather than as a pattern present in the code"
+          ]
+        }
+      ],
       "probe": {
         "command": "python native-lab\\tools\\capa_probe.py crackme-corpus\\out\\c01-stringobf.exe",
         "expect": "\"rules_matched\": 14",

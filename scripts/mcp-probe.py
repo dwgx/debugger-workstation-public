@@ -98,6 +98,9 @@ def prepare_case() -> str:
     return note
 
 
+SKIPPED: set[str] = set()
+
+
 def assert_no_execution(label: str, payload: dict) -> bool:
     leaked = sorted(RUNNER_KEYS & set(payload))
     ok = payload.get("ok") is False and not leaked
@@ -212,11 +215,30 @@ async def main() -> int:
                          "case_does_not_exist", mission_id="no-such-mission", target=str(TARGET))
 
             # junction inside the root pointing outside it: textually inside, physically out.
+            # The fixture is CREATED here, and it was not: this control was passing for the wrong
+            # reason and printing the reason while it did. With no junction on disk the server
+            # refused with `case_does_not_exist` -- a correct refusal of a DIFFERENT thing -- and the
+            # assertion only noticed because it checks which refusal came back. A control that
+            # cannot fail for its own reason is a control that cannot fail.
             link = MISSIONS / "probe-junction"
-            await refuse("R7 mission_id is a junction pointing out of the root",
-                         "forensics.memory.artefact", "case_symlink_escapes_root", mission_id="probe-junction",
-                         target=str(TARGET))
-            print(f"    (junction {link} exists={link.exists()})")
+            outside = SCRATCH / "outside-the-root"
+            outside.mkdir(parents=True, exist_ok=True)
+            if not link.exists():
+                # mklink /J needs no elevation; a symlink does on this box and the refusal under
+                # test is about REACHING outside the root, not about which kind of link it is.
+                made = subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(outside)],
+                                      capture_output=True, text=True)
+                if made.returncode != 0:
+                    print(f"    !! could not create the junction fixture: {made.stdout.strip()} "
+                          f"{made.stderr.strip()}")
+                    print("    !! R7 is SKIPPED, not passed. A control whose fixture cannot be "
+                          "built must say so rather than report a refusal it did not earn.")
+                    SKIPPED.add("R7")
+            if link.exists():
+                await refuse("R7 mission_id is a junction pointing out of the root",
+                             "forensics.memory.artefact", "case_symlink_escapes_root",
+                             mission_id="probe-junction", target=str(TARGET))
+                print(f"    (junction {link} exists={link.exists()})")
 
             # ---- 4. the gate still runs, and still refuses BY CAPABILITY NAME.
             await refuse("G1 gate refuses crypto.jose.parse (not in the grant)", "crypto.jose.parse",

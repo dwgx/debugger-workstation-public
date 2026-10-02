@@ -74,6 +74,68 @@
   (3) Editing `manifests\capabilities.json` changes its digest, which every grant records,
   so a registry edit invalidates existing grants and they must be re-minted. That is the
   point: a registry edit is a committed diff the Owner can see.
+
+  (4) NEW, and the reason this file now knows what a caller is about to run. Ten registry
+  entries carry `gate_must_not_delegate`: authority boundaries written as English sentences
+  -- "never pass --unsafe", "never parse an APK as PE", "Interceptor.replace /
+  Memory.patchCode". MEASURED 2026-10-03, and that is why this paragraph exists: deleting the
+  whole key from all ten entries and re-running `registry-verify.py` still exits 0 with
+  REGISTRY CLEAN. Nothing read them. A boundary that no program opens is a comment.
+
+  So the boundary is now expressed twice, and neither half is allowed to drift:
+      gate_must_not_delegate   the prose. What the Owner reads.
+      gate_prohibitions        codes + structured operands. What this script can refuse.
+  Every prohibition carries `covers`: the EXACT prose string it mechanises. Invoke-ProhibitionGate
+  requires the union of `covers` to equal `gate_must_not_delegate` as a set -- a prose string no
+  prohibition claims is a refusal, and a claim naming a string the entry no longer states is a
+  refusal. That is the whole anti-drift mechanism, and it is why deleting the prose key is now
+  visible to a program while deleting the structured key is equally visible.
+
+  THE VOCABULARY IS CLOSED ($ProhibitionCodes). An unknown code, a missing operand, a bad
+  `require` value or a malformed operand is exit 6, not a shrug. A prohibition this script
+  cannot evaluate is worse than prose, because prose at least looks like a claim.
+
+  THE CODES, AND WHAT EACH ONE CANNOT CATCH. Stated here because a gate that overstates is
+  the failure this project exists to reject:
+    target_must_be_self_authored   refuses a granted target that is neither under the repo root
+                                   nor under %TEMP%. It is a PATH claim. It cannot tell a file
+                                   that was built here from one copied in from elsewhere.
+    target_must_be_temp_copy       the same check, stricter: under %TEMP% only. It cannot tell a
+                                   copy of a self-authored challenge from an arbitrary file
+                                   that happens to live in %TEMP%.
+    container_must_be_pe           refuses a target whose first bytes are not `MZ`, so an APK, DEX,
+                                   JAR, ELF or Mach-O cannot be handed to a PE parser and
+                                   reported as PE structure. It reads two bytes; it does not
+                                   validate that a file claiming MZ is a usable PE.
+    no_forbidden_argv_token        whole-token match against the DECLARED invocation AND against
+                                   the capability's own recorded `probe.command`, so the
+                                   prohibition cannot be evaded by editing the registry's probe.
+                                   Requires -Invocation, because a vocabulary nobody states
+                                   cannot be checked -- omission is a refusal.
+    unenforceable_prose            RECORDED, NEVER CHECKED. Thirteen of the thirty-eight prose
+                                   prohibitions are claims about INTERPRETATION ("reading a match
+                                   miss as evidence that code CHANGED", "reporting rules_matched
+                                   as a risk score"). This gate authorises a capability; it does
+                                   not read results. Declaring one unenforceable is the honest
+                                   move, and the gate REPORTS the count rather than letting an
+                                   unenforceable claim look enforced.
+
+  WHAT IT STILL CANNOT CATCH: a caller that omits -Capability gets the grant's validity and no
+  prohibition evaluation, because a prohibition is a property of a capability and a bare
+  `Check` names none; and a prohibition whose tool argument is a different object from the
+  granted target -- ops.skill.security forbids scanning outside this repository, and the scan
+  root is not the granted binary -- is unenforceable here by construction, so it is declared
+  unenforceable rather than approximated.
+
+  THE CALL SITES THAT MUST NOW PASS -Invocation, and are not mine to change. Measured 2026-10-03:
+  `scripts/arsenal_mcp_server.py` runs `gate.ps1 -Action Check` from `gate_check()` at
+  arsenal_mcp_server.py:413, which is BEFORE the argv is assembled at :420 -- so it has nothing
+  to pass yet. That is the right place for it to change: the check must move to after the argv is
+  resolved from `invoke.argv` and placeholders, and then pass the joined argv. Until it does,
+  every one of the sixteen invocable capabilities that carries a vocabulary prohibition is
+  refused with `no_forbidden_argv_token(invocation-absent)`, which is a refusal, not a skip.
+  `scripts/mission.ps1` already cannot reach the mint (this file's item (2)), so it needs the same
+  change when that is fixed. Nothing else in the repository calls `-Action Check`.
 #>
 [CmdletBinding()]
 param(
@@ -86,7 +148,12 @@ param(
     [string]$EscalationClass = '',
     [string]$Lane = 'debug',
     [string]$Containment = '',
-    [string]$Registry = ''
+    [string]$Registry = '',
+    # The command line the caller is about to execute, for -Action Check. A capability whose
+    # registry entry declares an argv-vocabulary prohibition (`no_forbidden_argv_token`) makes
+    # this REQUIRED, and omitting it is a refusal rather than a shrug -- see Invoke-ProhibitionGate
+    # and the .NOTES entry "WHAT THIS BREAKS, (4)".
+    [string]$Invocation = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -274,6 +341,310 @@ $KnownEscalations = @('none', 'owner_word')
 $GrantableEscalation = @('owner_word')
 
 # --------------------------------------------------------------------------------
+# THE PROHIBITION VOCABULARY. A CLOSED set, because the defect being closed here is
+# exactly "a field the gate does not define is a field the gate is silently ignoring"
+# (see the grant schema block above -- same argument, different field).
+#
+# `unenforceable_prose` is IN this list on purpose and is the one code this script never
+# enforces. It exists so a prohibition nobody can express has a name in a checked
+# vocabulary instead of silently vanishing: 13 of the 38 prose prohibitions are claims
+# about how a RESULT may be read, and this gate authorises a capability, it does not read
+# results. A boundary that is recorded as unchecked is honest; one that is quietly absent
+# is not. Invoke-ProhibitionGate returns the enforced/unenforceable counts on every Check
+# so a reader can see which is which without reading the registry.
+$ProhibitionCodes = @(
+    'target_must_be_self_authored',
+    'target_must_be_temp_copy',
+    'container_must_be_pe',
+    'no_forbidden_argv_token',
+    'unenforceable_prose'
+)
+
+# The `require` operand each target/container code accepts. Closed for the same reason.
+$ProhibitionOrigins = @('repo_or_temp', 'temp')
+
+# Characters that DELIMIT a token. A forbidden token only matches when it stands alone:
+# `--unsafe` matches in `--unsafe`, `--unsafe=1` and `"--unsafe"`, and does NOT match in
+# `--unsafely`. That last one is deliberate and it is the near-miss the selftest pins --
+# a gate that refuses every string containing a flag is a gate that has no vocabulary.
+$TokenCharClass = 'A-Za-z0-9_\-./\\:'
+
+function Test-TokenPresent {
+    param([string]$Haystack, [string]$Token)
+    if ([string]::IsNullOrEmpty($Haystack) -or [string]::IsNullOrEmpty($Token)) { return $false }
+    $esc = [regex]::Escape($Token)
+    $rx = '(?<![' + $TokenCharClass + '])' + $esc + '(?![' + $TokenCharClass + '])'
+    return [regex]::IsMatch($Haystack, $rx, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+}
+
+function Get-RepoRoot {
+    # Derived from where THIS FILE lives, not from a parameter and not from the registry.
+    # A caller-supplied root would make `target_must_be_self_authored` satisfiable by typing.
+    return (Split-Path -Parent $PSScriptRoot)
+}
+
+function Get-TargetOrigin {
+    # The three-valued answer the target-origin codes compare against. `foreign` is the only
+    # one that refuses anything, and it is computed by RESOLVING the path, not by reading a
+    # field anybody wrote.
+    param([string]$Target)
+    $root = [IO.Path]::GetFullPath((Get-RepoRoot)).TrimEnd('\','/')
+    $temp = if ($env:TEMP) { [IO.Path]::GetFullPath($env:TEMP).TrimEnd('\','/') } else { '' }
+    $full = [IO.Path]::GetFullPath($Target)
+    $underRepo = $full.StartsWith($root + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase) -or
+                 $full.Equals($root, [StringComparison]::OrdinalIgnoreCase)
+    $underTemp = $temp -and (
+                 $full.StartsWith($temp + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase) -or
+                 $full.Equals($temp, [StringComparison]::OrdinalIgnoreCase))
+    if ($underRepo) { return 'repo' }
+    if ($underTemp) { return 'temp' }
+    return 'foreign'
+}
+
+function Get-ContainerKind {
+    # Two bytes, read from the file itself. `pe` is MZ. Everything else is named so the
+    # refusal can say WHAT it refused rather than "not MZ".
+    param([string]$Target)
+    try {
+        $fs = [System.IO.File]::OpenRead($Target)
+        try { $b = New-Object byte[] 4; [void]$fs.Read($b, 0, 4) } finally { $fs.Dispose() }
+    } catch { return 'unreadable' }
+    if ($b.Length -ge 2 -and $b[0] -eq 0x4D -and $b[1] -eq 0x5A) { return 'pe' }
+    if ($b.Length -ge 4 -and $b[0] -eq 0x50 -and $b[1] -eq 0x4B -and $b[2] -eq 0x03) { return 'zip' }
+    if ($b.Length -ge 4 -and $b[0] -eq 0x64 -and $b[1] -eq 0x65 -and $b[2] -eq 0x78) { return 'dex' }
+    if ($b.Length -ge 4 -and $b[0] -eq 0x7F -and $b[1] -eq 0x45 -and $b[2] -eq 0x4C) { return 'elf' }
+    if ($b.Length -ge 4 -and $b[0] -eq 0xFE -and $b[1] -eq 0xED) { return 'mach-o' }
+    return 'other'
+}
+
+function Get-ProhibitionRefusal {
+    # `error` carries the operand as well as the code, and that is deliberate twice over. A
+    # refusal that names only a code leaves the caller to go and find out what it tripped, and
+    # it gives the selftest nothing to assert on but the exit code -- which is how a control
+    # starts passing because SOME mechanism refused the same input. Both failures are the ones
+    # this suite exists to reject.
+    param([string]$Code, [string]$Detail, [string]$Why)
+    return @{ ok = $false; exit = 6
+             error = "prohibition refused: $Code :: $Detail"
+             code = $Code; operand = $Detail; why = $Why }
+}
+
+function Get-ListField {
+    # A presence-aware LIST read, returning @() for an absent or empty field. See the note at
+    # the call site: `@(Get-GrantField ...)` yields @(''), and an empty member in a vocabulary is
+    # not inert -- `[string].Contains('')` is true, so it matched everything.
+    param($Object, [string]$Name)
+    if (-not (Test-FieldPresent $Object $Name)) { return @() }
+    $out = @(Get-GrantField $Object $Name)
+    return @($out | Where-Object { -not [string]::IsNullOrEmpty([string]$_) })
+}
+
+function Invoke-ProhibitionGate {
+    <#
+      THE ENFORCEMENT POINT. Called from Test-Grant AFTER the registry is loaded and its
+      digest verified and BEFORE the capability is reported as inside the grant, so no
+      refusal here can be reached by a path that already returned ok:true.
+
+      It answers one question: does the registry's own boundary block, for the capability
+      being checked, refuse THIS grant and THIS invocation? Three fail-closed properties,
+      in the order they are checked:
+
+        1. STRUCTURE. prose with no prohibition, an unknown code, a missing `covers`, a
+           missing/!valid operand, a `covers` string the entry no longer states, or a prose
+           string no prohibition claims -- each is exit 6 naming the offending value. A
+           boundary that cannot be evaluated is refused, never skipped. THIS is what makes
+           deleting `gate_must_not_delegate` from the registry change what a program reports.
+
+        2. DERIVATION. target origin and container kind are read from the granted file's
+           own bytes and resolved path. Nothing the caller wrote is consulted, so no caller
+           can satisfy these by typing a field.
+
+        3. THE DECLARED INVOCATION. `no_forbidden_argv_token` needs the command line, so it
+           REQUIRES -Invocation and an absent one is exit 6 naming the code. It is matched
+           against BOTH the declared invocation and the capability's recorded `probe.command`,
+           so editing the registry's probe to smuggle a flag is refused too. Matching is
+           whole-token against `forbidden_argv_tokens` and case-insensitive substring against
+           `forbidden_substrings` (paths inside a URL have no token boundary to stand on).
+
+      `only_when_token` arms a prohibition conditionally -- "-KeepProjects against a path
+      outside %TEMP%" is about the flag, not about the path. An armed-conditionally
+      prohibition whose arming token cannot be determined is a refusal, for the same reason
+      an absent invocation is.
+    #>
+    param($CapDef, [string]$Capability, [string]$Target, [string]$Invocation)
+
+    # Presence, then value. `@(Get-GrantField ...)` on an absent field yields @(''), which is
+    # ONE empty string, not zero entries -- so the naive read reports a capability with no
+    # prohibitions as having one malformed prohibition, and reports a capability with no prose
+    # as having one empty sentence. Both were measured on the first run of this function.
+    $hasProse = Test-FieldPresent $CapDef 'gate_must_not_delegate'
+    $hasBlock = Test-FieldPresent $CapDef 'gate_prohibitions'
+    $prose = if ($hasProse) { @(Get-GrantField $CapDef 'gate_must_not_delegate') } else { @() }
+    $block = if ($hasBlock) { @(Get-GrantField $CapDef 'gate_prohibitions') } else { @() }
+
+    # (1a) prose with no mechanism. THE MEASURED HOLE: nothing in this file read either key,
+    # so deleting `gate_must_not_delegate` from all ten entries left every Check green.
+    if ($hasProse -and -not $hasBlock) {
+        return (Get-ProhibitionRefusal -Code 'gate_must_not_delegate_without_mechanism' `
+            -Detail "capability=$Capability prose=$($prose.Count) gate_prohibitions=absent" `
+            -Why 'a boundary written only as English cannot be enforced by a program, and an unenforced boundary is a comment. Add gate_prohibitions, or delete the prose and admit there is no boundary.')
+    }
+    # And the mirror image: a mechanism that claims sentences the entry no longer carries. This
+    # is what catches the half-edit in the OTHER direction, and it is what makes deleting the
+    # prose key -- with `gate_prohibitions` left in place -- a refusal rather than a no-op.
+    if ($hasBlock -and -not $hasProse) {
+        return (Get-ProhibitionRefusal -Code 'prohibition_block_without_prose' `
+            -Detail "capability=$Capability gate_prohibitions=$($block.Count) gate_must_not_delegate=absent" `
+            -Why 'the two halves are pinned to each other. A prohibition with no sentence to mechanise is an unnamed rule, and an unnamed rule is one the next reader cannot check.')
+    }
+
+    $enforced = 0; $unenforceable = 0; $codes = @()
+    foreach ($p in $block) {
+        # The five fields are read through Get-GrantField rather than by property access: a
+        # prohibition entry missing `covers` yields '' instead of $null, and '' is a refusal
+        # below rather than a silent pass.
+        $code = [string](Get-GrantField $p 'code')
+        $covers = @(Get-GrantField $p 'covers')
+        $op = Get-GrantField $p 'operand'
+        $when = [string](Get-GrantField $p 'only_when_token')
+
+        if ($ProhibitionCodes -notcontains $code) {
+            return (Get-ProhibitionRefusal -Code 'unknown_prohibition_code' -Detail "capability=$Capability code='$code' known=$($ProhibitionCodes -join ' | ')" `
+                -Why 'the vocabulary is closed. A code this script cannot interpret would be read as true by every later reader, which is how the escalation-class hole opened in the first place.')
+        }
+        if ($covers.Count -eq 0 -or @($covers | Where-Object { [string]::IsNullOrWhiteSpace($_) }).Count -gt 0) {
+            return (Get-ProhibitionRefusal -Code 'prohibition_covers_nothing' -Detail "capability=$Capability code=$code" `
+                -Why 'every prohibition says which sentence of gate_must_not_delegate it mechanises. One that does not is prose with extra syntax.')
+        }
+        foreach ($cv in $covers) {
+            if ($prose -notcontains [string]$cv) {
+                return (Get-ProhibitionRefusal -Code 'prohibition_claims_a_sentence_the_entry_does_not_state' `
+                -Detail "capability=$Capability code=$code claims='$cv'" `
+                -Why 'the two halves of this boundary are pinned to each other in both directions. A claim naming a sentence the entry no longer carries means one half was edited without the other, and the gate is the only thing that notices.')
+            }
+        }
+
+        if ($code -eq 'unenforceable_prose') { $unenforceable++; $codes += "$code(unchecked)"; continue }
+
+        # ---- (3) arming, before anything else, because an unarmed prohibition is the one
+        # ---- thing that must never be reached by accident.
+        $armed = $true
+        if ($when) {
+            if ([string]::IsNullOrWhiteSpace($Invocation)) {
+                return (Get-ProhibitionRefusal -Code "$code(arming-condition-unknown)" `
+                    -Detail "capability=$Capability only_when_token=$when invocation=<absent>" `
+                    -Why 'this prohibition is conditional, so the gate cannot know whether it applies without the command line. Assuming it does not apply is how a boundary disappears.')
+            }
+            $probeCmd = [string]((Get-GrantField $CapDef 'probe').command)
+            $armed = (Test-TokenPresent $Invocation $when) -or (Test-TokenPresent $probeCmd $when)
+        }
+        if (-not $armed) { continue }
+
+        switch ($code) {
+            'target_must_be_self_authored' {
+                if ([string]::IsNullOrWhiteSpace($op) -or $null -eq $op.require -or $op.require -ne 'repo_or_temp') {
+                    return (Get-ProhibitionRefusal -Code 'malformed_operand' -Detail "capability=$Capability code=$code operand.require='$($op.require)' accepted=$($ProhibitionOrigins -join ' | ')" `
+                        -Why 'an operand this script cannot evaluate would be silently treated as satisfied. A boundary whose operand is misspelled is not a boundary, it is a comment with a schema.')
+                }
+                $origin = Get-TargetOrigin -Target $Target
+                if ($origin -eq 'foreign') {
+                    return (Get-ProhibitionRefusal -Code $code `
+                        -Detail "capability=$Capability target=$Target origin=$origin (not under $(Get-RepoRoot) and not under $env:TEMP)" `
+                        -Why 'the granted target is neither inside this repository nor a %TEMP% copy, so nothing here establishes that this station authored it. This is a PATH claim and says no more than that.')
+                }
+            }
+            'target_must_be_temp_copy' {
+                if ([string]::IsNullOrWhiteSpace($op) -or $null -eq $op.require -or $op.require -ne 'temp') {
+                    return (Get-ProhibitionRefusal -Code 'malformed_operand' -Detail "capability=$Capability code=$code operand.require='$($op.require)' accepted=$($ProhibitionOrigins -join ' | ')" `
+                        -Why 'an operand this script cannot evaluate would be silently treated as satisfied. A boundary whose operand is misspelled is not a boundary, it is a comment with a schema.')
+                }
+                $origin = Get-TargetOrigin -Target $Target
+                if ($origin -ne 'temp') {
+                    return (Get-ProhibitionRefusal -Code $code `
+                        -Detail "capability=$Capability target=$Target origin=$origin (expected a %TEMP% copy)$(if ($when) { " only_when_token=$when" })" `
+                        -Why 'the operand for this prohibition is a %TEMP% copy of a self-authored challenge. It cannot tell such a copy from an arbitrary file that happens to live in %TEMP%; it can only refuse everything else.')
+                }
+            }
+            'container_must_be_pe' {
+                if ([string]::IsNullOrWhiteSpace($op) -or $null -eq $op.require -or $op.require -ne 'pe') {
+                    return (Get-ProhibitionRefusal -Code 'malformed_operand' -Detail "capability=$Capability code=$code operand.require='$($op.require)' accepted=pe" `
+                        -Why 'an operand this script cannot evaluate would be silently treated as satisfied. A boundary whose operand is misspelled is not a boundary, it is a comment with a schema.')
+                }
+                $kind = Get-ContainerKind -Target $Target
+                if ($kind -ne 'pe') {
+                    return (Get-ProhibitionRefusal -Code $code `
+                        -Detail "capability=$Capability target=$Target container=$kind (first bytes are not MZ)" `
+                        -Why 'pefile given a ZIP does not refuse cleanly; it produces a plausible PE structure out of a container. Reading two bytes is the whole enforcement, and it is enough for the case the boundary names.')
+                }
+            }
+            'no_forbidden_argv_token' {
+                # PRESENCE, then value, for the same reason as the prose/block read above --
+                # and this one bit harder. `@(Get-GrantField ...)` on an absent field yields
+                # @(''), and `[string].Contains('')` is TRUE, so a prohibition that names only
+                # `forbidden_argv_tokens` matched its own EMPTY substring against every
+                # invocation and refused all of them. Measured: it took out ten controls in one
+                # run, including the near-miss and every recorded probe. A gate that refuses
+                # everything passes every "refuses X" test, which is why these read as presence
+                # and drop empty members.
+                $tokens = @(Get-ListField $op 'forbidden_argv_tokens')
+                $subs = @(Get-ListField $op 'forbidden_substrings')
+                if ($tokens.Count -eq 0 -and $subs.Count -eq 0) {
+                    return (Get-ProhibitionRefusal -Code 'malformed_operand' -Detail "capability=$Capability code=$code operand names no token" `
+                        -Why 'a vocabulary with no members is an empty gate, and an empty gate is indistinguishable from no gate at all.')
+                }
+                if ([string]::IsNullOrWhiteSpace($Invocation)) {
+                    return (Get-ProhibitionRefusal -Code "$code(invocation-absent)" `
+                        -Detail "capability=$Capability forbidden=$((@($tokens) + @($subs)) -join ', ')" `
+                        -Why 'this prohibition is about a command line, so the gate cannot evaluate it without one. Refusing an unstated command line is the only fail-closed answer: a vocabulary nobody states is a vocabulary nobody is held to.')
+                }
+                $probeCmd = [string]((Get-GrantField $CapDef 'probe').command)
+                foreach ($tk in $tokens) {
+                    if ((Test-TokenPresent $Invocation $tk) -or (Test-TokenPresent $probeCmd $tk)) {
+                        $where = if (Test-TokenPresent $Invocation $tk) { 'the declared invocation' } else { 'the capability''s own recorded probe.command' }
+                        return (Get-ProhibitionRefusal -Code $code -Detail "capability=$Capability token='$tk' matched in $where; invocation=$Invocation" `
+                            -Why 'the boundary names this token as a way past the gate. Matching is whole-token, so a longer flag that merely contains it is still allowed.')
+                    }
+                }
+                foreach ($sb in $subs) {
+                    if ($Invocation.ToLowerInvariant().Contains([string]$sb.ToLowerInvariant()) -or
+                        $probeCmd.ToLowerInvariant().Contains([string]$sb.ToLowerInvariant())) {
+                        return (Get-ProhibitionRefusal -Code $code -Detail "capability=$Capability substring='$sb' present in invocation=$Invocation" `
+                            -Why 'this operand is a substring rather than a token because it is a path inside a URL, where no token boundary stands on either side.')
+                    }
+                }
+            }
+        }
+        $enforced++; $codes += $code
+    }
+
+    # (1b) the other direction of the same pin: a prose sentence no prohibition claims.
+    $claimed = @(); foreach ($p in $block) { $claimed += @(Get-GrantField $p 'covers') }
+    $uncovered = @($prose | Where-Object { $claimed -notcontains [string]$_ })
+    if ($uncovered.Count -gt 0) {
+        return (Get-ProhibitionRefusal -Code 'prose_with_no_prohibition' -Detail "capability=$Capability uncovered: $($uncovered -join ' || ')" `
+            -Why 'adding one convenient prohibition and leaving the rest as English is how this field became decorative in the first place. Every sentence must be claimed by a code, or declared unenforceable, or deleted.')
+    }
+
+    return @{ ok = $true; exit = 0
+             prohibitions = $block.Count; enforced = $enforced; unenforceable = $unenforceable
+             codes = ($codes -join ', ') }
+}
+
+function Test-FieldPresent {
+    # Get-GrantField yields '' for an ABSENT property, which is what makes a grant's canonical
+    # form stable across "missing" and "empty". It is the wrong tool for a presence question,
+    # and using it as one is a bug this function had on its first run: a capability with no
+    # `gate_prohibitions` came back as @(''), so "prose with no mechanism" never fired and the
+    # refusal came out as `unknown_prohibition_code code=''` instead. Right answer, wrong
+    # reason -- which is exactly what the per-control error-regex assertions exist to catch.
+    param($Object, [string]$Name)
+    if ($null -eq $Object) { return $false }
+    foreach ($e in (Get-Entries $Object)) { if ($e.Key -eq $Name) { return $true } }
+    return $false
+}
+
+
+# --------------------------------------------------------------------------------
 # The identity seal.
 #
 # THE KEY, AND WHERE IT LIVES. There is no key file and no key material in this repo. The
@@ -450,7 +821,30 @@ function Test-Grant {
     # re-hashed right now. `grant_sha256` is still checked, and it is still not a
     # signature: an unkeyed hash over a file the attacker rewrote proves only that the
     # attacker can compute SHA-256.
-    param($CaseDir, $Capability)
+    # `$Invocation` is the command line the caller is about to execute. It is a PARAMETER OF
+    # THIS FUNCTION, not just of the script, and the first version of this change forgot that:
+    # the script and the dispatch switch both took `-Invocation`, so `Test-Grant -Invocation x`
+    # bound nothing, every argv control silently fell through to the `invocation-absent`
+    # refusal, and three controls went red while several more went green FOR THE WRONG REASON
+    # -- a `$wantError` of 'prohibition refused: no_forbidden_argv_token' matches the
+    # invocation-absent refusal as happily as a real token match. Which is why the token
+    # controls below now assert the TOKEN, not the code.
+    # $Target is the file the CALLER is about to point this capability at, and it was missing
+    # until 2026-10-03. Without it the gate authorises "this capability, on THAT file" and the
+    # caller may aim it anywhere: an independent audit of the MCP surface found the server
+    # passing -Capability and never -Target, so a valid debug-lane grant for one self-built PE
+    # was a licence to run the same capability on any file on this machine. The grant re-hashes
+    # its own target, which proves the GRANTED file is unchanged -- it says nothing about which
+    # file the caller chose. A grant authorises a pair (capability, bytes); a caller that names
+    # only half of it must be refused, not trusted.
+    # NAMED $RequestedTarget, not $Target, and that is a correction rather than a style
+    # choice: PowerShell variable names are CASE-INSENSITIVE, and this function already
+    # used `$target` for the path read out of the grant. Declaring a parameter `$Target`
+    # bound the CLI value correctly and then silently lost it to `$target = (Get-GrantField
+    # $grant 'target')` further down -- so the comparison compared the grant with itself
+    # and every caller's file was accepted. Measured 2026-10-03, caught by a diagnostic
+    # print rather than by reading.
+    param($CaseDir, $Capability, $Invocation, $RequestedTarget)
     if ($r = Test-RegistrySubstitution) { return $r }
 
     $gp = Join-Path $CaseDir 'grant.json'
@@ -597,6 +991,29 @@ function Test-Grant {
                  why = '-Registry is caller-controlled, so the registry is bound into the sealed identity. Checking a real grant against a substituted registry now fails instead of passing.' }
     }
 
+
+    # --- THE REGISTRY'S OWN AUTHORITY BOUNDARIES, ENFORCED --------------------
+    # Placed here, and not at the end, for two reasons that are both load-bearing. FIRST
+    # ORDER: it runs after the registry has been loaded and its digest has been matched
+    # against the seal, so the boundary block it reads is the one the Owner granted against,
+    # and BEFORE the membership test below, so a capability whose boundary refuses this grant
+    # can never reach an ok:true by way of being "inside the grant". SECOND, and this is the
+    # reason it is here at all rather than inside the membership branch: `$Capability` is the
+    # only thing that names WHICH boundary applies, so this is where the caller states which
+    # capability it is about to run. A caller that names none gets the grant's validity and no
+    # boundary evaluation, which is the limit stated in .NOTES and is not papered over.
+    if ($Capability) {
+        $bndDef = $reg.capabilities | Where-Object { $_.id -eq $Capability }
+        if ($bndDef) {
+            # `$target` is assigned further down, at the re-hash. Read it from the grant here
+            # rather than moving that assignment: this block must not depend on a variable a
+            # LATER check produces, because a boundary that only evaluates when the file happens
+            # to be intact is a boundary with a hole in the middle.
+            $bndTarget = [string](Get-GrantField $grant 'target')
+            $bnd = Invoke-ProhibitionGate -CapDef $bndDef -Capability $Capability -Target $bndTarget -Invocation $Invocation
+            if (-not $bnd.ok) { return $bnd }
+        }
+    }
     # --- the capability, against that registry --------------------------------
     if ($Capability) {
         $capDef = $reg.capabilities | Where-Object { $_.id -eq $Capability }
@@ -663,6 +1080,29 @@ function Test-Grant {
                  target = $target
                  why = 'this used to skip the re-hash and then report target_bytes_verified: true. A missing file has no bytes to hash; the only honest answer is that nothing was verified.' }
     }
+    # --- the CALLER's target must be the GRANTED target -------------------------------
+    # Measured 2026-10-03: a valid grant plus a different file was accepted, because the only
+    # target this function knew about was the one inside the grant. Naming it is what makes the
+    # grant a licence for one object instead of one capability.
+    if ($RequestedTarget) {
+        $wantPath = $null
+        try { $wantPath = (Resolve-Path -LiteralPath $RequestedTarget -ErrorAction Stop).Path } catch { }
+        if (-not $wantPath -or -not (Test-Path -LiteralPath $RequestedTarget)) {
+            return @{ ok = $false; exit = 7; target_bytes_verified = $false
+                     error = 'the requested target does not exist or cannot be resolved'
+                     requested_target = $RequestedTarget; granted_target = $target
+                     why = 'a grant authorises a specific file. Pointing a granted capability at a path this gate cannot see is refused rather than assumed to be the granted one.' }
+        }
+        $wantHash = Get-Sha256File -Path $wantPath
+        if ($wantPath -ne $target) {
+            return @{ ok = $false; exit = 7; target_bytes_verified = $false
+                     error = 'the requested target is not the granted target'
+                     requested_target = $wantPath; granted_target = $target
+                     requested_sha256 = $wantHash; granted_sha256 = [string](Get-GrantField $grant 'target_sha256')
+                     why = 'a grant names ONE file. Running the granted capability against a different file is a different authorisation, and this gate does not have one.' }
+        }
+    }
+
     $nowHash = Get-Sha256File -Path $target
     $grantedHash = [string](Get-GrantField $grant 'target_sha256')
     if ($nowHash -ne $grantedHash) {
@@ -680,7 +1120,15 @@ function Test-Grant {
              allowed = $allowed
              identity_reestablished = $true
              verified_against_registry = $true
-             target_bytes_verified = $true }
+             target_bytes_verified = $true
+             # Reported, not just enforced: a reader of this JSON has to be able to see how
+             # much of the boundary was actually checked. `unenforceable` in particular is the
+             # number that must never be mistaken for a pass -- those are prohibitions this
+             # gate records and does NOT evaluate, and hiding the count would make an
+             # unchecked boundary look like a checked one.
+             prohibitions_enforced = $(if ($bnd) { $bnd.enforced } else { 0 })
+             prohibitions_unenforceable = $(if ($bnd) { $bnd.unenforceable } else { 0 })
+             prohibition_codes = $(if ($bnd) { $bnd.codes } else { '' }) }
 }
 
 function Invoke-Escalate {
@@ -774,6 +1222,106 @@ function Invoke-Selftest {
     $tgt = Join-Path $tmp 'sample.bin'
     Set-Content -LiteralPath $tgt -Value 'not really a binary, but a path we can see'
 
+    # =============================================================================
+    # THE SELFTEST'S CONFORMING REGISTRY.
+    #
+    # WHY IT EXISTS. The boundary gate refuses an entry whose prose has no mechanism, and ten
+    # entries in the registry in git are exactly that today -- which is CORRECT and is the whole
+    # point, but it would mean every control below goes red for a reason that has nothing to do
+    # with what each control was written for. That is the failure mode this suite exists to
+    # reject, so the suite runs against a copy of the real registry that HAS the mechanism.
+    #
+    # IT IS NOT A FIXTURE IN THE USUAL SENSE, and the distinction is the point: this synthesises
+    # a block ONLY for an entry that has prose and no block of its own. The moment the
+    # integrator pastes the real `gate_prohibitions`, this function stops touching that entry
+    # and the suite tests the registry's own data. Measured, and asserted by a control below.
+    #
+    # The table lists, per capability, which prose index gets a real code; every index NOT
+    # listed becomes `unenforceable_prose`, which is what 13 of the 38 sentences genuinely are.
+    # A fixture that enforced all 38 would be a fixture that lied.
+    $script:SelfBnd = @{
+        'native.ida.decompile' = @(
+            @{ i = 0; code = 'no_forbidden_argv_token'; op = @{ forbidden_argv_tokens = @('--unsafe') } }
+            @{ i = 1; code = 'no_forbidden_argv_token'; op = @{ forbidden_argv_tokens = @('--profile') } }
+            @{ i = 2; code = 'no_forbidden_argv_token'; op = @{ forbidden_argv_tokens = @('POST'); forbidden_substrings = @('/config') } })
+        'dynamic.win.frida' = @(
+            @{ i = 0; code = 'target_must_be_self_authored'; op = @{ require = 'repo_or_temp' } }
+            @{ i = 1; code = 'no_forbidden_argv_token'; op = @{ forbidden_argv_tokens = @('-U', 'frida-remote', 'frida-ps') } }
+            @{ i = 2; code = 'no_forbidden_argv_token'; op = @{ forbidden_argv_tokens = @('-p', '-n') } }
+            @{ i = 3; code = 'no_forbidden_argv_token'; op = @{ forbidden_substrings = @('Interceptor.replace', 'Memory.patchCode') } })
+        'ops.skill.security' = @(
+            @{ i = 0; code = 'no_forbidden_argv_token'; op = @{ forbidden_argv_tokens = @('--transitive') } }
+            @{ i = 2; code = 'no_forbidden_argv_token'; op = @{ forbidden_substrings = @('skillspector[mcp]') } }
+            @{ i = 3; code = 'no_forbidden_argv_token'; op = @{ forbidden_argv_tokens = @('--llm') } })
+        'dynamic.win.frida.intercept' = @(
+            @{ i = 0; code = 'target_must_be_self_authored'; op = @{ require = 'repo_or_temp' } }
+            @{ i = 1; code = 'no_forbidden_argv_token'; op = @{ forbidden_substrings = @('Interceptor.replace', 'Memory.patchCode') } }
+            @{ i = 2; code = 'target_must_be_temp_copy'; op = @{ require = 'temp' } }
+            @{ i = 3; code = 'no_forbidden_argv_token'; op = @{ forbidden_substrings = @('frida.get_remote_device', 'frida.get_usb_device', 'get_remote_device', 'get_usb_device') } })
+        'native.pe.container' = @(
+            @{ i = 0; code = 'container_must_be_pe'; op = @{ require = 'pe' } }
+            @{ i = 2; code = 'no_forbidden_argv_token'; op = @{ forbidden_substrings = @('Interceptor.attach', 'Interceptor.replace', 'Memory.patchCode') } })
+        'native.function.match' = @(
+            @{ i = 0; code = 'target_must_be_self_authored'; op = @{ require = 'repo_or_temp' } }
+            @{ i = 3; code = 'target_must_be_temp_copy'; op = @{ require = 'temp' }; when = '-KeepProjects' })
+        'native.pe.packer' = @(
+            @{ i = 0; code = 'target_must_be_self_authored'; op = @{ require = 'repo_or_temp' } }
+            @{ i = 3; code = 'no_forbidden_argv_token'; op = @{ forbidden_substrings = @('PackedAtOrAbove') } })
+        'native.disasm.capstone' = @(
+            @{ i = 0; code = 'target_must_be_self_authored'; op = @{ require = 'repo_or_temp' } }
+            @{ i = 1; code = 'no_forbidden_argv_token'; op = @{ forbidden_argv_tokens = @('--force') } })
+        'native.pe.authenticode' = @(
+            @{ i = 0; code = 'target_must_be_self_authored'; op = @{ require = 'repo_or_temp' } }
+            @{ i = 3; code = 'no_forbidden_argv_token'; op = @{ forbidden_argv_tokens = @('--make-control') } })
+        'native.behaviour.capa' = @(
+            @{ i = 0; code = 'target_must_be_self_authored'; op = @{ require = 'repo_or_temp' } })
+    }
+
+    function New-ConformingRegistry {
+        param([string]$Destination)
+        $d = Get-Content -LiteralPath (Get-RegistryPath) -Raw | ConvertFrom-Json
+        $synth = 0
+        foreach ($c in $d.capabilities) {
+            if (-not (Test-FieldPresent $c 'gate_must_not_delegate')) { continue }
+            # POST-PASTE THIS FUNCTION BECOMES A NO-OP for that entry, by design.
+            if (Test-FieldPresent $c 'gate_prohibitions') { continue }
+            $prose = @(Get-GrantField $c 'gate_must_not_delegate')
+            $tpl = @()
+            if ($script:SelfBnd.ContainsKey([string]$c.id)) { $tpl = @($script:SelfBnd[[string]$c.id]) }
+            $block = @()
+            for ($i = 0; $i -lt $prose.Count; $i++) {
+                $spec = $null
+                foreach ($s in $tpl) { if ($s.i -eq $i) { $spec = $s } }
+                $p = [ordered]@{ code = 'unenforceable_prose'; covers = @([string]$prose[$i]) }
+                if ($spec) {
+                    $p['code'] = [string]$spec.code
+                    if ($spec.op) { $p['operand'] = $spec.op }
+                    if ($spec.when) { $p['only_when_token'] = [string]$spec.when }
+                }
+                $block += [pscustomobject]$p
+            }
+            $c | Add-Member -NotePropertyName gate_prohibitions -NotePropertyValue $block -Force
+            $synth++
+        }
+        Set-Content -LiteralPath $Destination -Value ($d | ConvertTo-Json -Compress -Depth 20) -Encoding UTF8
+        return @{ path = $Destination; synthesised = $synth }
+    }
+
+    $conf = New-ConformingRegistry (Join-Path $tmp 'capabilities-conforming.json')
+    # Printed rather than returned-and-ignored. After the integrator pastes, this reads 0, and
+    # that zero IS the signal: the suite has stopped synthesising and is reading the registry's
+    # own blocks. A number nobody prints is a number nobody checks.
+    Write-Host ("  (conforming registry: $($conf.synthesised) of the ten boundary entries needed a synthesised gate_prohibitions block; the rest carry the registry's own)")
+
+    $script:SelftestRegistry = $conf.path
+    # The baseline for the rest of the suite. Every `$script:RegistryOverride = ''` below became
+    # `= $script:SelftestRegistry`; leaving one as '' would silently drop every later control back
+    # onto the un-pasted real registry, where the ten entries refuse for the wrong reason.
+    $script:RegistryOverride = $script:SelftestRegistry
+    # Read once so a control that needs a capability's own recorded probe command does not
+    # have to re-read the file to get one.
+    $regSelfRead = Get-Content -LiteralPath $script:SelftestRegistry -Raw | ConvertFrom-Json
+
     # `containment` is now a REQUIRED mint input (New refuses without it -- there is no
     # default, because guessing a containment class is what mission.ps1's intake refuses
     # to do). These five fixtures therefore carry one. The ASSERTIONS are untouched: same
@@ -794,7 +1342,15 @@ function Invoke-Selftest {
     # only that a lookup with no capability succeeds. Combined with the -Lane that these
     # fixtures did not pass -- without it every grant here had lane="" and allowed=[] --
     # this control was green while testing nothing at all. Both are real now.
-    T 'a capability inside the grant is allowed' { Test-Grant -CaseDir $tmp -Capability ($g.grant.allowed | Select-Object -First 1) } 0
+    # `-Invocation` is the capability's own recorded probe command, read from the registry
+    # rather than typed here, so this control keeps asking the question it was written for
+    # ("is an allowed capability allowed?") and does not start asking a second one. Without it
+    # the control would still be green -- the boundary gate's refusal carries the same exit
+    # 0-versus-3 shape only by accident -- which is exactly the "passes for the wrong reason"
+    # failure the $wantError regex exists to catch.
+    $firstAllowed = [string]($g.grant.allowed | Select-Object -First 1)
+    $firstAllowedCmd = [string](($regSelfRead.capabilities | Where-Object { $_.id -eq $firstAllowed }).probe.command)
+    T 'a capability inside the grant is allowed' { Test-Grant -CaseDir $tmp -Capability $firstAllowed -Invocation $firstAllowedCmd } 0
     T 'a capability OUTSIDE the grant is refused' { Test-Grant -CaseDir $tmp -Capability 'not.a.real.capability' } 3
 
     # Tamper: the whole point of the hash.
@@ -900,9 +1456,15 @@ function Invoke-Selftest {
         if ($bad.Count -gt 0) { return @{ ok = $false; exit = 3; error = "reached the grant: $($bad -join ', ')" } }
         return @{ ok = $true; exit = 0; error = 'clean: no absent or blocked capability entered the grant' }
     } 0 '^clean'
-    T 'G4b: a BLOCKED capability is refused at Check, by state' { Test-Grant -CaseDir $cState -Capability 'native.ida.decompile' } 3 'state'
+    # `-Invocation` is passed because native.ida.decompile now carries a vocabulary prohibition
+    # and an unstated command line is a refusal. Without it this control would still be GREEN,
+    # for the wrong reason: it would be refused by the boundary gate with exit 6 instead of by
+    # the state filter with exit 3, and `wantError 'state'` would be the only thing telling the
+    # difference. Passing the capability's own recorded probe is what keeps this control testing
+    # the state filter and nothing else.
+    T 'G4b: a BLOCKED capability is refused at Check, by state' { Test-Grant -CaseDir $cState -Capability 'native.ida.decompile' -Invocation 'node native-lab/tools/loop.mjs --only=decompile' } 3 'state'
     T 'G4b: an ABSENT capability is refused at Check, by state' { Test-Grant -CaseDir $cState -Capability 'native.ida.list_functions' } 3 'state'
-    $script:RegistryOverride = ''
+    $script:RegistryOverride = $script:SelftestRegistry
 
     # --- G-FS, part 1: the identity blanked ------------------------------------
     $cBlank = Join-Path $tmp 'c-blank-identity'
@@ -950,7 +1512,7 @@ function Invoke-Selftest {
     New-Grant -Target $tgt -Provenance $Prov -OwnerWord 'analyze this exe' -CaseDir $cReg -Containment $Cont -Lane $L | Out-Null
     $script:RegistryOverride = $regEvilPath
     T 'G7: Check against a caller-substituted registry is refused' { Test-Grant -CaseDir $cReg -Capability 'native.ida.decompile' } 6 'registry'
-    $script:RegistryOverride = ''
+    $script:RegistryOverride = $script:SelftestRegistry
 
     # --- G10: the caller cannot substitute the registry at ANY entry point -------
     # The measured attack, in the shape a caller produces it: set the one variable the
@@ -992,7 +1554,7 @@ function Invoke-Selftest {
         }
         return @{ ok = $true; exit = 0; error = 'none' }
     } 0 'none'
-    $script:RegistryOverride = ''
+    $script:RegistryOverride = $script:SelftestRegistry
 
     # The control that makes the scoping claim in Get-RegistryPath's comment TRUE rather than
     # merely plausible, and it has to be a SEPARATE PROCESS: `-File` runs the gate in its own
@@ -1005,7 +1567,7 @@ function Invoke-Selftest {
     New-Item -ItemType Directory -Path $cOverrideThenFile -Force | Out-Null
     $script:RegistryOverride = $regEvilPath
     New-Grant -Target $tgt -Provenance $Prov -OwnerWord 'analyze this exe' -CaseDir $cOverrideThenFile -Containment $Cont -Lane $L | Out-Null
-    $script:RegistryOverride = ''
+    $script:RegistryOverride = $script:SelftestRegistry
     # It must name a capability that EXISTS in the real registry. The first version of this
     # control asked about RULE.THE.WORLD, which does not exist there, so it passed because the
     # capability was unknown -- a control that passes for a reason other than the one it was
@@ -1136,6 +1698,296 @@ function Invoke-Selftest {
         New-Grant -Target $tgt -Provenance $Prov -OwnerWord 'go' -CaseDir (Join-Path $tmp 'c-mint-no-containment') -Containment ''
     } 3 'containment'
 
+    # =============================================================================
+    # G11 -- THE REGISTRY'S OWN AUTHORITY BOUNDARIES ARE LOAD-BEARING.
+    #
+    # THE MEASUREMENT THAT PROVED THEY WERE NOT. 2026-10-03, read-only mutation audit: delete
+    # `gate_must_not_delegate` from all ten entries, re-run `registry-verify.py`, and it still
+    # exits 0 with REGISTRY CLEAN. The validator does not read that key and neither did this
+    # script. Ten authority boundaries -- "never pass --unsafe", "never parse an APK as PE",
+    # "Interceptor.replace / Memory.patchCode" -- were English with no program attached.
+    #
+    # Every control below is written so it goes RED if the mechanism it names is deleted, and
+    # so it still goes red if a DIFFERENT mechanism starts refusing the same input: the
+    # $wantError regex is the point, and it is why the first control here asserts the refusal
+    # code rather than the exit code alone.
+    # =============================================================================
+
+    function New-BoundaryRegistry {
+        # A scratch registry for one structural mutation, derived from the CONFORMING one so a
+        # control's refusal can only come from the mutation and not from the fixture.
+        param([string]$Name, [scriptblock]$Mutate)
+        $path = Join-Path $tmp $Name
+        $d = Get-Content -LiteralPath $script:SelftestRegistry -Raw | ConvertFrom-Json
+        & $Mutate $d
+        Set-Content -LiteralPath $path -Value ($d | ConvertTo-Json -Compress -Depth 20) -Encoding UTF8
+        return $path
+    }
+
+    function Bnd-Check {
+        # Mint and Check under ONE registry. The override has to be live for the Check as well
+        # as the mint, because a grant records the digest of the registry it was minted from --
+        # a Check against any other registry is refused for the registry digest, which is a
+        # refusal for the right-looking wrong reason. Every G11 control therefore goes through
+        # here rather than minting and checking by hand.
+        param([string]$Reg, [string]$CaseDir, [string]$Capability, [string]$Target,
+              [string]$Invocation, [switch]$OmitInvocation)
+        $prev = $script:RegistryOverride
+        $script:RegistryOverride = $Reg
+        try {
+            New-Item -ItemType Directory -Path $CaseDir -Force | Out-Null
+            New-Grant -Target $Target -Provenance $Prov -OwnerWord 'analyze this exe' -CaseDir $CaseDir -Containment $Cont -Lane $L | Out-Null
+            if ($OmitInvocation) { return Test-Grant -CaseDir $CaseDir -Capability $Capability }
+            return Test-Grant -CaseDir $CaseDir -Capability $Capability -Invocation $Invocation -RequestedTarget $Target
+        } finally { $script:RegistryOverride = $prev }
+    }
+
+    $CleanDecompile = 'node native-lab/tools/loop.mjs --only=decompile'
+
+    # A PE-shaped file, because `container_must_be_pe` reads two bytes and a text file would
+    # be refused for the wrong reason in the controls that are not about it.
+    $tgtPe = Join-Path $tmp 'sample-pe.exe'
+    [IO.File]::WriteAllBytes($tgtPe, ([byte[]](0x4D, 0x5A, 0x90, 0x00) + [byte[]](0) * 60))
+    # A ZIP-shaped file: the exact case native.pe.container's first prohibition names.
+    $tgtZip = Join-Path $tmp 'sample-container.apk'
+    [IO.File]::WriteAllBytes($tgtZip, ([byte[]](0x50, 0x4B, 0x03, 0x04, 0x14, 0x00, 0x00, 0x00)))
+    # A file under NEITHER the repo root NOR %TEMP%: the parent of %TEMP%, which is
+    # .../AppData/Local -- one level up, so it is a real "foreign" path rather than a
+    # synthetic string the matcher was never asked to handle.
+    $foreign = Join-Path ([IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($env:TEMP))) 'gnd-foreign-fixture.bin'
+    [IO.File]::WriteAllBytes($foreign, ([byte[]](0x4D, 0x5A, 0x90, 0x00) + [byte[]](0) * 60))
+    $repoTarget = Join-Path (Get-RepoRoot) 'crackme-corpus/out/c01-stringobf.exe'
+
+    # --- the headline: deleting the prose key is now visible to a program ----------
+    $regNoMechanism = New-BoundaryRegistry 'capabilities-prose-only.json' { param($d)
+        $e = $d.capabilities | Where-Object { $_.id -eq 'native.pe.container' }
+        $e.PSObject.Properties.Remove('gate_prohibitions') }
+    T 'G11: DELETING gate_must_not_delegate''s mechanism is refused and NAMES the gap' {
+        Bnd-Check -Reg $regNoMechanism -CaseDir (Join-Path $tmp 'g11-no-mechanism') `
+                  -Capability 'native.pe.container' -Target $tgtPe -Invocation $CleanDecompile
+    } 6 'gate_must_not_delegate_without_mechanism'
+
+    # The mirror image, and the one the mutation audit's exact operation produces once the
+    # integrator pastes: the prose key goes, the mechanism stays, and every `covers` string is
+    # now a sentence the entry does not state.
+    $regNoProse = New-BoundaryRegistry 'capabilities-mechanism-only.json' { param($d)
+        $e = $d.capabilities | Where-Object { $_.id -eq 'native.pe.container' }
+        $e.PSObject.Properties.Remove('gate_must_not_delegate') }
+    T 'G11: deleting the PROSE while the mechanism survives is refused' {
+        Bnd-Check -Reg $regNoProse -CaseDir (Join-Path $tmp 'g11-no-prose') `
+                  -Capability 'native.pe.container' -Target $tgtPe -Invocation $CleanDecompile
+    } 6 'prohibition_block_without_prose'
+
+    $regPhantom = New-BoundaryRegistry 'capabilities-phantom-cover.json' { param($d)
+        $e = $d.capabilities | Where-Object { $_.id -eq 'native.pe.container' }
+        $e.gate_must_not_delegate[1] = 'using a section name as evidence, but reworded' }
+    T 'G11: a prohibition claiming a sentence the entry no longer states is refused' {
+        Bnd-Check -Reg $regPhantom -CaseDir (Join-Path $tmp 'g11-phantom') `
+                  -Capability 'native.pe.container' -Target $tgtPe -Invocation $CleanDecompile
+    } 6 'claims_a_sentence_the_entry_does_not_state'
+
+    $regUncovered = New-BoundaryRegistry 'capabilities-uncovered.json' { param($d)
+        $e = $d.capabilities | Where-Object { $_.id -eq 'native.pe.container' }
+        $keep = @($e.gate_prohibitions | Where-Object { $_.code -ne 'unenforceable_prose' })
+        $e | Add-Member -NotePropertyName gate_prohibitions -NotePropertyValue $keep -Force }
+    T 'G11: a prose sentence NO prohibition claims is refused' {
+        Bnd-Check -Reg $regUncovered -CaseDir (Join-Path $tmp 'g11-uncovered') `
+                  -Capability 'native.pe.container' -Target $tgtPe -Invocation $CleanDecompile
+    } 6 'prose_with_no_prohibition'
+
+    $regUnknownCode = New-BoundaryRegistry 'capabilities-unknown-code.json' { param($d)
+        $e = $d.capabilities | Where-Object { $_.id -eq 'native.pe.container' }
+        $e.gate_prohibitions[0].code = 'no_unsafe_flags_please' }
+    T 'G11: a prohibition code outside the vocabulary is refused' {
+        Bnd-Check -Reg $regUnknownCode -CaseDir (Join-Path $tmp 'g11-unknown-code') `
+                  -Capability 'native.pe.container' -Target $tgtPe -Invocation $CleanDecompile
+    } 6 'unknown_prohibition_code'
+
+    $regNoCovers = New-BoundaryRegistry 'capabilities-no-covers.json' { param($d)
+        $e = $d.capabilities | Where-Object { $_.id -eq 'native.pe.container' }
+        $e.gate_prohibitions[0] | Add-Member -NotePropertyName covers -NotePropertyValue @() -Force }
+    T 'G11: a prohibition that covers no sentence is refused' {
+        Bnd-Check -Reg $regNoCovers -CaseDir (Join-Path $tmp 'g11-no-covers') `
+                  -Capability 'native.pe.container' -Target $tgtPe -Invocation $CleanDecompile
+    } 6 'prohibition_covers_nothing'
+
+    $regBadOperand = New-BoundaryRegistry 'capabilities-bad-operand.json' { param($d)
+        $e = $d.capabilities | Where-Object { $_.id -eq 'native.pe.container' }
+        $e.gate_prohibitions[0].operand.require = 'anything_at_all' }
+    T 'G11: an operand value the gate cannot evaluate is refused, not ignored' {
+        Bnd-Check -Reg $regBadOperand -CaseDir (Join-Path $tmp 'g11-bad-operand') `
+                  -Capability 'native.pe.container' -Target $tgtPe -Invocation $CleanDecompile
+    } 6 'malformed_operand'
+
+    # --- the argv vocabulary -----------------------------------------------------
+    T 'G11: --unsafe is refused and the refusal NAMES the token it matched' {
+        Bnd-Check -Reg $script:SelftestRegistry -CaseDir (Join-Path $tmp 'g11-unsafe') `
+                  -Capability 'native.ida.decompile' -Target $tgtPe `
+                  -Invocation 'node native-lab/tools/loop.mjs --only=decompile --unsafe'
+    } 6 "token='--unsafe'"
+
+    # The near-miss. A gate that refused every string CONTAINING the flag would pass the
+    # control above; this is what proves it has a vocabulary rather than a substring test.
+    T 'G11: a flag that merely CONTAINS a forbidden token is allowed' {
+        Bnd-Check -Reg $script:SelftestRegistry -CaseDir (Join-Path $tmp 'g11-near-miss') `
+                  -Capability 'native.ida.decompile' -Target $tgtPe `
+                  -Invocation 'node native-lab/tools/loop.mjs --only=decompile --unsafely-quiet'
+    } 0 ''
+
+    T 'G11: a clean declared invocation still checks ok' {
+        Bnd-Check -Reg $script:SelftestRegistry -CaseDir (Join-Path $tmp 'g11-clean') `
+                  -Capability 'native.ida.decompile' -Target $tgtPe -Invocation $CleanDecompile
+    } 0 ''
+
+    T 'G11: a vocabulary prohibition with NO stated command line is refused' {
+        Bnd-Check -Reg $script:SelftestRegistry -CaseDir (Join-Path $tmp 'g11-no-invocation') `
+                  -Capability 'native.ida.decompile' -Target $tgtPe -OmitInvocation
+    } 6 'invocation-absent'
+
+    # --no-llm against a --llm prohibition. The single most valuable near-miss in the set:
+    # the capability's own recorded probe carries --no-llm, so a matcher that forgets token
+    # boundaries would refuse the station's own sanctioned command.
+    T 'G11: --no-llm is ALLOWED where --llm is forbidden' {
+        Bnd-Check -Reg $script:SelftestRegistry -CaseDir (Join-Path $tmp 'g11-no-llm') `
+                  -Capability 'ops.skill.security' -Target $tgtPe `
+                  -Invocation 'skillspector scan skills --no-llm --fail-on-findings'
+    } 0 ''
+
+    T 'G11: --llm is refused where --no-llm is allowed' {
+        Bnd-Check -Reg $script:SelftestRegistry -CaseDir (Join-Path $tmp 'g11-llm') `
+                  -Capability 'ops.skill.security' -Target $tgtPe `
+                  -Invocation 'skillspector scan skills --llm'
+    } 6 "token='--llm'"
+
+    # Substring operands: Interceptor.replace / Memory.patchCode. These appear inside a `-e`
+    # script body, where no token boundary stands on either side, which is why they are
+    # substring operands and the flags above are not.
+    T 'G11: Interceptor.replace in a declared invocation is refused' {
+        Bnd-Check -Reg $script:SelftestRegistry -CaseDir (Join-Path $tmp 'g11-replace') `
+                  -Capability 'native.pe.container' -Target $tgtPe `
+                  -Invocation 'python tools/x.py -e "Interceptor.replace(main, fn)"'
+    } 6 "substring='Interceptor.replace'"
+
+    # And the anti-smuggling control: the prohibition is evaluated against the capability's own
+    # recorded probe.command as well as the declared invocation, so editing the registry to put
+    # the flag in the probe is refused even when the caller declares something clean.
+    $regSmuggled = New-BoundaryRegistry 'capabilities-smuggled-probe.json' { param($d)
+        $e = $d.capabilities | Where-Object { $_.id -eq 'native.ida.decompile' }
+        $e.probe.command = 'node native-lab/tools/loop.mjs --only=decompile --unsafe' }
+    T 'G11: a forbidden token hidden in the registry''s own probe.command is refused' {
+        Bnd-Check -Reg $regSmuggled -CaseDir (Join-Path $tmp 'g11-smuggled') `
+                  -Capability 'native.ida.decompile' -Target $tgtPe -Invocation $CleanDecompile
+    } 6 'recorded probe.command'
+
+    # --- derived from the target's own bytes and resolved path --------------------
+    T 'G11: a ZIP container is refused for a capability that parses PE' {
+        Bnd-Check -Reg $script:SelftestRegistry -CaseDir (Join-Path $tmp 'g11-zip') `
+                  -Capability 'native.pe.container' -Target $tgtZip -Invocation 'python tools/pe.py'
+    } 6 'container=zip'
+
+    T 'G11: a PE target is allowed for the same capability' {
+        Bnd-Check -Reg $script:SelftestRegistry -CaseDir (Join-Path $tmp 'g11-pe-ok') `
+                  -Capability 'native.pe.container' -Target $tgtPe -Invocation 'python tools/pe.py'
+    } 0 ''
+
+    T 'G11: a target under NEITHER the repo root NOR %TEMP% is refused' {
+        Bnd-Check -Reg $script:SelftestRegistry -CaseDir (Join-Path $tmp 'g11-foreign') `
+                  -Capability 'native.pe.packer' -Target $foreign -Invocation 'powershell -File tools/triage-packer.ps1'
+    } 6 'origin=foreign'
+
+    # -KeepProjects is the conditional one: the boundary is about the flag, not the path, so
+    # both directions are asserted. Without the flag the repo-path target is ALLOWED, which is
+    # what makes this a control about arming rather than about path arithmetic.
+    T 'G11: -KeepProjects against a NON-%TEMP% target is refused' {
+        Bnd-Check -Reg $script:SelftestRegistry -CaseDir (Join-Path $tmp 'g11-keepprojects') `
+                  -Capability 'native.function.match' -Target $repoTarget `
+                  -Invocation 'powershell -File tools/match-functions.ps1 -KeepProjects'
+    } 6 'only_when_token=-KeepProjects'
+
+    T 'G11: the SAME target WITHOUT -KeepProjects is allowed' {
+        Bnd-Check -Reg $script:SelftestRegistry -CaseDir (Join-Path $tmp 'g11-nokeep') `
+                  -Capability 'native.function.match' -Target $repoTarget `
+                  -Invocation 'powershell -File tools/match-functions.ps1 -Source a.exe -Dest b.exe'
+    } 0 ''
+
+    # --- the counts, reported rather than assumed ---------------------------------
+    # DERIVED, NOT PINNED. Measured on 2026-10-03: 38 prose sentences, 25 enforceable,
+    # 13 unenforceable. Those numbers are what .NOTES reports, but this control deliberately
+    # does NOT assert them: a sibling editing a capability's prose is a legitimate change, and
+    # a control that goes red for it is a control that will be "fixed" by deleting itself. So it
+    # asserts the INVARIANT -- the counts reach the Check output, and they equal the counts
+    # derived from the registry the gate actually read -- and it PRINTS the measured numbers so
+    # drift is visible in the run instead of hidden in a comment.
+    T 'G11: the boundary counts are REPORTED, unenforceable ones included' {
+        $rd = Get-Content -LiteralPath $script:SelftestRegistry -Raw | ConvertFrom-Json
+        $n = 0; $u = 0
+        foreach ($c in $rd.capabilities) {
+            if (-not (Test-FieldPresent $c 'gate_prohibitions')) { continue }
+            foreach ($p in @(Get-GrantField $c 'gate_prohibitions')) {
+                $n++
+                if ([string](Get-GrantField $p 'code') -eq 'unenforceable_prose') { $u++ }
+            }
+        }
+        if ($n -lt 1) { return @{ ok = $false; exit = 0; error = "the registry carries $n prohibitions" } }
+        if ($u -lt 1) {
+            return @{ ok = $false; exit = 0; error = "no prohibition is declared unenforceable, so this control proves nothing about reporting an unchecked boundary" }
+        }
+        $c = Bnd-Check -Reg $script:SelftestRegistry -CaseDir (Join-Path $tmp 'g11-counts') `
+                  -Capability 'native.pe.container' -Target $tgtPe -Invocation 'python tools/pe.py'
+        if (-not $c.ok) { return $c }
+        $entry = @($rd.capabilities | Where-Object { $_.id -eq 'native.pe.container' })[0]
+        $wantU = @(@(Get-GrantField $entry 'gate_prohibitions') | Where-Object { [string](Get-GrantField $_ 'code') -eq 'unenforceable_prose' }).Count
+        if ([int]$c.prohibitions_unenforceable -ne $wantU) {
+            return @{ ok = $false; exit = 0; error = "the Check reported $($c.prohibitions_unenforceable) unenforceable prohibitions; the registry carries $wantU for that entry" }
+        }
+        Write-Host ("  (registry carries $n prohibitions: " + ($n - $u) + " enforceable, $u unenforceable -- measured, not asserted)")
+        return @{ ok = $true; exit = 0; error = "clean: $n prohibitions, $u unenforceable, and the count reaches the Check output" }
+    } 0 '^clean'
+
+    # The invariant that makes the whole vocabulary usable: no capability's own recorded
+    # probe may trip its own prohibitions. Measured across all ten entries with the generator
+    # before the table above was written, and asserted here so a future probe edit is caught
+    # by a refusal at the gate rather than by a surprise.
+    T 'G11: every capability''s recorded probe satisfies its OWN prohibitions' {
+        $bad = @()
+        $rdAll = Get-Content -LiteralPath $script:SelftestRegistry -Raw | ConvertFrom-Json
+        foreach ($c in $rdAll.capabilities) {
+            $blk = @(Get-GrantField $c 'gate_prohibitions')
+            if ($blk.Count -eq 0) { continue }
+            $cmd = [string]((Get-GrantField $c 'probe').command)
+            $cap = $c.id
+            $r = Invoke-ProhibitionGate -CapDef $c -Capability $cap -Target $tgtPe -Invocation $cmd
+            if (-not $r.ok) { $bad += "$cap => $($r.code)" }
+        }
+        if ($bad.Count -gt 0) { return @{ ok = $false; exit = 0; error = "probe trips own boundary: $($bad -join '; ')" } }
+        return @{ ok = $true; exit = 0; error = 'clean: no recorded probe trips its own prohibition' }
+    } 0 '^clean'
+
+    # The fixture's honesty, asserted rather than assumed: once the integrator pastes the real
+    # blocks, New-ConformingRegistry must stop synthesising for those entries, so this suite
+    # starts testing the registry's own data instead of a table in this file.
+    T 'G11: the selftest synthesises a block ONLY for an entry that has none' {
+        $rd = Get-Content -LiteralPath $script:SelftestRegistry -Raw | ConvertFrom-Json
+        $real = Get-Content -LiteralPath (Join-Path (Get-RepoRoot) 'manifests/capabilities.json') -Raw | ConvertFrom-Json
+        $drift = @()
+        foreach ($c in $rd.capabilities) {
+            if (-not (Test-FieldPresent $c 'gate_prohibitions')) { continue }
+            $rc = $real.capabilities | Where-Object { $_.id -eq $c.id }
+            if (Test-FieldPresent $rc 'gate_prohibitions') {
+                if ((Get-CanonicalJson @(Get-GrantField $c 'gate_prohibitions')) -ne
+                    (Get-CanonicalJson @(Get-GrantField $rc 'gate_prohibitions'))) {
+                    $drift += $c.id
+                }
+            }
+        }
+        if ($drift.Count -gt 0) {
+            return @{ ok = $false; exit = 0; error = "the fixture OVERWROTE a real block: $($drift -join ', ')" }
+        }
+        return @{ ok = $true; exit = 0; error = 'clean: no synthesised block shadowed real registry data' }
+    } 0 '^clean'
+
+    if (Test-Path -LiteralPath $foreign) { Remove-Item -LiteralPath $foreign -Force -ErrorAction SilentlyContinue }
+
     Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
 
     $cases = $script:gateCases
@@ -1178,7 +2030,10 @@ switch ($Action) {
         exit ([int]$r.exit)
     }
     'Check' {
-        $r = Test-Grant -CaseDir $CaseDir -Capability $Capability
+        # -Target is forwarded so a caller can be held to the file the grant names. Omitting it
+        # keeps the previous behaviour, which is why the MCP server had to be fixed as well as
+        # the gate: a gate that only binds a target when asked binds nothing by default.
+        $r = Test-Grant -CaseDir $CaseDir -Capability $Capability -Invocation $Invocation -RequestedTarget $Target
         Out-Json $r
         exit ([int]$r.exit)
     }

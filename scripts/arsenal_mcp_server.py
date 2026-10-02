@@ -324,7 +324,8 @@ def resolve_case(mission_id: str = "", case_dir: str = "") -> tuple[str, dict[st
     return str(resolved), None
 
 
-def gate_check(case_dir: str, cid: str) -> tuple[bool, str]:
+def gate_check(case_dir: str, cid: str, invocation: list[str] | None = None,
+              target: str | None = None) -> tuple[bool, str]:
     """Ask the ONE component on this station that may say yes to authority.
 
     Measured 2026-10-03, and this function exists because a sentence in this file's own header
@@ -357,6 +358,23 @@ def gate_check(case_dir: str, cid: str) -> tuple[bool, str]:
         return False, f"gate.ps1 is missing at {gate}; refusing rather than running unauthorised"
     cmd = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(gate),
            "-Action", "Check", "-CaseDir", str(case_dir), "-Capability", cid]
+    # -Invocation, added 2026-10-03. gate.ps1 now evaluates each capability's
+    # `gate_prohibitions` -- the machine-checkable half of the ten `gate_must_not_delegate`
+    # boundaries that used to be prose nobody read -- and a vocabulary prohibition REQUIRES the
+    # invocation: it refuses `no_forbidden_argv_token(invocation-absent)` rather than shrug,
+    # because a boundary that cannot see the call cannot judge the call. Without this line every
+    # capability carrying a prohibition was refused through MCP, which is a refusal rather than a
+    # skip, and therefore a break.
+    if invocation:
+        cmd += ["-Invocation", " ".join(str(a) for a in invocation)]
+    # -Target, added 2026-10-03 after an independent audit of this file found the hole it
+    # opened: the server passed -Capability and never -Target, so a valid debug-lane grant for one
+    # self-built PE authorised running that capability on ANY file on this machine. The grant
+    # re-hashes its own target, which proves the GRANTED file is unchanged and says nothing about
+    # which file the caller chose. A grant is a licence for a (capability, bytes) pair and this
+    # surface was letting a caller name only half of it.
+    if target:
+        cmd += ["-Target", str(target)]
     try:
         p = subprocess.run(cmd, capture_output=True, text=True, timeout=120,
                            stdin=subprocess.DEVNULL)
@@ -406,10 +424,16 @@ def run_capability(cid: str, mission_id: str = "", case_dir: str = "", **kwargs)
                         "inside the missions root could not be resolved from what you sent."}
 
     # The authorisation check comes AFTER the cheap structural refusals and BEFORE anything is
-    # executed. A capability nobody may run should not be able to spend a gate invocation, and a
-    # capability that does not exist should not produce an authorisation question at all.
-    ok, why = gate_check(resolved_case, cid)
-    if not ok:
+    # executed, but it is asked TWICE on purpose, and the reason is a capability boundary rather
+    # than a grant. `gate_prohibitions` (2026-10-03) makes each capability's `gate_must_not_delegate`
+    # enforceable, and an argv prohibition cannot be judged without the argv -- so the first ask
+    # carries no invocation, and a refusal whose text says "prohibition" is re-asked below WITH the
+    # resolved argv. A refusal that is about the GRANT is final on the first ask and never spends
+    # the second.
+    caller_target = str(kwargs.get("target") or "")
+    ok, why = gate_check(resolved_case, cid, invocation=None, target=caller_target or None)
+    prohibition_pending = (not ok) and "prohibition" in why
+    if not ok and not prohibition_pending:
         return {"ok": False, "capability": cid, "error": f"{cid} refused by the gate: {why}",
                 "gate": "scripts/gate.ps1 -Action Check",
                 "resolved_case_dir": resolved_case, "missions_root": str(missions_root()),
@@ -446,6 +470,22 @@ def run_capability(cid: str, mission_id: str = "", case_dir: str = "", **kwargs)
                 "note": "a placeholder fed by an upstream fact belongs to a mission, not to a "
                         "model. Either run it as a mission round, or expose the value the runner "
                         "needs as an argument this tool does not currently take."}
+
+    # The second ask, and the only reason the gate is consulted twice: a capability's argv
+    # prohibitions are claims about the CALL, so they cannot be judged from a capability name. If
+    # the first ask refused with a prohibition verdict, this one re-asks with the argv and its
+    # refusal is final -- it names the token or the operand that matched, which is the whole point
+    # of making the boundary machine-checkable.
+    if prohibition_pending:
+        ok, why = gate_check(resolved_case, cid, invocation=argv, target=caller_target or None)
+        if not ok:
+            return {"ok": False, "capability": cid, "error": f"{cid} refused by its own boundary: {why}",
+                    "gate": "scripts/gate.ps1 -Action Check -Invocation <argv>",
+                    "resolved_case_dir": resolved_case, "invocation": argv,
+                    "check_failed": "capability_prohibition",
+                    "note": "this is the capability's gate_must_not_delegate, enforced. The "
+                            "prose is in the registry under gate_must_not_delegate; the machine "
+                            "half is under gate_prohibitions."}
 
     runner = inv.get("runner", "python")
     exe = {"python": sys.executable, "powershell": "powershell",
