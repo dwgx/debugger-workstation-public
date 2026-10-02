@@ -39,7 +39,14 @@ import * as S from '../lab/spec.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const LAB_ROOT = path.resolve(HERE, '..');
-const WORK = process.env.D12_FORENSICS_WORK || path.join(os.tmpdir(), 'd12-forensics-lab');
+/* PER-PROCESS, and D12_FORENSICS_WORK still wins for a caller that wants a shared one.
+ *
+ * This directory was shared by every run, and mkimage.generate() rm -rf's the directory it is
+ * handed before regenerating it -- so two concurrent loops delete each other's forensic image.
+ * Measured 2026-10-03 as an UNHANDLED `Error: EPERM ... \fuzz-lab\work\image` from the fuzz
+ * lab, whose corpus build calls into this same generator. A crash is a louder symptom than the
+ * mobile-lab one and the same root cause: a fixed scratch path plus a destructive first step. */
+const WORK = process.env.D12_FORENSICS_WORK || path.join(os.tmpdir(), `d12-forensics-lab-${process.pid}`);
 const TARGET = path.join(WORK, 'target');
 const CARVED = path.join(WORK, 'carved');
 

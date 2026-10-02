@@ -38,8 +38,17 @@ const REPO = path.resolve(LAB_ROOT, '..');
 
 export const sha256 = (buf) => crypto.createHash('sha256').update(buf).digest('hex');
 
+/* PER-PROCESS work dir. `FUZZ_LAB_DIR` still wins, so a caller that wants a shared corpus can
+ * still ask for one -- but the DEFAULT is no longer shared, and it was measured as a crash.
+ *
+ * Two concurrent `node fuzz-lab/tools/loop.mjs` runs on 2026-10-03: the first died one second in with
+ * an UNHANDLED `Error: EPERM, Permission denied: ...\fuzz-lab\work\image` thrown from
+ * forensics-lab/lab/mkimage.mjs:482, which rm -rf's its output directory before regenerating it --
+ * i.e. it deleted the corpus the other run was reading. The second run finished normally (exit 0),
+ * so the lab looked fine and one of the two runs was a crash nobody would have predicted. The same
+ * shape as the mobile-lab defect, found the same way: by running the gate twice at once. */
 export function workDir() {
-  return process.env.FUZZ_LAB_DIR || path.join(os.tmpdir(), 'fuzz-lab', 'work');
+  return process.env.FUZZ_LAB_DIR || path.join(os.tmpdir(), `fuzz-lab-work-${process.pid}`);
 }
 
 /* ---------------------------------------------------------------- pcap seeds */
