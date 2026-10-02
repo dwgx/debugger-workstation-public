@@ -94,9 +94,31 @@ $ErrorActionPreference = 'Stop'
 function Out-Json($o) { $o | ConvertTo-Json -Compress -Depth 8 }
 
 function Get-RegistryPath {
-    param([string]$Override)
-    if ($Override) { return $Override }
+    # G10. The registry this gate reads is its OWN calibration, not a parameter. `-Registry`
+    # is now refused at every entry point (see Test-RegistrySubstitution below), so the only
+    # thing that can still redirect the gate is this script-scoped override, which
+    # Invoke-Selftest sets and nothing outside this file can reach.
+    #
+    # MEASURED 2026-10-03, red-team finding, and the reason this is not a style change: with
+    # `-Registry` honoured at the MINT, a hand-written capabilities.json containing one extra
+    # capability minted a fully green grant -- allowed set, DPAPI seal, digest -- and a Check
+    # with the same override answered ok:true. The authority of that grant was a file outside
+    # git. The digest binding that G7 tests was real and did not help: a substituted mint
+    # seals the substituted registry's own digest, so it matches itself perfectly.
+    # mission.ps1 already refuses a caller-supplied registry at intake (Refuse 6). The gate is
+    # the component that was left able to honour one.
+    if ($script:RegistryOverride) { return $script:RegistryOverride }
     return (Join-Path (Split-Path -Parent $PSScriptRoot) 'manifests\capabilities.json')
+}
+
+function Test-RegistrySubstitution {
+    # One refusal, three entry points. Returns $null when no substitution was attempted, so a
+    # caller of this function can write `if ($r = Test-RegistrySubstitution) { return $r }`.
+    if (-not $Registry) { return $null }
+    return @{ ok = $false; exit = 6
+             error = 'a caller-supplied -Registry is refused: the capability registry is this script''s own calibration, not a parameter'
+             detail = "registry=$Registry"
+             why = 'a gate that reads whichever registry the caller names cannot tell you which capabilities are real. The registry in git is the authority, and editing it is a committed diff the Owner can see.' }
 }
 
 function Get-CanonicalJson {
@@ -218,6 +240,23 @@ $GrantSealFile = 'grant.identity'
 # the grant did not record. The gate now records it and refuses a grant without it.
 $KnownContainments = @('station_under_named_process_rule', 'loopback_capture', 'isolated_vm')
 
+# `escalation` is the OTHER authority field on a grant, and until 2026-10-03 it was the
+# only one with no vocabulary anywhere in this file. Measured that day: `-Action Escalate
+# -EscalationClass 'TOTALLY_MADE_UP_CLASS'` returned exit 0, wrote the caller's string into
+# grant.escalation, re-sealed it with DPAPI, and the following Check answered ok:true with
+# identity_reestablished=true. A freshly minted grant was fine; a grant that had been
+# widened recorded a class this script cannot interpret, and every later read believed the
+# record. registry-verify.py was already disciplined here -- R6 checks gate.escalation_class
+# against VALID_ESCALATION -- so the gap was the gate, not the schema.
+#
+# Two lists, deliberately, because they answer different questions:
+#   $KnownEscalations    what a grant may RECORD. `none` and `owner_word`.
+#   $GrantableEscalation what an ESCALATION may LAND ON. `owner_word` only -- escalating
+#                        while recording `none` would widen `allowed` and then state that
+#                        nothing was widened.
+$KnownEscalations = @('none', 'owner_word')
+$GrantableEscalation = @('owner_word')
+
 # --------------------------------------------------------------------------------
 # The identity seal.
 #
@@ -320,6 +359,7 @@ function Get-GrantableIds {
 
 function New-Grant {
     param($Target, $Provenance, $OwnerWord, $CaseDir, $Lane, $Containment)
+    if ($r = Test-RegistrySubstitution) { return $r }
 
     if (-not $Target -or -not (Test-Path -LiteralPath $Target)) {
         return @{ ok = $false; exit = 3; error = 'target missing or not a path we can see'; detail = "target=$Target" }
@@ -348,7 +388,7 @@ function New-Grant {
                  why = 'a grant that is not persisted cannot be attested, and an unattested grant cannot be checked.' }
     }
 
-    $regPath = Get-RegistryPath $Registry
+    $regPath = Get-RegistryPath
     $reg = Get-Content -LiteralPath $regPath -Raw | ConvertFrom-Json
 
     # The grant starts as the set of capabilities whose own gate declares they may run
@@ -395,6 +435,7 @@ function Test-Grant {
     # signature: an unkeyed hash over a file the attacker rewrote proves only that the
     # attacker can compute SHA-256.
     param($CaseDir, $Capability)
+    if ($r = Test-RegistrySubstitution) { return $r }
 
     $gp = Join-Path $CaseDir 'grant.json'
     if (-not (Test-Path -LiteralPath $gp)) {
@@ -477,6 +518,18 @@ function Test-Grant {
                  detail = "escalation=$escalation" }
     }
 
+    # G9, the same defect one layer down. `containment` above is re-established against a
+    # literal list; `escalation` was only checked for "is there a word behind it", so a grant
+    # naming a class this script does not define passed. The seal does not cover this: the
+    # seal is DPAPI at CurrentUser and this file says so in its own notes -- any code running
+    # as this user can re-seal, which the G9 selftest control does on purpose.
+    if ($KnownEscalations -notcontains $escalation) {
+        return @{ ok = $false; exit = 6
+                 error = "grant escalation class is not one this gate defines; known: $($KnownEscalations -join ' | ')"
+                 detail = "escalation=$escalation"
+                 why = 'the class records HOW FAR this grant was widened. A class the gate cannot enforce is a class it will go on reading as true.' }
+    }
+
     # --- the seal -------------------------------------------------------------
     # THE HEADLINE FIX. Un-keyed-hash re-derivation cannot be beaten by editing text, so
     # the identity is additionally sealed with DPAPI at mint time and unsealed here. The
@@ -509,7 +562,7 @@ function Test-Grant {
     }
 
     # --- the registry, as the authority ---------------------------------------
-    $regPath = Get-RegistryPath $Registry
+    $regPath = Get-RegistryPath
     $reg = Get-Content -LiteralPath $regPath -Raw | ConvertFrom-Json
 
     # -Registry is a caller-controlled parameter, so "the registry authority" used to be
@@ -616,6 +669,7 @@ function Test-Grant {
 
 function Invoke-Escalate {
     param($CaseDir, $Capability, $NewWord, $NewClass)
+    if ($r = Test-RegistrySubstitution) { return $r }
 
     $cur = Test-Grant -CaseDir $CaseDir
     if (-not $cur.ok) { return $cur }
@@ -623,6 +677,16 @@ function Invoke-Escalate {
     if ($NewClass -eq 'impossible') {
         return @{ ok = $false; exit = 3; error = 'the impossible class cannot be granted at runtime'
                  why = 'changing lane or reach is an Owner edit to AGENTS.md / CHARTER-ARSENAL.md in git. There is no flag on this script that changes that, by design.' }
+    }
+
+    # G9: the class is a closed vocabulary, checked here at the only place authority widens.
+    # Before this, any string except the literal `impossible` was accepted, written into the
+    # grant and re-sealed -- see the note above $KnownEscalations for the measurement.
+    if ([string]::IsNullOrWhiteSpace($NewClass) -or ($GrantableEscalation -notcontains $NewClass)) {
+        return @{ ok = $false; exit = 3
+                 error = "escalation class is required and must be one of: $($GrantableEscalation -join ' | ')"
+                 detail = "escalation_class=$NewClass"
+                 why = 'this call widens allowed, so the class it records has to say that it did. "none" is what a grant that was never widened carries, and it is not a destination.' }
     }
     # G8. The one operation that WIDENS authority had no check at all on its
     # authorisation: `Escalate -NewWord ''` returned exit 0 and wrote an empty
@@ -636,7 +700,7 @@ function Invoke-Escalate {
                  why = 'New refuses an empty Owner word. Escalation is strictly more dangerous than minting, so it cannot have a weaker rule.' }
     }
 
-    $reg = Get-Content -LiteralPath (Get-RegistryPath $Registry) -Raw | ConvertFrom-Json
+    $reg = Get-Content -LiteralPath (Get-RegistryPath) -Raw | ConvertFrom-Json
     $cap = $reg.capabilities | Where-Object { $_.id -eq $Capability }
     if (-not $cap) { return @{ ok = $false; exit = 3; error = "unknown capability '$Capability'" } }
 
@@ -782,7 +846,7 @@ function Invoke-Selftest {
 
     $Prov = 'Owner named this file in conversation 2026-09-30'
     $Cont = 'station_under_named_process_rule'
-    $regRealPath = Get-RegistryPath ''
+    $regRealPath = Get-RegistryPath
 
     # Scratch registries, so these controls test the gate and not a sibling's next edit
     # to manifests\capabilities.json. Written with -Depth 20 because Out-Json's -Depth 8
@@ -805,7 +869,7 @@ function Invoke-Selftest {
     # --- G4b: absent and blocked capabilities may not enter a grant ------------
     # Minted against a registry where two observed capabilities are flipped, so this does
     # not depend on which entries happen to be absent or blocked today.
-    $script:Registry = $regStatePath
+    $script:RegistryOverride = $regStatePath
     $cState = Join-Path $tmp 'c-state-filter'
     New-Item -ItemType Directory -Path $cState -Force | Out-Null
     New-Grant -Target $tgt -Provenance $Prov -OwnerWord 'analyze this exe' -CaseDir $cState -Containment $Cont -Lane $L | Out-Null
@@ -822,7 +886,7 @@ function Invoke-Selftest {
     } 0 '^clean'
     T 'G4b: a BLOCKED capability is refused at Check, by state' { Test-Grant -CaseDir $cState -Capability 'native.ida.decompile' } 3 'state'
     T 'G4b: an ABSENT capability is refused at Check, by state' { Test-Grant -CaseDir $cState -Capability 'native.ida.list_functions' } 3 'state'
-    $script:Registry = ''
+    $script:RegistryOverride = ''
 
     # --- G-FS, part 1: the identity blanked ------------------------------------
     $cBlank = Join-Path $tmp 'c-blank-identity'
@@ -868,9 +932,51 @@ function Invoke-Selftest {
     $cReg = Join-Path $tmp 'c-registry-swap'
     New-Item -ItemType Directory -Path $cReg -Force | Out-Null
     New-Grant -Target $tgt -Provenance $Prov -OwnerWord 'analyze this exe' -CaseDir $cReg -Containment $Cont -Lane $L | Out-Null
-    $script:Registry = $regEvilPath
+    $script:RegistryOverride = $regEvilPath
     T 'G7: Check against a caller-substituted registry is refused' { Test-Grant -CaseDir $cReg -Capability 'native.ida.decompile' } 6 'registry'
+    $script:RegistryOverride = ''
+
+    # --- G10: the caller cannot substitute the registry at ANY entry point -------
+    # The measured attack, in the shape a caller produces it: set the one variable the
+    # parameter used to write, and mint. Before the fix this produced a green grant whose
+    # authority was a file outside git; G7 above could not catch it, because a substituted
+    # mint seals the substituted registry's own digest and therefore matches itself.
+    $cRegMint = Join-Path $tmp 'c-registry-at-mint'
+    New-Item -ItemType Directory -Path $cRegMint -Force | Out-Null
+    $script:Registry = $regEvilPath
+    T 'G10: a mint that names another registry is refused' {
+        $m = New-Grant -Target $tgt -Provenance $Prov -OwnerWord 'analyze this exe' -CaseDir $cRegMint -Containment $Cont -Lane $L
+        if ($m.ok) { return @{ ok = $false; exit = 0; error = "the mint SUCCEEDED against a substituted registry (allowed_count=$($m.allowed_count))" } }
+        return $m
+    } 6 'registry'
+    T 'G10: a Check that names another registry is refused' { Test-Grant -CaseDir $cReg -Capability 'native.ida.decompile' } 6 'registry'
     $script:Registry = ''
+    # `Test-Path` returns a boolean, and T() reads `.exit` off the result -- the first version
+    # of this control compared $null to 0 and printed an empty verdict, which is the shape of
+    # a control that passes for a reason nobody can name.
+    T 'G10: nothing was written by the refused mint' {
+        if (Test-Path -LiteralPath (Join-Path $cRegMint 'grant.json')) {
+            return @{ ok = $false; exit = 0; error = 'the refused mint left a grant.json on disk' }
+        }
+        return @{ ok = $true; exit = 0; error = 'none' }
+    } 0 'none'
+
+    # And the override the selftest itself uses still works, so this cannot be "completed"
+    # later by deleting it -- the G4b controls above depend on it, and a suite that silently
+    # stopped testing the state filter would be worse than the hole it closed.
+    $cOverrideWorks = Join-Path $tmp 'c-override-works'
+    New-Item -ItemType Directory -Path $cOverrideWorks -Force | Out-Null
+    $script:RegistryOverride = $regEvilPath
+    T 'G10: the selftest-only override still redirects the gate' {
+        $m = New-Grant -Target $tgt -Provenance $Prov -OwnerWord 'analyze this exe' -CaseDir $cOverrideWorks -Containment $Cont -Lane $L
+        if (-not $m.ok) { return $m }
+        $d = Get-Content -LiteralPath (Join-Path $cOverrideWorks 'grant.json') -Raw | ConvertFrom-Json
+        if (@($d.allowed) -notcontains 'RULE.THE.WORLD') {
+            return @{ ok = $false; exit = 3; error = 'the override did NOT take effect, so the state-filter controls above were reading the real registry' }
+        }
+        return @{ ok = $true; exit = 0; error = 'none' }
+    } 0 'none'
+    $script:RegistryOverride = ''
 
     # --- G8: the widening operation, with no word ------------------------------
     $cEsc = Join-Path $tmp 'c-escalate-word'
@@ -892,6 +998,72 @@ function Invoke-Selftest {
         if (-not $c.ok) { return @{ ok = $false; exit = 0; error = "the escalated grant no longer checks: $($c.error)" } }
         return @{ ok = $true; exit = 0; error = 'none' }
     } 0 'none'
+
+    # --- G9: the escalation CLASS is a vocabulary, not a field anybody may fill ------
+    # MEASURED 2026-10-03, before any of the three checks below existed:
+    #   gate.ps1 -Action Escalate -EscalationClass 'TOTALLY_MADE_UP_CLASS'
+    # returned exit 0, wrote that string into grant.escalation, re-sealed with DPAPI,
+    # and a following Check answered ok:true with identity_reestablished=true. So the one
+    # field that records HOW MUCH authority a grant was widened into was free text, in the
+    # same script where `containment` -- a different authority field -- has a literal list,
+    # three enforcement points and four controls. The registry side was already disciplined:
+    # R6 checks gate.escalation_class against VALID_ESCALATION. The gate was the gap.
+    $cEscClass = Join-Path $tmp 'c-escalate-class'
+    New-Item -ItemType Directory -Path $cEscClass -Force | Out-Null
+    New-Grant -Target $tgt -Provenance $Prov -OwnerWord 'analyze this exe' -CaseDir $cEscClass -Containment $Cont -Lane $L | Out-Null
+    T 'G9: escalating into a class this gate never defined is refused and writes nothing' {
+        $e = Invoke-Escalate -CaseDir $cEscClass -Capability 'net.pcap.analyse' -NewWord 'the Owner widened this' -NewClass 'TOTALLY_MADE_UP_CLASS'
+        $after = Get-Content -LiteralPath (Join-Path $cEscClass 'grant.json') -Raw | ConvertFrom-Json
+        if ([string]$after.escalation -ne 'none') {
+            return @{ ok = $false; exit = 0; error = "the refused class was written to disk anyway (escalation=$($after.escalation))" }
+        }
+        return $e
+    } 3 'escalation class'
+
+    T 'G9: a BLANK escalation class is refused, not recorded as an empty escalation' {
+        Invoke-Escalate -CaseDir $cEscClass -Capability 'net.pcap.analyse' -NewWord 'the Owner widened this' -NewClass ''
+    } 3 'escalation class'
+
+    # The identity projection covers `escalation`, so a plain text edit is already refused
+    # by the seal. But this file states the limit itself: the seal is DPAPI at CurrentUser,
+    # so ANY code running as this user can re-seal. So this control re-seals -- the attack
+    # the free-text class enabled -- and asks whether Check re-establishes the CLASS as well
+    # as the bytes. A check that cannot fire is not a check, so it has to be one that can.
+    $cEscRestated = Join-Path $tmp 'c-escalation-restated'
+    New-Item -ItemType Directory -Path $cEscRestated -Force | Out-Null
+    New-Grant -Target $tgt -Provenance $Prov -OwnerWord 'analyze this exe' -CaseDir $cEscRestated -Containment $Cont -Lane $L | Out-Null
+    $restated = Get-Content -LiteralPath (Join-Path $cEscRestated 'grant.json') -Raw | ConvertFrom-Json
+    # `escalation_word` is set too, on purpose. Without it this control was refused by the
+    # PRE-EXISTING "escalation with no Owner word" check -- i.e. it would go red for a reason
+    # that has nothing to do with the vocabulary, which is the failure mode this repo exists to
+    # reject. The first run of this case did exactly that.
+    $restated.escalation = 'owner_word_by_fiat'
+    # `escalation_word` / `escalated_at` are ABSENT on a freshly minted grant (they only
+    # come into existence when an escalation happens), so they must be added rather than
+    # assigned -- `$d.escalation_word = ...` raises "property cannot be found on this
+    # object" under $ErrorActionPreference='Stop' and takes the whole selftest down.
+    $restated | Add-Member -NotePropertyName escalation_word -NotePropertyValue 'the Owner widened this, in words the gate does not define' -Force
+    $restated | Add-Member -NotePropertyName escalated_at -NotePropertyValue (Get-Date).ToUniversalTime().ToString('o') -Force
+    $restated.grant_sha256 = Get-GrantHash $restated
+    Write-GrantSeal -CaseDir $cEscRestated -Grant $restated
+    Set-Content -LiteralPath (Join-Path $cEscRestated 'grant.json') -Value (Out-Json $restated) -Encoding UTF8
+    T 'G9: a grant whose escalation class was restated AND re-sealed is still refused' { Test-Grant -CaseDir $cEscRestated } 6 'escalation class'
+
+    # And the contradiction case: `-NewClass 'none'` WIDENS `allowed` and then records
+    # `escalation: none`, i.e. the grant says nothing was escalated while it was. Whether
+    # that currently buys an attacker anything depends on which capability is named, which
+    # is exactly why it should be a stated rule and not an accident of the code path.
+    $cEscNone = Join-Path $tmp 'c-escalate-none'
+    New-Item -ItemType Directory -Path $cEscNone -Force | Out-Null
+    New-Grant -Target $tgt -Provenance $Prov -OwnerWord 'analyze this exe' -CaseDir $cEscNone -Containment $Cont -Lane $L | Out-Null
+    T 'G9: an escalation that RECORDS no escalation is refused' {
+        $e = Invoke-Escalate -CaseDir $cEscNone -Capability 'net.pcap.analyse' -NewWord 'the Owner widened this' -NewClass 'none'
+        $after = Get-Content -LiteralPath (Join-Path $cEscNone 'grant.json') -Raw | ConvertFrom-Json
+        if ([string]$after.escalation -ne 'none') {
+            return @{ ok = $false; exit = 0; error = "the refused class was written to disk anyway (escalation=$($after.escalation))" }
+        }
+        return $e
+    } 3 'escalation class'
 
     # --- the field allow-list ---------------------------------------------------
     $cFields = Join-Path $tmp 'c-unknown-field'
