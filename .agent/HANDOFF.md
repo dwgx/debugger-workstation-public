@@ -1,304 +1,203 @@
-# HANDOFF — reverse workstation
+# HANDOFF — reverse workstation (debugger station)
 
-**刚发生的事 (2026-10-02):** a deep review with concurrent subagents found this repo's own
-verification layer was not verifying itself. The headline — **C1**, the "complete, confident,
-wrong answer" this harness exists to reject — still reached `tier=confirmed` with every fact
-invented, no tool run, both capabilities IDA Pro and four guards named that never ran. Under
-it: `gate.ps1` accepted a grant whose Owner word and provenance were blanked with the
-attacker-recomputed public hash (eight exploited holes); the registry validator's R8 could
-never fire for any of its five effects; the registry declared **one** composition edge, and
-capability selection was a hardcoded table that never read the registry at all. All
-reproduced first, all fixed, all covered by a control that reddens when its mechanism is
-removed. Commits `f1d23de`, `5ec8878`, `4e381f0`.
+**交接时间 2026-10-02 17:40 · 基线 `101cf57` · tracked-uncommitted 0 · 两仓库均已 push**
 
-**下一步:** **first, the bug that matters.** `mission.ps1:861` dereferenced `$parsed.PSObject`
-with no null guard while `:853` explicitly sets `$parsed = $null` when a tool emits non-JSON —
-which `mobile.apk.static` correctly does, exiting 3 on a non-ZIP target. So **the acceptance
-mission CRASHED on round 3 and exited 0, with no verdict and no artifact.** Every earlier
-measurement of "`unresolved`, `failed_gates=[independence]`" was taken at `-MaxRounds 2`, which
-never reaches the crash. Fixed and re-measured on the default: 3 rounds, `unresolved`,
-`failed_gates=[independence]`, exit 1. **Do not re-measure it at `-MaxRounds 2` again.**
-
-The gate and the verdict layer are honest, and that exposed the real gap: **the only end-to-end
-mission chain is one instrument, IDA Pro, held twice, so it cannot corroborate itself.**
-Do not weaken `independence` to change that.
-
-**Registry is now 18 capabilities** (was 16). Two added and both measured: `ops.skill.security`
-(NVIDIA/SkillSpector, 18,952★, Apache-2.0, installed from git — our own six skill files scan
-clean at 100% coverage, a planted poisoned control scores 39/MEDIUM and exits 1) and
-`dynamic.win.frida.intercept` (**interception is now genuinely proven**, `INTERCEPT-PROVEN`, hit
-count 1, from the committed `native-lab/tools/frida_spawn_gate.py`). The second one closes the
-gap that `dynamic.win.frida` recorded in its own first `does_not_prove`.
-
-**Three of my own claims were wrong this session and all three are corrected in place:**
-pentagi is **MIT**, not unlicensed; the MCP exposure is safe only because
-`mcp/bin/ida-pro-mcp.cmd:7` passes `--stdio` — **stdio is a flag, and HTTP on 127.0.0.1:8745 is
-the DEFAULT**; and the module base does **not** "differ every run" (five consecutive runs gave
-0x7ff666bb0000). A worker overturned two of these and I measured the third before agreeing.
-
-Full record with every measured number and the dead ends not to re-walk:
-**`.agent/detail-2026-10-02-deep-review.md`**. Survey evidence now tracked at
-`<private-tree>\wiki\literature\survey-2026-10-02\`. What follows below is the 2026-09-30
-record; §9 is the only part kept current.
-
-Written 2026-09-30 at the end of a long session. Every number below was produced by a
-command in this repo. Nothing here is remembered.
+本文替代此前那一版。那一版记的是"八 agent 深审发现验证层没在验证自己"，**已被本文取代**：
+那个阶段的洞全部修完，之后又发生了六个阶段的工作，见下。
 
 ---
 
-## 0. The one rule
+## 0. 三十分钟上手
 
-> **本项目声称的每一个能力,都由一条可运行的命令证明。**
-> **A capability without a runnable command is a claim, not a capability.**
+```bash
+cd "D:/Software/Tool/WorkStation/debugger"
 
-Three corollaries that the whole repo is built on:
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-all.ps1   # 一条命令跑完整套快检
+python scripts/reachability-report.py                                       # 什么真的产出过 fact
+python scripts/assert-probes.py --list                                     # 手工跑真实 probe（~15min 全量）
+python scripts/arsenal_mcp_server.py                                       # MCP 面（stdio）
+```
 
-1. **A check that always passes is not evidence.**
-2. **`rejected` is not `correct`.** The tool returned a decision, not the right one.
-3. **The instrument, not the subject, is usually what is broken.** This session produced
-   **13 separate instances** of that, and every one was caught by a program rather than by
-   reading more carefully. Section 8 lists them, because the next window will produce the
-   fourteenth.
+**`verify-all.ps1` 是入口。** 它跑：registry-verify / registry --selftest / requires-tools /
+doc-facts / gate selftest / mission selftest / mission ablate / reachability / assert-probes --list。
+`assert-probes` 不在默认链里（它真跑工具、耗时），要跑请显式。
 
 ---
 
-## 1. What this workstation is for
+## 1. 这一阶段实际做了什么（按天序）
 
-Two repos, non-overlapping:
-
-| Repo | Job |
+| 阶段 | 结果 |
 |---|---|
-| `<private-tree>` | **Policy, authorization, knowledge, the lab range.** Decides *whether* something may be done. Contains no tools. |
-| `debugger-workstation` (this one) | **Tools, labs, the capability registry, the orchestrator.** Decides *how* to do it and *whether it worked*. |
+| 独立 verifier 审计注册表 | 8 条发现，含 fact_map 指向未声明键（R20）、**13/24 负控制是散文**（R21） |
+| 写 `assert-probes.py` | 把"你真的跑过吗"变成命令；自曝 21/24 假 DRIFT（PowerShell 喂给 cmd.exe）、**把所有控制报成通过**（`-File` 吞退出码）、**超时报成 drift** |
+| 写 `reachability-report.py` | 把 `ok:true` 且零 facts 算成 worked——**我这一轮报给你的每个数字都是上界** |
+| capa 登记 / 修正 | `grep capa` 命中全部条目，因为 "capa" 在 "capabilit**y**" 里 |
+| 证书二次意见 | OpenSSL 推翻 pefile 对自家 fixture 的"证书头有效"读数 |
+| Q6/Q4 点亮 | **黑轴 3/7 → 1/7**；`native.pe.hardening`（radare2 早就装了、0 条引用） |
+| **安全洞** | precondition 只声明 Q1，**加壳目标在打包器门从未被咨询的情况下被反编译** |
+| 造轮子 | `check-requires-tools.py`、`arsenal_mcp_server.py`、注册表 plan 绑定 |
+| 两轮 subagents | registry/tools/gates 审计 + 联网挖掘三轮 |
 
-The split is deliberate: a debug ALLOW must never be misread as a bounty ALLOW.
+**规模**：session 基线 15 能力 / 3 可调用 / 10 规则 → 现在 **27 / 16 / 22**。
 
 ---
 
-## 2. How to use it — the actual workflow
+## 2. 当前实测状态（不是声明）
 
 ```
-  you ──▶ gate.ps1 New ──▶ grant.json          only this mints authority; only an
-                                              Owner sentence authorises one
-     ──▶ mission.ps1 Run ──▶ plan.json         written BEFORE any tool runs
-                         ├─ round 1  capability A   gate re-checked EVERY round
-                         ├─ round 2  capability B   fed A's typed fact forward
-                         └─ verdict    computed by seven gates, not written by the model
-                         ──▶ artifact.json + trace.jsonl + STOP note
+27 capabilities: 23 observed · 2 absent · 1 planned · 1 blocked
+16 declare an invoke · 16 evidence families · 7 question axes
+registry-verify            REGISTRY CLEAN（22 规则，59 自测用例全触发）
+check-requires-tools       27 条 probe：20 ok · 0 wrong · 0 tool-fault · 3 skipped
+doc-facts                  17 条活声明 OK
+gate selftest              24 refusals/grants behaved
+mission selftest           51 controls（N4 仍 unresolved —— 这是对的）
+mission ablate             7 + 6 load-bearing，0 unproved
+reachability               1 of 7 轴从未产出 fact；3 of 16 可调用从未产出 fact
 ```
 
-Concretely:
+### 按轴（**这是该引用的数字，不是"可调用 16/24"**）
+
+```
+Q1.identify 6/8   Q2.locate 5/5   Q3.behaviour 4/4   Q4.data 2/4
+Q6.crypto   2/3   Q7.origin  3/5   Q5.vuln-shape 0/0   ← 唯一黑轴
+```
+
+**`可调用` 是注册表的属性，`成功过` 是历史的属性。只有历史能回答你拥有哪一个。**
+
+---
+
+## 3. 唯一需要 Owner 决定的一条
+
+**授权能被凭空造出。** 实测：
 
 ```powershell
-# 1. prove the whole station still works
-powershell -File scripts\smoke-all.ps1
-
-# 2. mint authority for one object
-powershell -File scripts\gate.ps1 -Action New -Target crackme-corpus\out\c01-stringobf.exe `
-  -Provenance "Owner-authored; built by crackme-corpus/tools/loop.py from our own source" `
-  -OwnerWord "analyze this exe" -CaseDir E:\missions\mycase
-
-# 3. run a mission behind it
-powershell -File scripts\mission.ps1 -Action Run -Target crackme-corpus\out\c01-stringobf.exe `
-  -Question "where is the input validation" -QuestionType Q2.locate `
-  -Provenance "..." -OwnerWord "..." -Containment station_under_named_process_rule `
-  -Claim "what you think the answer is -- the loop decides whether it survives"
-
-# 4. a single capability on its own
-powershell -File scripts\native-lab.ps1 loop
-node fuzz-lab\tools\loop.mjs
+gate.ps1 -Action New -Target <我自己拷到 temp 的文件>
+  -OwnerWord "do absolutely anything you want to this machine"
+  -Provenance "the user asked for this in the previous turn of THIS conversation"
+# → {"ok":true,"allowed_count":18,"attested":true}   MINT_EXIT=0
 ```
 
-`agent-cli.ps1 catalog` lists every lab entry point as JSON.
+`Test-SelfAsserted` 那 9 条正则过滤**措辞不是权限**；24 条 selftest 全在测"已铸的授权被改盘"，
+**没有一条问 Owner 那句话是不是真的**。
+
+**这是设计缺口不是 bug** —— 门无法验证人话。修法在授权层（Owner nonce / 具名目标 / 会签记录），
+**不在 `gate.ps1` 里**。**不要为了让指标好看去翻 `requires_verdict`。**
 
 ---
 
-## 3. The one command that proves the orchestrator is real
+## 4. 已知不足，按严重度
 
-```powershell
-powershell -File scripts\mission.ps1 -Action Selftest     # 15/15, incl. N4
+1. **授权缺口**（上）。
+2. **7 个家族各只有 1 条可调用能力**：`artefact-parser` `capture-analysis` `certificate-verifier`
+   `dynamic-instrumentation` `format-reader` `package-inspection` `packet-reader`。
+   **它们在 independence 门里贡献为零**；Q4 够两个是运气不是设计。
+3. **`assert-probes` 认字符串不认仪器** —— 2 行假脚本能让它绿灯。
+4. **10 条能力还没有可运行的负控制**（`kind: plan`，附书面理由，设计是真的，命令还没有）。
+5. **知识库门仍窄** —— 已从 16 条扩到 17 条 + 跨行，但散文计数、表格裸数字、
+   `.agent/` 与 `literature/` 整目录仍跳过。
+6. **`net.pcap.selfparse` 类型写错**：`capture: pcap`，但 **pcap 就是一条路径**，应为 `path_ref`。
+   与当初 `forensics` 把 `lab_workdir` 写成 `image` 同类，方向相反。**下一步该修它。**
+7. **MCP 面只被一个测试 client 跑过**，没有被任何真实客户端用过。
+8. **20 个已装工具仍无能力**：ImHex · ReClass.NET · YARA-X · sigcheck · x64dbg · ScyllaHide 等。
+   T1 已判定：**最好的三个候选都是被"它们怎么报告"淘汰的**——
+   **YARA-X 命中和未命中都 exit 0**（只能读 stdout 字节数）、FLOSS 在它存在的意义那个用例上
+   **exit 0 且输出为空**、sigcheck 对 Signed/Unsigned 都 exit 0。**"能跑且退出 0"不是一个结果。**
+
+---
+
+## 5. 环境陷阱（每次都会踩的）
+
+- **bash 是 WSL2，看不到 `D:`。** PowerShell 用**单引号**：`powershell -NoProfile -Command '...'`
+  （双引号会让外层吃掉 `$`）
+- **`EXIT=$?` 在管道后读的是最后一个命令的**，不是目标的。用 `cmd >/dev/null 2>&1; echo $?`
+- **`%TEMP%` 在 PowerShell 不展开**，用 `$env:TEMP`。这一条已经害我产生过一次假 DRIFT
+- **相对路径跑 .exe 会失败**（exit 127 / "command not found"），用绝对路径
+- **PowerShell 里带引号的路径是字符串表达式不是调用**，要加调用符 `&`
+- **`Get-FileHash` 在这里不存在**（CommandNotFoundException）——用
+  `[System.Security.Cryptography.SHA256]::Create()`，`gate.ps1:173-176` 有记录
+- **`spawn 出去的进程会继承文件描述符** —— server 持有的 JSON-RPC 管道会被子进程继承并挂死，
+  必须 `stdin=subprocess.DEVNULL`
+- **not on PATH**：`tshark`(portable Wireshark 4.6.8) · `diec` · `upx`(5.2.1) · `rabin2`(6.2.2) · Frida(仅 objection venv)
+- **IDA 走 `idalib-mcp` MCP device，不是 CLI**
+- **端口冲突**：`crypto-lab` 硬编码 8791，而 `<project>\homework` 的 `atlas_server.py` 占着它
+  ——**那是 Owner 另一个项目，不要碰**；probe 已写 `CRYPTO_LAB_PORT=8799` 绕过
+- **成本**：capa ~33s · Ghidra pair ~32s · fuzz loop ~634s · assert-probes 全量 ~15min
+- **不要跑** `smoke-all.ps1` / 任何 lab loop / 任何 fuzz run（父进程所有，昂贵）
+
+---
+
+## 6. 目录地图
+
+```
+manifests/capabilities.json     唯一事实源，27 条，22 规则由 registry-verify.py 校验
+scripts/verify-all.ps1          一条命令跑全套
+scripts/gate.ps1                授权：New / Check / Escalate / Selftest
+scripts/mission.ps1             编排：Run / Selftest / Ablate；-SeedFact；precondition 按 invoke.gates 跟随
+scripts/registry-verify.py      静态校验 + 59 自测
+scripts/check-requires-tools.py 执行 requires.tools[].expect（27 条）
+scripts/assert-probes.py        真跑 probe/control，比对 expect
+scripts/reachability-report.py  按 mission 历史算"真的成功过"
+scripts/doc-facts.py            wiki 数字漂移，跨行匹配
+scripts/arsenal_mcp_server.py   MCP 面，16 个可调用能力
+native-lab/ headless-lab/ net-reverse/ crypto-lab/ forensics-lab/ fuzz-lab/
+managed-lab/ mobile-lab/ web-reverse/ crackme-corpus/     各自 self-authored、零下载
+Static-Reversing/ Mobile-Android/ Network-HTTP/ Debuggers/
+System-Forensics/ Unpackers-Game/                          第三方工具（tools.json 登记 38 个）
+E:/missions/                    143 个 mission case，每个含 artifact.json / trace.jsonl / plan.json
 ```
 
-**N4 is the one that matters:** it aims the station's own documented failure mode — the
-managed lab's *complete, confident, wrong answer* — straight at the new code, and requires
-`unresolved`. A harness that is a function cannot be argued with.
-
-Measured acceptance run on our own crackme:
-
-```
-round 1  native.ida.list_functions  →  native.func.addr, native.func.named
-round 2  native.ida.decompile       →  native.dec.code, native.dec.refs
-termination DONE | verdict confirmed | scope guard INTACT | STOP note: 11 did not run
-```
-
-The recorded evidence was **checked against the claim**, not assumed to support it: the
-decompiled `main` does compare `argv[1]` against the decoded buffer `Str2` *and* does carry
-the plaintext decoy. So the claim is what the artifact shows.
+**`E:` 放运行时数据；仓库留 `D:`。**
 
 ---
 
-## 4. The seven verdict gates
+## 7. 工作流程（这个项目实际遵守的）
 
-The caller proposes a claim. **The loop disposes of it.** Fail any gate → `unresolved`,
-which cannot be the terminal answer.
-
-| Gate | Refuses |
-|---|---|
-| `process` | a conclusion with no recorded run behind it |
-| `reachability` | two disconnected results presented as a chain |
-| `observation` | a fact that does not cover the claim |
-| `independence` | **facts from one instrument FAMILY.** `{ghidra.decompile, ida.decompile}` is refused — two decompilers share the blind spots that come from reconstructing machine code into C |
-| `bounded_claim` | a claim wider than any `does_not_prove` allows |
-| `uncertainty` | a verdict with no unknowns |
-| `discharged` | **"I found nothing" without naming the guards that would have found it.** Strictly stronger than anything this repo had before. Naming a guard not in the registry does not count |
-
-And termination is computed too, in three states. **DONE ≠ EXHAUSTED** — a mission that ran
-out of budget and one that answered both stop, and reading the first as the second turns a
-gap into a verdict. `EXHAUSTED` names the guards it did not run.
+1. **先测后写。** 每一个"已验证"都必须有真跑过的命令和真实输出。
+2. **先量再修。** "这条路走不通"要区分**三个**不同原因：不在 PATH / 跑不起来 / 没有新问题。
+3. **拒绝优于伪造。** `native.crosscompare.ghidra` 从 `observed` 降到 `planned`，因为没有可运行命令
+   做过它声称的比较。**没有命令的 probe 是 schema 条目，不是能力。**
+4. **每个新规则必须能被控制证伪**，且 **fixture 必须是合法注册表**（本项目四次栽在这：
+   control command 字面写着 `"false"`）。
+5. **删除要切换不要抹除**：散文负控制移到 `control_plan` 并附理由；过时数字划掉不删。
+6. **subagent 派发**：`board.py open --scope` 占坑 → brief 必须有 `# Non-Conflict` + `DONE WHEN`
+   → **结果先落盘再报状态**（上下文压缩会静默杀掉没落盘的 worker）
+   → `close --verdict ok --verify "<真跑过的>"`
+   **注意：本环境的 worker 没有文件写权限**（write 只接受 `xd://`），**必须让它在最终消息里全量交付**，
+   由父进程落盘。
 
 ---
 
-## 5. What is claimed, and how each is proved
+## 8. 与 <private-tree> 仓库的同步
 
-15 capabilities in `manifests/capabilities.json`; **12 observed, 2 absent, 1 blocked**.
-Verify the claims, not the file:
-
-```powershell
-python scripts\registry-verify.py               # 15 capabilities, CLEAN
-python scripts\registry-verify.py --selftest    # 18 selftest cases across 11 rules, each
-                                                # case built to violate exactly that rule
-```
-
-**Never trust a `last_summary` in the registry.** Re-run the `probe.command`. A recorded
-number that no longer reproduces is worse than no number.
-
-The two absent and one blocked, so you do not go looking:
-
-- **`dynamic.device.frida`** — no device, no `adb`, no emulator.
-- **`native.il2cpp.symbols`** — the tool is a net6 build, this host has .NET 8/10 only,
-  and it **hangs silently** rather than erroring. Separately: no *authorized* IL2CPP
-  artifact exists. `global-metadata.dat` files are present on this host inside the VIVE
-  Hub installer — **third-party commercial software — and were deliberately not used.**
-  "It is installed on my machine" is not ownership.
-- **`native.ghidra.emulate`** — the API is reachable and ran; the controlled-input setup
-  does not take, so ground truth was not recovered. **And `EmulatorHelper` / `DefaultEmulator`
-  are deprecated and marked for removal.** Fixing the setup would mean building a durable
-  capability on an API Ghidra intends to delete. Decide that *before* the fix.
+- `<project>/<private-tree>` 的 `wiki/` 是本军火库**唯一**的解释层。
+- `doc-facts.py` 跨仓库校验 wiki 数字。**改注册表数字后必须修 wiki**，否则它会红。
+- 本阶段写入：`wiki/CHARTER-ARSENAL.md`（方法论沉淀）、`wiki/methods/arsenal-upgrade-plan.md`
+  （升级计划 + 未接线工具审计 + MCP + plan 绑定）、`wiki/INDEX.md`（计数）。
+- 两仓库 commit 均已 push，uncommitted 均为 0。
 
 ---
 
-## 6. The traps in this repo's own tooling
+## 9. 下一步建议（按性价比）
 
-All measured. All of these cost real time.
-
-| Trap | Cost |
-|---|---|
-| `Start-Process -PassThru` + `WaitForExit(<int>)` | `$p.ExitCode` is **`$null`**; `exit $null` is **exit 0**. Ghidra wrapper failed open on a failed import. Gate on the artifact, never the code |
-| `ida-pro-mcp` failure reporting | `isError:false`, `code:null`, `error:"…"`. Test the `error` field, require non-null `code` |
-| `--unsafe` on that server | **a speed bump, not a boundary.** One unauthenticated loopback POST made `py_eval` callable; the result is persisted into the sample's `.i64`. And `idb_save` is *not* tagged unsafe |
-| Batches drop items silently | 5 queries in, 4 results out, no index, no counter. Contract is `len(result) == len(queries)` |
-| Orphaned `idalib` worker holds 8745 | the loop attaches to a server it did not start. `portFree()` refuses |
-| IDA lists no session until analysis ends | an early poll returns `[]`, indistinguishable from failure-to-open |
-| Ghidra compiles the whole scriptPath dir | one broken file pollutes **every** headless run's output |
-| Bash here is **WSL2** | `C:\Windows\system32\bash.exe`; its root is a Linux filesystem and `D:` is absent. Three bash smoke attempts failed 15/15 for that reason. **PowerShell only** |
-| `command -v` is not a package check | webcrack/wakaru are npm packages under `web-reverse/static/node_modules/`, not PATH binaries |
-| Research claims about our own tooling | "we lack a JS transform engine" was false. A claim about *your own* tooling deserves **more** scrutiny than one about someone else's |
-| `.agent/` in `<private-tree>` is excluded; here it is not | this recovery doc is tracked **on purpose** — it is the only artifact that survives a lost machine |
+1. **`net.pcap.selfparse` 的 `capture: pcap` → `path_ref`** —— 2 分钟，且它其实可路由
+2. **剩 10 条 plan 负控制** —— 审计给了 NEEDS-A-TOOL-CHANGE 清单
+3. **MCP 面接一个真实客户端**（Claude Code 等）跑一遍，而不是只有测试 client
+4. **研究已采纳未建**：Kubernetes dry-run **枚举**（`none|client|server`）+
+   **答不出就 fail closed**——现成失败案例是 `kubectl --dry-run=client` 接受非法资源类型。
+   这里权威是 `gate.ps1`，**客户端侧 dry-run 什么也验证不了**
+5. **授权缺口** —— 只有 Owner 能定
 
 ---
 
-## 7. Two premises that were wrong, and the rule they produced
+## 10. 这一阶段最有价值的一条（别丢）
 
-Both were asserted limitations nobody re-checked. Both had already spread into a manifest
-and into a briefing sent to four research agents.
-
-1. **"This box has no IDA Pro."** False. IDA Professional **9.2**, licensed
-   (`idapro.hexlic`), with `ida-pro-mcp` v2.0.0 serving **66 tools**.
-2. **"Ghidra cannot open a sibling program headlessly."** False.
-   `AutoVersionTrackingScript` does exactly that — verified with three programs open in one
-   process, 14 correlators, 14–17 s.
-
-> **Rule: a claim of the form "the tool cannot do X" is unverified until someone has run it.**
-
----
-
-## 8. The thirteen times the instrument was wrong
-
-Recorded because the next window will produce the fourteenth, and because the pattern is
-the actual lesson of this session.
-
-1. Counted `PASS` lines as checks — forensics 74 lines = 37 checks. Nearly "corrected" three
-   correct numbers with a bad ruler.
-2. A negative control that passed **for the wrong reason** — refused because no session id
-   was bound, so it never reached the address it was testing.
-3. A selftest that collected **zero** cases and still announced "OK: 0 rules".
-4. Smoke reported four green labs as red (`JSON-SUMMARY` shadowed the verdict line).
-5. `ida-pro-mcp` wrapper: hashtable splatted as one argument → `target=System.Collections.Hashtable`.
-6. Ghidra fail-open (above).
-7. Verdict gate list came back **empty**, so six gates passed vacuously.
-8. `$failed` vs `$FailedRounds` — different variable names; `$null -eq 0` is false, so
-   CONTINUE was unreachable and every mission reported DONE.
-9. Scope guard hashed the 1 GB Ghidra install — minutes per run. **A guard nobody waits for
-   is not a guard.** Now `git ls-files`, 50 ms.
-10. Android environment detector reported root/emulator checks present **on our own clean
-    APK** — `"sdk"` matched the literal `"sdk="`, and `"su"` matched XML element names.
-11. A Ghidra project-cleanup block sat **after** the exits, so it was unreachable on the
-    only path that creates a project: looked right, fixed nothing.
-12. Smoke reported `IL2CPP ABSENT` as a FAILURE **while printing that exact string** — the
-    scan pattern was a hardcoded list the new probes' `expect` values were never in.
-13. `.agent/RECOVERY-STATION.md` recorded a "50-minute anomaly" that was **my own waiting,
-    not the run** — it finished in 740 s, LOOP CLOSED.
-
-Structural fixes, not fourth patches:
-
-- The smoke scan pattern is now **derived from each probe's own `expect`**, so a checklist
-  and the thing it checks cannot drift apart.
-- Every selftest has an **explicit zero-case floor**. A checker over zero items must fail.
-- `registry-verify` has **11 rules, exercised by 18 selftest cases** — each case builds a
-  registry that violates exactly the rule it covers.
-
----
-
-## 9. Current state
-
-| | |
-|---|---|
-| registry | **16 capabilities**, CLEAN · **19 validator rules, 46 selftest cases** |
-| gate selftest | **24** refusals and grants |
-| mission selftest | **51** controls incl. N4; **7** verdict gates; **6** routing rules |
-| ablation | `-Action Ablate` → **7 verdict + 6 routing load-bearing, 0 unproved** |
-| ghidra fail-open regression | **4/4 LOOP CLOSED** |
-| fuzz lab | **24/24 LOOP CLOSED**, 740 s at budget 90 (floor 40) |
-| native-lab | **15/15 LOOP CLOSED**, ~2.4 s |
-| full aggregate smoke | **pass=19 fail=0**, ~270 s. The old "contends on three Ghidra probes and is killed by timeout" is **REFUTED** — concurrent run 103.47 s vs 161.93 s serial, all passing. The real hazard is **fixed loopback ports**: two `crypto-lab` runs both bind 8791 and one dies `EADDRINUSE`; two `native-lab` runs both bind 8745 and the loser exits 1 |
-| research | `docs/research/` — 8 reports, 5,634 lines. Measured 2026-10-02 with `(Get-ChildItem docs\research -Filter *.md \| Where-Object Name -ne README.md \| Get-Content).Count`, summed per file |
-| `E:` | **28.01 GiB free of 33.67 GiB** (measured 2026-10-02, `Get-Volume -DriveLetter E`). The VHDX **never returns bytes**; budget by peak cumulative pull |
-
-Both trees clean at the time of the 2026-10-02 review commit. `<private-tree>` 18 commits,
-station 49 — **re-measure with `git rev-list --count HEAD` in each**; the station moved
-three times after this line was last written.
-
----
-
-## 10. Do not
-
-- Do not claim a capability from a manifest entry without running its probe.
-- Do not treat a third-party binary as an analysis target. The gate is an Owner-named
-  object with checkable provenance, and this repo has already found and declined several.
-- Do not add a second IDA server (`AGENTS.md:123`). The agent route is `idalib`, not the
-  GUI on 13337.
-- Do not `docker compose up` from `<project>` — the working dir is `E:\<private-tree>-sandbox\compose`.
-- Do not weaken a control to make something converge. Record the failure instead.
-- Do not use bash. See §6.
-
-## 11. Still open, honestly
-
-1. **18.1 MB of stale `%TEMP%\ghidra-proj-*`** on `E:` — 5 directories that hold data, left
-   by runs from before the leak fix. New runs leak nothing (verified 56 dirs before, 56
-   after). **Needs an Owner word before recursive deletion.**
-2. **The aggregate smoke contends** on three Ghidra-consuming probes. Split them onto
-   separate cadences.
-3. **`p-code emulation`** — blocked, and deprecated upstream. See §5.
-4. **IL2CPP** — unblocked only by the Owner naming an IL2CPP binary they own.
-5. **Android device lane** — needs the emulator (≈1.7 GB download, ≈2.9 GB installed, plus
-   a Windows optional feature and a reboot). **Owner decision; deliberately not taken.**
+> **一个"看起来像契约"但没人执行的字段，比没有这个字段更危险。**
+>
+> `requires.tools[].expect` 读了几个月、写着 `tshark --version`（在本机**根本跑不了**），
+> 而**全项目没有任何东西执行过它**。直到 `check-requires-tools.py` 去跑，10 条错声明当场暴露。
+>
+> 同类还有：`probe.expect` 认字符串不认仪器 · `reachability` 把"没报错"当成"学到了" ·
+> **`Test-SelfAsserted` 过滤措辞当作权限**。
+>
+> **绿是写入顺序的函数，不是正确性的函数。**
