@@ -1363,6 +1363,68 @@ def r29_fact_types_are_declared(reg, doc):
     return out
 
 
+
+def r30_requires_and_lane_are_declared(reg, doc):
+    """`requires.net` and `gate.lane` are read by a literal comparison and nothing else.
+
+    Measured 2026-10-03 by mutation: setting `requires.net` to `the-internet` on all 27 entries
+    leaves this validator at exit 0, REGISTRY CLEAN. The reason is not that the field is ignored --
+    it IS read, twice, by the exact test `req.get("net") == "any"` (the R6 escalation floor and the
+    R8 reach floor). Every other string is therefore INERT: `any` means escalate me, and every
+    other value means the same thing, whatever it says. A field whose only live value is one
+    string is a flag wearing a vocabulary clothes.
+
+    `gate.lane` is worse in the way that matters for authority. gate.ps1 filters grants on
+    `$_.gate.lane -eq $Lane` (Get-GrantableIds) and `-ne $Lane` (Check), both plain equality
+    against a caller-supplied lane. There is no VALID_LANES anywhere, so `atlantis` validates here,
+    is simply never equal to `debug` or `bounty`, and silently drops the capability out of every
+    grant rather than being refused. A typo in a lane is not an error today; it is a capability
+    that stops being grantable and nobody is told.
+
+    Both are now closed against `schema.net_requirements` and `schema.lanes`, which is where every
+    other enumeration in this document already lives -- R13 question types, R24 input types, R18
+    evidence families. The values are not invented: `none` is what 27 of 27 entries declare, `any`
+    is the only other literal the code reads, and the two lanes are the two in use and the two the
+    MCP surface names in prose.
+
+    What this does NOT do: it does not make `reach.net` and `requires.net` agree. They are
+    different questions -- need the network, versus touch the network -- and `net.pcap.analyse` is
+    the case that proves it: its probe needs no network, its lab negative control is a CA-trust
+    check. A sweep flagged that pair as a contradiction and it is not one; `schema._two_net_fields`
+    records the distinction so the next sweep does not re-raise it.
+    """
+    schema = doc.get("schema") or {}
+    nets = set(schema.get("net_requirements") or {})
+    lanes = set(schema.get("lanes") or {})
+    out = []
+    if not nets:
+        out.append("R30?: schema.net_requirements is absent, so requires.net cannot be checked "
+                   "against anything. Refusing to pass rather than skipping the check quietly.")
+        return out
+    if not lanes:
+        out.append("R30?: schema.lanes is absent, so gate.lane cannot be checked against "
+                   "anything. Refusing to pass rather than skipping the check quietly.")
+        return out
+    for c in reg:
+        cid = c.get("id", "?")
+        rn = (c.get("requires") or {}).get("net")
+        if rn not in nets:
+            out.append(f"R30 {cid}: requires.net is {rn!r}, which is not in schema."
+                       f"net_requirements ({sorted(nets)}). The escalation and reach floors key "
+                       f"on the literal 'any', so every other string -- including a typo -- means "
+                       f"'no escalation needed' while reading like something else. If this "
+                       f"capability genuinely needs the network, say 'any'.")
+        ln = (c.get("gate") or {}).get("lane")
+        if ln is not None and ln not in lanes:
+            out.append(f"R30 {cid}: gate.lane is {ln!r}, which is not in schema.lanes "
+                       f"({sorted(lanes)}). gate.ps1 filters grants by EQUALITY against a "
+                       f"caller-supplied lane, so an unrecognised lane is not refused -- it "
+                       f"silently matches nothing and drops this capability out of every grant. "
+                       f"A typo in a lane should be an error, not a capability that quietly "
+                       f"stops being grantable.")
+    return out
+
+
 RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r4_fact_types_agree, r5_control_must_fail, r6_reach_needs_escalation, r7_ids,
          r8_reach_must_be_declared, r9_batch_must_account, r10_invoke_must_runnable,
@@ -1375,7 +1437,8 @@ RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r26_bare_braces_survive_the_shell,
          r27_probe_exit_has_one_spelling,
          r28_evidence_is_tracked_not_merely_present,
-         r29_fact_types_are_declared)
+         r29_fact_types_are_declared,
+         r30_requires_and_lane_are_declared)
 
 
 # ---------------------------------------------------------------------------- core
@@ -1456,6 +1519,13 @@ def _schema_doc(caps, pinned=None):
             "input_types": {"path_ref": "a path to a file the caller supplies",
                             "string": "a text literal",
                             "structure": "a typed record the caller builds"},
+            # R30 reads these two. Without them in the envelope every case below would either
+            # redden on "schema.net_requirements is absent" instead of on the rule it is testing,
+            # or -- worse -- pass vacuously, because a rule that finds no vocabulary and skips is
+            # a rule that never runs.
+            "net_requirements": {"none": "runs with no network access",
+                                 "any": "cannot run without network access"},
+            "lanes": {"debug": "locally authored target", "bounty": "in-scope third-party asset"},
         },
         "capabilities": caps,
         # R24 reads the FACT vocabulary at the document root, where the real registry keeps
@@ -1766,6 +1836,22 @@ def selftest() -> int:
     # R29: membership in the vocabulary. The negative case matters more than usual here, because
     # the vocabulary lives at the document ROOT (`fact_types`), not under `schema.*` -- so a rule
     # written to read `schema.fact_types` finds nothing and refuses every fact in the registry.
+    # R30: two fields whose only live behaviour is a string comparison. `requires.net` is read by
+    # `== "any"` and every other value is inert; `gate.lane` is read by equality in gate.ps1, so an
+    # unrecognised lane silently removes a capability from every grant instead of being refused.
+    case("R30 requires.net outside the vocabulary",
+         lambda b: b[0]["requires"].__setitem__("net", "the-internet"), "R30")
+    case("R30 gate.lane outside the vocabulary",
+         lambda b: b[0]["gate"].__setitem__("lane", "atlantis"), "R30")
+    # The obvious negative case -- "net: any" is legal" -- is NOT expressible, and that is a fact
+    # worth keeping rather than working around: R6 requires an escalation class whenever net is
+    # `any`, so `any` is legal only in company. What is worth pinning instead is the fail-closed
+    # branch: a rule that cannot find its vocabulary must REFUSE, not skip, or it becomes a rule
+    # that silently checks nothing on a registry that lost its schema.
+    doc_case("R30 a registry with no net_requirements vocabulary is refused",
+             lambda d: d["schema"].pop("net_requirements"), "R30")
+    doc_case("R30 a registry with no lanes vocabulary is refused",
+             lambda d: d["schema"].pop("lanes"), "R30")
     case("R29 a fact typed outside the vocabulary",
          lambda b: b[0]["produces"]["facts"][0].__setitem__("type", "banana"), "R29")
     nocase("R29 a fact typed from the vocabulary is accepted",

@@ -12,6 +12,15 @@
       "lab_workdir": "a directory the mission created for its own case. Not a caller-supplied file, which is why it is not a path_ref.",
       "lab_target": "a lab-chosen target the runner resolves from its own id list, not from anything the caller passes."
     },
+    "net_requirements": {
+      "none": "this capability runs with no network access at all; it is what 27 of 27 entries declare today",
+      "any": "this capability cannot run without network access"
+    },
+    "lanes": {
+      "debug": "the debugging lane: a locally authored target under a named process, a loopback capture, or an isolated VM",
+      "bounty": "the bounty lane: an in-scope third-party asset under the program rules"
+    },
+    "_two_net_fields": "requires.net and reach.net are DIFFERENT QUESTIONS, and a mutation sweep flagged them as a contradiction when they are not. requires.net asks whether the capability NEEDS the network to run; reach.net declares whether it TOUCHES the network. net.pcap.analyse is the case that proves it: its probe runs tshark against a local capture and needs no network (requires.net none, correct), while its lab negative control is a CA-trust check, which is a network effect (reach.net true, and its own reach note says so). Reading one as the other is how a capability ends up escalating for the wrong reason.",
     "question_types": {
       "Q1.identify": "what is this file, is it packed, what is its shape",
       "Q2.locate": "where is the code that does X",
