@@ -26,6 +26,9 @@ polling loop, no sleep.
 import json
 import struct
 import sys
+import os
+import shutil
+import tempfile
 import threading
 
 import frida
@@ -103,6 +106,45 @@ if (MODE === "neg-rebase") {
 """
 
 
+# STDOUT MUST BE PURE JSON once this recipe is callable, because mission.ps1 runs a capability as
+# `& $runner @argList 2>&1 | Out-String` and MERGES the two streams. Every human-readable line --
+# the [stage], [pe], [spawn], [js], [resu], [end] narration that makes this recipe worth reading --
+# goes to stderr, and exactly one JSON object goes to stdout. Measured on native.disasm.capstone:
+# mixing them cost a whole mission round that reported ok:false while the same command worked
+# perfectly by hand with exit 0. Set FRIDA_GATEWAY=0 to get the narration on stdout instead, which
+# is what a human running it interactively wants.
+_HUMAN = os.environ.get("FRIDA_GATEWAY", "1") != "0"
+_REAL_STDOUT = sys.stdout
+_OUT_FD = None
+if _HUMAN:
+    # A PYTHON-LEVEL sys.stdout swap is NOT ENOUGH, and finding that out cost a mission round.
+    # The spawned target INHERITS this process's file descriptors, so the crackme's own
+    # `ACCEPTED` / `FLAG{...}` lines arrive on the real fd 1 no matter what Python's sys.stdout
+    # points at. Measured: with only the Python swap, stdout carried two lines of the TARGET'S
+    # output ahead of the JSON and ConvertFrom-Json failed at character 0.
+    #
+    # So the DESCRIPTOR is redirected with dup2 -- fd 1 points at fd 2 for the whole run, which
+    # catches the child's inherited handle as well as our own prints -- and a private duplicate
+    # of the original fd 1 is kept purely for emit_json to write the one object to be parsed.
+    _OUT_FD = os.dup(1)
+    os.dup2(2, 1)
+    sys.stdout = sys.stderr
+
+def emit_json(mode, target, ok, verdict, hit_at, hit_count, tid=None):
+    """The ONE object that goes to stdout. Everything else went to stderr above."""
+    (os.fdopen(_OUT_FD, "w") if _OUT_FD is not None else _REAL_STDOUT).write(json.dumps({
+        "ok": ok, "exit": 0 if ok else 5, "mode": mode, "target": target,
+        "verdict": verdict,
+        "runtime_hook_hit": {"at": hit_at, "count": hit_count, "tid": tid},
+        "instrument_ordering": "spawn(suspended) -> create_script -> load -> resume. The CLI does "
+                               "the opposite and therefore cannot intercept; this ordering is the "
+                               "whole entry.",
+        "caveat": "SELF-BUILT CORPUS TARGETS ONLY, run from a %TEMP% copy -- the repository "
+                  "original is staged and never executed. Instrumenting your own program on your "
+                  "own machine is not running a sample; running an UNTRUSTED one here is a STOP.",
+    }) + "\n")
+    _REAL_STDOUT.flush()
+
 def run_mode(mode, target, argv_pw):
     facts = pe_entry_rva(target)
     print("[pe  ] %s" % json.dumps(facts))
@@ -179,6 +221,8 @@ def run_mode(mode, target, argv_pw):
         print("[end] verdict=%s bad-address (distinguishable from rebase failure)"
               % ("NEGCTL-OK" if ok else "NEGCTL-BROKEN"))
         teardown()
+        emit_json(mode, target, ok,
+                  "NEGCTL-OK bad-address" if ok else "NEGCTL-BROKEN", None, 0)
         return 0 if ok else 4
 
     device.resume(pid)                  # resume only AFTER load
@@ -189,8 +233,36 @@ def run_mode(mode, target, argv_pw):
                                         hit.get("at")))
     print("[end] verdict=%s" % ("INTERCEPT-PROVEN" if ok else "INTERCEPT-FAILED"))
     teardown()
+    emit_json(mode, target, ok,
+              "INTERCEPT-PROVEN" if ok else "INTERCEPT-FAILED",
+              hit.get("at"), sum(1 for e in events if e.get("kind") == "HIT"),
+              hit.get("tid"))
     return 0 if ok else 5
 
 
+# WHY THIS EXISTS NOW. The recipe is being made CALLABLE, which means mission.ps1 passes a
+# repository path directly. Two rules make that unsafe as written, and both are enforced here
+# rather than trusted to the caller:
+#
+#   1. THE REPO BINARY IS NEVER EXECUTED. crackme-corpus/out/ holds the corpus IDA databases, so a
+#      strayed write or a stray .i64 there destroys an artefact other capabilities depend on. The
+#      target is copied into a fresh %TEMP% directory and that copy is what gets spawned.
+#   2. THE TARGET MUST LOOK LIKE A CORPUS FILE. Naming is the only signal available at this layer,
+#      so it is checked explicitly and the refusal is loud rather than a crash later.
+#
+# Defence in depth, not a substitute for the gate: dynamic.win.frida.intercept carries
+# escalation_class owner_word because a mission that EXECUTES a target must never be a runtime
+# self-decision.
+def stage_copy(path: str) -> str:
+    if not path.lower().endswith(".exe"):
+        print("[stage] REFUSING %r: expected a .exe from the corpus" % path, file=sys.stderr)
+        sys.exit(2)
+    d = tempfile.mkdtemp(prefix="fridagate-")
+    dst = os.path.join(d, os.path.basename(path))
+    shutil.copy2(path, dst)
+    print("[stage] copied to %%TEMP%% %s (%d bytes); the repository original is never executed"
+          % (dst, os.path.getsize(dst)), file=sys.stderr)
+    return dst
+
 if __name__ == "__main__":
-    sys.exit(run_mode(MODE, TARGET, ARGV_PW))
+    sys.exit(run_mode(MODE, stage_copy(TARGET), ARGV_PW))

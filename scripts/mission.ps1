@@ -884,10 +884,23 @@ function Invoke-Mission {
             continue
         }
 
+        $errFile = Join-Path $env:TEMP ("mission-stderr-{0}.txt" -f [guid]::NewGuid().ToString('N').Substring(0, 8))
         $sw = [Diagnostics.Stopwatch]::StartNew()
-        $raw = & $cap.invoke.runner @argList 2>&1 | Out-String
+        # STDERR IS CAPTURED SEPARATELY, NOT MERGED. This was `2>&1 | Out-String`, which
+        # concatenates both streams into one blob, so any tool that wrote a single warning line
+        # produced output ConvertFrom-Json could not parse -- and the round was recorded ok:false
+        # while the same command worked perfectly by hand with exit 0. It cost a mission round on
+        # native.disasm.capstone and then again on dynamic.win.frida.intercept, and it is a
+        # LATENT defect for every capability rather than a quirk of those two: no tool could ever
+        # warn, explain or progress-print without breaking the contract that it declares
+        # `stdout: json`. Streams stay separate, stderr is recorded on the evidence record where
+        # it is readable, and the declared stdout is the only thing parsed.
+        $errText = ''
+        $raw = & $cap.invoke.runner @argList 2> $errFile | Out-String
         $rc = $LASTEXITCODE
         $sw.Stop()
+        if (Test-Path -LiteralPath $errFile) { $errText = (Get-Content -LiteralPath $errFile -Raw) }
+        if ($errText) { Say "          stderr: $(($errText -split "`n" | Select-Object -First 2) -join ' | ')" }
 
         $ev = [ordered]@{
             id = "e$round"
@@ -899,6 +912,9 @@ function Invoke-Mission {
             wall_s = [math]::Round($sw.Elapsed.TotalSeconds, 1)
             facts = @()
             ts = (Get-Date).ToUniversalTime().ToString('o')
+            # Recorded rather than discarded. A tool that explains itself on stderr is telling
+            # the reader something, and throwing it away is how a real warning goes unnoticed.
+            stderr = (($errText -split "`r?`n" | Where-Object { $_.Trim() }) -join ' | ')
         }
 
         # The honest success test is the declared one, not the exit code. This server

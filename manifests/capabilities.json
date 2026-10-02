@@ -2194,7 +2194,8 @@
       "gate": {
         "lane": "debug",
         "requires_verdict": true,
-        "escalation_class": "none"
+        "escalation_class": "owner_word",
+        "escalation_why": "RAISED FROM none, and deliberately. This entry was not callable before today, so escalation_class=none described a capability nothing could invoke. Making it callable means mission.ps1 will SPAWN AND EXECUTE a binary, which is the single most consequential thing any capability in this registry does. **Executing a target must never be a runtime self-decision**: a grant naming this capability must carry a checkable Owner word, which is what gate.ps1 already mints and verifies. The wrapper is defence in depth on top of that, not a substitute -- it copies the target into a fresh %TEMP% directory so the repository original, which holds the corpus IDA databases, is never executed."
       },
       "gate_must_not_delegate": [
         "frida_spawn_gate.py against any binary this repository did not author",
@@ -2225,7 +2226,22 @@
         "record": "docs/research/dynamic-pairings.md"
       },
       "evidence_source": "dynamic-instrumentation",
-      "evidence_source_note": "The SAME instrument as dynamic.win.frida and dynamic.device.frida, deliberately. One Frida, three lanes: a CLI lane that spawn-gates without intercepting, this API lane that does intercept, and the Android device lane. A chain citing any two of them is ONE opinion held twice, and no verdict may count them as corroboration. This is why adding this entry does not move the acceptance mission off unresolved -- independence is a property of the instrument, and this added a claim, not a family."
+      "evidence_source_note": "The SAME instrument as dynamic.win.frida and dynamic.device.frida, deliberately. One Frida, three lanes: a CLI lane that spawn-gates without intercepting, this API lane that does intercept, and the Android device lane. A chain citing any two of them is ONE opinion held twice, and no verdict may count them as corroboration. This is why adding this entry does not move the acceptance mission off unresolved -- independence is a property of the instrument, and this added a claim, not a family.",
+      "invoke": {
+        "runner": "D:\\Software\\Tool\\WorkStation\\debugger\\Mobile-Android\\objection\\.venv\\Scripts\\python.exe",
+        "argv": [
+          "native-lab/tools/frida_spawn_gate.py",
+          "{target}",
+          "positive"
+        ],
+        "stdout": "json",
+        "success_when": "parsed JSON has ok == true AND verdict is INTERCEPT-PROVEN AND runtime_hook_hit.count > 0",
+        "fact_map": {
+          "runtime_hook_hit": "runtime.hook.hit",
+          "instrument_ordering": "instrument.ordering"
+        },
+        "note": "Consumes NO function-address fact, and that is measured rather than an omission. This recipe hooks the PE ENTRY POINT -- it parses the entry RVA out of the headers itself -- so it has no slot for native.func.addr. It therefore enters a mission by DECLARING Q3.behaviour, not by being pulled along an edge. The runner is the objection venv's python, NOT the system one: frida is installed only there. `positive` is the only mode wired; the two negative-control modes are deliberately NOT in the invoke, because a mission must not be able to schedule its own failure mode as if it were evidence. The runner is the objection venv's python by ABSOLUTE PATH, not bare `python`: frida is installed only there and not in the system interpreter, so the first attempt produced `ModuleNotFoundError: No module named 'frida'` and the round failed. That failure was visible only because stderr is now captured separately -- under the old `2>&1` merge the traceback would have been concatenated into the JSON and reported as a parse failure with no cause."
+      }
     },
     {
       "id": "native.pe.container",
