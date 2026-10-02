@@ -45,6 +45,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -76,7 +77,7 @@ def load() -> list[dict]:
     return json.load(open(REG, encoding="utf-8"))["capabilities"]
 
 
-def run(cmd: str, timeout: int) -> tuple[int, str, float]:
+def run(cmd: str, timeout: int, env: dict | None = None) -> tuple[int, str, float]:
     """Execute `cmd` byte-for-byte, with no re-quoting of any kind.
 
     The command goes into a .ps1 file which PowerShell runs with -File. Two earlier designs
@@ -100,10 +101,12 @@ def run(cmd: str, timeout: int) -> tuple[int, str, float]:
         # this script did on its previous run, and it is the same defect it was written to
         # find. The failure mode of a checking tool is to check nothing and look green.
         script.write_text(cmd + "\nexit $LASTEXITCODE\n", encoding="utf-8-sig")
+        merged = dict(os.environ)
+        merged.update(env or {})
         p = subprocess.run(
             f'powershell -NoProfile -ExecutionPolicy Bypass -File "{script}"',
             shell=True, cwd=REPO, capture_output=True, text=True,
-            timeout=timeout, encoding="utf-8", errors="replace")
+            timeout=timeout, encoding="utf-8", errors="replace", env=merged)
         return p.returncode, (p.stdout or "") + (p.stderr or ""), time.time() - t0
     except subprocess.TimeoutExpired:
         return -1, f"<timeout after {timeout}s>", time.time() - t0
@@ -156,7 +159,11 @@ def check(cap: dict, timeout: int) -> list[tuple[str, str]]:
     if not cmd or prose(cmd):
         return [("SKIP", f"{cid}: probe.command is not executable ({cmd[:50]!r})")]
 
-    rc, blob, secs = run(cmd, timeout)
+    # probe.env exists because crypto.jose.parse needs CRYPTO_LAB_PORT: its lab's default
+    # port 8791 is held by ANOTHER of the Owner's projects, so without this the checker
+    # reports a DRIFT on every run for a reason that is not the registry's. A checker that
+    # cries wolf gets switched off, so teaching it to set the variable is the fix.
+    rc, blob, secs = run(cmd, timeout, (probe.get("env") or None))
     fault = tool_fault(rc, blob, secs)
     if fault:
         out.append(("TOOL-FAULT", f"{cid} PROBE {fault} :: {cmd[:60]}"))
@@ -198,7 +205,7 @@ def check(cap: dict, timeout: int) -> list[tuple[str, str]]:
         out.append(("SKIP", f"{cid} CONTROL: not executable ({ccmd[:50]!r})"))
         return out
 
-    crc, cblob, csecs = run(ccmd, timeout)
+    crc, cblob, csecs = run(ccmd, timeout, (nc.get("env") or None))
     cfault = tool_fault(crc, cblob, csecs)
     if cfault:
         out.append(("TOOL-FAULT", f"{cid} CONTROL {cfault} :: {ccmd[:60]}"))
