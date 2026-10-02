@@ -60,7 +60,11 @@
     "pcap": "a parsed packet-capture record set",
     "apk": "a parsed Android package manifest or dex summary",
     "token": "a parsed JOSE/JWT: header, claims, signature presence -- never a live credential",
-    "evidence_source": "which FAMILY of instrument produced a fact. Independence is about the family, not the tool id: ghidra.decompile and ida.decompile are both 'decompiler' and therefore cannot corroborate each other."
+    "evidence_source": "which FAMILY of instrument produced a fact. Independence is about the family, not the tool id: ghidra.decompile and ida.decompile are both 'decompiler' and therefore cannot corroborate each other.",
+    "rva": "a relative virtual address: an offset from the image base, NOT an address. It becomes an address only when added to a measured runtime module base, and an RVA handed over unrebased faults rather than misbehaving quietly. Added 2026-10-03 because native.pe.container own note said an RVA is not an address while the field was declared `address` -- a fact typed as something it is not is worse than an untyped one, because every consumer of `address` assumes it can be dereferenced.",
+    "boolean": "true or false, and nothing else. Added 2026-10-03: four facts declared `structure` or `verdict` were emitting bare booleans (measured: identical_inputs false, signed false, packed false), and `verdict` is a five-value outcome enumeration, so a boolean wearing it was a lie a reader could not detect.",
+    "number": "a scalar measurement: a score, a ratio, a count. NOT a finding and NOT an outcome class. Added 2026-10-03 after measuring rules_matched 14 declared `verdict` -- the entry own note had already said a COUNT IS NOT A FINDING, and the type said otherwise.",
+    "structure[]": "an ORDERED LIST of records, as distinct from `structure`, which is one record. Added 2026-10-03: five facts bound to list-valued stdout keys (matches, pairs, insns, rip_operands, sections) were declared `structure`, so a consumer asking for a named field would find nothing where a list was. One character of vocabulary separated a record from a list of records, and nothing refused the difference."
   },
   "capabilities": [
     {
@@ -664,7 +668,7 @@
         "facts": [
           {
             "key": "net.flow.summary",
-            "type": "structure",
+            "type": "string",
             "fields": [
               "src",
               "dst",
@@ -689,7 +693,7 @@
             "name": "tshark",
             "probe": "& \"Network-HTTP\\Wireshark\\portable\\App\\Wireshark\\tshark.exe\" --version",
             "expect": "TShark (Wireshark)",
-            "note": "FIXED by check-requires-tools.py. A quoted path in PowerShell is a STRING EXPRESSION, not an invocation -- you need the call operator &. Without it the probe exited 1 with a parser error and this entry's precondition had never been executed by anything. Measured: TShark (Wireshark) 4.6.8."
+            "note": "FIXED by check-requires-tools.py. A quoted path in PowerShell is a STRING EXPRESSION, not an invocation -- you need the call operator &. Without it the probe exited 1 with a parser error and this entry's precondition had never been executed by anything. Measured: TShark (Wireshark) 4.6.8. RE-TYPED 2026-10-03 from `structure`. Measured: invoke.fact_map binds the stdout key `detail`, and this entry own invoke note documents the stdout shape as ok/question/asked/pcap/method/command/stdout/detail/guarantee -- detail is verdict-detail TEXT about how the question was answered, not a src/dst record. The `fields` list below is therefore wrong as well and is KEPT as the record of what was claimed."
           },
           {
             "name": "lab pcaps",
@@ -2153,8 +2157,8 @@
           },
           {
             "key": "skill.findings",
-            "type": "path_ref",
-            "note": "the JSON report at skillspector scan <path> --format json, carrying issues[] with file, start_line, start_column and severity. Always read the findings, never the score alone."
+            "type": "structure",
+            "note": "the JSON report at skillspector scan <path> --format json, carrying issues[] with file, start_line, start_column and severity. Always read the findings, never the score alone. RE-TYPED 2026-10-03 from `path_ref`. Measured by running it: skillspector scan with --format json writes its JSON to STDOUT and creates no report file -- there is no path to point at. A path_ref fact whose file does not exist is a promise, and this one could never be kept."
           },
           {
             "key": "scan.completeness",
@@ -2293,13 +2297,13 @@
           },
           {
             "key": "runtime.hook.hit",
-            "type": "address",
-            "note": "the address at which an onEnter callback actually fired, plus the thread id. Measured: HIT at 0x7ff79e0115d0, tid 44248, hit count 1. ONE hit is the interpretable number: a hook firing thousands of times would still prove interception and still be useless, so the count is recorded precisely because the single hit shows the hook is on the entry point rather than a hot inner loop."
+            "type": "structure",
+            "note": "the address at which an onEnter callback actually fired, plus the thread id. Measured: HIT at 0x7ff79e0115d0, tid 44248, hit count 1. ONE hit is the interpretable number: a hook firing thousands of times would still prove interception and still be useless, so the count is recorded precisely because the single hit shows the hook is on the entry point rather than a hot inner loop. RE-TYPED 2026-10-03 from `address`. Measured in the retained probe log: the forwarded value is a three-field object -- at, count, tid. `address` is an address in the target own address space, hex string, so a consumer asking this fact for an address was handed a record with no address at its top level."
           },
           {
             "key": "instrument.ordering",
-            "type": "structure",
-            "note": "the emitted event order spawn(suspended) -> load -> resume -> HIT. This is the load-bearing fact of the whole entry and it is printed so it can be read rather than inferred from a tool's internals. The CLI emits the opposite order and cannot intercept as a result."
+            "type": "string",
+            "note": "the emitted event order spawn(suspended) -> load -> resume -> HIT. This is the load-bearing fact of the whole entry and it is printed so it can be read rather than inferred from a tool's internals. The CLI emits the opposite order and cannot intercept as a result. RE-TYPED 2026-10-03 from `structure`. Measured: the forwarded value is a single sentence describing the event order, so it is a text literal, and the ordering it records is the whole point of this capability."
           }
         ]
       },
@@ -2430,8 +2434,8 @@
           },
           {
             "key": "pe.entry_rva",
-            "type": "address",
-            "note": "OPTIONAL_HEADER.AddressOfEntryPoint. Measured 0x15d0. An RVA, not an address."
+            "type": "rva",
+            "note": "OPTIONAL_HEADER.AddressOfEntryPoint. Measured 0x15d0. An RVA, not an address. RE-TYPED 2026-10-03 from `address`. The note on this very field already said an RVA is not an address while the type said `address`: measured against PE ImageBase 0x140000000 plus rva 0x15d0. Every consumer of `address` assumes it can be dereferenced, and handing one an RVA is how the static-VA fault in dynamic.win.frida happened."
           },
           {
             "key": "pe.aslr",
@@ -2440,8 +2444,8 @@
           },
           {
             "key": "pe.section_extent",
-            "type": "structure",
-            "note": "per-section name, VirtualAddress and Misc_VirtualSize. Measured .text 0x1000 -> 0x166d0, which places main at RVA 0x1080 inside an executable section. Addressability, not behaviour."
+            "type": "structure[]",
+            "note": "per-section name, VirtualAddress and Misc_VirtualSize. Measured .text 0x1000 -> 0x166d0, which places main at RVA 0x1080 inside an executable section. Addressability, not behaviour. RE-TYPED 2026-10-03 from `structure`. Measured: pe_probe.py emits `sections` as a LIST of per-section records, six of them. A consumer asking a `structure` for a named field would find no such field, because there is no record -- there are six."
           }
         ]
       },
@@ -2576,13 +2580,13 @@
           },
           {
             "key": "fn.pair",
-            "type": "structure",
-            "note": "one entry per matched function: {hash, size, source_name, dest_name, renamed}. `renamed` is the flag worth keeping, because it separates a pure rename from a changed body."
+            "type": "structure[]",
+            "note": "one entry per matched function: {hash, size, source_name, dest_name, renamed}. `renamed` is the flag worth keeping, because it separates a pure rename from a changed body. RE-TYPED 2026-10-03 from `structure`. Measured in the retained log: pairs is a list. This is a PAIR fact, and a pair is a list of two records, not a record."
           },
           {
             "key": "fn.identical_inputs",
-            "type": "structure",
-            "note": "boolean, true when the two paths resolve to the same file. Present so an identity run cannot be mistaken for a real comparison."
+            "type": "boolean",
+            "note": "boolean, true when the two paths resolve to the same file. Present so an identity run cannot be mistaken for a real comparison. RE-TYPED 2026-10-03 from `structure`. Measured: identical_inputs is false."
           }
         ]
       },
@@ -2705,13 +2709,13 @@
         "facts": [
           {
             "key": "pe.packed",
-            "type": "verdict",
-            "note": "boolean derived from DIE'S OWN VERDICT STRING, never from a numeric threshold. Measured on c01-stringobf.exe: die_verdict 'not packed', die_score 6.15091, packed false. The score is reported as evidence and nothing branches on it -- see does_not_prove."
+            "type": "boolean",
+            "note": "boolean derived from DIE'S OWN VERDICT STRING, never from a numeric threshold. Measured on c01-stringobf.exe: die_verdict 'not packed', die_score 6.15091, packed false. The score is reported as evidence and nothing branches on it -- see does_not_prove. RE-TYPED 2026-10-03 from `verdict`. Measured by running the probe: packed is false. `verdict` is a five-value outcome enumeration, and a boolean wearing it means a reader looking for an evidence class finds a yes/no that says nothing about evidence."
           },
           {
             "key": "pe.die_score",
-            "type": "structure",
-            "note": "Die's own Total score plus its verdict text. Evidence, not a decision input. Measured 6.15091 / 'not packed'."
+            "type": "number",
+            "note": "Die's own Total score plus its verdict text. Evidence, not a decision input. Measured 6.15091 / 'not packed'. RE-TYPED 2026-10-03 from `structure`. Measured by running the probe: die_score is 6.15091, a bare float. The entry own caveat records that a hand-picked 5.0 threshold on this number reported packed true for a binary Die calls not packed."
           },
           {
             "key": "pe.magic",
@@ -2883,13 +2887,13 @@
         "facts": [
           {
             "key": "insn.stream",
-            "type": "bytes_ref",
-            "note": "the decoded instruction stream as {addr, mnemonic, op_str} triples. Measured 40 instructions from RVA 0x1080, including `cmp dword ptr [rsp + 0xa0], 2` at 0x1400010a2 -- the argc==2 guard the decompilers both report as `if (argc == 2)`."
+            "type": "structure[]",
+            "note": "the decoded instruction stream as {addr, mnemonic, op_str} triples. Measured 40 instructions from RVA 0x1080, including `cmp dword ptr [rsp + 0xa0], 2` at 0x1400010a2 -- the argc==2 guard the decompilers both report as `if (argc == 2)`. RE-TYPED 2026-10-03 from `bytes_ref`. Measured: the 40 disassembled instructions are INLINED in stdout and the probe writes no file. `bytes_ref` is a pointer to content-addressed bytes whose bytes are not inlined, so this fact pointed at bytes that are not there."
           },
           {
             "key": "insn.rip_operand",
-            "type": "structure",
-            "note": "every RIP-relative memory operand resolved to an absolute address WITH ITS WIDTH: {at, text, target, width, byte, dword}. This is the unique contribution. Measured: 0x140017342 width=byte value 90; 0x140017344 width=dword value 11; 0x140017343 width=byte value 51; 0x140017364 width=dword value 5."
+            "type": "structure[]",
+            "note": "every RIP-relative memory operand resolved to an absolute address WITH ITS WIDTH: {at, text, target, width, byte, dword}. This is the unique contribution. Measured: 0x140017342 width=byte value 90; 0x140017344 width=dword value 11; 0x140017343 width=byte value 51; 0x140017364 width=dword value 5. RE-TYPED 2026-10-03 from `structure`. Measured: rip_operands is a list of nine objects."
           },
           {
             "key": "pe.section_exec",
@@ -3029,8 +3033,8 @@
         "facts": [
           {
             "key": "pe.signed",
-            "type": "verdict",
-            "note": "boolean: is a WIN_CERTIFICATE table present. Measured false for all seven corpus binaries (SECURITY VA=0x0 size=0) and true for a self-authored fixture. THIS IS NOT A TRUST VERDICT -- see does_not_prove."
+            "type": "boolean",
+            "note": "boolean: is a WIN_CERTIFICATE table present. Measured false for all seven corpus binaries (SECURITY VA=0x0 size=0) and true for a self-authored fixture. THIS IS NOT A TRUST VERDICT -- see does_not_prove. RE-TYPED 2026-10-03 from `verdict`. Measured in the retained log: signed is false. Same shape as pe.packed: a boolean declared as an evidence class."
           },
           {
             "key": "pe.cert_header",
@@ -3164,13 +3168,13 @@
         "facts": [
           {
             "key": "behav.pattern",
-            "type": "structure",
-            "note": "matched rules as {rule, namespace, lib}, plus a per-namespace count. Measured on c01-stringobf.exe: 14 rules over 10 namespaces including linking/runtime-linking, load-code/pe, anti-analysis, host-interaction/environment-variable (x2), host-interaction/file-system/write, and data-manipulation/compression."
+            "type": "structure[]",
+            "note": "matched rules as {rule, namespace, lib}, plus a per-namespace count. Measured on c01-stringobf.exe: 14 rules over 10 namespaces including linking/runtime-linking, load-code/pe, anti-analysis, host-interaction/environment-variable (x2), host-interaction/file-system/write, and data-manipulation/compression. RE-TYPED 2026-10-03 from `structure`. Measured: matches is a list of capa rule hits."
           },
           {
             "key": "behav.count",
-            "type": "verdict",
-            "note": "integer count of matched rules. Measured 14. A COUNT IS NOT A FINDING: it says how many patterns were present, not how many are concerning, and it is not comparable across binaries without a per-binary rule-set baseline."
+            "type": "number",
+            "note": "integer count of matched rules. Measured 14. A COUNT IS NOT A FINDING: it says how many patterns were present, not how many are concerning, and it is not comparable across binaries without a per-binary rule-set baseline. RE-TYPED 2026-10-03 from `verdict`. Measured in the retained log: rules_matched is 14. This entry own note already said a COUNT IS NOT A FINDING, and `verdict` is precisely a finding class."
           }
         ]
       },

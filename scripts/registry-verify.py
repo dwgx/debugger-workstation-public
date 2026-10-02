@@ -1310,6 +1310,59 @@ def r28_evidence_is_tracked_not_merely_present(reg, doc):
     return out
 
 
+
+def r29_fact_types_are_declared(reg, doc):
+    """Every produced fact's type must be a MEMBER of the fact_types vocabulary.
+
+    Found 2026-10-03 by a mutation sweep of every registry field: retyping all 51 facts to
+    `banana` left the validator at exit 0, REGISTRY CLEAN. R4 checks that two producers of the same
+    key AGREE and that a consumer matches its producer -- and it only does the second where a `from`
+    edge exists, so 47 of 51 facts were compared against nothing at all. The vocabulary existed the
+    whole time, ten members wide, and was read by exactly one rule -- R24, and only to work out
+    which types are NOT input types.
+
+    Landing this rule turned the registry red on 19 rows, which is the interesting part: it is not
+    that the field was unchecked, it is that NINE facts were actively LYING about their shape.
+    Measured against retained probe logs and the emitters themselves:
+
+      pe.entry_rva            declared `address`, and its own note said "An RVA, not an address"
+      behav.count             declared `verdict`, and its own note said "A COUNT IS NOT A FINDING"
+      pe.packed / pe.signed   declared `verdict`; both emit a bare boolean
+      pe.die_score            declared `structure`; emits 6.15091
+      insn.stream             declared `bytes_ref`, defined as "the bytes are not inlined"; the
+                              40 instructions are inlined in stdout and no file is written
+      pe.section_extent, fn.pair, insn.rip_operand, behav.pattern
+                              declared `structure`; all four are LISTS
+      net.flow.summary        declared `structure` with fields src/dst; fact_map binds `detail`,
+                              which is prose
+      skill.findings          declared `path_ref`; skillspector writes JSON to stdout and creates
+                              no file, so the path does not exist
+
+    Two of those had the right prose and the wrong type in the same object, which is the strongest
+    argument for the rule: a human reading the entry was told the truth, and a machine reading the
+    field was told the opposite.
+
+    Enforcing membership required GROWING the vocabulary first, because four of the measured shapes
+    had no member to be typed as: `rva`, `boolean`, `number`, `structure[]`. Those four were added
+    in the same commit, each with the measurement that demanded it in its definition. A closed list
+    that cannot express what the instruments emit is a closed list people route around.
+    """
+    declared = set((doc.get("fact_types") or {}))
+    out = []
+    for c in reg:
+        for f in (c.get("produces") or {}).get("facts") or []:
+            t = f.get("type")
+            if t not in declared:
+                out.append(f"R29 {c.get('id','?')}: fact {f.get('key','?')!r} is typed {t!r}, "
+                           f"which is not in fact_types ({sorted(declared)}). A fact typed as "
+                           f"something it is not is worse than an untyped one, because every "
+                           f"consumer of that type assumes a shape it will not find. If the "
+                           f"instrument really emits something the vocabulary cannot name, ADD the "
+                           f"member with the measurement that demands it -- do not retype the fact "
+                           f"to something convenient.")
+    return out
+
+
 RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r4_fact_types_agree, r5_control_must_fail, r6_reach_needs_escalation, r7_ids,
          r8_reach_must_be_declared, r9_batch_must_account, r10_invoke_must_runnable,
@@ -1321,7 +1374,8 @@ RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r24_input_types_are_declared, r25_plan_needs_a_checkable_ref,
          r26_bare_braces_survive_the_shell,
          r27_probe_exit_has_one_spelling,
-         r28_evidence_is_tracked_not_merely_present)
+         r28_evidence_is_tracked_not_merely_present,
+         r29_fact_types_are_declared)
 
 
 # ---------------------------------------------------------------------------- core
@@ -1407,9 +1461,16 @@ def _schema_doc(caps, pinned=None):
         # R24 reads the FACT vocabulary at the document root, where the real registry keeps
         # it. Declared here so the "a fact type is not an input type" half has something to
         # compare against; without it that half is inert in every selftest case.
+        # The four members R29's negative case needs, added 2026-10-03 for the same reason as the
+        # real vocabulary grew them: a fixture whose vocabulary cannot express what the instruments
+        # emit will redden on the fixture rather than on the rule under test.
         "fact_types": {"string": "a text literal recovered from the target",
                        "structure": "a typed record",
-                       "path_ref": "a filesystem path to an artifact"},
+                       "structure[]": "an ordered list of records",
+                       "path_ref": "a filesystem path to an artifact",
+                       "boolean": "true or false",
+                       "number": "a scalar measurement",
+                       "rva": "an offset from the image base"},
     }
 
 
@@ -1702,6 +1763,13 @@ def selftest() -> int:
         rel = "evidence/probes/ops.skill.security.probe.log"
         b[0]["probe"]["run_log"] = rel
         b[0]["probe"]["sha256"] = _h.sha256((REPO_ROOT / rel).read_bytes()).hexdigest()
+    # R29: membership in the vocabulary. The negative case matters more than usual here, because
+    # the vocabulary lives at the document ROOT (`fact_types`), not under `schema.*` -- so a rule
+    # written to read `schema.fact_types` finds nothing and refuses every fact in the registry.
+    case("R29 a fact typed outside the vocabulary",
+         lambda b: b[0]["produces"]["facts"][0].__setitem__("type", "banana"), "R29")
+    nocase("R29 a fact typed from the vocabulary is accepted",
+           lambda b: b[0]["produces"]["facts"][0].__setitem__("type", "structure[]"), "R29")
     nocase("R28 a tracked run_log is accepted", _tracked_evidence, "R28")
     nocase("R27 probe.expect_exit alone is accepted",
            lambda b: b[0]["probe"].__setitem__("expect_exit", 0), "R27")
