@@ -2631,7 +2631,27 @@
       },
       "evidence_source": "structural-parser",
       "evidence_source_note": "Deliberately NOT static-analysis, and the choice is worth stating. The schema reserves that value so it cannot be silently re-used and says no capability should carry it, because on this estate it existed solely to relabel one idalib-mcp capability and thereby manufacture a second family. Writing a paragraph explaining why a misleading label was acceptable would have been the same escape wearing a footnote. The honest member of the closed set is structural-parser -- a self-describing container decoded without executing it -- which is where packer identification genuinely sits: Die reads the PE container and its section names and matches signatures over them. It shares that family with native.pe.container and crypto.jose.parse, and those are DIFFERENT INSTRUMENTS, so R18 is satisfied and correctly so. Two instruments in one family is not two opinions about a decompilation either, so this entry adds no corroboration to the independence gate and is not offered as any.",
-      "root_reason": "Genuine root. It is handed a path and answers a question about that file's container before anything else is allowed to run -- nothing upstream produces a packer verdict, and nothing downstream may trust one that was not produced here. It declares no typed edge for the same reason native.pe.container does not: it consumes an input no other capability emits, so the absence of an edge is a decision rather than an oversight."
+      "root_reason": "Genuine root. It is handed a path and answers a question about that file's container before anything else is allowed to run -- nothing upstream produces a packer verdict, and nothing downstream may trust one that was not produced here. It declares no typed edge for the same reason native.pe.container does not: it consumes an input no other capability emits, so the absence of an edge is a decision rather than an oversight.",
+      "invoke": {
+        "runner": "powershell",
+        "argv": [
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          "headless-lab/tools/triage-packer.ps1",
+          "-Target",
+          "{target}"
+        ],
+        "stdout": "json",
+        "success_when": "parsed JSON has ok == true, which means Die's own verdict is 'not packed'. A PACKED target returns ok:false and the loop skips every downstream round",
+        "fact_map": {
+          "die_verdict": "pe.packer_verdict",
+          "die_score": "pe.die_score"
+        },
+        "gate_role": "precondition",
+        "note": "THE FIRST CAPABILITY WITH invoke.gate_role = 'precondition', and the reason it exists is that the loop could previously express EVIDENCE only. skills/debugger-workstation/references/triage.md says to detect a packer BEFORE decompiling and never to analyse a stub, but with no gate_role that was advice: a packed target would have been decompiled anyway and the only trace would have been a note in a document. Now the packer check runs as a round whose `ok` decides whether the decompile round happens at all, and a failure is recorded as precondition_failed and NAMES what it blocked."
+      }
     },
     {
       "id": "native.disasm.capstone",

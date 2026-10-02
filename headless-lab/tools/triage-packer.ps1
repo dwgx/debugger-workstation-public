@@ -79,8 +79,15 @@ if ($null -eq $score) {
 }
 
 [ordered]@{
-    ok         = $true
-    exit       = 0
+    # `ok` IS THE PRECONDITION VERDICT, and that is a semantic change made on 2026-10-02. It was
+    # hard-coded $true regardless of the verdict, which is right for an EVIDENCE round and wrong
+    # for a PRECONDITION one: this entry now declares invoke.gate_role = "precondition", and the
+    # loop skips every downstream round when a precondition's declared success fails. A packed
+    # binary must therefore report ok:false, or "unpack first, do not decompile the stub" stays
+    # advice instead of becoming a gate. Unpacked stays ok:true so normal work proceeds.
+    ok         = (-not (($verdict -notmatch 'not\s+packed') -and ("$verdict" -match 'packed')))
+    precondition = "PASS means it is safe to decompile. A packed target reports ok:false and the " +
+                   "mission skips every downstream round rather than analysing a stub."
     target     = (Resolve-Path -LiteralPath $Target).Path
     size       = $bytes.Length
     die_score  = $score

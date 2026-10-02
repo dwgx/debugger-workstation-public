@@ -401,6 +401,22 @@ function Get-Route {
     }
     $order = Get-Order @($selected | ForEach-Object { $_.id } | Sort-Object { $idx[$_] })
     $ordered = @()
+    # PRECONDITIONS RUN FIRST. Measured before this existed: native.pe.packer declared
+    # gate_role:precondition and was ordered round 5 of 5 -- LAST, in a Q1.identify mission whose
+    # whole purpose is to decide whether decompiling is safe. **A gate that runs after the thing
+    # it gates is not a gate**; it is a footnote that arrives once the damage is done.
+    #
+    # The partition is by role only and is STABLE within each half, so the existing edge ordering
+    # and the registry-index tie-break are untouched. Ties among preconditions still fall back to
+    # registry_index, which keeps the plan deterministic -- a precondition whose position moved
+    # run to run would make every mission unreproducible.
+    $order = @(@($order | Where-Object {
+                    $cc = $byId[$_]
+                    "$($cc.invoke.gate_role)" -eq 'precondition'
+                }) + @($order | Where-Object {
+                    $cc = $byId[$_]
+                    "$($cc.invoke.gate_role)" -ne 'precondition'
+                }))
     foreach ($id in $order) {
         $s = @($selected | Where-Object { $_.id -eq $id })[0]
         if (-not $s) { continue }
@@ -421,7 +437,7 @@ function Get-Route {
     return [ordered]@{
         question_type = $QuestionType
         source = 'manifests/capabilities.json -- this file declares no capability list of its own'
-        ordering = 'a capability runs after whatever produces a fact its own invoke.argv binds; every remaining tie is broken by the capability index in the registry capabilities array, carried on each step as registry_index'
+        ordering = 'a capability declaring invoke.gate_role = precondition runs FIRST, because it is a gate on the rest and a gate that runs last gates nothing; within each half the existing rule holds -- a capability runs after whatever produces a fact its own invoke.argv binds, and every remaining tie is broken by the registry index, carried on each step as registry_index'
         rules = @('state must be observed', 'question_types must list this question',
                   'a required input the registry marks unproduced blocks the capability',
                   'a hard edge pulls its producer in, whatever question type that producer declares',
@@ -961,6 +977,25 @@ function Invoke-Mission {
         $n = @($ev.facts).Count
         Say ("          exit={0} ok={1} facts={2} in {3}s" -f $rc, $declaredOk, $n, $ev.wall_s)
         if ($n -gt 0) { foreach ($f in $ev.facts) { Say ("            + {0} <- {1}" -f $f.key, $f.source_field) } }
+
+        # PRECONDITION. A capability may declare invoke.gate_role = 'precondition', which means
+        # its `ok` is not an evidence result but a GATE on whether downstream work may happen at
+        # all. When one fails, every remaining round is skipped and named -- not run and not
+        # silently omitted. This is what turns skills/debugger-workstation/references/triage.md's
+        # "unpack first; do not decompile the stub" from advice into a rule the loop enforces:
+        # native.pe.packer reports ok:false on a packed target and the decompile round never runs.
+        #
+        # Without this the loop could only express EVIDENCE, so a packed binary would have been
+        # decompiled anyway and the only trace would be a note nobody reads.
+        if ("$($cap.invoke.gate_role)" -eq 'precondition' -and -not $declaredOk) {
+            $preconditionBlock = $step.id
+            Say ''
+            Say "  PRECONDITION FAILED: $($step.id) -- every remaining round is SKIPPED, not attempted."
+            Say "    Analysing the target now would mean analysing whatever the packer left behind."
+            $trace += [ordered]@{ round = $round; capability = $step.id
+                                  event = 'precondition_failed'; blocks = 'all remaining rounds' }
+            break
+        }
     }
 
     # --- termination, COMPUTED over the artifact, never self-reported --------------
