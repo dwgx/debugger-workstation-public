@@ -1151,25 +1151,18 @@ function Invoke-Mission {
     $verdict = Get-Verdict -Claim $Claim -QuestionType $qt -Evidence $evidence -Registry $reg -DischargedIn $Discharged
 
     # --- scope guard --------------------------------------------------------------
-            # NOT MY SUBJECT IS NOT A GATED-SHUT TARGET. A precondition can now exit a code the
-            # registry lists in invoke.skip_exits, meaning "I am not the right instrument for this
-            # file" rather than "I checked and you must not proceed". The two used to be
-            # indistinguishable and the cost was concrete: native.pe.packer refused an APK with
-            # the same exit 2 it uses for a missing diec, the loop read that as the target being
-            # gated shut, and every downstream round was skipped -- including
-            # mobile.apk.static, which analyses that APK correctly. A gate that blocks on a file
-            # it does not understand is not a gate; it is a wall, and it walls off the very
-            # capabilities that do understand the file.
-            $skipExits = @($cap.invoke.skip_exits)
-            if ($skipExits -and ($skipExits -contains $rc)) {
-                Say ''
-                Say "  PRECONDITION NOT APPLICABLE: $($step.id) -- this target is not its subject (exit $rc)."
-                Say "    That is not a refusal of the target, so downstream rounds still run."
-                $trace += [ordered]@{ round = $round; capability = $step.id
-                                      event = 'precondition_not_applicable'; exit = $rc
-                                      blocks = 'nothing' }
-                continue
-            }
+    # The `skip_exits` logic that used to sit HERE has been deleted, and the reason is worth
+    # keeping. It was an exact copy of the in-loop copy at :1115-1135, minus that copy's
+    # `gate_role -eq 'precondition'` test, and it sat AFTER the round loop closed -- so its
+    # `continue` was outside every loop in this function. `artifact.json` is written at :1200
+    # and the exit code at :1216, so anything that block skipped was skipped SILENTLY: no
+    # artifact, no trace, no message, and no non-zero exit to notice. It was dead today only
+    # because no capability's last step happened to match; the trigger was registry data, so
+    # a one-line registry edit could have turned a mission into a silent no-op.
+    #
+    # The lesson is the one this file already keeps repeating: a control that lives in two
+    # places is zero controls plus one. The live copy is inside the loop, guarded, and states
+    # why "not my subject" is not "gated shut". This paragraph is the tombstone.
     $after = Get-TreeHash $RepoRoot
     $scopeOk = ($after -eq $baseline)
     if (-not $scopeOk) {
