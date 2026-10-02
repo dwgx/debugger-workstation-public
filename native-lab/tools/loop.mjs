@@ -161,6 +161,15 @@ async function main() {
       db ? `${db} -> ${sess.filename}` : 'never became ready');
     if (!db) return finish();
 
+
+    // PER-CAPABILITY SCOPING. Measured before this existed: native.ida.decompile and
+    // native.ida.list_functions carried the IDENTICAL probe.command, so a break in `decompile`
+    // was indistinguishable from a break in `list_funcs` -- the same run reddened both entries
+    // and neither could be blamed. Two capabilities sharing a probe command is legal, since this
+    // loop genuinely exercises both, but it cannot LOCALISE a fault. `--only=<tool>` narrows the
+    // run to one capability's own instrument; the default still covers both.
+    const only = (process.argv.find((a) => a.startsWith('--only=')) || '').split('=')[1] || '';
+    const wants = (t) => !only || only === t;
     const lf = await call('list_funcs', { queries: [{ count: 300 }], database: db });
     const flat = Array.isArray(lf.body) ? lf.body : lf.body?.data || lf.body?.result || [];
     const funcs = flat.flatMap((g) => (Array.isArray(g) ? g : g?.data || []));
@@ -170,37 +179,39 @@ async function main() {
     add(Boolean(mainFn), 'main is located by name', mainFn ? `${mainFn.addr} size ${mainFn.size}` : 'no main in listing');
     if (!mainFn) return finish();
 
-    const dec = await call('decompile', { addr: mainFn.addr, include_addresses: false, database: db });
-    const code = dec.body?.code || '';
-    add(code.length > 200, 'decompile returns real recovered C for main', `${code.length} chars`);
-    add(code.includes(GROUND_TRUTH), 'the plaintext decoy flag is recovered from the decompilation', GROUND_TRUTH);
-    add(/strcmp/.test(code), 'the comparison logic is recovered, not just the strings',
-      /strcmp/.test(code) ? 'strcmp present in recovered code' : 'no strcmp in output');
-    add(Array.isArray(dec.body?.refs) && dec.body.refs.length > 0,
-      'decompile carries resolved refs alongside the code', `${dec.body?.refs?.length ?? 0} refs`);
+    if (wants('decompile')) {
+      const dec = await call('decompile', { addr: mainFn.addr, include_addresses: false, database: db });
+      const code = dec.body?.code || '';
+      add(code.length > 200, 'decompile returns real recovered C for main', `${code.length} chars`);
+      add(code.includes(GROUND_TRUTH), 'the plaintext decoy flag is recovered from the decompilation', GROUND_TRUTH);
+      add(/strcmp/.test(code), 'the comparison logic is recovered, not just the strings',
+        /strcmp/.test(code) ? 'strcmp present in recovered code' : 'no strcmp in output');
+      add(Array.isArray(dec.body?.refs) && dec.body.refs.length > 0,
+        'decompile carries resolved refs alongside the code', `${dec.body?.refs?.length ?? 0} refs`);
 
-    // --- the hazard, asserted as a control ---------------------------------
-    const bogus = await call('decompile', { addr: '0xDEADBEEF', database: db });
-    const codeNull = bogus.body?.code === null || bogus.body?.code === undefined;
-    const errPresent = typeof bogus.body?.error === 'string' && bogus.body.error.length > 0;
-    add(codeNull, 'NEGATIVE: a bogus address yields no code', `code=${JSON.stringify(bogus.body?.code)}`);
-    add(errPresent, 'NEGATIVE: the failure is carried in an `error` field', String(bogus.body?.error).slice(0, 78));
+      // --- the hazard, asserted as a control ---------------------------------
+      const bogus = await call('decompile', { addr: '0xDEADBEEF', database: db });
+      const codeNull = bogus.body?.code === null || bogus.body?.code === undefined;
+      const errPresent = typeof bogus.body?.error === 'string' && bogus.body.error.length > 0;
+      add(codeNull, 'NEGATIVE: a bogus address yields no code', `code=${JSON.stringify(bogus.body?.code)}`);
+      add(errPresent, 'NEGATIVE: the failure is carried in an `error` field', String(bogus.body?.error).slice(0, 78));
 
-    // The control on the control. If isError were true here the hazard would not
-    // exist and wrappers could trust it. Asserting it is false keeps the documented
-    // hazard load-bearing instead of folklore.
-    add(bogus.isError === false, 'CONTROL: isError is FALSE on that failure',
-      bogus.isError === false
-        ? 'isError=false while error is set — an isError-only wrapper logs a success'
-        : 'isError was true; the documented hazard is WRONG and every wrapper needs re-checking');
+      // The control on the control. If isError were true here the hazard would not
+      // exist and wrappers could trust it. Asserting it is false keeps the documented
+      // hazard load-bearing instead of folklore.
+      add(bogus.isError === false, 'CONTROL: isError is FALSE on that failure',
+        bogus.isError === false
+          ? 'isError=false while error is set — an isError-only wrapper logs a success'
+          : 'isError was true; the documented hazard is WRONG and every wrapper needs re-checking');
 
-    const bogusSym = await call('decompile', { addr: 'no_such_symbol_zzz', database: db });
-    add(typeof bogusSym.body?.error === 'string' && /not found/i.test(bogusSym.body.error),
-      'NEGATIVE: a nonexistent symbol is refused by name', String(bogusSym.body?.error).slice(0, 68));
+      const bogusSym = await call('decompile', { addr: 'no_such_symbol_zzz', database: db });
+      add(typeof bogusSym.body?.error === 'string' && /not found/i.test(bogusSym.body.error),
+        'NEGATIVE: a nonexistent symbol is refused by name', String(bogusSym.body?.error).slice(0, 68));
 
-    const missing = await rpcRaw('tools/call', { name: 'decompile', arguments: { database: db } });
-    add(missing?.result?.isError === true, 'NEGATIVE: a missing required parameter is refused',
-      missing?.result?.isError === true ? 'isError=true from the schema layer' : `accepted: ${JSON.stringify(missing).slice(0, 100)}`);
+      const missing = await rpcRaw('tools/call', { name: 'decompile', arguments: { database: db } });
+      add(missing?.result?.isError === true, 'NEGATIVE: a missing required parameter is refused',
+        missing?.result?.isError === true ? 'isError=true from the schema layer' : `accepted: ${JSON.stringify(missing).slice(0, 100)}`);
+    }
   } finally {
     // proc.kill() trips a libuv assertion on Windows; taskkill is quieter.
     try { execFileSync('taskkill', ['/PID', String(proc.pid), '/T', '/F'], { stdio: 'ignore' }); } catch { /* already gone */ }

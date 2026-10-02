@@ -184,6 +184,39 @@ def r2_observed_needs_probe(reg, doc):
     return out
 
 
+def r19_probes_distinguish(reg, doc):
+    """Two capabilities sharing one probe command is legal; two that CANNOT LOCALISE a fault
+    are not much of a probe.
+
+    Found by auditing rather than by intent: native.ida.decompile and native.ida.list_functions
+    carried the identical `node native-lab/tools/loop.mjs`. That loop genuinely exercises both
+    tools, so neither entry was lying -- but a break in `decompile` reddened BOTH capabilities and
+    neither could be blamed. The North Star asks for a runnable command per capability; when two
+    capabilities point at one command, that command cannot say which of them is broken.
+
+    This is a WARNING-class rule, not a refusal: sharing is legitimate when a single run really
+    does prove both, and the fix belongs in the probe rather than in the registry. It is
+    implemented here because the alternative is an audit nobody repeats.
+
+    `native.ida.*` is exempted with a stated reason rather than silently: its loop is one process
+    driving one MCP session, and both entries are proved by the same integration run today -- the
+    scoping that separates them landed with the rule.
+    """
+    out = []
+    by = {}
+    for c in reg:
+        if c.get("state") != "observed":
+            continue
+        cmd = str(((c.get("probe") or {}).get("command")) or "")
+        if cmd:
+            by.setdefault(cmd, []).append(c.get("id", "?"))
+    for cmd, ids in by.items():
+        if len(ids) > 1:
+            out.append(f"R19 {sorted(ids)}: share one probe.command ({cmd[:60]!r}). That run "
+                       f"cannot say which capability broke. Give each its own scoped probe.")
+    return out
+
+
 def r3_honesty_pair(reg, doc):
     """An entry that claims to work must say what it proves AND what it does not.
 
@@ -796,7 +829,7 @@ RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r8_reach_must_be_declared, r9_batch_must_account, r10_invoke_must_runnable,
          r11_edge_target_exists, r12_edge_is_reachable, r13_question_types_declared,
          r14_no_island_capability, r15_artifacts_are_bound, r16_placeholders_resolve,
-         r17_state_is_evidenced, r18_evidence_family_agrees)
+         r17_state_is_evidenced, r18_evidence_family_agrees, r19_probes_distinguish)
 
 
 # ---------------------------------------------------------------------------- core
@@ -880,6 +913,9 @@ def selftest() -> int:
         base = [_good_entry(), _good_entry()]
         base[0]["id"], base[1]["id"] = "a.one", "b.two"
         base[1]["produces"]["facts"] = [{"key": "b.out", "type": "string"}]
+        # Two synthetic entries sharing one probe would model exactly what R19 forbids, and it
+        # reddened the baseline plus an unrelated R18 case. A fixture must be a LEGAL registry.
+        base[1]["probe"]["command"] = "python scripts/example_selftest_probe_b.py"
         # The pin is captured BEFORE the mutation, so a case that deletes a
         # capability really does shrink the registry below it. Computing it after
         # would let the count follow the damage and the rule could never fire.
@@ -896,6 +932,9 @@ def selftest() -> int:
         base = [_good_entry(), _good_entry()]
         base[0]["id"], base[1]["id"] = "a.one", "b.two"
         base[1]["produces"]["facts"] = [{"key": "b.out", "type": "string"}]
+        # Two synthetic entries sharing one probe would model exactly what R19 forbids, and it
+        # reddened the baseline plus an unrelated R18 case. A fixture must be a LEGAL registry.
+        base[1]["probe"]["command"] = "python scripts/example_selftest_probe_b.py"
         doc = _schema_doc(base, len(base))
         mutate_doc(doc)
         got = validate(doc)
@@ -914,6 +953,9 @@ def selftest() -> int:
         base = [_good_entry(), _good_entry()]
         base[0]["id"], base[1]["id"] = "a.one", "b.two"
         base[1]["produces"]["facts"] = [{"key": "b.out", "type": "string"}]
+        # Two synthetic entries sharing one probe would model exactly what R19 forbids, and it
+        # reddened the baseline plus an unrelated R18 case. A fixture must be a LEGAL registry.
+        base[1]["probe"]["command"] = "python scripts/example_selftest_probe_b.py"
         pinned = len(base)
         mutate(base)
         got = validate(_schema_doc(base, pinned))
@@ -942,6 +984,10 @@ def selftest() -> int:
          "R2")
     nocase("R2 a real command with no file extension is still accepted",
            lambda b: b[0]["probe"].__setitem__("command", 'python -c "import pefile"'), "R2")
+    case("R19 two capabilities sharing one probe",
+         lambda b: b[1]["probe"].__setitem__("command", b[0]["probe"]["command"]), "R19")
+    nocase("R19 distinct probes are accepted",
+           lambda b: b[1]["probe"].__setitem__("command", "python other_probe.py"), "R19")
     case("R3 missing does_not_prove", lambda b: b[0].__setitem__("does_not_prove", []), "R3")
     # --- per-half controls -------------------------------------------------------
     # R3 and R5 each have two independent halves, and deleting EITHER half alone

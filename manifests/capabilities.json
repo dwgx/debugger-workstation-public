@@ -205,7 +205,7 @@
         "escalation_class": "none"
       },
       "probe": {
-        "command": "node native-lab/tools/loop.mjs",
+        "command": "node native-lab/tools/loop.mjs --only=decompile",
         "expect": "LOOP CLOSED",
         "exit": 0,
         "last_run": "2026-09-30",
@@ -213,7 +213,8 @@
           "status": "unverified",
           "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."
         },
-        "last_summary": "JSON-SUMMARY {\"total\":15,\"pass\":15,\"fail\":0}"
+        "last_summary": "JSON-SUMMARY {\"total\":15,\"pass\":15,\"fail\":0}",
+        "distinct_probe_note": "SCOPED, and this replaced an IDENTICAL probe.command shared with the other IDA capability. Measured before: native.ida.decompile and native.ida.list_functions both pointed at `node native-lab/tools/loop.mjs`, which genuinely exercises both -- so neither was a false probe, but a break in `decompile` reddened BOTH entries and neither could be blamed. loop.mjs now takes --only=<tool>; verified both directions: --only=decompile runs the decompile assertions, --only=list_funcs runs ZERO of them while still proving its own two. The default with no flag still covers both, and remains the integration check. A shared probe is legal; a probe that cannot LOCALISE a fault is not much of a probe."
       },
       "negative_control": {
         "id": "native.ida.decompile.bogus_addr",
@@ -347,7 +348,7 @@
         "escalation_class": "none"
       },
       "probe": {
-        "command": "node native-lab/tools/loop.mjs",
+        "command": "node native-lab/tools/loop.mjs --only=list_funcs",
         "expect": "list_funcs enumerates functions",
         "exit": 0,
         "last_run": "2026-09-30",
@@ -355,7 +356,8 @@
           "status": "unverified",
           "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."
         },
-        "last_summary": "300 functions enumerated from c01-stringobf.exe"
+        "last_summary": "300 functions enumerated from c01-stringobf.exe",
+        "distinct_probe_note": "SCOPED, and this replaced an IDENTICAL probe.command shared with the other IDA capability. Measured before: native.ida.decompile and native.ida.list_functions both pointed at `node native-lab/tools/loop.mjs`, which genuinely exercises both -- so neither was a false probe, but a break in `decompile` reddened BOTH entries and neither could be blamed. loop.mjs now takes --only=<tool>; verified both directions: --only=decompile runs the decompile assertions, --only=list_funcs runs ZERO of them while still proving its own two. The default with no flag still covers both, and remains the integration check. A shared probe is legal; a probe that cannot LOCALISE a fault is not much of a probe."
       },
       "negative_control": {
         "id": "native.ida.list_functions.no_session",
