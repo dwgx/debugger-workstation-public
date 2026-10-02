@@ -33,8 +33,16 @@ import sys
 CLAIMS: list[tuple[str, re.Pattern[str], object]] = []
 
 
-def claim(label, pattern, fn):
-    CLAIMS.append((label, re.compile(pattern, re.IGNORECASE), fn))
+def claim(label, pattern, fn, multiline=False):
+    """Register one checkable fact.
+
+    `multiline=True` matches against the whole LIVE TEXT of a file rather than one line at a
+    time. It exists because an audit found a LIVE FALSE claim in the charter's own headline
+    paragraph, split across a newline: `capabilities:` and `22` on different lines. A per-line
+    checker cannot see a claim that wraps, and the line-splitting habit that markdown encourages
+    is exactly what defeats it.
+    """
+    CLAIMS.append((label, re.compile(pattern, re.IGNORECASE), fn, multiline))
 
 
 def _cap_count(reg):
@@ -86,14 +94,57 @@ def _make(fn):
 # NOTE ON GROUPING: every alternative carries exactly ONE capture group, because the checker
 # takes the first non-empty group. An earlier draft nested one inside another, so a match on
 # **21 capabilities** yielded the whole '**21 capabilities' string and int() raised.
+# MULTILINE, and the reason is a control rather than a theory: the audit's LIVE FALSE claim
+# split `capabilities:` and `22` across a newline, so a per-line checker never saw it. Adding
+# the multiline machinery but leaving THIS claim on the per-line path would have looked like a
+# fix while reproducing the exact defect it was written for. Planted and confirmed to fire.
 claim("capability count",
-      r"(?:`capabilities:\s*`?\s*(\d{1,3})`)"   # `capabilities: 21`
-      r"|\*\*(\d{1,3})\s+capabilit",           # **21 capabilities**
-      _cap_count)
+      r"(?:`capabilities:\s*`?\s*(\d{1,4})`)"   # `capabilities: 21`
+      r"|\*\*(\d{1,4})\s+capabilit",           # **21 capabilities**
+      _cap_count, multiline=True)
 claim("observed count",
-      r"(\d{1,3})\s+`observed`", _observed)
+      r"(\d{1,4})\s+`observed`|`observed`\*{0,2}\s*[:=]?\s*(\d{1,4})", _observed)
 claim("typed edge count",
-      r"(\d{1,3})\s+typed\s+(?:from-)?edges", _edges)
+      r"(\d{1,4})\s+typed\s+(?:from-)?edges", _edges)
+
+
+def _invoke_count(reg):
+    return sum(1 for c in reg["capabilities"] if c.get("invoke"))
+
+
+def _runnable_controls(reg):
+    return sum(1 for c in reg["capabilities"]
+               if str(((c.get("negative_control") or {}).get("command")) or "").strip())
+
+
+def _plan_controls(reg):
+    return sum(1 for c in reg["capabilities"]
+               if (c.get("negative_control") or {}).get("kind") == "plan")
+
+
+def _families(reg):
+    return len(reg["schema"]["evidence_families"])
+
+
+# An audit measured this gate at 16 live claims against 1893 live lines carrying a digit --
+# 0.85% coverage, with greenness a function of write order rather than correctness. Four more
+# quantities take it off the list of things the wiki asserts and nothing checks. Only
+# unambiguous forms are added; prose counts remain out of scope ON PURPOSE, because the second
+# version of this script over-matched row counts and a gate that cries wolf gets switched off.
+claim("callable count",
+      r"(\d{1,4})\s+(?:capabilities\s+)?(?:declaring an `invoke`|callable capabilities|callable\b)",
+      _invoke_count, multiline=True)
+claim("runnable negative controls",
+      r"(\d{1,4})\s+runnable negative control", _runnable_controls)
+claim("declared plan controls",
+      r"(\d{1,4})\s+(?:declared\s+PLANS?|declare a documented plan)", _plan_controls)
+# BOLDED ONLY, after the first attempt matched `2 capabilities across 2 evidence families:
+# decompiler, static-analysis` inside a QUOTED mission message and reported the registry as
+# wrong. This is the over-matching failure this script has already made once, and the rule that
+# survives it is the one already written at the top of this file: check two unambiguous forms
+# reliably rather than five noisily, because a gate that cries wolf gets switched off.
+claim("family count",
+      r"\*\*(\d{1,4})\s+(?:evidence )?famil(?:y|ies)\*\*", _families)
 
 STRIKE = re.compile(r"~~.*?~~")
 
@@ -175,8 +226,30 @@ def main() -> int:
             text = path.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             continue
-        for lineno, line in live_lines(text):
-            for label, rx, fn in CLAIMS:
+        lines = list(live_lines(text))
+        for label, rx, fn, multiline in CLAIMS:
+            if multiline:
+                # Match against the whole live text with newlines collapsed to spaces, so a
+                # claim that WRAPS is still seen. The reported line number is derived from the
+                # offset, which is approximate for a wrapped claim and is stated as such.
+                blob = " ".join(l for _, l in lines)
+                for m in rx.finditer(blob):
+                    got = next((g for g in m.groups() if g), None)
+                    if got is None:
+                        continue
+                    want = fn(reg)
+                    if want is None:
+                        continue
+                    checked += 1
+                    if int(got) != want:
+                        approx = blob.count("\n", 0, m.start()) + 1
+                        rel = path.relative_to(wiki)
+                        violations.append(
+                            f"{rel}~{approx}: claims {got} {label}; registry says {want}\n"
+                            f"    {blob[max(0, m.start()-40):m.end()+40].strip()[:110]}"
+                            f"\n    (~ is approximate for a claim that wraps)")
+                continue
+            for lineno, line in lines:
                 for m in rx.finditer(line):
                     # A line may carry the number twice (two capture groups); take the first
                     # group that actually captured something.

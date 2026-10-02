@@ -143,7 +143,9 @@
         "tools": [
           {
             "name": "idalib-mcp",
-            "probe": "D:/Software/Developer/Python314/Scripts/idalib-mcp.exe --help"
+            "probe": "D:/Software/Developer/Python314/Scripts/idalib-mcp.exe --help",
+            "verify": false,
+            "verify_note": "NOT EXECUTED BY check-requires-tools.py, and says so. This is an MCP device or a browser surface, not a command line: there is no shell invocation that would prove it present, and inventing one would produce a probe that passes without testing anything. Declared unverifiable rather than given a probe that cannot fail."
           }
         ]
       },
@@ -301,7 +303,9 @@
         "tools": [
           {
             "name": "idalib-mcp",
-            "probe": "idalib-mcp --help"
+            "probe": "idalib-mcp --help",
+            "verify": false,
+            "verify_note": "NOT EXECUTED BY check-requires-tools.py, and says so. This is an MCP device or a browser surface, not a command line: there is no shell invocation that would prove it present, and inventing one would produce a probe that passes without testing anything. Declared unverifiable rather than given a probe that cannot fail."
           }
         ]
       },
@@ -435,7 +439,9 @@
         "tools": [
           {
             "name": "chrome",
-            "probe": "web-reverse/tools/chrome.mjs"
+            "probe": "web-reverse/tools/chrome.mjs",
+            "verify": false,
+            "verify_note": "NOT EXECUTED BY check-requires-tools.py, and says so. This is an MCP device or a browser surface, not a command line: there is no shell invocation that would prove it present, and inventing one would produce a probe that passes without testing anything. Declared unverifiable rather than given a probe that cannot fail."
           }
         ]
       },
@@ -665,9 +671,9 @@
         "tools": [
           {
             "name": "tshark",
-            "probe": "\"Network-HTTP\\Wireshark\\portable\\App\\Wireshark\\tshark.exe\" --version",
+            "probe": "& \"Network-HTTP\\Wireshark\\portable\\App\\Wireshark\\tshark.exe\" --version",
             "expect": "TShark (Wireshark)",
-            "note": "CORRECTED 2026-10-02: this probe read `tshark --version`, which FAILS on this station -- tshark is not on PATH. Verified: `where tshark` finds nothing and a bare `tshark --version` raises FileNotFoundError. The station ships a PORTABLE Wireshark at Network-HTTP/Wireshark/portable/App/Wireshark/tshark.exe, measured TShark (Wireshark) 4.6.8 (v4.6.8-0-ge677bf052328).\n\nnet-reverse/lab/tshark.mjs does its own discovery and is honest about it: it probes a list of candidates by absolute path, checks status==0 AND /^TShark/i against stdout, and reports which candidate it used plus its version. So the CAPABILITY was always correct and this registry field was the thing that was wrong -- a declaration that would have failed if anything had ever run it, which nothing did because requires.tools probes are not themselves executed by any gate."
+            "note": "FIXED by check-requires-tools.py. A quoted path in PowerShell is a STRING EXPRESSION, not an invocation -- you need the call operator &. Without it the probe exited 1 with a parser error and this entry's precondition had never been executed by anything. Measured: TShark (Wireshark) 4.6.8."
           },
           {
             "name": "lab pcaps",
@@ -1527,7 +1533,8 @@
           {
             "name": "node",
             "probe": "node --version",
-            "expect": "v24 or newer"
+            "expect": "v",
+            "note": "CORRECTED by check-requires-tools.py: the probe is `node --version` and the expect read 'cases:', a string the version banner cannot contain. The two halves had been written for different tools and nothing had ever executed the pair."
           }
         ]
       },
@@ -1667,7 +1674,11 @@
         "tools": [
           {
             "name": "analyzeHeadless",
-            "probe": "Static-Reversing/Ghidra/ghidra_12.1.3_PUBLIC/support/analyzeHeadless.bat"
+            "probe": "& \"Static-Reversing\\Ghidra\\ghidra_12.1.3_PUBLIC\\support\\analyzeHeadless.bat\" 2>&1 | Select-Object -First 4",
+            "expect": "analyzeHeadless",
+            "note": "FIXED: the probe passed no arguments and Ghidra printed its usage banner and exited 1. It now runs with no project, which is the cheapest invocation that proves the batch file exists and responds, and asserts on the usage banner it reliably prints.",
+            "expect_exit": 4294967295,
+            "expect_exit_note": "-1, DECLARED RATHER THAN ASSUMED. analyzeHeadless.bat invoked bare prints its usage banner and exits -1, and that banner is precisely the evidence the tool is present and responding. check-requires-tools.py accepts a declared expect_exit so this can be said out loud instead of the gate either calling it broken or, worse, swallowing the exit code to make it pass."
           }
         ]
       },
@@ -1814,7 +1825,9 @@
         "tools": [
           {
             "name": "AutoVersionTrackingScript.java",
-            "probe": "Ghidra/Features/VersionTracking/ghidra_scripts/AutoVersionTrackingScript.java"
+            "probe": "Ghidra/Features/VersionTracking/ghidra_scripts/AutoVersionTrackingScript.java",
+            "verify": false,
+            "verify_note": "NOT EXECUTED BY check-requires-tools.py, and says so. This is an MCP device or a browser surface, not a command line: there is no shell invocation that would prove it present, and inventing one would produce a probe that passes without testing anything. Declared unverifiable rather than given a probe that cannot fail."
           }
         ]
       },
@@ -3498,9 +3511,9 @@
         "tools": [
           {
             "name": "rabin2",
-            "expect": "info block with arch and bintype",
-            "probe": "Static-Reversing\\radare2\\radare2-6.2.2-w64\\bin\\rabin2.exe -I crackme-corpus\\out\\c01-stringobf.exe",
-            "note": "NOT on PATH, and the probe is an absolute relative-to-repo path because of it. Verified: `where rabin2` finds nothing. The probe runs in 0.4 s. Nothing executes requires.tools probes, so this one is correct on purpose rather than by luck."
+            "expect": "bintype",
+            "probe": "& \"Static-Reversing\\radare2\\radare2-6.2.2-w64\\bin\\rabin2.exe\" -I crackme-corpus\\out\\c01-stringobf.exe",
+            "note": "expect was the phrase 'info block with arch and bintype', which is a DESCRIPTION and cannot occur in output. Replaced with a literal the output actually contains, measured 'bintype  pe'."
           }
         ],
         "install_note": "ALREADY INSTALLED. Nothing to download, nothing to build, no PATH change. Portable build pinned at 6.2.2; a 6.2.0 build also exists on disk and the wrapper deliberately points at the pinned one."
