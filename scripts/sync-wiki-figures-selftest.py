@@ -107,19 +107,30 @@ def with_figure(template: str, n: int) -> str:
     return template.replace("@N@", str(n))
 
 
-def load_doc_facts_as_the_writer_does(repo: pathlib.Path):
-    """doc-facts.py loaded the way sync-wiki-figures.py loads it: module executed, state untouched.
+def what_the_writer_can_derive(repo: pathlib.Path) -> list[str]:
+    """Which claim labels the WRITER ITSELF cannot derive, asked by calling the writer's own loader.
 
-    Kept separate on purpose. This harness sets `_REPO` so it can derive every expected value
-    itself; the writer does not, and the difference is the whole story behind a false green. A
-    claim whose fn returns None here is a claim the writer's `if expected is None: continue`
-    skips without a word.
+    This deliberately does not reimplement the writer's loading path. An earlier version of this
+    harness loaded doc-facts.py itself and left `_REPO` unset, on the theory that the writer did
+    the same -- which was true when written and became a FALSE ACCUSATION the moment the writer was
+    fixed to set it. A diagnostic that hard-codes someone else's bug goes on reporting that bug
+    after it is gone, which is worse than no diagnostic. So: import the writer, call its
+    `load_doc_facts()`, and ask its module.
     """
-    spec = importlib.util.spec_from_file_location("doc_facts_writer_path",
-                                                  repo / "scripts" / "doc-facts.py")
+    spec = importlib.util.spec_from_file_location("sync_writer_probe",
+                                                  repo / "scripts" / "sync-wiki-figures.py")
     mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
+    spec.loader.exec_module(mod)          # module-level constants only; nothing is written
+    df = mod.load_doc_facts()             # the writer's own loader, not ours
+    reg = json.loads((repo / "manifests" / "capabilities.json").read_text(encoding="utf-8"))
+    blank = []
+    for lbl, _rx, fn, _ml in df.CLAIMS:
+        try:
+            if fn(reg) is None:
+                blank.append(lbl)
+        except Exception:                                   # noqa: BLE001
+            blank.append(lbl)
+    return blank
 
 
 def load_doc_facts(repo: pathlib.Path):
@@ -152,6 +163,20 @@ def run(cmd: list[str], cwd: pathlib.Path | None = None, timeout: int = 300) -> 
     return p.returncode, p.stdout, p.stderr
 
 
+def digit_skeleton(text: str) -> str:
+    """Every run of digits collapsed to a single '#'.
+
+    This is the whole of ask "the writer must change only the digits". If the skeletons of the
+    before and after texts are equal, then every non-digit character is unchanged, in the same
+    order, at the same offset relative to its neighbours -- so the writer cannot have reformatted a
+    sentence, reflowed a line, dropped a backtick or eaten a paragraph and still pass. Digit
+    WIDTHS are allowed to differ, because `27` becoming `104` is three characters longer and is
+    exactly what a correct rewrite does; collapsing runs rather than comparing lengths is what
+    makes that legal instead of a false alarm.
+    """
+    return re.sub(r"\d+", "#", text)
+
+
 def wiki_hashes(wiki: pathlib.Path) -> dict[str, str]:
     """sha256 of every markdown file in the REAL wiki, for the %TEMP%-only property."""
     return {str(p.relative_to(wiki)): hashlib.sha256(p.read_bytes()).hexdigest()
@@ -159,49 +184,40 @@ def wiki_hashes(wiki: pathlib.Path) -> dict[str, str]:
 
 
 class Skeleton:
-    """A %TEMP% repo + wiki the writer can be pointed at without touching either real tree.
+    """A %TEMP% wiki the real writer can be aimed at, with the real registry left where it is.
 
-    `REPO` in the writer is derived from `__file__`, so a copy of the writer placed anywhere else
-    resolves its registry to the wrong place -- measured: it raised FileNotFoundError and exited 1,
-    which is indistinguishable from "found stale figures" if you only look at the exit code. So the
-    copy lives in a repo skeleton that has manifests/ and scripts/ beside it, exactly like the real
-    one, and the harness asserts the writer's WIKI constant points inside %TEMP% before every run.
+    The writer takes `--repo` and `--wiki`, so nothing here rewrites its source any more: the copy
+    is placed under %TEMP%, the real station is passed as --repo (it owns the registry, the
+    validator and the evidence tree the validator needs), and the %TEMP% copy is passed as --wiki.
+
+    An earlier version of this harness textually repointed the copy's WIKI constant and built a
+    repo skeleton around it. That was wrong in a way worth recording: the skeleton had no
+    evidence/ and no git tree, so the writer's two validator claims were underivable, it printed
+    "REFUSING TO PASS", it exited 1 -- and my harness read that as the writer failing on every
+    label at once. The lesson is the one doc-facts.py already states: a refusal is not a verdict.
+    Pass the pair; do not imitate the environment.
     """
 
     def __init__(self, root: pathlib.Path, repo: pathlib.Path, wiki: pathlib.Path):
         self.root = root
         self.repo_src = repo
         self.wiki_src = wiki
-        self.repo = root / "repo"
         self.wiki = root / "wiki"
-        (self.repo / "scripts").mkdir(parents=True)
-        (self.repo / "manifests").mkdir(parents=True)
-        shutil.copy2(repo / "manifests" / "capabilities.json", self.repo / "manifests")
-        for name in ("doc-facts.py", "registry-verify.py", "sync-wiki-figures.py"):
-            shutil.copy2(repo / "scripts" / name, self.repo / "scripts" / name)
-        self.repoint_wiki(self.repo / "scripts" / "sync-wiki-figures.py")
+        self.writer = root / "sync-wiki-figures.py"
+        self.writer.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(repo / "scripts" / "sync-wiki-figures.py", self.writer)
         for rel in WRITER_FILES:
             dst = self.wiki / rel
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(wiki / rel, dst)
 
-    def repoint_wiki(self, writer: pathlib.Path) -> None:
-        """Point the writer's copy at this skeleton's wiki. The ONLY edit made to any script here."""
-        src = writer.read_text(encoding="utf-8")
-        m = re.search(r'^WIKI = Path\(r?"([^"]+)"\)\s*$', src, re.M)
-        if not m:
-            raise AssertionError(f"{writer.name}: no WIKI constant to repoint; the harness must be "
-                                 f"updated rather than pointed at the real wiki by accident")
-        writer.write_text(src[:m.start()] + f'WIKI = Path(r"{self.wiki}")' + src[m.end():],
-                          encoding="utf-8")
-        self.writer = writer
-
     def assert_wiki_is_temp(self) -> None:
-        """Property 3, enforced before every single writer run, not just once at the end."""
-        m = re.search(r'^WIKI = Path\(r?"([^"]+)"\)\s*$', self.writer.read_text(encoding="utf-8"), re.M)
-        if not m or not pathlib.Path(m.group(1)).resolve().is_relative_to(pathlib.Path(tempfile.gettempdir()).resolve()):
-            raise AssertionError(f"writer copy would read {m.group(1) if m else '?'}, which is NOT "
-                                 f"under %TEMP%; refusing to run")
+        """Property 3, enforced before every single writer run, not once at the end."""
+        temp = pathlib.Path(tempfile.gettempdir()).resolve()
+        if not self.wiki.resolve().is_relative_to(temp):
+            raise AssertionError(f"would write to {self.wiki}, which is NOT under %TEMP%; refusing")
+        if self.wiki.resolve() == self.wiki_src.resolve():
+            raise AssertionError("the %TEMP% copy resolved to the REAL wiki; refusing to run")
 
     def plant(self, line: str) -> pathlib.Path:
         target = self.wiki / PLANT_FILE
@@ -216,13 +232,16 @@ class Skeleton:
             raise AssertionError(f"mutation {why!r} expected exactly one {old!r} in the writer copy")
         self.writer.write_text(src.replace(old, new), encoding="utf-8")
 
+    def _cmd(self, *extra: str) -> list[str]:
+        return [PY, str(self.writer), "--repo", str(self.repo_src), "--wiki", str(self.wiki), *extra]
+
     def check(self) -> tuple[int, str, str]:
         self.assert_wiki_is_temp()
-        return run([PY, str(self.writer), "--check"])
+        return run(self._cmd("--check"))
 
     def rewrite(self) -> tuple[int, str, str]:
         self.assert_wiki_is_temp()
-        return run([PY, str(self.writer)])
+        return run(self._cmd())
 
 
 def planted_line(wiki: pathlib.Path) -> str:
@@ -286,17 +305,17 @@ def main() -> int:
         print(f"      (fn(reg) returns None because doc-facts._REPO is unset in an imported module;"
               f" the writer's own loop skips these with `if expected is None: continue`)")
 
-    writer_path = load_doc_facts_as_the_writer_does(repo)
-    writer_blank = [lbl for lbl, _rx, fn, _ml in writer_path.CLAIMS if fn(reg) is None]
+    writer_blank = what_the_writer_can_derive(repo)
     if writer_blank:
         print(f"   THE WRITER CANNOT DERIVE: {writer_blank}")
-        print(f"      Its `fn(reg)` returns None for these, and its loop then runs "
-              f"`if expected is None: continue` --")
-        print(f"      so these claims are skipped SILENTLY and their figures are never rewritten. "
-              f"doc-facts._REPO is unset in a")
-        print(f"      freshly exec'd module, and `_validator_number` returns None without it. This "
-              f"harness sets it, which is why")
-        print(f"      the cases below are measured as FALSE GREEN rather than as absent.")
+        print(f"      Asked by calling the writer's OWN load_doc_facts(), not by reimplementing it.")
+        print(f"      Those claims go unchecked AND unwritten by the writer. The writer now refuses "
+              f"loudly rather than")
+        print(f"      skipping quietly, so its exit code says so; if that ever regresses, these "
+              f"cases turn FALSE GREEN")
+        print(f"      again and name the labels.")
+    else:
+        print(f"   the writer can derive all {len(labels)} claims (asked via its own loader)")
 
     missing = [lbl for lbl in labels if lbl not in PLANTS]
     stale = [lbl for lbl in PLANTS if lbl not in labels]
@@ -326,6 +345,19 @@ def main() -> int:
         return 1
     show("baseline", "\n".join(l for l in bout.splitlines() if "already current" in l or "->" in l))
 
+    # The other half of "must not misread": on a wiki where every figure is already correct, a real
+    # (non---check) rewrite run must leave every file byte-for-byte identical. A writer that
+    # "tidies" a current wiki is a writer that will one day rewrite something nobody asked it to.
+    base_before = {rel: (base.wiki / rel).read_bytes() for rel in WRITER_FILES}
+    rcode0, rout0, _rerr0 = base.rewrite()
+    base_after = {rel: (base.wiki / rel).read_bytes() for rel in WRITER_FILES}
+    no_op = base_before == base_after
+    touched = sorted(r for r in base_before if base_before[r] != base_after.get(r))
+    print(f"   rewrite run on that CURRENT wiki: exit {rcode0}, "
+          f"{'all 4 files byte-identical' if no_op else 'MODIFIED ' + str(touched)}")
+    rep.check(no_op, "property-3b",
+              "the writer modified a wiki that was already correct", str(touched))
+
     # ------------------------------------------------------------- property 1: a plant per label
     print("\n-- 1. PROPERTY 1: every claim label must be caught, then correctly rewritten ---------")
     for label in labels:
@@ -340,12 +372,23 @@ def main() -> int:
         stale_n = want + 7
         skel = Skeleton(root / re.sub(r"[^a-z0-9]+", "-", label.lower()).strip("-"), repo, wiki)
         skel.plant(with_figure(template, stale_n))
+        before_text = (skel.wiki / PLANT_FILE).read_text(encoding="utf-8")
+        others_before = {rel: (skel.wiki / rel).read_bytes()
+                         for rel in WRITER_FILES if rel != PLANT_FILE}
 
         ccode, cout, cerr = skel.check()
         rcode, rout, rerr = skel.rewrite()
+        after_text = (skel.wiki / PLANT_FILE).read_text(encoding="utf-8")
+        others_after = {rel: (skel.wiki / rel).read_bytes()
+                        for rel in WRITER_FILES if rel != PLANT_FILE}
         after = planted_line(skel.wiki)
         wrote = (str(want) in after) and (str(stale_n) not in after)
         named = label in rout
+        # The writer must change DIGITS AND NOTHING ELSE, and must not touch a file it had no
+        # reason to touch. A writer that helpfully reformats a sentence is a writer that will one
+        # day eat a paragraph, and no exit code can see that.
+        digits_only = digit_skeleton(before_text) == digit_skeleton(after_text)
+        others_intact = others_before == others_after
         caught_ok = ccode == 1 and rcode == 0 and wrote and named
 
         # The false-green test, stated as its own line because it is the failure that matters: a
@@ -360,6 +403,17 @@ def main() -> int:
               f"{'correct' if wrote else 'WRONG'}"
               + (f" -> {after.strip()}" if after else ""))
         print(f"        attributed to {label!r} in the writer's output: {named}")
+        print(f"        digits only: {digits_only} (every non-digit character identical at its "
+              f"offset); other files untouched: {others_intact}")
+        if not digits_only:
+            diff_at = next((i for i, (a, b) in enumerate(zip(before_text, after_text)) if a != b),
+                           min(len(before_text), len(after_text)))
+            print(f"        !! non-digit text differs. first divergence at offset {diff_at}:")
+            print(f"           before: ...{before_text[max(0, diff_at - 45):diff_at + 45]!r}")
+            print(f"           after : ...{after_text[max(0, diff_at - 45):diff_at + 45]!r}")
+        if not others_intact:
+            moved = sorted(r for r in others_before if others_before[r] != others_after.get(r))
+            print(f"        !! the writer modified files it had no reason to touch: {moved}")
         if not caught_ok:
             show("writer said", cout + rout + cerr + rerr)
             # The checker is run with --repo pointing at the REAL station and --wiki at the %TEMP%
@@ -379,6 +433,10 @@ def main() -> int:
             rep.caught += 1
         else:
             rep.check(False, label, "stale plant not caught, or not rewritten correctly")
+        rep.check(digits_only, label,
+                  "the rewrite changed something other than digits",
+                  f"first divergence near offset {len(before_text)}")
+        rep.check(others_intact, label, "the rewrite touched an unrelated wiki file")
 
         # Control: the CORRECT number planted must leave the writer silent. Without this, a writer
         # that always exits 1 would pass every case above.
@@ -433,11 +491,11 @@ def main() -> int:
         for label in probes:
             want = expected[label]
             s = Skeleton(skel.root / f"probe-{label}", repo, wiki)
-            # The mutation is copied in, then the copy is re-pointed at THIS probe's wiki: the
-            # mutated file carries its own WIKI constant, so copying it verbatim made every probe
-            # check the parent's empty tree and exit 0. Measured -- the harness's own false green.
+            # The probe needs the MUTATED writer, copied over the fresh one. No re-pointing is
+            # needed now that --wiki is passed on the command line; an earlier version had to
+            # re-point it here, because copying the file also copied its WIKI constant and every
+            # probe silently checked the parent's empty tree. Measured -- my own false green.
             shutil.copy2(skel.writer, s.writer)
-            s.repoint_wiki(s.writer)
             s.plant(with_figure(PLANTS[label], want + 7))
             pcode, _pout, _perr = s.check()
             if pcode == 0:
@@ -452,6 +510,32 @@ def main() -> int:
                   "the dead-shape mutation was not detected by this harness",
                   f"undetected={undetected}")
 
+    # ------------------------- property 3b: the digits-only assertion must itself be able to fail
+    print("\n-- 2b. the digits-only assertion must be able to FAIL, or it is decoration ------------")
+    # A writer that "helpfully" tidies a file is the failure this guards, and it is invisible to
+    # every exit code: the figures are still corrected and --check still goes 0 on the next run.
+    skel = Skeleton(root / "M4-blank-lines", repo, wiki)
+    skel.mutate_writer(
+        'path.write_text(text, encoding="utf-8")',
+        'path.write_text(text.replace("\\n\\n", "\\n"), encoding="utf-8")  # MUTANT: tidy',
+        "the writer collapses blank lines while rewriting")
+    probe = "capability count"
+    skel.plant(with_figure(PLANTS[probe], expected[probe] + 7))
+    pre = (skel.wiki / PLANT_FILE).read_text(encoding="utf-8")
+    skel.rewrite()
+    post = (skel.wiki / PLANT_FILE).read_text(encoding="utf-8")
+    still_digits_only = digit_skeleton(pre) == digit_skeleton(post)
+    refound = str(expected[probe] + 7) in post and str(expected[probe]) in post
+    print(f"   [{'DETECTED' if not still_digits_only else 'MISSED  '}] M4: a writer that collapses "
+          f"blank lines")
+    print(f"        figures still corrected ({refound}) and the exit code unchanged -- so only the "
+          f"skeleton")
+    print(f"        comparison can see this. digits only: {still_digits_only} (want False)")
+    if still_digits_only:
+        print(f"        !! the assertion did not notice paragraph structure being destroyed")
+    rep.check(not still_digits_only, "property-3b-mutation",
+              "the digits-only assertion could not detect a reformatting writer")
+
     # ------------------------------------------------------------------ property 3: %TEMP% only
     print("\n-- 3. PROPERTY 3: the real wiki was never touched -----------------------------------")
     after_hashes = wiki_hashes(wiki)
@@ -460,7 +544,9 @@ def main() -> int:
     ok3 = not changed
     print(f"   [{'UNTOUCHED' if ok3 else 'VIOLATED '}] {len(before)} real wiki files hashed before "
           f"and after: {'identical' if ok3 else 'CHANGED: ' + str(changed)}")
-    print(f"   every writer run asserted its WIKI constant is under %TEMP% before executing")
+    print(f"   every writer run passed --wiki <a %TEMP% copy> and --repo <the real station>, and "
+          f"refused to")
+    print(f"   execute unless the copy resolves under %TEMP% and is not the real wiki")
     print(f"   temp tree: {root}")
     rep.check(ok3, "property-3", "the real wiki was modified", str(changed))
 

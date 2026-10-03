@@ -41,6 +41,9 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 WIKI = Path(r"<private-tree>\wiki")
+# The four files that carry live registry figures. Named here rather than walked, because a figure in
+# a file nobody listed is a figure nobody keeps correct -- and the harness asserts the list is the
+# same one doc-fats scans.
 FILES = (WIKI / "INDEX.md", WIKI / "CHARTER-ARSENAL.md", WIKI / "methods" / "arsenal-inventory.md",
          WIKI / "methods" / "arsenal-upgrade-plan.md")
 
@@ -97,7 +100,25 @@ def rewrite(text: str, pattern: re.Pattern, expected: int, multiline: bool) -> t
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true", help="exit 1 if any figure is stale, changing nothing.")
+    # --repo and --wiki, mirroring doc-facts.py's own pair. MEASURED REASON: this writer derives REPO
+    # from __file__, so a copy of it inside a %TEMP% skeleton reads a registry that is not there,
+    # `_validator_number` returns None for both validator claims, and the run exits 1 saying "could
+    # not derive" -- indistinguishable, from the exit code, from "found stale figures". A writer that
+    # can only ever touch one real wiki cannot be tested at all; these two flags are what make the
+    # sibling's harness possible, and they are also just correct.
+    ap.add_argument("--repo", default=None,
+                    help="station repo root; defaults to this script's parent")
+    ap.add_argument("--wiki", default=None,
+                    help="wiki root; defaults to the sibling <project>/<private-tree>")
     args = ap.parse_args()
+
+    global REPO, WIKI, FILES
+    if args.repo:
+        REPO = Path(args.repo).resolve()
+    if args.wiki:
+        WIKI = Path(args.wiki).resolve()
+    FILES = (WIKI / "INDEX.md", WIKI / "CHARTER-ARSENAL.md", WIKI / "methods" / "arsenal-inventory.md",
+             WIKI / "methods" / "arsenal-upgrade-plan.md")
 
     df = load_doc_facts()
     reg = json.loads((REPO / "manifests" / "capabilities.json").read_text(encoding="utf-8"))
