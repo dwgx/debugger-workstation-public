@@ -47,6 +47,13 @@ Step 'assert-probes (bounded)' { python scripts/assert-probes.py --budget 150 --
 # listed, not run, and the list says which entry costs what is in the entry's own runtime_note.
 Step 'assert-probes --list'   { python scripts/assert-probes.py --list }
 
+# WHAT THE REGISTRY CLAIMS THAT NOTHING READS, by name. This is a REPORT and exits 0 by design:
+# a name search cannot see a generic reader, so `image_base`, `aslr`, `sections` and nine other
+# `invoke.fact_map` SOURCE keys appear unread and are false positives. It is in the chain because
+# every rule added on 2026-10-03 came from asking that question, and the question should be
+# askable after any change rather than only when someone remembers.
+Step 'unread registry keys (report)' { python scripts/scan-unread-keys.py }
+
 # scripts/mcp-probe.py drives scripts/arsenal_mcp_server.py with a REAL MCP client over stdio and
 # proves two things nothing else here can: that a client which knows only a `mission_id` can run a
 # granted capability, and that a refusal executes NOTHING (a `node.cmd` PATH shim sits first on the
