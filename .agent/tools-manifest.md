@@ -248,14 +248,17 @@ in the same family as the one I was asked to close; it needs a decision about wh
 
 | tool | site | declared? |
 |---|---|---|
-| `rabin2` | `native-lab/tools/hardening_probe.py:83` (`args.rabin2`) | **no** — `tools.json` pins radare2 but declares only `radare2.exe`, never `rabin2.exe` |
+| `rabin2` | `native-lab/tools/hardening_probe.py:83` (`args.rabin2`) | **CORRECTED — I was wrong here.** Not a bare launch: `:57` is `DEFAULT_RABIN2 = os.environ.get("RABIN2_EXE") or _newest_rabin2()`, and `_newest_rabin2()` globs `radare2-*-w64/bin/rabin2.exe` under the declared `Static-Reversing/radare2` dir. `:79-81` even refuses with "this path is the pinned 6.2.2 build and is not a PATH lookup". Declared by directory. |
 | `openssl` | `native-lab/tools/cert_verify.py:97` | **no** |
 | `certutil` | `net-reverse/tools/trustcheck.mjs:60,61` | no, OS-provided |
 | `curl.exe` | `scripts/web-reverse-lab.ps1:56`, `crypto-lab.ps1:80`, `mobsf-agent.ps1:47,53,54` | no, OS-provided |
 | `taskkill` | `native-lab/tools/ida-client.mjs:136`, `loop.mjs:217` | no, OS-provided |
 | `cmd.exe` | `ghidra-headless.ps1:71,96`, `mcp-probe.py:239`, `mobile-lab/tools/loop.mjs:252` | no, OS-provided |
 
-`rabin2` and `openssl` are the two that are neither declared nor OS-provided.
+`openssl` is the only one of these that is neither declared nor OS-provided. `CloneBootstrapProbe`
+independently reached the same conclusion from the registry side: `native.signature.certverify` →
+`requires.tools[openssl].probe` = `"openssl version"`, resolving to
+`C:\Program Files\Git\mingw64\bin\openssl.EXE`, undeclared. First reported here 2026-10-03.
 
 ## 11. Coordination — a sibling already covers part of this ground
 
@@ -343,11 +346,17 @@ needs someone to say which filename is canonical. Report stands; no entry was ed
 Also in that bucket: GH Injector, Reqable, ImHex, ReClass.NET, System Informer,
 Universal Extractor, pyinstxtractor-ng, `forensics-lab payload` (`d12payload.c`).
 
-**Open finding 3 — two bare-name tools that are neither declared nor OS-provided.**
-`rabin2` (`native-lab/tools/hardening_probe.py:83`, operator-supplied argv) — `tools.json`
-pins radare2 but declares only `radare2.exe`, never `rabin2.exe`. And `openssl`
-(`native-lab/tools/cert_verify.py:97`). A bare-name gate would catch both; the current
-absolute-path gate cannot.
+**Open finding 3 — ONE bare-name tool that is neither declared nor OS-provided.**
+`openssl` (`native-lab/tools/cert_verify.py:97`, `subprocess.run(["openssl", ...])`). Found
+independently by both checkers from opposite directions.
+
+**RETRACTED from this report:** I previously listed `rabin2` here as an undeclared bare-name
+tool. That was wrong, and `CloneBootstrapProbe` measured it rather than argued it —
+`hardening_probe.py:57` resolves it from `RABIN2_EXE` or a glob under the declared
+`Static-Reversing/radare2` directory, and `:79-81` explicitly refuses a PATH lookup. It is
+covered by the radare2 `dir`. Kept here as a retraction rather than deleted, because a
+plausible-but-unverified claim is exactly what this project keeps paying for, and the next
+window should be able to see that the claim was made, checked, and found false.
 
 **Next command I would have run**, had the session not been paused — to close the one
 `[UNVERIFIED]` in §13. `verify-clone-freshness.py` has an `if __name__ == "__main__":` guard at
