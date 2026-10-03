@@ -106,6 +106,7 @@ import sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MANIFEST = os.path.join(REPO, "manifests", "tools.json")
+REGISTRY = os.path.join(REPO, "manifests", "capabilities.json")
 
 SCAN_SUBDIRS = ("tools", "lab")
 SCAN_SKIP = {"node_modules", ".venv", "__pycache__", ".git", "out", "_download-stage"}
@@ -278,6 +279,74 @@ class Source:
         self.can_launch = bool(pat.search(raw)) if pat else False
 
 
+
+# --- the OTHER input shape -------------------------------------------------
+#
+# MEASURED, and it is the reason this function exists. Two gates in this tree answer "is a
+# tool undeclared": this one, which searches the repo's own SOURCE, and
+# `verify-clone-freshness.py`, which searches the probe COMMANDS in capabilities.json. Their
+# numbers are 12 and 23, and their union is NOT 35 -- the target sets OVERLAP, so adding
+# them is arithmetic on a set that was never measured as a set. Two workers each re-measured
+# the other's number at their HEAD and agreed the station-wide answer was 2 (adb, openssl),
+# but neither could produce it, because neither gate sees the other's input.
+#
+# So the union is computed HERE, once, from both shapes, with duplicates collapsed by the
+# inventory key. One question gets one answer, and the answer is measured rather than
+# summed.
+#
+# Why this is a separate shape and not a text file to scan: a JSON string that has been
+# through `json.load` has its doubled backslashes RESOLVED. Exclusion rule E2 (escaped
+# spelling) is about the doubled form and is structurally unreachable here -- it is a rule
+# about a layer these strings no longer occupy. Feeding them through Source would apply
+# source-text rules to decoded text and produce confident nonsense.
+class DeclaredCommandSource:
+    """One capability's probe/prepare/control command, as scannable lines.
+
+    `can_launch` is True unconditionally: every string here is a command the registry says
+    is RUN, so exclusion rule E3 (a file that cannot spawn) has no referent either.
+    """
+
+    __slots__ = ("rel", "raw_lines", "code_lines", "can_launch")
+
+    def __init__(self, rel: str, lines: list[str]) -> None:
+        self.rel = rel
+        self.raw_lines = lines
+        self.code_lines = lines
+        self.can_launch = True
+
+
+def registry_command_sources() -> list[DeclaredCommandSource]:
+    try:
+        with open(REGISTRY, encoding="utf-8") as fh:
+            doc = json.load(fh)
+    except OSError as exc:
+        raise SystemExit(f"verify-tools-manifest: cannot read registry: {exc}")
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"verify-tools-manifest: registry is not valid JSON: {exc}")
+    out: list[DeclaredCommandSource] = []
+    for cap in doc.get("capabilities") or []:
+        cid = cap.get("id") or "<unnamed>"
+        probe = cap.get("probe") or {}
+        control = cap.get("negative_control") or {}
+        for key, holder in (("prepare", probe), ("command", probe),
+                            ("control.command", control)):
+            cmd = holder.get(key if key != "control.command" else "command")
+            if isinstance(cmd, str) and cmd.strip():
+                text_lines = cmd.splitlines()
+                # A PATH UNDER THE SYSTEM TEMP DIRECTORY IS A PRODUCT OF THIS RUN, NOT A
+                # PREREQUISITE. Measured the moment the registry input was added: the union gate went
+                # red on `$env:TEMP\signed-fixture.exe` in native.signature.certverify -- a fixture the
+                # capability's own `prepare` BUILDS before the probe reads it. Declaring it in
+                # manifests/tools.json would be wrong; it is not software a person installs.
+                #
+                # So the exclusion is on the DIRECTORY, not the name: a temp path is excluded
+                # because temp is where this station puts run products, and the rule is stated in
+                # terms of that fact rather than in terms of the one filename that tripped it.
+                if not any(re.search(r"(?i)\$(?:env:)?TEMP\b|%TEMP%|\\Temp\\|/tmp/", ln)
+                           for ln in text_lines):
+                    out.append(DeclaredCommandSource(
+                        f"manifests/capabilities.json#{cid}.{key}", text_lines))
+    return out
 # --- manifest ----------------------------------------------------------------
 
 FIELD_ORDER = ("name", "entry", "dir", "needs", "note")
@@ -518,6 +587,11 @@ def main() -> int:
     index = declared_index(entries)
     files = scanned_files()
     sources = [Source(rel) for rel in files]
+    # BOTH INPUT SHAPES, ONE INVENTORY. The registry commands are scanned by the SAME pass with
+    # the same rules, and the inventory key collapses duplicates, so a tool named by both a lab
+    # script and a probe command is counted once. Summing the two gates' counts instead would be
+    # arithmetic on an unmeasured union -- see registry_command_sources().
+    sources = sources + registry_command_sources()
     inv, excl = scan(sources)
     segments, seg_files = corpus_segments(sources)
     dead, mismatch = find_dead(entries, segments, seg_files)
