@@ -41,7 +41,22 @@
 
 .NOTES
   Exit codes: 0 = granted · 3 = refused · 4 = self-asserted provenance · 5 = grant tampered
-  · 6 = the grant's claims could not be independently re-established.
+  · 6 = the grant's claims could not be independently re-established
+  · 7 = the `-Target` named is NOT the target the grant covers, or the target's bytes
+  no longer hash to what the grant sealed.
+
+  WHY exit 7 IS ITS OWN CODE AND NOT 3. A general refusal tells a caller "no". This one
+  tells a caller something actionable: the capability IS granted and the case IS inside
+  the containment, but the file you named is not the file the authority was minted over.
+  A grant for `c01-stringobf.exe` used to make any file in the same directory legible,
+  which is the hole `-RequestedTarget` was added to close (measured: naming
+  `manifests/capabilities.json` gave exit 7 with both `requested_target` and
+  `granted_target` printed, where before it was exit 0). Collapsing it into 3 would
+  have hidden the distinction the code was written to make.
+
+  Exit 7 was absent from this table for a full day after it was added — measured by a
+  verifier reading the refusal codes off a live run. A refusal code nobody documented is
+  one a caller cannot handle.
 
   THE ONE THAT MATTERS: `New` refuses when the provenance is self-asserted. "I found it
   on my disk" is not ownership. If no subprocess is spawned before that refusal, the
