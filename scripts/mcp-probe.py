@@ -291,7 +291,14 @@ async def main() -> int:
     print("=== VERDICTS ===")
     for _label, _ok in results:
         print("  %-6s %s" % ("PASS" if _ok else "FAIL", _label))
-    print("  FAILURES: %d of %d" % (sum(1 for _, o in results if not o), len(results)))
+    failed = sum(1 for _, o in results if not o)
+    print("  FAILURES: %d of %d" % (failed, len(results)))
+    # THIS FUNCTION HAD NO RETURN STATEMENT AT ALL. `async def main() -> int` declares an int and
+    # returns None, so `raise SystemExit(main())` exited 0 with every one of the fifteen verdicts
+    # forced to FAIL. Measured by a verifier: "FAILURES: 15 of 15" and exit 0. A harness that
+    # cannot fail is worse than no harness -- it certifies the MCP surface it exists to check, and
+    # inside verify-all.ps1 the step's `if ($LASTEXITCODE -ne 0)` was unreachable for this script.
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":

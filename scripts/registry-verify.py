@@ -7,15 +7,28 @@ its own correctness the thing to worry about. A checker that inspects zero items
 passes is worse than no checker, so:
 
   * an EMPTY registry is a failure, not a vacuous success;
-  * the rules below are the code in `RULES`, in the same order. Twenty-five rule
-    functions; R23 and R24 were added 2026-10-03. `--selftest` prints 67 rows and
-    reports 66, and that number is CASES, not rules: one row is a baseline that must
-    stay clean, two are deliberate relaxations that must stay SILENT, and 63 are
-    registries built to break one rule. Cases outnumber rules because several rules
-    have more than one independent half, and each half needs its own control --
-    deleting either half alone leaves the suite green while the registry quietly
-    loses the check. R9 to R24 are not repeated in this header; each is documented at
-    its own definition, which is where the measurement behind it lives.
+  * the rules below are the code in `RULES`, in the same order.
+
+THREE COUNTS USED TO BE STATED HERE AND EVERY ONE WAS WRONG. This header claimed 25 rule
+functions, `--selftest` printing 67 rows and reporting 66, and 63 registries built to
+break one rule. Measured stale by a verifier at both ends of the day's work: 34 numbered
+rules, 104 cases. `--count` exists precisely because this prose used to state the numbers
+and a mutation sweep measured them stale -- the FLAG was added and the PROSE WAS NEVER
+REMOVED, so the one place a reader looks first kept lying while the gate beside it was
+right. `doc-facts.py` does not catch this, because it checks the wiki and never the
+validator's own docstring.
+
+So this header states NO counts. Run `--count` for the rule total and `--selftest` for the
+case count. Both are measured by running the thing, which is the only version of this number
+that has ever been worth reading.
+
+What is worth saying here, because it is not a number that drifts: cases outnumber rules
+because several rules have more than one independent half, and each half needs its own
+control -- deleting either half alone leaves the suite green while the registry quietly
+loses the check. One row is a baseline that must stay clean and two are deliberate
+relaxations that must stay SILENT, so the case count is not the rule count plus one.
+R9 onward are not repeated in this header; each is documented at its own definition,
+which is where the measurement behind it lives.
 
 Rules, each traceable to a failure it prevents. R1 to R8, in `RULES` order:
 
