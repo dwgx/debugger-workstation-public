@@ -84,6 +84,60 @@ Step 'mcp surface' {
     python scripts/mcp-probe.py (Join-Path $repo 'scripts\arsenal_mcp_server.py')
 }
 
+# ---------------------------------------------------------------------------
+# THE GATES NOBODY RAN. Measured 2026-10-03: six scripts in scripts/ that check something real and
+# were invoked by NO command in the repository -- not here, not by each other, not by any task.
+# Their authors each wrote a negative control, watched it fail, and shipped a proof that nothing
+# executes. A check nobody runs does not exist, and this file's own header says so; the six
+# contradicted it.
+#
+# Each line below names what the gate is FOR, because "wire it up" without a reason produces a
+# chain nobody can audit and a future editor who removes the slow ones without knowing which are
+# load-bearing.
+
+# `sync-wiki-figures.py --check` is the one that most deserves to be here. Its writer had a FALSE
+# GREEN: two of doc-facts' twelve claims derive through the validator, the writer never set
+# `_REPO`, and it silently skipped them -- a wiki claiming 41 rules read as "already current" while
+# doc-facts on the same bytes exited 1. A drift check that cannot detect drift is worse than no
+# drift check, and this one is the one that would have caught it.
+Step 'wiki figures in sync'    { python scripts/sync-wiki-figures.py --check }
+
+# Two writers and two readers, so that neither can be correct alone. `--selftest` proves the gate
+# can fail; the other proves it is right. Both are mutation-tested inside the harness itself.
+Step 'wiki writer harness'     { python scripts/sync-wiki-figures-selftest.py }
+
+# The tools manifest had 60 entries and no gate, so three binaries the code launches by absolute
+# path -- skillspector.exe, vcvars64.bat, msedge.exe -- were declared nowhere. The gate now
+# computes the union of BOTH input shapes (repo source and registry probe commands); 12 + 23 was
+# never 35, because those sets overlap.
+Step 'tools manifest'          { python scripts/verify-tools-manifest.py }
+Step 'tools manifest selftest' { python scripts/verify-tools-manifest.py --selftest }
+
+# 24 of 27 OK verdicts from assert-probes are STRINGS ONLY -- every entry declares an exit code
+# and a substring, so no entry looks like an exception and the eye stops checking. A measurement,
+# and it exits 0 whatever it finds: a grade B is a fact about what the registry declares, not a
+# build failure. It is in the chain because the question should be askable after any change.
+Step 'probe coverage (report)' { python scripts/verify-probe-coverage.py }
+
+# On the STATION this exits 0. In a CLONE it exits 1, and that is correct: a clone ships 383 files
+# and no corpus, so 14 capabilities name a path that is not there. A gate that passes in a clone
+# would be the always-green failure again, one directory up. If this goes red and you are in a
+# clone, read `README.md` -> "What a fresh clone does not have" before touching anything.
+Step 'clone freshness'        { python scripts/verify-clone-freshness.py }
+
+# 6 of 6 runs of a six-step loop killed mid-flight were accepted as PRODUCED with zero DRIFT: the
+# artifact records nothing about the five steps that never ran. ~19 s because the control measures
+# the write window and the kill latency that hide the truncation it cannot produce.
+Step 'artifact atomicity'      { python scripts/verify-atomic-artifacts.py }
+
+# NOT WIRED, AND THE REASON IS A REAL DEFECT, NOT AN OVERSIGHT.
+# `scripts/assert-probes-selftest.py` reports 9 properties: 5 PROVEN and 4 BROKEN. BROKEN means a
+# GAP that used to reproduce now comes back GREEN -- a gap this harness found and I then fixed --
+# and the harness reports a fixed gap as BROKEN precisely so it gets PROMOTED to an assertion.
+# Until those four are promoted the script exits 2 by design. Wiring it now would put a permanent
+# red in the chain, and a permanently red gate is a gate people learn to ignore. It is named here
+# so its absence is a decision with a reason rather than an oversight.
+
 Write-Host ""
 if ($script:fail.Count -eq 0) {
     Write-Host "VERIFY-ALL: every check passed, INCLUDING the bounded probe sweep above." -ForegroundColor Green
