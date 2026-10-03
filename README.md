@@ -62,6 +62,99 @@ powershell -File scripts\download-tools.ps1 -Apply
 
 > Windows PowerShell 5.1 also works (the script is UTF-8 BOM). Prefer PowerShell 7 (`pwsh`).
 
+## What a fresh clone does not have
+
+Everything below was measured on 2026-10-03 against a pristine `git archive HEAD` export (383 tracked
+files) — not against this workstation, which has been built for a month.
+
+**A clone ships 383 files and zero build products.** `.gitignore` excludes every `out/` directory, so
+`crackme-corpus/out/`, `managed-lab/out/` and `headless-lab/out/` are empty directories that do not
+even exist. That exclusion is deliberate and permanent: `crackme-corpus/README.md` states `out/` holds
+compiled binaries plus ~1500 machine-generated decompiled C files and "exporting decompiled C into git
+is forbidden by the station charter. The sources are the product."
+
+**`scripts/bootstrap.ps1` does not build any of it.** Read what it actually does: it copies
+`manifests/ skills/ docs/ scripts/ templates/` plus a fixed list of root files, generates `.mcp.json`,
+clones third-party MCP upstreams, and creates **exactly one** virtualenv — `mcp/debugger-router/.venv`,
+the only MCP enabled by default. It prints the official download URL for each third-party tool and
+downloads none of them. No lab output directory is produced by any script in `scripts/`.
+
+### Step 1 — build the corpus, from inside `crackme-corpus/`
+
+This is the one build step nothing else does for you, and **11 of the 21 executable proofs in
+`manifests/capabilities.json` read a binary out of it.**
+
+```powershell
+cd crackme-corpus
+python tools\loop.py
+```
+
+Run it from **inside** `crackme-corpus/`, not from the repo root. `loop.py` passes `-OutDir "out"` as a
+relative path and `build-c.ps1` resolves it against the current directory. Measured: from the repo root
+the binaries land in `<repo>\out\` while the solvers look in `crackme-corpus\out\`, so the run reports
+`PASS build c01` followed by `FAIL solve c01` against a file that was never built.
+`scripts/crackme-corpus.ps1` dispatches the same runner and does not change the working directory, so
+the same rule applies.
+
+It needs four things, **none of which is in this repository**:
+
+| Needs | Where the code demands it | What a fresh clone says |
+|---|---|---|
+| MSVC 2022 (`vcvars64.bat`) | `crackme-corpus/tools/build-c.ps1` probes five fixed `VC\Auxiliary\Build\vcvars64.bat` paths; there is no gcc on this design | not installed by any script here |
+| Ghidra headless | `scripts/ghidra-headless.ps1` hardcodes `Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\support\analyzeHeadless.bat` | `missing <that path>` |
+| radare2 + rabin2 | `crackme-corpus/tools/labkit.py` pins `Static-Reversing\radare2\radare2-6.2.2-w64\bin\` | `radare2 not found at <that path>` |
+| .NET SDK + ilspycmd | `loop.py` shells out to `dotnet build` for the c04 challenge, then probes `Static-Reversing\ilspycmd\ilspycmd.exe` | not installed by any script here |
+
+`scripts/download-tools.ps1 -Apply` fetches radare2, Ghidra and ilspycmd from their official releases. It
+does **not** install MSVC or the .NET SDK, and it has no job for Detect It Easy at all.
+
+Cost, measured: `python tools\loop.py --no-ghidra` on the pristine export takes **8 s** of wall clock and
+reports `PASS build` five times. The full run on this machine is recorded in the tracked evidence log
+`evidence/probes/re.corpus.solve.probe.log`: **exit 0 in 132.29 s**. Without Ghidra the four native
+challenges cannot close — they fail with `no ghidra export at ...-ghidra\decompiled`, which is a missing
+prerequisite, not a corpus defect.
+
+### Step 2 — install the third-party tools the other proofs call
+
+Same table, one row further down: `rabin2`, `capa`, `diec` and Ghidra headless are named by absolute
+path inside `native-lab/tools/`, `headless-lab/tools/` and `scripts/`. A fresh clone answers
+`capa not found at <path>`, `diec.exe not found at <path>`, `ghidra headless not found at <path>`.
+`manifests/tools.json` lists every one with its official source and version; `download-tools.ps1` covers
+all of them except DiE.
+
+### What is still BLOCKED after all of that
+
+State this plainly so a half-green sweep is not read as a broken registry:
+
+* **6 of the 27 capabilities are skipped by design** — `assert-probes.py` never runs them and prints
+  why: the two `native.ida.*` entries are driven through the `idalib-mcp` MCP device rather than a CLI
+  command, `dynamic.device.frida` needs an attached device, `native.il2cpp.symbols` needs an extracted
+  metadata dump, `native.crosscompare.ghidra` is `planned` with no runnable command, and
+  `native.ghidra.emulate` is `blocked` on a runtime the registry does not have. That leaves **21 checked**.
+* **11 of those 21 read a `crackme-corpus/out/` binary** — 10 name the path directly in `probe.command`
+  or `probe.prepare`; `native.ghidra.decompile` reaches it through `scripts/ghidra-failopen-regress.ps1`,
+  whose first line is an **absolute** `$repo = 'D:\Software\Tool\WorkStation\debugger'` instead of a path
+  derived from the script. On a clone stored anywhere else, that probe reads a different machine's tree.
+* **Measured on the pristine export, a sweep of exactly those 11 entries exits 1 with 14 DRIFT, 4 PREREQ
+  and 7 TOOL-FAULT** — over half the checked surface, every failure naming a missing file. After building
+  the corpus in that export, 3 of 7 re-run entries went `OK` and 4 stayed DRIFT on `rabin2` / `capa` /
+  `diec` / Ghidra headless.
+
+### The failure that invites the wrong repair
+
+All of those failures say the same thing in a different dialect: `no such file:
+crackme-corpus\out\c01-stringobf.exe`, `Cannot open file`, `Cannot find path ... because it does not
+exist`, `capa not found at <path>`. `assert-probes.py` reads that as a PREREQ or a TOOL-FAULT, and both
+are correct. **A missing prerequisite is not a registry defect.**
+
+The wrong repair is to edit the recorded `probe.expect` string until the sweep goes quiet. That has
+happened here: an audit found `net.pcap.selfparse`'s `negative_control.expect_output_note` asserting
+`0x4d5a is 'MZ'` about a file that begins `23 20` (`"# "`, a markdown header), and the recorded
+expectation was edited rather than the original mistake left visible — `.agent/audit/a1/REPORT.md`
+finding A1-F3, corrected in commit `77f1151`. An expectation that was true stays true; a build step that
+was skipped is a build step. Run `python tools\loop.py` first, re-run the sweep, and only then read a
+verdict as a finding.
+
 ## For AI agents: read this first
 
 After cloning, resolve the UI locale ([docs/I18N.md](docs/I18N.md)) and **read the matching [AGENTS.md](AGENTS.md)** (`AGENTS.zh-CN.md` / `AGENTS.ja.md` / `AGENTS.ko.md`). Chat in that language. Git commits stay English.
