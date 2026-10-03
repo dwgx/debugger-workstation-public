@@ -902,3 +902,25 @@ Cost measured: 0.20–0.38 s wall, no network, no subprocess, no write outside s
 - `%TEMP%\clonefresh-neg-095314-24928` — the pristine `git archive HEAD` export used for cases A/B/C,
   including `scripts/verify-clone-freshness.MUTANT.py`, the one-line mutant. Delete whenever.
 - `%TEMP%\o-*.txt` — the full captured outputs whose middle sections §5 elides.
+
+### Cross-check after the sibling's `8ebf4cc` landed (both agents stopped, then re-measured)
+
+The tools-manifest worker closed its side and I re-ran mine against the same HEAD. **Nothing in my
+numbers moved**, which is the point of the split rather than a coincidence:
+
+| | mine (registry probe strings) | theirs (repo scripts, absolute paths) |
+|---|---|---|
+| undeclared after their fix | **2** — `adb`, `openssl` | **0** of 12 invoked absolute-path tools |
+| what each fix touched | nothing their commit covered | `ops/SkillSpector`, `build/MSVC vcvars64`, `msedge` needs |
+
+Their 3 undeclared tools were all *absolute-path launches in repo scripts*; my 2 are *bare names named
+by a registry probe*. Neither commit can move the other's count, and neither number is wrong. If a
+single number is wanted for "how many tools does a clone not know about", it is **2 + 0 = 2**, not 5
+and not 0 — and the two are counted over different denominators (my 23 registry targets, their 12
+invoked absolute paths), so they must not be added without saying so.
+
+Two numbers in this report are **captured at a moment and are already stale** — the pasted station run
+in §3 is a snapshot: the wiki scan now reads **165** markdown files / 28 prose mentions (was 164 / 27)
+because another writer added a page, and section 2b still reads `52 present, 2 absent`. The gate is
+still `0 FAIL, 29 WARN -> exit 0`, re-verified after that re-run. Do not read §3 as the current state of
+the wiki; re-run the command.
