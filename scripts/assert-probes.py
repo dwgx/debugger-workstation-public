@@ -325,6 +325,20 @@ def run(cmd: str, timeout: int, env: dict | None = None) -> tuple[int, str, floa
     the OPPOSITE of mission.ps1, which separates the two because a capability under a mission
     must not corrupt its JSON. Two contracts, two behaviours.
     """
+    # The RUNTIME half of R26. R26 refuses an unquoted brace at validation time; this refuses one
+    # at execution time, because the failure is SILENT rather than loud: measured 2026-10-03, a
+    # probe carrying `FLAG{abc}` unquoted produces stderr EMPTY and exit 0, with PowerShell handing
+    # the child `-encodedCommand <base64 of a mangled token>`. Unless a recorded expect string
+    # happens to contain that mangled token, nothing looks wrong and the sweep reports OK. rc 127
+    # is distinct on purpose, so tool_fault() names it as TOOL-FAULT instead of DRIFT -- blaming
+    # the registry for a command the shell rewrote is the third instance of that mistake today.
+    _brace = UNQUOTED_BRACE.search(cmd)
+    if _brace:
+        return 127, (f"<refused before running: unquoted brace {_brace.group(0)} in argument "
+                     f"position. PowerShell reads it as the start of a script block, re-enters "
+                     f"itself, and hands the child -encodedCommand <base64 of a mangled token> "
+                     f"instead of the recorded value -- measured with stderr empty and exit 0, so "
+                     f"the damage is invisible unless you know to look for it.>"), 0.0
     script = REPO / "_assert_probe_cmd.ps1"
     t0 = time.time()
     try:
@@ -363,7 +377,15 @@ def tool_fault(rc: int, blob: str, secs: float) -> str | None:
         return (f"timed out after {secs:.0f}s, so no output was captured and NOTHING can be "
                 f"concluded about the expect string. THIS TOOL'S LIMIT: rerun with a larger "
                 f"--timeout. A truncated run is not evidence.")
-    if rc == 0 or secs >= TOOL_FAULT_SECS:
+    # THE MARKER DECIDES, NOT THE EXIT CODE. Measured 2026-10-03 by a sibling's harness: PowerShell
+    # leaves `$LASTEXITCODE` UNSET when a command is not found, so the `exit $LASTEXITCODE` wrapper
+    # propagates 0 -- and this function short-circuited on `rc == 0` BEFORE scanning the markers.
+    # "is not recognized" was in FAULT_MARKERS the whole time, unreachable on that path, so a probe
+    # naming a binary that does not exist came back as a clean pass.
+    #
+    # The control that proves the other half is still reachable: a quoted exe with no call operator
+    # gives rc=1 in ~0.27 s with a ParserError, under TOOL_FAULT_SECS, so the marker branch fires.
+    if secs >= TOOL_FAULT_SECS:
         return None
     low = blob.lower()
     hit = next((m for m in FAULT_MARKERS if m in low), None)
@@ -376,9 +398,69 @@ def tool_fault(rc: int, blob: str, secs: float) -> str | None:
     return None
 
 
+UNQUOTED_BRACE = re.compile(r"\{[A-Za-z0-9_.:]+\}")
+
+
 def prose(cmd: str) -> bool:
     head = cmd.strip().split()[0] if cmd.strip() else ""
     return head in {"see", "list_funcs", "run", "use", "the"} or not cmd.strip()
+
+
+def _missing_paths(cmd: str) -> list[str]:
+    """Path-looking tokens in a command that do not exist, repo-relative to the runner's cwd.
+
+    Deliberately conservative: a token qualifies only if it carries a path separator or a known
+    file extension, and only if NOTHING matching it exists. A bare word like `any` is not a path,
+    and a glob is not required to resolve. Returning an empty list means "no evidence", and the
+    caller then says nothing -- silence is the correct answer when the evidence is thin.
+    """
+    # An environment-referenced path is removed WHOLE before anything is scanned, not filtered after
+    # the fact: the token class has no `$` and no `%`, so `$env:TEMP\x.exe` was captured as
+    # `env:TEMP\x.exe` and `%TEMP%\x.exe` as `\x.exe`, and a file the shell would have expanded was
+    # reported MISSING. Measured on net.pcap.selfparse and native.signature.certverify, both of
+    # which name their fixture through the environment.
+    cmd = re.sub(r"(?i)(?:%[A-Za-z_][A-Za-z0-9_]*%|\$env:[A-Za-z_][A-Za-z0-9_]*|\$\{[^}]*\})"
+                 r"[\\/][^\s'\"]+", "ENVVAR_PATH", cmd)
+    cands: list[str] = []
+    for tok in re.findall(r"[A-Za-z0-9_.:\\/\\-]+\.(?:exe|py|js|mjs|ps1|json|pcap|apk|md|txt|log|raw)\b", cmd):
+        t = tok.strip("'\"")
+        # MUST carry a path separator. Measured 2026-10-03 against the real registry: requiring only
+        # a file extension matched `console.log` five times inside the frida JavaScript payload and
+        # a bare `dns-txt.pcap` fragment, so a healthy probe would have been reported as missing its
+        # prerequisite. A bare filename tells us nothing about where the runner would look, so the
+        # honest answer is silence.
+        if "/" not in t and "\\" not in t:
+            continue
+        if "$" in t or "%" in t:
+            continue
+        if t.upper().startswith("ENVVAR_PATH"):
+            continue
+        cands.append(t)
+    if not cands:
+        return []
+    missing = []
+    for t in cands:
+        p = Path(t)
+        if "*" in t or "?" in t:
+            ok = bool(list(REPO.glob(t)))          # a glob may legitimately match
+        elif p.is_absolute():
+            ok = p.exists()
+        else:
+            ok = (REPO / t).exists()
+        # A drive letter is part of the path. The first version's character class excluded `:`, so
+        # `D:/.../python.exe` was captured as `/.../python.exe`, found to be neither absolute nor
+        # repo-relative, and reported MISSING on a probe that had just run successfully -- caught
+        # by a sibling's harness on its first plant, which is the right way to find this.
+        if re.match(r"^[A-Za-z]:", t) or t.startswith(("\\\\", "//")):
+            ok = Path(t).exists()
+            # The first version also accepted the token if ANY sibling existed in the same
+            # directory, which made every missing file "present" on a machine that had built its
+            # corpus once -- i.e. it reported missing exactly when it was missing, which is the
+            # opposite of useful. Measured: a planted NOT-BUILT-ANYWHERE.exe came back as DRIFT,
+            # not PREREQ, because c01-stringobf.exe sat next to it.
+        if not ok:
+            missing.append(t)
+    return missing
 
 
 def check(cap: dict, timeout: int) -> list[tuple[str, str]]:
@@ -430,6 +512,29 @@ def check(cap: dict, timeout: int) -> list[tuple[str, str]]:
             out.append(("DRIFT", f"{cid} PROBE exit: recorded expect_exit={want_exit}, real={rc} "
                                   f"after {secs:.1f}s :: {cmd[:60]}"))
         want = probe.get("expect")
+        if want and want not in blob:
+            # PREREQ-MISSING, tried before DRIFT and only on the combination that is almost
+            # never anything else. Measured 2026-10-03 by an audit of re-runnability: in a fresh
+            # clone `crackme-corpus/out/` is EMPTY -- it is gitignored by design and nothing in the
+            # repository builds it -- so 11 of the 21 bound proofs read a file that does not exist.
+            # Every one of those reported `expect is not a substring of the real output`, which
+            # reads as "the instrument regressed" and invites the exact wrong repair: editing the
+            # recorded expect string. `.agent/HANDOFF.md` records that repair being made before.
+            #
+            # The three conditions together are what keep this from crying wolf:
+            #   (1) the command names at least one path-looking token,
+            #   (2) NONE of those tokens exists on disk, and
+            #   (3) the recorded expect is absent from the output.
+            # One alone is common; all three mean the run had nothing to read.
+            missing = _missing_paths(cmd)
+            if missing:
+                out.append(("PREREQ", f"{cid} PROBE: nothing to read. The command names "
+                                       f"{len(missing)} path(s) and none exists: "
+                                       f"{missing[:3]}. This is a MISSING PREREQUISITE, not a "
+                                       f"regression -- build or install what the path names, then "
+                                       f"re-run. Do NOT edit probe.expect in response to this; a "
+                                       f"string that was true stays true."))
+                want = None
         if want and want not in blob:
             near = ""
             for pat in (r'"packed"\s*:\s*\S+', r'"match_rate"\s*:\s*\S+', r'verdict=\S+',
@@ -640,10 +745,29 @@ def main() -> int:
     if counts.get("TOOL-FAULT"):
         print("\nTOOL-FAULT is this script's problem, not the registry's: those commands never\n"
               "ran. Fix this script before reading anything else in this output.")
+    if counts.get("PREREQ"):
+        print("\nPREREQ is NOT a drift and NOT a pass: the probe had nothing to read. Build or\n"
+              "install what the named path is, then re-run. Editing probe.expect in response to a\n"
+              "PREREQ is the one repair guaranteed to be wrong -- it turns a missing prerequisite\n"
+              "into a recorded claim that the missing thing was expected.")
     if counts.get("DRIFT"):
         print("\nA DRIFT is a finding, not an auto-fix: the instrument may have regressed, or the\n"
               "recorded string may never have been true. Those have opposite fixes, so read it.")
-    return 1 if counts.get("DRIFT") else 0
+    # PREREQ does NOT set a non-zero exit on its own, and that is deliberate. A fresh clone without
+    # the corpus or the third-party tools would otherwise be permanently red, and a permanently red
+    # gate is a gate that gets switched off. It is printed, counted and named; DRIFT is what says
+    # "do not trust this run".
+    # DRIFT is the "do not trust this run" verdict. TOOL-FAULT joins it only when EVERY entry that
+    # ran failed to start, because a sweep in which nothing executed has measured nothing and
+    # reporting that as green is the failure this file was written to find. A few tool faults among
+    # twenty good runs stay non-fatal and are named, since a permanently red gate gets switched off.
+    measured = sum(1 for c in ran if True) if ran else 0
+    faults = counts.get("TOOL-FAULT", 0)
+    nothing_measured = measured > 0 and faults >= measured
+    if nothing_measured:
+        print(f"\nREFUSING TO PASS: all {faults} of {measured} entries that ran failed to start, so "
+              f"nothing was measured. That is not a green run; it is no run.")
+    return 1 if (counts.get("DRIFT") or nothing_measured) else 0
 
 
 if __name__ == "__main__":
