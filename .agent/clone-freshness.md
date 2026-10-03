@@ -914,10 +914,19 @@ numbers moved**, which is the point of the split rather than a coincidence:
 | what each fix touched | nothing their commit covered | `ops/SkillSpector`, `build/MSVC vcvars64`, `msedge` needs |
 
 Their 3 undeclared tools were all *absolute-path launches in repo scripts*; my 2 are *bare names named
-by a registry probe*. Neither commit can move the other's count, and neither number is wrong. If a
-single number is wanted for "how many tools does a clone not know about", it is **2 + 0 = 2**, not 5
-and not 0 — and the two are counted over different denominators (my 23 registry targets, their 12
-invoked absolute paths), so they must not be added without saying so.
+by a registry probe*. Neither commit can move the other's count, and neither number is wrong. The
+undeclared sets are disjoint (theirs is empty), so the station-wide count of *undeclared-and-invoked*
+tools is **2**: `adb`, `openssl`.
+
+**But do not add the denominators.** The sibling worker caught me implying a total I cannot defend, and
+is right: `23 + 12 = 35` is also wrong, because the two sets **overlap**. Their 12 are absolute-path
+launches inside repo scripts — which include harness internals my gate never sees (`node.exe`,
+`python.exe`, `powershell.exe`, and `frida_spawn_gate.py`, which is a repo file, not a tool) — while my
+23 are capability-probe targets their gate never sees (`tshark`, `capa`, `diec`, and the bare-name
+PATH-resolved ones). So: **neither 12, nor 23, nor 35 is a station-wide tool count.** They are two
+differently-scoped denominators. Anyone who wants one number needs a third gate over the union, and
+neither of us has written it. (Their reading of the overlap is `[INFERENCE]` from the two inclusion
+criteria, not a measured set comparison — the union count is `[UNVERIFIED]` in this report too.)
 
 Two numbers in this report are **captured at a moment and are already stale** — the pasted station run
 in §3 is a snapshot: the wiki scan now reads **165** markdown files / 28 prose mentions (was 164 / 27)
