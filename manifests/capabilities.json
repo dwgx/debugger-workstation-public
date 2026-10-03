@@ -716,11 +716,10 @@
           {
             "key": "net.flow.summary",
             "type": "string",
-            "fields": [
-              "src",
-              "dst",
-              "bytes"
-            ]
+            "_retype_residue_struck_2026_10_03": {
+              "what_it_was": ["src", "dst", "bytes"],
+              "why_struck": "structure-shaped metadata left over from this fact's typing BEFORE R29 retyped it as a string. The emitter (net.pcap.analyse) returns prose beginning 'LANE CLOSED:', not a record, so those three names describe nothing it produces. A verifier found the contradiction: the declared type said string and the sibling key said structure, and no rule caught it because both keys were individually well-formed. The emitter that would produce these fields does not exist."
+            }
           }
         ],
         "invalidates_on": [
