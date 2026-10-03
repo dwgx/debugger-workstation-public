@@ -1577,6 +1577,56 @@ def r33_envelope_error_field_is_an_error(reg, doc):
     return out
 
 
+
+def r34_no_absolute_paths_outside_the_repo(reg, doc):
+    """A recorded command may not name an absolute path outside the repository it lives in.
+
+    Measured 2026-10-03 by an independent audit of re-runnability, and the finding is worse than
+    "a clone cannot run this". Two instruments hardcoded the ORIGINAL station's absolute tool
+    path -- `native-lab/tools/capa_probe.py` and `native-lab/tools/hardening_probe.py` -- so a
+    clone at any other path did not fail: it found the binary on the machine the path named and
+    measured with it, reporting PASS. A passing number about a machine the reader is not on is
+    the most expensive kind of wrong, because nothing anywhere looks wrong.
+
+    Eleven registry commands had the same shape: eight `probe.prepare` fields that were the
+    literal string `cd 'D:\Software\Tool\WorkStation\debugger'`, and three absolute paths inside
+    frida probe commands. All are now relative to the script that runs them.
+
+    What this refuses is the SHAPE, not the string: an absolute Windows path that does not begin
+    with this repository's own root. That is deliberately narrow. `%TEMP%` and `%USERPROFILE%`
+    are absolute and are CORRECT in several places -- a probe that stages a fixture outside the
+    repo on purpose is doing the right thing, and a rule that refused those would be a rule that
+    had to be argued with rather than obeyed. A path under the repo is equally fine and is what
+    every portable form resolves to.
+
+    Why the registry rather than the tools: a tool that hardcodes a path is invisible to a reader
+    of the manifest, and the manifest is the document that claims what runs. The two probes that
+    did it are fixed in their own files; this rule stops the next one from being written.
+    """
+    root = str(REPO_ROOT).replace("/", "\\").lower()
+    out = []
+    for c in reg:
+        cid = c.get("id", "?")
+        for field, holder in (("probe.command", (c.get("probe") or {})),
+                              ("probe.prepare", (c.get("probe") or {})),
+                              ("negative_control.command", (c.get("negative_control") or {}))):
+            cmd = holder.get(field.split(".")[-1])
+            if not isinstance(cmd, str):
+                continue
+            for m in re.finditer(r"[A-Za-z]:\\(?:[^\"'\s;|]+)", cmd):
+                found = m.group(0)
+                if not found.lower().startswith(root):
+                    out.append(f"R34 {cid}: {field} names the absolute path {found!r}, which is "
+                               f"not under this repository ({REPO_ROOT}). Measured 2026-10-03: two "
+                               f"probes that did exactly this reported PASS from a clone while "
+                               f"measuring the ORIGINAL machine's binaries -- a green verdict about "
+                               f"a tool the reader is not running. Write it relative to the script "
+                               f"that runs it (Join-Path (Split-Path -Parent $PSScriptRoot) ...), or "
+                               f"as %TEMP% / %USERPROFILE% if the file genuinely lives outside the "
+                               f"repository.")
+    return out
+
+
 RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r4_fact_types_agree, r5_control_must_fail, r6_reach_needs_escalation, r7_ids,
          r8_reach_must_be_declared, r9_batch_must_account, r10_invoke_must_runnable,
@@ -1593,7 +1643,8 @@ RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r30_requires_and_lane_are_declared,
          r31_callability_is_declared,
          r32_owner_decision_agrees_with_grantability,
-         r33_envelope_error_field_is_an_error)
+         r33_envelope_error_field_is_an_error,
+         r34_no_absolute_paths_outside_the_repo)
 
 
 # ---------------------------------------------------------------------------- core
@@ -1821,6 +1872,22 @@ def selftest() -> int:
     # documentation. The dangerous mutation is flipping `requires_verdict` to true, which is what an
     # ordinary flag edit looks like; the second branch is the silent one.
     # R33: the anti-contradiction half, planted on an entry whose own success_when mentions `ok`.
+    # R34: the shape that made two probes report PASS from a clone while measuring the ORIGINAL
+    # machine's binaries. The negative case is the one that keeps the rule from being a nuisance:
+    # %TEMP% and %USERPROFILE% are absolute too, and a probe that stages a fixture outside the
+    # repository on purpose is doing the right thing.
+    case("R34 a command naming another machine's absolute path",
+         lambda b: b[0]["probe"].__setitem__(
+             "command", "& 'D:\\Some\\Other\\Machine\\tool.exe' --version"), "R34")
+    case("R34 a control naming another machine's absolute path",
+         lambda b: b[0]["negative_control"].__setitem__(
+             "command", "python D:\\elsewhere\\x.py"), "R34")
+    nocase("R34 a command using %TEMP% is accepted",
+           lambda b: b[0]["probe"].__setitem__(
+               "command", "python scripts/x.py --out $env:TEMP\\out.json"), "R34")
+    nocase("R34 a repo-relative command is accepted",
+           lambda b: b[0]["probe"].__setitem__(
+               "command", "python native-lab\\tools\\disasm.py x.exe"), "R34")
     case("R33 an envelope naming a success sentinel as its error field",
          lambda b: b[0].__setitem__(
              "envelope", {"success_when": "body.ok is true", "item_error_field": "ok"}), "R33")

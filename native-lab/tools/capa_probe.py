@@ -16,10 +16,22 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import pathlib
 import subprocess
 import sys
 
-CAPA = r"D:\Software\Tool\WorkStation\debugger\Static-Reversing\capa\capa.exe"
+# RESOLVED RELATIVE TO THIS FILE, and that is a fix rather than a style choice.
+# Measured 2026-10-03 by an independent audit: this used to hardcode the ORIGINAL station's
+# absolute path. Run from a clone at any other path it did not refuse -- it found capa.exe on the
+# machine it was written on and measured with it, reporting PASS about a tool the reader is not
+# using. A silent wrong-machine measurement is strictly worse than a clean failure: the number
+# looks right and is not. The three sibling tools that resolve from $PSScriptRoot already fail
+# cleanly in a clone, which is the correct behaviour; this joins them.
+#
+# CAPA_ENV overrides the location for a caller who keeps the tools elsewhere.
+_HERE = pathlib.Path(__file__).resolve().parent
+CAPA = os.environ.get("CAPA_EXE") or str(
+    _HERE.parents[1] / "Static-Reversing" / "capa" / "capa.exe")
 
 
 def refuse(code: int, msg: str, **extra):

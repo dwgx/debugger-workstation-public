@@ -1439,12 +1439,12 @@
         "tools": [
           {
             "name": "frida",
-            "probe": "& 'D:\\Software\\Tool\\WorkStation\\debugger\\Mobile-Android\\objection\\.venv\\Scripts\\frida.exe' --version",
+            "probe": "& '.\\Mobile-Android\\objection\\.venv\\Scripts\\frida.exe' --version",
             "expect": "17.17.0"
           },
           {
             "name": "frida-ps",
-            "probe": "& 'D:\\Software\\Tool\\WorkStation\\debugger\\Mobile-Android\\objection\\.venv\\Scripts\\frida-ps.exe' --version",
+            "probe": "& '.\\Mobile-Android\\objection\\.venv\\Scripts\\frida-ps.exe' --version",
             "expect": "17.17.0"
           }
         ],
@@ -1538,10 +1538,10 @@
         }
       ],
       "probe": {
-        "command": "& 'D:\\Software\\Tool\\WorkStation\\debugger\\Mobile-Android\\objection\\.venv\\Scripts\\frida.exe' -f \"$env:TEMP\\fridaprobe\\target.exe\" -q -t 6 -e 'var m=Process.mainModule;console.log(`FRIDA_WIN module_base=${m.base}`);console.log(`FRIDA_WIN symbol_main=${DebugSymbol.fromName(`main`)}`);console.log(`FRIDA_WIN export_printf=${Module.getGlobalExportByName(`printf`)}`);console.log(`FRIDA_WIN rebased_main=${m.base.add(0x1080)}`);Interceptor.attach(m.base.add(0x1080),{onEnter:function(){console.log(`FRIDA_WIN HIT main`);}});'",
+        "command": "& '.\\Mobile-Android\\objection\\.venv\\Scripts\\frida.exe' -f \"$env:TEMP\\fridaprobe\\target.exe\" -q -t 6 -e 'var m=Process.mainModule;console.log(`FRIDA_WIN module_base=${m.base}`);console.log(`FRIDA_WIN symbol_main=${DebugSymbol.fromName(`main`)}`);console.log(`FRIDA_WIN export_printf=${Module.getGlobalExportByName(`printf`)}`);console.log(`FRIDA_WIN rebased_main=${m.base.add(0x1080)}`);Interceptor.attach(m.base.add(0x1080),{onEnter:function(){console.log(`FRIDA_WIN HIT main`);}});'",
         "expect": "FRIDA_WIN symbol_main=0",
         "expect_exit": 0,
-        "prepare": "New-Item -ItemType Directory -Force -Path \"$env:TEMP\\fridaprobe\" | Out-Null; Copy-Item 'D:\\Software\\Tool\\WorkStation\\debugger\\crackme-corpus\\out\\c01-stringobf.exe' \"$env:TEMP\\fridaprobe\\target.exe\" -Force",
+        "prepare": "New-Item -ItemType Directory -Force -Path \"$env:TEMP\\fridaprobe\" | Out-Null; Copy-Item '.\\crackme-corpus\\out\\c01-stringobf.exe' \"$env:TEMP\\fridaprobe\\target.exe\" -Force",
         "prepare_note": "The probe needs a target. It is the estate's own self-built crackme, copied to %TEMP% and never run from the repo directory. Run `prepare` first, or the probe fails for a reason that has nothing to do with Frida. The JavaScript uses backtick template literals on purpose: it is passed inside PowerShell single quotes, and embedded double quotes are stripped by the native argument builder, which turns this probe into a SyntaxError on the first attempt (measured).",
         "last_run": "2026-10-02",
         "flake_note": "MEASURED FLAKE, and it is recorded because a probe that passes three times out of four is how a gate gets muted. 2026-10-03: inside one bounded verify-all sweep this probe reported DRIFT twice -- exit 1 where the entry declares 0, and the recorded expect string 'FRIDA_WIN symbol_main=0' absent. Run on its own, twice, it passed; and a later full sweep with the same budget passed it again with 0 DRIFT. The probe spawns a Windows PE under Frida's own `-t 6` second timeout, so on a loaded host the timeout can expire before the script prints, and the recorded expect then never appears because the run was cut short. NOT fixed by raising `-t`: loosening a timeout because a check failed is the move this registry exists to refuse. It is recorded so the next red run on this entry is read as 're-measure it alone first', which is what distinguishes a flake from a regression.",
@@ -1551,7 +1551,7 @@
       },
       "negative_control": {
         "id": "dynamic.win.frida.static_va_unrebased",
-        "command": "& 'D:\\Software\\Tool\\WorkStation\\debugger\\Mobile-Android\\objection\\.venv\\Scripts\\frida.exe' -f \"$env:TEMP\\fridaprobe\\target.exe\" -q -t 6 -e 'var m=Process.mainModule;console.log(`NEG_CTL module_base=${m.base}`);console.log(`NEG_CTL handing the STATIC va 0x140001080 straight to Interceptor.attach`);Interceptor.attach(ptr(`0x140001080`),{onEnter:function(){}});'",
+        "command": "& '.\\Mobile-Android\\objection\\.venv\\Scripts\\frida.exe' -f \"$env:TEMP\\fridaprobe\\target.exe\" -q -t 6 -e 'var m=Process.mainModule;console.log(`NEG_CTL module_base=${m.base}`);console.log(`NEG_CTL handing the STATIC va 0x140001080 straight to Interceptor.attach`);Interceptor.attach(ptr(`0x140001080`),{onEnter:function(){}});'",
         "expect_exit": 1,
         "expect_output": "Error: access violation accessing 0x140001080",
         "expect_output_note": "expect_exit is the contract; this line is corroboration. It is written to frida's ERROR stream, so capture it with 2>&1 -- run unpiped, the line can be interleaved away while the exit code stays 1. Measured stable over four consecutive runs: exit 1 every time, line present every time when stderr was captured.",
@@ -2382,7 +2382,6 @@
         "expect": "Recommendation  SAFE",
         "expect_exit": 0,
         "expect_note": "CORRECTED 2026-10-02 by assert-probes.py. This read '\"issues\": []' -- JSON that SkillSpector v2.12.0 has never emitted. The tool prints a BOXED TEXT report: a risk block reading 'Score 0/100', 'Severity LOW', 'Recommendation SAFE', then a component table. Both substrings were re-derived from a live run and verified present before being written down, which is the whole point of checking instead of trusting.",
-        "prepare": "cd 'D:\\Software\\Tool\\WorkStation\\debugger'",
         "last_run": "2026-10-02",
         "evidence_binding": {
           "status": "verified"
@@ -2476,7 +2475,7 @@
         "tools": [
           {
             "name": "frida-python",
-            "probe": "& 'D:\\Software\\Tool\\WorkStation\\debugger\\Mobile-Android\\objection\\.venv\\Scripts\\python.exe' -c \"import frida;print(frida.__version__)\"",
+            "probe": "& '.\\Mobile-Android\\objection\\.venv\\Scripts\\python.exe' -c \"import frida;print(frida.__version__)\"",
             "expect": "17.17.0"
           }
         ],
@@ -2565,14 +2564,13 @@
         }
       ],
       "probe": {
-        "command": "$py='D:\\Software\\Tool\\WorkStation\\debugger\\Mobile-Android\\objection\\.venv\\Scripts\\python.exe'; $d=Join-Path $env:TEMP 'fridagate'; New-Item -ItemType Directory -Force -Path $d | Out-Null; Copy-Item 'D:\\Software\\Tool\\WorkStation\\debugger\\crackme-corpus\\out\\c01-stringobf.exe' (Join-Path $d 'target.exe'); & $py 'D:\\Software\\Tool\\WorkStation\\debugger\\native-lab\\tools\\frida_spawn_gate.py' (Join-Path $d 'target.exe') positive",
+        "command": "$py='.\\Mobile-Android\\objection\\.venv\\Scripts\\python.exe'; $d=Join-Path $env:TEMP 'fridagate'; New-Item -ItemType Directory -Force -Path $d | Out-Null; Copy-Item '.\\crackme-corpus\\out\\c01-stringobf.exe' (Join-Path $d 'target.exe'); & $py '.\\native-lab\\tools\\frida_spawn_gate.py' (Join-Path $d 'target.exe') positive",
         "expect": "verdict=INTERCEPT-PROVEN",
         "expect_exit": 0,
         "last_run": "2026-10-02",
         "run_log": "evidence/probes/dynamic.win.frida.intercept.probe.log",
         "sha256": "9006f67a6407c718ad78931a268e5b8a4fe4bbb4386783dbd26054721c73e81e",
         "run_summary": "run from the committed recipe at native-lab/tools/frida_spawn_gate.py: [pe] magic 0x20b entry_rva 5584 size_of_image 163840; [spawn] pid=46292 suspended=True; [js] module target.exe base 0x7ff79e010000 size 163840; [js] rebase ok=true target 0x7ff79e0115d0 inImage=true; [js] attached; [load] script loaded while main thread suspended; [resu] main thread resumed; ACCEPTED; FLAG{c01_string_table_xor}; [js] HIT at 0x7ff79e0115d0 tid 44248; [end] hit count=1; [end] verdict=INTERCEPT-PROVEN; exit 0",
-        "prepare": "cd 'D:\\Software\\Tool\\WorkStation\\debugger'",
         "expect_note": "expect is the CONTRACT and it is deliberately a verdict string rather than the word HIT: a hook firing on some other address would still print HIT and still mean nothing. INTERCEPT-PROVEN is printed only after hit count>0 AND inImage true AND the address equals base+entry_rva. Read the [load] line too -- it is the ordering this entry exists to prove."
       },
       "negative_control": {
@@ -2591,7 +2589,7 @@
       "evidence_source": "dynamic-instrumentation",
       "evidence_source_note": "The SAME instrument as dynamic.win.frida and dynamic.device.frida, deliberately. One Frida, three lanes: a CLI lane that spawn-gates without intercepting, this API lane that does intercept, and the Android device lane. A chain citing any two of them is ONE opinion held twice, and no verdict may count them as corroboration. This is why adding this entry does not move the acceptance mission off unresolved -- independence is a property of the instrument, and this added a claim, not a family.",
       "invoke": {
-        "runner": "D:\\Software\\Tool\\WorkStation\\debugger\\Mobile-Android\\objection\\.venv\\Scripts\\python.exe",
+        "runner": ".\\Mobile-Android\\objection\\.venv\\Scripts\\python.exe",
         "argv": [
           "native-lab/tools/frida_spawn_gate.py",
           "{target}",
@@ -2740,7 +2738,6 @@
         "run_log": "evidence/probes/native.pe.container.probe.log",
         "sha256": "b8bc67a395bd1c446ad9ed1f0a474aa9ce4552ec5bd65ef7578d46e06a71d1ed",
         "run_summary": "python -c \"import pefile,hashlib;b=open('crackme-corpus/out/c01-stringobf.exe','rb').read();print(hashlib.sha256(b).hexdigest());pe=pefile.PE(data=b);print(hex(pe.OPTIONAL_HEADER.ImageBase),hex(pe.OPTIONAL_HEADER.AddressOfEntryPoint),hex(pe.OPTIONAL_HEADER.DllCharacteristics),bool(pe.OPTIONAL_HEADER.DllCharacteristics&0x40))\" -> sha256 2d59a3c5d3281782e254ed84d14f43768251096240cb85c492f56018b56fbf09, 0x140000000 0x15d0 0x8160 True; .text 0x1000 -> 0x166d0 and main 0x1080 inside True. 0.14 s.",
-        "prepare": "cd 'D:\\Software\\Tool\\WorkStation\\debugger'",
         "expect_note": "Three values, all of which other entries depend on. DllCharacteristics 0x8160 with bit 0x40 set is the ASLR claim, and it is now confirmed by a parser rather than inferred from hook behaviour."
       },
       "negative_control": {
@@ -2923,7 +2920,6 @@
         "run_log": "evidence/probes/native.function.match.probe.log",
         "sha256": "768bc07e200cab4f20a494d07743ba34a47a90cbcb09ee75389b9e2a5b1a2a41",
         "run_summary": "identity control (same content, two filenames): ok=true src_fns 511 dst_fns 511 matched 511 rate 100%, ~30 s. negative control (c01-stringobf.exe vs c03_antidebug.exe): src_fns 511 dst_fns 515 matched 192 rate 37.6%, ~48 s. refusal: a non-PE file returns {ok:false, exit:2, 'Ghidra produced no function-hash table for at least one input'} and TRUE_EXIT=2; a missing path returns TRUE_EXIT=1.",
-        "prepare": "cd 'D:\\Software\\Tool\\WorkStation\\debugger'",
         "expect_note": "CORRECTED 2026-10-02, and this is the SECOND entry carrying the same defect as native.pe.packer: expect read '\"match_rate\": 37.6' with a space while the tool emits compact JSON, '\"match_rate\":37.6'. Two entries invented the same spacing means the space was a habit rather than a measurement, which is the real lesson -- and it is why assert-probes.py now exists instead of relying on the next reader to notice."
       },
       "negative_control": {
@@ -3093,7 +3089,6 @@
         "run_log": "evidence/probes/native.pe.packer.probe.log",
         "sha256": "99e868031a85e5d9d11b1263cbebe78bfed937ef5e9ca758df2584885253f3c2",
         "run_summary": "ok:true exit:0 target c01-stringobf.exe size 143872 die_score 6.15091 die_verdict 'not packed' packed false score_is_advisory true. Control: README.md -> ok:false exit:2 first_bytes '2320', TRUE_EXIT=2. Raw diec.exe on the same README.md returns 'Total 5.26547: not packed' with exit 0, which is the defect this wrapper exists to fix. Re-measured 2026-10-02 for the expect correction: stdout carries prose plus \"not packed\",\"packed\":false,\"die_verdict\":... -- compact JSON, no space after the colon.",
-        "prepare": "cd 'D:\\Software\\Tool\\WorkStation\\debugger'",
         "expect_note": "CORRECTED 2026-10-02. This read '\"packed\": false' with a space, and the tool emits PowerShell's ConvertTo-Json form with NO space -- measured output contains \"packed\":false. A literal substring check against the old string FAILS on a perfectly healthy probe, which is the worst kind of registry defect: it trains you to distrust your own instrument. Separately, this probe prints human prose as well as JSON, so the assertion has to be a substring of the JSON island and not of the whole stream."
       },
       "negative_control": {
@@ -3296,7 +3291,6 @@
         "run_log": "evidence/probes/native.disasm.capstone.probe.log",
         "sha256": "63214a692238babb71bdb6db15ef70c587cd82742b76335522aeba11273fe55d",
         "run_summary": "ok:true rva 0x1080 file_offset 0x480 count 40. RIP-REL operands: 0x140022080 dword 769630770; 0x140022000 dword 1734439797; 0x140017342 width=byte byte=90 dword=734042; 0x140017344 width=dword byte=11 dword=11; 0x140017330 dword 41361174; 0x140017343 width=byte byte=51 dword=2867; 0x140017364 width=dword byte=5 dword=5; 0x140017348 dword 1096567660; 0x140017368 dword 1195461702; 0x140022018 dword 1162495314. 0.18 s. Re-measured 2026-10-02 for the expect correction: --rva 0x1080 --count 40 returns ok:true, image_base 0x140000000, first insn {addr: 0x140001080, mnemonic: mov}, and zero 'width=byte' fields.",
-        "prepare": "cd 'D:\\Software\\Tool\\WorkStation\\debugger'",
         "expect_note": "CORRECTED 2026-10-02 by assert-probes.py. This read '0x140017342 width=byte', but the recorded probe disassembles --rva 0x1080, and that invocation emits NO width= field at all: measured, grep -c 'width=byte' over its real output returns 0. The old string came from a DIFFERENT invocation, so the entry asserted a fact about a run it does not name. Worse, the value it asserted -- the operand WIDTH that Ghidra's DAT_ loses -- is the whole reason this instrument exists, so the string that got checked was not even the property worth checking. The replacement is what this command really emits: the first instruction at 0x140001080."
       },
       "negative_control": {
@@ -3473,7 +3467,6 @@
         "run_log": "evidence/probes/native.pe.authenticode.probe.log",
         "sha256": "b9869e6f21c93380775f66fc022f1784b94e62a422033fed5d6b8a0e015d6b7c",
         "run_summary": "crackme-corpus/out/c01-stringobf.exe: security_va_is_a 'FILE OFFSET (not an RVA)', security_offset 0, security_size 0, signed false, reason 'no certificate table: IMAGE_DIRECTORY_ENTRY_SECURITY is empty'. exit 0. All seven corpus binaries measured identical. Self-authored fixture: security_offset 143872, signed true, dwLength 48, revision_is_2_0 true, type_is_pkcs_signed_data true, blob_ascii_head 'ARSENAL-FIXTURE-NOT-A-REAL-SIGNATURE'. non-PE README.md: exit 1.",
-        "prepare": "cd 'D:\\Software\\Tool\\WorkStation\\debugger'",
         "expect_note": "expect asserts ABSENCE, which is the honest reading for this corpus and the opposite of what the negative control asserts. A gate whose positive case had to be asserted would be asserting a result this corpus cannot produce; the two-sided control is what carries the meaning."
       },
       "negative_control": {
@@ -3625,7 +3618,6 @@
         "run_log": "evidence/probes/native.behaviour.capa.probe.log",
         "sha256": "e95d4fbd549a66e2361f3510096e7d4456bafc9523504be6103bf50b3bfe08aa",
         "run_summary": "ok:true rules_matched 14, namespaces {linking/runtime-linking:1, (none):4, load-code/pe:1, host-interaction/process/terminate:1, data-manipulation/compression:1, host-interaction/file-system/files/list:1, host-interaction/environment-variable:2, host-interaction/file-system/write:1, host-interaction/file-system/meta:1, anti-analysis:1}, exit 0, ~33 s. Control README.md: {ok:false, exit:2, first_bytes '2320'}, TRUE_EXIT=2.",
-        "prepare": "cd 'D:\\Software\\Tool\\WorkStation\\debugger'",
         "expect_note": "expect asserts the measured count for THIS binary against THIS rule set. It is not a threshold and must not be reused as one -- a rule-set update would change it."
       },
       "negative_control": {

@@ -282,6 +282,25 @@ def report(root: str) -> int:
 
     print(f"mission artifacts read : {len(files)}"
           + (f"   UNREADABLE: {len(unreadable)}" if unreadable else ""))
+
+    # FAIL CLOSED ON AN EMPTY SCAN. Measured 2026-10-03 by an independent audit: with the missions
+    # root absent this tool printed "mission artifacts read : 0", then a table listing every
+    # invocable capability as NEVER ROUTED INTO ANY MISSION, and exited 0 -- and `verify-all.ps1`,
+    # which runs the plain form, printed "VERIFY-ALL: every check passed". That is the loudest
+    # table in the repository attached to a green verdict, and it is the exact shape of every
+    # finding in this project: a number that means "I looked and found nothing" being read as
+    # "I looked and found nothing there".
+    #
+    # A history claim is only evidence when there IS history. With zero artifacts the honest
+    # answer is that the question could not be asked, so say that and refuse to pass.
+    if not files:
+        print(f"\nreachability: NO MISSION ARTIFACTS under {root}.")
+        print("  Every number below would be read as a finding about the arsenal when it is in fact")
+        print("  a statement about a directory that does not exist here. Refusing rather than")
+        print("  printing a table of zeros: a scan that cannot see its subject has not measured it.")
+        print(f"  Point --missions-root at a populated root, or run --selftest, which exercises these")
+        print(f"  controls against real artifacts and refuses to substitute invented ones.")
+        return 2
     for f, e in unreadable:
         print(f"   !! could not parse {f}: {e}")
 

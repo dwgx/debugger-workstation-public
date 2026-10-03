@@ -25,11 +25,36 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import pathlib
 import subprocess
 import sys
 
-DEFAULT_RABIN2 = (r"D:\Software\Tool\WorkStation\debugger\Static-Reversing\radare2"
-                   r"\radare2-6.2.2-w64\bin\rabin2.exe")
+# RESOLVED RELATIVE TO THIS FILE. Measured 2026-10-03 by an independent audit: this hardcoded the
+# ORIGINAL station's absolute rabin2 path, so a clone at any other path silently measured with the
+# original machine's binary and reported PASS. Passing number, wrong machine. RABIN2_ENV overrides.
+_HERE = pathlib.Path(__file__).resolve().parent
+_R2 = _HERE.parents[1] / "Static-Reversing" / "radare2"
+def _newest_rabin2() -> str:
+    """The HIGHEST version present, not the first one alphabetically.
+
+    Measured 2026-10-03, and the first version of this fix got it wrong in a way worth writing
+    down: `sorted(glob(...))[0]` picks radare2-6.2.0 over radare2-6.2.2, so the tool would have
+    silently switched versions while every number it printed stayed plausible. Two copies of an
+    instrument is two different instruments, and choosing between them by alphabetical accident
+    is how a measurement becomes a claim about something else. Sorting by the parsed version and
+    taking the max makes the choice explicit; RABIN2_EXE still overrides it entirely.
+    """
+    import re as _re
+    best, best_key = None, None
+    for cand in _R2.glob("radare2-*-w64/bin/rabin2.exe"):
+        m = _re.search(r"radare2-(\d+)\.(\d+)\.(\d+)", str(cand))
+        key = tuple(int(x) for x in m.groups()) if m else (0, 0, 0)
+        if best_key is None or key > best_key:
+            best, best_key = cand, key
+    return str(best) if best else str(_R2 / "bin" / "rabin2.exe")
+
+
+DEFAULT_RABIN2 = os.environ.get("RABIN2_EXE") or _newest_rabin2()
 
 # The fields this reports, and what each one is allowed to mean. `crypto` is the one that most
 # needs the caveat: rabin2 sets it from the presence of a signature directory, which is exactly the
