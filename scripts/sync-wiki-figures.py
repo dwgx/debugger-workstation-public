@@ -50,6 +50,14 @@ def load_doc_facts():
     spec = importlib.util.spec_from_file_location("doc_facts", REPO / "scripts" / "doc-facts.py")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
+    # MEASURED BUG, found by a sibling's harness on a planted wiki: two of doc-facts' claims --
+    # the validator's rule count and its selftest case count -- derive through `_validator_number()`,
+    # which returns None unless this module global is set. It is set in doc-facts' own main(), which
+    # exec_module does not run. My writer then hit `if expected is None: continue` and SKIPPED BOTH,
+    # silently: a wiki carrying "41 numbered rules" was reported "already current" by the writer while
+    # doc-fats on the same wiki exited 1. A FALSE GREEN, on the very sentence that drifted four times
+    # today. One line to fix; the reason it survived is below.
+    mod._REPO = REPO
     return mod
 
 
@@ -96,6 +104,7 @@ def main() -> int:
 
     total_rules = rules_total()
     stale_files = 0
+    underived: list[str] = []
     for path in FILES:
         if not path.exists():
             print(f"  !! missing: {path}")
@@ -106,9 +115,16 @@ def main() -> int:
             try:
                 expected = fn(reg)
             except Exception as exc:                   # noqa: BLE001 - a claim we cannot derive
-                print(f"  ?? {path.name}: cannot derive {label!r} ({exc}); left alone")
+                print(f"  !! {path.name}: cannot derive {label!r} ({exc})")
+                underived.append(label)
                 continue
             if expected is None:
+                # NOT A SILENT SKIP. doc-facts refuses to print OK when a claim goes unchecked, and
+                # says so in its own docstring: "a gate that quietly stops checking is the
+                # always-green failure wearing a new hat". A writer that skips quietly is the same
+                # failure wearing a writer's costume. Record it, finish, and exit non-zero.
+                print(f"  !! {path.name}: cannot derive {label!r} -- LEFT ALONE")
+                underived.append(label)
                 continue
             hay = text if multiline else None
             if multiline:
@@ -139,6 +155,12 @@ def main() -> int:
         else:
             print(f"  {path.name:<26} already current")
 
+    if underived:
+        print(f"\nREFUSING TO PASS: {len(set(underived))} claim label(s) had no derivable expected "
+              f"value, so those figures were NOT checked or rewritten:\n  "
+              f"{sorted(set(underived))}")
+    if underived and not args.check:
+        return 1
     if args.check and stale_files:
         print(f"\n{stale_files} file(s) carry a stale figure. Run without --check to rewrite.")
         return 1
