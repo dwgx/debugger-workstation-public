@@ -332,9 +332,9 @@ def run(cmd: str, timeout: int, env: dict | None = None) -> tuple[int, str, floa
     # happens to contain that mangled token, nothing looks wrong and the sweep reports OK. rc 127
     # is distinct on purpose, so tool_fault() names it as TOOL-FAULT instead of DRIFT -- blaming
     # the registry for a command the shell rewrote is the third instance of that mistake today.
-    _brace = UNQUOTED_BRACE.search(cmd)
+    _brace = unquoted_brace(cmd)
     if _brace:
-        return 127, (f"<refused before running: unquoted brace {_brace.group(0)} in argument "
+        return 127, (f"<refused before running: unquoted brace {_brace} in argument "
                      f"position. PowerShell reads it as the start of a script block, re-enters "
                      f"itself, and hands the child -encodedCommand <base64 of a mangled token> "
                      f"instead of the recorded value -- measured with stderr empty and exit 0, so "
@@ -373,6 +373,8 @@ def tool_fault(rc: int, blob: str, secs: float) -> str | None:
     # the missing string was reported as DRIFT -- naming the registry for this tool's impatience.
     # That is the third time this script has blamed the registry for its own limit, which is
     # enough to make it a named verdict rather than an occasional correction.
+    if rc == REFUSED_RC:
+        return "refused before running: this script declined to execute the command (see the "
     if rc == TIMEOUT_RC:
         return (f"timed out after {secs:.0f}s, so no output was captured and NOTHING can be "
                 f"concluded about the expect string. THIS TOOL'S LIMIT: rerun with a larger "
@@ -398,7 +400,44 @@ def tool_fault(rc: int, blob: str, secs: float) -> str | None:
     return None
 
 
-UNQUOTED_BRACE = re.compile(r"\{[A-Za-z0-9_.:]+\}")
+def unquoted_brace(cmd: str) -> str | None:
+    """The first brace in ARGUMENT POSITION, or None. Quote-aware, because the difference
+    matters and I got it wrong first time.
+
+    PowerShell only treats `{` as a script block when nothing quotes it. The frida probe and
+    control carry a whole JavaScript payload inside PowerShell SINGLE quotes -- `${m.base}`,
+    `Interceptor.attach(..., {onEnter: ...})` -- and they run correctly today. A first version of
+    this check pattern-matched the text and refused them: four DRIFTs at rc 127 on probes that
+    work. R26 already solved the quoting half for validation time; this is the same scanner at
+    run time rather than a second, blunter one.
+    """
+    quote = None
+    i = 0
+    while i < len(cmd):
+        ch = cmd[i]
+        if ch == "`" and i + 1 < len(cmd):
+            i += 2
+            continue
+        if quote:
+            if ch == quote:
+                quote = None
+            i += 1
+            continue
+        if ch in "\"'":
+            quote = ch
+            i += 1
+            continue
+        if ch == "{":
+            m = re.match(r"\{[A-Za-z0-9_.:]+\}", cmd[i:])
+            return m.group(0) if m else "{"
+        i += 1
+    return None
+
+
+# rc 127 is this script's own "I refused to run this", and it must never be mistaken for a probe
+# that ran and failed. Recognised by NUMBER as well as by marker, because the refusal is a
+# deliberate signal rather than a shell's opinion.
+REFUSED_RC = 127
 
 
 def prose(cmd: str) -> bool:
