@@ -332,9 +332,238 @@ function Get-CapabilityEdges {
     return @($edges)
 }
 
+function Get-HostCapacity {
+    <#
+      WHAT THIS STATION IS, MEASURED -- the machine `requires.ram_mb` and `requires.disk_mb`
+      are finally checked against. Added 2026-10-03.
+
+      WHY THIS FUNCTION EXISTS. A mutation sweep measured that `requires.ram_mb` (27 entries),
+      `requires.disk_mb` (27) and `requires.wall_minutes` (27) were read by NOTHING outside
+      the manifest: the numbers a planner would use to decide whether a capability can run
+      here at all were, in the literal sense, decorative. The temptation was to write a check
+      and call the field load-bearing. That would have been the second fake contract in a file
+      whose whole argument is against them, so the question was answered before the code:
+      CAN A CHECK BE MEASURED ON THIS HOST?
+
+      IT CAN, and here is the command, from PowerShell on this box, 2026-10-03:
+          (Get-CimInstance Win32_OperatingSystem).TotalVisibleMemorySize
+              -> 32900636 KiB, i.e. 32129 MB
+          (Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='E:'").FreeSpace
+              -> 28118147072 bytes, i.e. 26813 MB
+      Both are real, both are in the unit the field names use (KiB/1024 = MiB, bytes/1MB =
+      MiB), and neither is a hardcoded table entry. `docs/research/orchestration-design.md`
+      section 6.3 independently reports `E:` at "28.01 GiB free of 33.67 GiB" measured
+      2026-10-02 by `Get-Volume`, and this probe agrees with it on the denominator
+      (33.67 GiB) while showing the free figure has moved -- which is the point of measuring
+      rather than copying.
+
+      WHICH DISK, and why that is not arbitrary. `requires.disk_mb` is a capability's working
+      set, and the same design document grounds it in a measured object rather than a guess:
+      "a Ghidra project is ~300-800 MB", against `native.ghidra.decompile: 350` and
+      `native.ida.decompile: 300`. That document also states the behaviour that was never
+      built: "every dynamic capability declares `requires.disk_mb`, and the loop refuses to
+      start a round whose declared cost exceeds the remaining budget." This is that refusal.
+      The volume checked is the one the mission WRITES TO -- the case root -- because that is
+      where the IDA database, the Ghidra project and the decoded APK land, and a requirement
+      met on D: and written to E: is not met.
+
+      WHICH RAM, and the limit of this check stated as a limit. TOTAL physical memory, not
+      free. Total is a stable property of the machine, so a plan does not become
+      unreproducible because a sibling process took 2 GB, and "can this machine ever run
+      this capability" is the question a declared REQUIREMENT answers. Free memory is
+      measured too and carried in the artifact as context, but it does NOT gate: a check on
+      free RAM would flap under the parallel lab runs this station is built for, and a
+      control that flaps is not a control. That is a real gap -- "this box has the RAM but
+      not right now" is not caught here -- and it is named rather than papered over.
+
+      FAIL CLOSED. An axis that cannot be measured leaves `ok = $false` on THAT AXIS with the
+      reason, and every capability declaring a requirement on it is refused with
+      `host_measurement_unavailable`. Planning on an unmeasured axis is precisely the
+      failure this file exists to refuse: a plan that says nothing about the machine is a
+      plan that has not asked. The suite carries a control asserting this probe SUCCEEDS
+      here, so a permanently-broken probe cannot hide behind a permanently-firing refusal.
+    #>
+    param([string]$WriteRoot = $CaseRoot)
+
+    # Measured ONCE per (process, write root). Not a nicety: `-Action Selftest` calls
+    # Get-Route fourteen times, and one uncached probe costs 606 ms on this box (measured,
+    # 2026-10-03), which would add roughly 8.5 s to every suite run to learn the same two
+    # numbers fourteen times. Keyed on the write root, because the volume -- and therefore
+    # the answer -- depends on it.
+    if (-not $script:HostCapCache) { $script:HostCapCache = @{} }
+    if ($script:HostCapCache.ContainsKey("$WriteRoot")) { return $script:HostCapCache["$WriteRoot"] }
+
+    $cap = [ordered]@{
+        measured_at  = (Get-Date).ToUniversalTime().ToString('o')
+        write_root   = $WriteRoot
+        volume       = $null
+        ram_total_mb = $null
+        ram_free_mb  = $null
+        disk_free_mb = $null
+        ram_ok       = $false
+        disk_ok      = $false
+        errors       = @()
+        sources      = [ordered]@{
+            ram  = 'Get-CimInstance Win32_OperatingSystem -> TotalVisibleMemorySize / FreePhysicalMemory (KiB) / 1024'
+            disk = 'Get-CimInstance Win32_LogicalDisk -Filter DeviceID=<volume> -> FreeSpace (bytes) / 1MB'
+        }
+    }
+    $errs = @()
+
+    try {
+        $os = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction Stop
+        $cap.ram_total_mb = [math]::Floor([double]$os.TotalVisibleMemorySize / 1024)
+        $cap.ram_free_mb  = [math]::Floor([double]$os.FreePhysicalMemory / 1024)
+        $cap.ram_ok = ($cap.ram_total_mb -gt 0)
+        if (-not $cap.ram_ok) {
+            $errs += "Win32_OperatingSystem answered TotalVisibleMemorySize=$($os.TotalVisibleMemorySize), which is not a machine"
+        }
+    } catch {
+        $errs += "RAM unmeasured: $($_.Exception.Message)"
+    }
+
+    try {
+        if (-not $WriteRoot) { throw 'no write root was supplied' }
+        # Climb to the nearest EXISTING ancestor. -CaseRoot is caller-supplied and routinely
+        # a path that does not exist yet, and a probe that refuses to answer because the
+        # directory has not been created would make every mission unplannable for a reason
+        # that has nothing to do with the machine.
+        $p = $WriteRoot
+        while ($p -and -not (Test-Path -LiteralPath $p)) {
+            $parent = Split-Path -Parent $p
+            if (-not $parent -or $parent -eq $p) { $p = $null; break }
+            $p = $parent
+        }
+        if (-not $p) { throw "no existing ancestor of the write root '$WriteRoot'" }
+        $letter = [IO.Path]::GetPathRoot((Get-Item -LiteralPath $p).FullName).TrimEnd('\', '/')
+        $cap.volume = $letter
+        $ld = Get-CimInstance -ClassName Win32_LogicalDisk -Filter ("DeviceID='" + $letter + "'") -ErrorAction Stop
+        $cap.disk_free_mb = [math]::Floor([double]$ld.FreeSpace / 1MB)
+        $cap.disk_ok = ($null -ne $ld -and $cap.disk_free_mb -gt 0)
+        if (-not $cap.disk_ok) {
+            $errs += "Win32_LogicalDisk answered for '$letter' with no free space"
+        }
+    } catch {
+        $errs += "DISK unmeasured: $($_.Exception.Message)"
+    }
+
+    $cap.errors = @($errs)
+    $script:HostCapCache["$WriteRoot"] = $cap
+    return $cap
+}
+
+function Get-HostBlocker {
+    <#
+      Whether THIS STATION can run this capability, or $null when it can. A refusal carries
+      the shortfall, not just the verdict: "requires.ram_mb asks 2048 MB and this station has
+      1500 MB of ram_total_mb, measured by <source>" is a fact an operator can act on, and a
+      bare "insufficient resources" is not.
+
+      THE COMPARISON IS `>`, NEVER `>=`. A capability whose requirement exactly equals what
+      the machine has fits, and refusing it would be an off-by-one that eats real work on any
+      host that happens to match a requirement exactly. One selftest control pins the
+      boundary from both sides.
+
+      A requirement of 0 means "declares none", not "needs a machine with no RAM". The
+      distinction matters in exactly one place -- an UNMEASURABLE axis -- where a capability
+      that requires nothing on that axis is not blocked by not knowing the axis. So the
+      `> 0` test guards both arms, and a capability declaring `ram_mb: 0` is never refused
+      for RAM on any host, measurable or not.
+
+      REFUSAL, NOT SKIP. The answer is a blocker, the same shape as `state=absent`, so it
+      feeds the existing route machinery: the capability lands in `unavailable` BY NAME with
+      this reason, a hard edge whose producer cannot fit is not pulled in, and rule 5 then
+      drops the consumer whose fact nothing produces. A step-level "skipped_host_short" would
+      have left the consumer in the plan with an edge to a producer that was quietly not
+      there -- the exact shape this file's rule 5 was written to remove.
+    #>
+    param($CapDef, $Capacity)
+
+    if (-not $CapDef) { return $null }
+    $req = $CapDef.requires
+    if (-not $req) { return $null }
+
+    $short = @()
+    $unmeasured = @()
+
+    $ramNeed = $req.ram_mb
+    if ($null -ne $ramNeed -and [double]$ramNeed -gt 0) {
+        if ((-not $Capacity) -or (-not $Capacity.ram_ok)) {
+            $why = if ($Capacity) { ($Capacity.errors -join '; ') } else { 'no host measurement was taken at all' }
+            $unmeasured += "requires.ram_mb=$ramNeed could not be checked -- $why"
+        } elseif ([double]$ramNeed -gt [double]$Capacity.ram_total_mb) {
+            $short += [ordered]@{ field = 'requires.ram_mb'; need = [double]$ramNeed
+                                  have = $Capacity.ram_total_mb; axis = 'ram_total_mb'
+                                  source = $Capacity.sources.ram }
+        }
+    }
+
+    $diskNeed = $req.disk_mb
+    if ($null -ne $diskNeed -and [double]$diskNeed -gt 0) {
+        if ((-not $Capacity) -or (-not $Capacity.disk_ok)) {
+            $why = if ($Capacity) { ($Capacity.errors -join '; ') } else { 'no host measurement was taken at all' }
+            $unmeasured += "requires.disk_mb=$diskNeed could not be checked -- $why"
+        } elseif ([double]$diskNeed -gt [double]$Capacity.disk_free_mb) {
+            $short += [ordered]@{ field = 'requires.disk_mb'; need = [double]$diskNeed
+                                  have = $Capacity.disk_free_mb
+                                  axis = ("disk_free_mb on " + $Capacity.volume)
+                                  source = $Capacity.sources.disk }
+        }
+    }
+
+    if ($unmeasured.Count -gt 0) {
+        return [ordered]@{ reason = 'host_measurement_unavailable'
+            detail = ('this capability declares a host requirement and this station could not be measured against it: ' +
+                      ($unmeasured -join '; ') +
+                      '. Planning it anyway would mean the plan had asked nothing at all about the machine it runs on, which is the one question a requirement exists to answer. Measuring the axis is the fix, not re-declaring the number.') }
+    }
+
+    if ($short.Count -gt 0) {
+        $parts = @($short | ForEach-Object {
+            "$($_.field) asks $($_.need) MB and this station has $($_.have) MB of $($_.axis), measured by $($_.source)" })
+        $tags = @($short | ForEach-Object {
+            $(if ("$($_.axis)" -like 'ram*') { 'host_ram_short' } else { 'host_disk_short' }) } | Sort-Object -Unique)
+        return [ordered]@{ reason = ($tags -join '+')
+            detail = ('this station cannot run this capability as declared: ' + ($parts -join '; ') +
+                      '. It is named in `unavailable` rather than planned, because a step that cannot run here is an unasked question and not a clean answer. Either re-declare the requirement to what this station actually is, or run the capability on a machine that meets it -- do not lower the number to make a refusal go away.') }
+    }
+
+    return $null
+}
+
+# `requires.wall_minutes` -- THE THIRD FIELD, DELIBERATELY NOT CHECKED HERE. Written down so
+# the next window does not re-derive it, and so nobody reads the omission as an oversight.
+#
+# DECISION: not consumable as a host check on this file, and inventing one would be a second
+# fake contract. Two reasons, both measured on 2026-10-03:
+#
+#   1. IT IS NOT A PROPERTY OF THE MACHINE. `ram_mb` and `disk_mb` describe the host, so the
+#      host can answer them. `wall_minutes` is a BUDGET -- how long the author expects this
+#      capability to take -- and no measurement of this station produces a number to compare
+#      it to. A check here would be comparing a declared estimate against another declared
+#      estimate, which is the definition of the decorative field it is meant to stop being.
+#
+#   2. THE LOOP HAS NO TIMEOUT TO BIND IT TO. A round executes exactly
+#      `$raw = & $cap.invoke.runner @argList 2> $errFile | Out-String`, and the
+#      `[Diagnostics.Stopwatch]::StartNew()` eleven lines above it STARTS, times the call, and
+#      STOPS -- it records how long a round took and bounds nothing. There is no
+#      `WaitForExit`, no `Start-Process -PassThru`, no Job Object and no kill path anywhere in
+#      this file; `grep -n 'timeout|WaitForExit|Start-Process|Stopwatch' scripts/mission.ps1`
+#      returns this comment and ONE executable line, the Stopwatch. (Cited by statement rather
+#      than by line number, because a line number in a comment is stale the moment anyone adds
+#      a line above it -- which is the drift this file has spent a year removing.)
+#      So wiring `wall_minutes` in is not a check, it is a new control -- a bounded
+#      subprocess that gets terminated -- and that is its own change with its own negative
+#      control ("a round that overruns is killed and recorded as killed, not as failed").
+#      It does not belong in a commit whose subject is "make two fields load-bearing".
+#
+# IT IS NOT ORPHANED. `scripts/assert-probes.py` reads it: it orders its bounded probe sweep
+# by `wall_minutes`, so the field has a real consumer with a real measurement behind it.
+# One honest reader is enough; a second invented one is not.
+
 function Get-Route {
     <#
-      The capabilities a question type runs, DERIVED from the registry. Six rules, in this
+      The capabilities a question type runs, DERIVED from the registry. Seven rules, in this
       order, each one registry data and each one separately ablated by `-Action Ablate`:
 
         1. STATE.  Eligible only if the registry `state` is `observed`. `absent` and
@@ -350,6 +579,15 @@ function Get-Route {
         3. UNPRODUCIBLE REQUIRED INPUT.  An input the registry itself marks `unproduced`
            has no producer anywhere, so the capability cannot run however it is selected.
            Dropped, and named.
+
+        3b. THE HOST CAN RUN IT.  A capability whose `requires.ram_mb` exceeds this station's
+           measured total RAM, or whose `requires.disk_mb` exceeds the free space measured on
+           the volume the mission writes to, cannot run here however it is selected. Dropped,
+           and named, with the shortfall in the reason -- `host_ram_short`, `host_disk_short`,
+           or `host_measurement_unavailable` when the station could not be measured at all.
+           Added 2026-10-03; both fields were declared on all 27 entries and read by nothing.
+           See `Get-HostCapacity` for the measurement and for what this rule deliberately does
+           NOT check.
 
         4. HARD-EDGE CLOSURE.  A capability whose runner binds another capability's fact
            pulls that producer into the mission, whatever question type the producer
@@ -379,7 +617,14 @@ function Get-Route {
       possible only in a registry that declares one -- is broken at that same index and
       reported in `cycles`, never looped on.
     #>
-    param($Registry, [string]$QuestionType)
+    param($Registry, [string]$QuestionType, $Capacity = $null)
+
+    # Measured HERE when the caller did not supply it, and exactly once per call. Invoke-Mission
+    # measures and passes the same record so the route's refusals and the plan artifact cannot
+    # disagree about the machine: two independent readings of a number that moves by gigabytes
+    # between calls would make the plan self-contradictory in the one field that decides
+    # whether a step can run at all.
+    if (-not $Capacity) { $Capacity = Get-HostCapacity -WriteRoot $CaseRoot }
 
     $all = @($Registry.capabilities)
     $byId = @{}; $idx = @{}
@@ -391,22 +636,34 @@ function Get-Route {
     $emitted = @{}
     $cycles = @()
 
-    # Why a capability cannot be planned at all, whatever selects it. Rules 1 and 3.
-    # `return $null` is the routable answer and emits nothing, so the caller's test is a
-    # plain truthiness check -- and a capability that IS routable returns no string at all.
+    # Why a capability cannot be planned at all, whatever selects it. Rules 1, 3 and 3b.
+    #
+    # IT RETURNS A RECORD, NOT A STRING, and that changed on 2026-10-03 when the host check
+    # arrived. The caller's `if ($blocker)` tests are unchanged and still correct -- an
+    # `[ordered]` record is truthy and `$null` is not -- but the reason now travels WITH the
+    # detail instead of being re-derived at the call site. That re-derivation was the bug
+    # waiting to happen: `$tag` below worked out the reason from `state` alone, which is
+    # correct for exactly two blockers, and the moment a third existed it would have labelled
+    # a machine that is out of RAM as `unproduced_required_input`. A plan that names the
+    # wrong cause with the right formatting is worse than one that names none.
     function Get-Blocker($capDef) {
-        if (-not $capDef) { return 'not in the registry' }
+        if (-not $capDef) { return [ordered]@{ reason = 'not_in_registry'; detail = 'not in the registry' } }
         # ABLATE-ANCHOR state-filter
         $stateOk = ("$($capDef.state)" -eq 'observed')
         if (-not $stateOk) {
-            return "state=$($capDef.state). An absent or blocked capability is a claim, not a capability: its probe never ran, so no mission may plan it and no edge may pull it in as a producer."
+            return [ordered]@{ reason = "state=$($capDef.state)"
+                detail = "state=$($capDef.state). An absent or blocked capability is a claim, not a capability: its probe never ran, so no mission may plan it and no edge may pull it in as a producer." }
         }
         $bad = @($capDef.consumes.inputs | Where-Object { $_.unproduced -and $_.required })
         # ABLATE-ANCHOR unproduced-input
         $unproduced = @($bad | ForEach-Object { $_.name })
         if ($unproduced.Count -gt 0) {
-            return "required input(s) $($unproduced -join ', ') are declared unproduced by the registry itself, so nothing in this repository can supply them: $($bad[0].unproduced.reason)"
+            return [ordered]@{ reason = 'unproduced_required_input'
+                detail = "required input(s) $($unproduced -join ', ') are declared unproduced by the registry itself, so nothing in this repository can supply them: $($bad[0].unproduced.reason)" }
         }
+        # ABLATE-ANCHOR host-fit
+        $hostBlocker = Get-HostBlocker -CapDef $capDef -Capacity $Capacity
+        if ($hostBlocker) { return $hostBlocker }
         return $null
     }
 
@@ -419,8 +676,10 @@ function Get-Route {
         if ($blocker) {
             # `reason` is present on BOTH lists so a caller never has to know which list a
             # capability fell out of in order to say what went wrong with it.
-            $tag = if ("$($c.state)" -ne 'observed') { "state=$($c.state)" } else { 'unproduced_required_input' }
-            $unavailable += [ordered]@{ id = $c.id; state = "$($c.state)"; reason = $tag; detail = $blocker }
+            # The blocker decides its own name. See the note on Get-Blocker: re-deriving this
+            # from state is what made the third blocker report the second one's reason.
+            $unavailable += [ordered]@{ id = $c.id; state = "$($c.state)"
+                                        reason = "$($blocker.reason)"; detail = "$($blocker.detail)" }
             continue
         }
         $selected += [ordered]@{
@@ -605,6 +864,7 @@ function Get-Route {
         ordering = 'a capability declaring invoke.gate_role = precondition runs FIRST, because it is a gate on the rest and a gate that runs last gates nothing; within each half the existing rule holds -- a capability runs after whatever produces a fact its own invoke.argv binds, and every remaining tie is broken by the registry index, carried on each step as registry_index'
         rules = @('state must be observed', 'question_types must list this question',
                   'a required input the registry marks unproduced blocks the capability',
+                  'the station must be able to run it: requires.ram_mb against measured total RAM, requires.disk_mb against measured free space on the volume the mission writes to, and an axis that could not be measured blocks every capability that declares a requirement on it',
                   'a hard edge pulls its producer in, whatever question type that producer declares',
                   'a hard edge nothing produces drops the capability',
                   'a refinement edge pulls nothing in')
@@ -881,7 +1141,12 @@ function Invoke-Mission {
     # was never going to run anything. `Get-RouteRefusal` also has a second, grant-aware
     # arm, called again below: a route that exists and cannot be invoked is a different
     # failure with a different fix, and the two must not be reported as one.
-    $route = Get-Route -Registry $reg -QuestionType $qt
+    # The station, measured ONCE and carried into the artifact. Get-Route is handed the same
+    # record rather than measuring its own: free space moves by gigabytes between reads, and a
+    # plan whose `host` block and whose `unavailable` list disagree about the machine is
+    # self-contradictory in exactly the field that decides whether a step can run.
+    $hostFacts = Get-HostCapacity -WriteRoot $CaseRoot
+    $route = Get-Route -Registry $reg -QuestionType $qt -Capacity $hostFacts
     $empty = Get-RouteRefusal -Route $route
     if ($empty) { Refuse 2 "question type '$qt' has no routable capability" $empty }
 
@@ -924,6 +1189,12 @@ function Invoke-Mission {
     # mistake because the obvious spelling was the wrong one cost one mission run.
     $regHash = Get-Sha256Hex (Join-Path $PSScriptRoot '..\manifests\capabilities.json')
     Say "  registry      $($regHash.Substring(0,16))…  bound into this plan; a mid-flight edit is refused"
+    # The measured machine, stated in the same breath as the decision it made possible. A plan
+    # that silently checked `requires.disk_mb` against something is exactly the check nobody
+    # can falsify; a plan that prints the number, the volume and the source can be argued with.
+    Say ("  host          {0} MB RAM total / {1} MB free; {2} MB free on {3} ({4}){5}" -f `
+         $hostFacts.ram_total_mb, $hostFacts.ram_free_mb, $hostFacts.disk_free_mb, $hostFacts.volume, `
+         $hostFacts.write_root, $(if (@($hostFacts.errors).Count) { '  UNMEASURED: ' + ($hostFacts.errors -join '; ') } else { '' }))
     $planned = @(Resolve-PlanSteps -Route $route -Allowed @($grant.allowed) -Registry $reg -Seeded @($SeedFact))
     $runnable = @($planned | Where-Object { $_.state -eq 'planned' }).Count
 
@@ -947,6 +1218,14 @@ function Invoke-Mission {
     if (@($route.unavailable).Count) {
         Say ("  never routed  " + ((@($route.unavailable) | ForEach-Object { "$($_.id) (state=$($_.state))" }) -join ', '))
     }
+    # A host refusal is listed SEPARATELY from a state refusal, because the fix is different:
+    # `state=absent` wants a probe, `host_ram_short` wants a bigger machine or a re-declared
+    # requirement, and telling an operator to go and run a probe when the disk is the problem
+    # sends them to do work that cannot help.
+    $hostBlocked = @($route.unavailable | Where-Object { "$($_.reason)" -like 'host_*' })
+    if ($hostBlocked.Count) {
+        Say ("  host-blocked  " + ((@($hostBlocked | ForEach-Object { "$($_.id) [$($_.reason)]" }) -join ', ')))
+    }
     if (@($route.dropped).Count) {
         Say ("  dropped       " + ((@($route.dropped) | ForEach-Object { "$($_.id) [$($_.reason)]" }) -join ', '))
     }
@@ -961,6 +1240,24 @@ function Invoke-Mission {
         containment  = $Containment
         provenance   = [ordered]@{ text = $Provenance; declared_by_owner = [bool]$OwnerWord }
         gate         = [ordered]@{ grant_sha256 = $grant.grant_sha256; allowed = $grant.allowed }
+        # The machine this plan was measured against, and therefore the machine any reader has
+        # to hold it to. `gated_on` names the two axes the ROUTE actually refused on; the free
+        # figure is carried but ungated, which is a limit of the check and is written into the
+        # artifact rather than left for someone to discover by reading Get-HostCapacity.
+        host         = [ordered]@{
+            measured_at  = $hostFacts.measured_at
+            write_root   = $hostFacts.write_root
+            volume       = $hostFacts.volume
+            ram_total_mb = $hostFacts.ram_total_mb
+            ram_free_mb  = $hostFacts.ram_free_mb
+            disk_free_mb = $hostFacts.disk_free_mb
+            ram_ok       = $hostFacts.ram_ok
+            disk_ok      = $hostFacts.disk_ok
+            errors       = @($hostFacts.errors)
+            sources      = $hostFacts.sources
+            gated_on     = @('requires.ram_mb vs ram_total_mb', 'requires.disk_mb vs disk_free_mb')
+            not_gated_on = @('ram_free_mb -- a plan must not become unreproducible because a sibling process took memory mid-run')
+        }
         route        = [ordered]@{
             source = $route.source
             rules = $route.rules
@@ -2697,6 +2994,123 @@ function Invoke-Selftest {
         "unsound=$($bad.Count) $(if ($bad.Count) { $bad -join ',' })"
     } 'unsound=0 '
 
+    # ---- host fit: `requires.ram_mb` and `requires.disk_mb` stop being decorative -----
+    # A mutation sweep measured that both were declared on all 27 registry entries and read
+    # by NOTHING outside the manifest. These six controls are the answer, and each one was
+    # written to fail if the mechanism behind it were deleted:
+
+    C 'host: the station is MEASURED here, not assumed -- both axes answered with real numbers' {
+        # The premise of every control below. If this one ever fails, the fail-closed arm in
+        # Get-HostBlocker would be refusing everything permanently and reading like a policy
+        # rather than a probe -- so this is the control that keeps the refusals honest.
+        $h = Get-HostCapacity -WriteRoot $CaseRoot
+        "ram-positive=$($h.ram_total_mb -gt 0) free-is-subset-of-total=$($h.ram_free_mb -gt 0 -and $h.ram_free_mb -le $h.ram_total_mb) volume=$("$($h.volume)" -match '^[A-Z]:$') disk-positive=$($h.disk_free_mb -gt 0) errors=$(@($h.errors).Count)"
+    } 'ram-positive=True free-is-subset-of-total=True volume=True disk-positive=True errors=0'
+
+    C 'host: the boundary is `>` and not `>=` -- an EXACT fit is allowed, one MB short is REFUSED BY NAME' {
+        # One capability, three capacities, and the numbers are ITS OWN declared ones rather
+        # than invented, so the control fails if somebody edits the registry: a fit tested only
+        # against a made-up figure proves nothing about the real entry. 2048/300 is exactly
+        # native.ida.decompile's declared requires.ram_mb / requires.disk_mb.
+        $m = Get-Registry
+        foreach ($c in $m.capabilities) {
+            if ($c.id -eq 'native.ida.decompile') { $c.requires.ram_mb = 2048; $c.requires.disk_mb = 300 }
+        }
+        $h = [ordered]@{ write_root = 'selftest'; volume = 'Z:'; measured_at = 'selftest'
+                         ram_total_mb = 2048; ram_free_mb = 2048; disk_free_mb = 300
+                         ram_ok = $true; disk_ok = $true; errors = @()
+                         sources = [ordered]@{ ram = 'selftest'; disk = 'selftest' } }
+        $exact = @((Get-Route -Registry $m -QuestionType 'Q2.locate' -Capacity $h).steps | ForEach-Object { $_.id })
+        $h.ram_total_mb = 2047
+        $rShort = Get-Route -Registry $m -QuestionType 'Q2.locate' -Capacity $h
+        $ramBlk = @($rShort.unavailable | Where-Object { $_.id -eq 'native.ida.decompile' })[0]
+        $h.ram_total_mb = 2048; $h.disk_free_mb = 299
+        $dShort = Get-Route -Registry $m -QuestionType 'Q2.locate' -Capacity $h
+        $diskBlk = @($dShort.unavailable | Where-Object { $_.id -eq 'native.ida.decompile' })[0]
+        "exact-fit-routed=$($exact -contains 'native.ida.decompile') ram-reason=$($ramBlk.reason) disk-reason=$($diskBlk.reason) shortfall-is-named=$("$($ramBlk.detail)" -match '2048' -and "$($ramBlk.detail)" -match '2047')"
+    } 'exact-fit-routed=True ram-reason=host_ram_short disk-reason=host_disk_short shortfall-is-named=True'
+
+    C 'host: an axis the station could not MEASURE refuses EVERY capability that declares on it' {
+        # Fail closed, asserted as a COVERAGE rather than as one example: an unmeasured RAM
+        # axis has to block all of them, not the first one a loop happened to hit. The count
+        # of candidates is deliberately NOT pinned -- pinning it would make the control a
+        # statement about today's registry size rather than about the behaviour, which is the
+        # exact staleness bug two controls above this one are written up against.
+        $h = [ordered]@{ write_root = 'selftest'; volume = $null; measured_at = 'selftest'
+                         ram_total_mb = $null; ram_free_mb = $null; disk_free_mb = 1000000
+                         ram_ok = $false; disk_ok = $true
+                         errors = @('RAM unmeasured: the query was not answered')
+                         sources = [ordered]@{ ram = 'selftest'; disk = 'selftest' } }
+        $m = Get-Registry
+        $r = Get-Route -Registry $m -QuestionType 'Q2.locate' -Capacity $h
+        $want = @($m.capabilities | Where-Object {
+            (@($_.question_types) -contains 'Q2.locate') -and "$($_.state)" -eq 'observed' -and
+            [double]$_.requires.ram_mb -gt 0 } | ForEach-Object { $_.id })
+        $refused = @($r.unavailable | Where-Object { $want -contains $_.id })
+        # The id list is materialised FIRST. The first version nested a `Where-Object` inside a
+        # `Where-Object` and compared `$_.id -eq $_`, where the inner pipeline rebinds `$_` to
+        # the refused record -- so the predicate was a string compared with an object, always
+        # false, and the control reported `all-refused=False` against an implementation that
+        # had refused everything. The assertion was right and the predicate was wrong, which is
+        # the only direction worth fixing a control in.
+        $refusedIds = @($refused | ForEach-Object { "$($_.id)" })
+        $allRefused = ($want.Count -gt 0) -and (@($want | Where-Object { $refusedIds -notcontains "$_" }).Count -eq 0)
+        $reasons = @($refused | ForEach-Object { "$($_.reason)" } | Sort-Object -Unique)
+        $namesIt = @($refused | Where-Object { "$($_.detail)" -match 'not answered' }).Count -eq $want.Count
+        $noDisk = @($r.unavailable | Where-Object { "$($_.reason)" -like '*disk_short*' }).Count -eq 0
+        "has-candidates=$($want.Count -gt 0) all-refused=$allRefused reason=$($reasons -join '+') names-the-error=$namesIt healthy-axis-unaffected=$noDisk"
+    } 'has-candidates=True all-refused=True reason=host_measurement_unavailable names-the-error=True healthy-axis-unaffected=True'
+
+    C 'host: a capability declaring NO requirement is never blocked, even on an unmeasurable axis' {
+        # The `> 0` guard, on the arm where getting it wrong is invisible: ram_mb 0 means "this
+        # capability declares no memory requirement", not "this capability requires a machine
+        # with no memory". Tested on Get-HostBlocker directly because no registry entry can
+        # reach it through the route -- every ram_mb:0 entry is also state:absent, so the
+        # state filter answers first and the host check is never the one under test.
+        $cap = [pscustomobject]@{ id = 'selftest.no-requirement'
+                                   requires = [pscustomobject]@{ ram_mb = 0; disk_mb = 0 } }
+        $blank = [ordered]@{ ram_ok = $false; disk_ok = $false; errors = @('nothing answered') }
+        $b = Get-HostBlocker -CapDef $cap -Capacity $blank
+        if ($b) { "blocked=$($b.reason)" } else { 'blocked=no' }
+    } 'blocked=no'
+
+    C 'host: on THIS station every declared requirement fits, so the check refuses nothing real' {
+        # The anti-drift control, and deliberately a STATION claim rather than a portable one.
+        # If this ever reads False the machine has shrunk under a registry that has not, and
+        # the next window should hear that from the suite rather than from a mission that died
+        # halfway. The maxima are read from the registry, never typed, so it cannot go stale.
+        $reg = Get-Registry
+        $h = Get-HostCapacity -WriteRoot $CaseRoot
+        $blocked = @()
+        foreach ($p in $reg.schema.question_types.PSObject.Properties) {
+            foreach ($u in @((Get-Route -Registry $reg -QuestionType $p.Name -Capacity $h).unavailable)) {
+                if ("$($u.reason)" -like 'host_*') { $blocked += "$($u.id)[$($u.reason)]" }
+            }
+        }
+        $maxRam  = ($reg.capabilities | ForEach-Object { [double]$_.requires.ram_mb }  | Measure-Object -Maximum).Maximum
+        $maxDisk = ($reg.capabilities | ForEach-Object { [double]$_.requires.disk_mb } | Measure-Object -Maximum).Maximum
+        "nothing-blocked=$($blocked.Count -eq 0) max-declared-ram-fits=$($h.ram_total_mb -ge $maxRam) max-declared-disk-fits=$($h.disk_free_mb -ge $maxDisk) $(if ($blocked.Count) { $blocked -join ',' })"
+    } 'nothing-blocked=True max-declared-ram-fits=True max-declared-disk-fits=True '
+
+    C 'host: the PLAN ARTIFACT carries the machine the decision was made on' {
+        # End to end, and the only control here that spawns anything: `-Action Plan` mints a
+        # grant and writes plan.json, and runs no tool. Without it the check could live entirely
+        # in memory and a reader of the artifact would have no way to hold the decision to
+        # anything -- which is the shape of a check nobody can falsify.
+        $id = 'hostfit-selftest'
+        & $PSCommandPath -Action Plan -Target $own -QuestionType 'Q2.locate' `
+            -Question 'where is the input validation' `
+            -Provenance 'Owner-authored corpus binary built on this station' -OwnerWord 'go' `
+            -Containment station_under_named_process_rule -CaseRoot $tmp -CaseId $id -Json | Out-Null
+        $planPath = Join-Path (Join-Path $tmp $id) 'plan.json'
+        if (-not (Test-Path -LiteralPath $planPath)) {
+            'plan-written=False'
+        } else {
+            $pj = (Get-Content -LiteralPath $planPath -Raw | ConvertFrom-Json)
+            "plan-written=True ram=$($pj.host.ram_total_mb -gt 0) disk=$($pj.host.disk_free_mb -gt 0) volume=$("$($pj.host.volume)" -match '^[A-Z]:$') names-its-source=$("$($pj.host.sources.ram)" -match 'Win32_OperatingSystem') names-what-it-did-not-gate=$(@($pj.host.not_gated_on).Count -gt 0)"
+        }
+    } 'plan-written=True ram=True disk=True volume=True names-its-source=True names-what-it-did-not-gate=True'
+
     # The budget cap used to `break` with nothing recorded, so an artifact could not tell a
     # short plan from a truncated one. "The steps that never ran" is exactly the gap that
     # produces no error to notice -- the same shape as the STOP note this file already insists on.
@@ -2955,14 +3369,17 @@ function Invoke-Ablate {
       left the whole suite green. Six of seven gates were a sentence in a comment. This
       function is what found it and is kept so it cannot be undone quietly.
 
-      PASS 2 -- the six routing rules. Capability selection used to be a hardcoded
-      seven-entry hashtable, which ablation could not touch at all: there was no mechanism
-      to remove, only a table to read, and a table is not a mechanism. The route is six
-      decisions, each with exactly one assignment line, so each can be neutralised and the
-      suite asked whether it noticed. A routing rule that can be deleted without turning
-      the suite red is a sentence in a comment, exactly as a gate is -- and the whole point
-      of this change is that the route is derived rather than typed, so "derived" has to
-      be measured rather than asserted in a comment.
+      PASS 2 -- the routing rules, one row each in `$routing` below. Capability selection
+      used to be a hardcoded seven-entry hashtable, which ablation could not touch at all:
+      there was no mechanism to remove, only a table to read, and a table is not a
+      mechanism. Each rule is one decision with exactly one assignment line, so each can be
+      neutralised and the suite asked whether it noticed. A routing rule that can be deleted
+      without turning the suite red is a sentence in a comment, exactly as a gate is -- and
+      the whole point of that change is that the route is derived rather than typed, so
+      "derived" has to be measured rather than asserted in a comment. The seventh row,
+      `host-fit`, was added 2026-10-03 for the same reason: `requires.ram_mb` and
+      `requires.disk_mb` were declared on 27 entries and read by nothing, and the only way to
+      know that is no longer true is to delete the mechanism and watch the suite notice.
 
       Three things keep this from being a check that always passes:
         1. A PRISTINE copy is run first. If the suite is already red, "load-bearing" means
@@ -2994,7 +3411,14 @@ function Invoke-Ablate {
         @{ name = 'unmet-edge';   rx = '(?m)^(\s*)\$unmetHard\s*=.*$';       to = '$1$unmetHard = @()'
           what = 'the unmet-hard-edge drop' },
         @{ name = 'argv-slot';    rx = '(?m)^(\s*)\$unresolvedSlots\s*=.*$'; to = '$1$unresolvedSlots = @()'
-          what = 'the argv-slot check: a capability with an unfillable placeholder would be planned' }
+          what = 'the argv-slot check: a capability with an unfillable placeholder would be planned' },
+        # Added 2026-10-03. The mechanism is ONE assignment -- the call into Get-HostBlocker --
+        # so neutralising it is `no blocker`, which is the exact pre-change behaviour of this
+        # file: requires.ram_mb and requires.disk_mb declared on 27 entries and read by nothing.
+        # If this row ever reports "NOT TESTED", the host check has become a sentence in a
+        # comment again, and the sweep that found the drift will find it a second time.
+        @{ name = 'host-fit';     rx = '(?m)^(\s*)\$hostBlocker\s*=\s*Get-HostBlocker.*$'; to = '$1$hostBlocker = $null'
+          what = 'the host-fit check: requires.ram_mb and requires.disk_mb would go back to being read by nothing' }
     )
     $names = @('process', 'reachability', 'observation', 'independence', 'bounded_claim', 'uncertainty', 'discharged')
     $src = Get-Content -LiteralPath $PSCommandPath -Raw
