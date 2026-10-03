@@ -737,16 +737,25 @@ capability→corpus dependency, not from the file count, the directory probe, or
 
 The brief states skillspector "is absent from `manifests/tools.json`". Measured today:
 
-- **At HEAD it is absent.** `git show HEAD:manifests/tools.json | grep -i skillspector` → no match;
-  the category list at HEAD is `static-reversing, debuggers, mobile-android, network-http,
-  unpackers-game, system-forensics, web-reverse, crypto-lab, forensics-lab, fuzz-lab` — there is no
-  `ops` category at all. Both `%TEMP%` clones are at that shape, which is why **both flag
-  skillspector.exe as undeclared**.
-- **In the working tree it is declared.** `git status --porcelain manifests/tools.json` → ` M`, and
-  the uncommitted diff adds two entries: `ops / SkillSpector` (`dir: %USERPROFILE%\.local\bin\skillspector.exe`)
-  and `build / MSVC vcvars64`. That is why the **station** run does not flag it.
-- **Consequence:** the fix exists but is uncommitted, so a clone made from HEAD today still misses it.
-  The station run and the clone runs are not disagreeing; they are reading two different commits.
+- **In the clones it is absent.** `git show 8ebf4cc^:manifests/tools.json | grep -i skillspector`
+  → no match; that tree's category list is `static-reversing, debuggers, mobile-android,
+  network-http, unpackers-game, system-forensics, web-reverse, crypto-lab, forensics-lab,
+  fuzz-lab` — no `ops` category at all. Both `%TEMP%` clones sit at or before that shape, which is
+  why **both flag skillspector.exe as undeclared**.
+- **At the station's HEAD today it is declared.** `git log -1 -- manifests/tools.json` → `8ebf4cc`
+  "Twelve tools are launched by absolute path and three of them were declared nowhere";
+  `git status --porcelain manifests/tools.json` → **empty (clean)**; `git show HEAD:manifests/tools.json
+  | grep -c "SkillSpector\|MSVC vcvars64"` → **2**. So a clone made from HEAD *now* gets both.
+- **RETRACTION — this section first said the fix was uncommitted.** I wrote "In the working tree it
+  is declared … `git status` → ` M` … the fix exists but is uncommitted, so a clone made from HEAD
+  today still misses it." That was a **stale read**: the ` M` was true when I took it and `8ebf4cc`
+  landed between that read and my commit (`git push` reported `8ebf4cc..070320a`). The tools-manifest
+  worker caught it and re-measured it independently rather than believing me. A claim about the index
+  has a shelf life, and this one did — the retraction is left in place instead of deleted, because
+  the next window should be able to see that it was made, checked, and found stale.
+- **What survives:** the station run and the two clone runs were never disagreeing. They were reading
+  three different commits — two clones behind `8ebf4cc`, the station at it. The clone-side flags for
+  `skillspector.exe` are a true statement about *those two trees*, not about the station.
 
 Two more of the brief's implicit assumptions did not survive measurement: MSVC is declared too
 (`build / MSVC vcvars64`), and the undeclared set today is `adb` and `openssl` —
@@ -803,8 +812,9 @@ them is Main's call, not mine. Three points measured rather than assumed:
   (`scripts/verify-clone-freshness.py`, section 2b), so `ops / SkillSpector` and `build / MSVC vcvars64`
   are skipped, not reported absent. Evidence: the station run counts `52 present, 2 absent` out of 54
   entries that carry both fields, and neither new entry appears in the ABSENT list.
-- **Their manifest edit does silence my R5 finding, and only in the working tree** (§6.1). Both
-  `%TEMP%` clones still flag `skillspector.exe` because they sit at HEAD.
+- **Their manifest edit silences my R5 finding, and both `%TEMP%` clones still flag
+  `skillspector.exe`** — not because the edit is uncommitted (it is committed, `8ebf4cc`) but because
+  those two clones sit *behind* it. See §6.1.
 - **Their `rabin2` example does not hold; their `openssl` example is already covered.**
   `native-lab/tools/hardening_probe.py:57` is `DEFAULT_RABIN2 = os.environ.get("RABIN2_EXE") or
   _newest_rabin2()` — a pinned path, and `:79-80` refuses outright with *"this path is the pinned
@@ -840,8 +850,10 @@ Cost measured: 0.20–0.38 s wall, no network, no subprocess, no write outside s
 
 ## 9. If someone picks this up next
 
-1. **Commit `manifests/tools.json`.** Until the `ops / SkillSpector` and `build / MSVC vcvars64` entries
-   are in HEAD, every clone still misses two tools a clone provably needs (§6.1).
+1. ~~**Commit `manifests/tools.json`.**~~ — **DONE by Main in `8ebf4cc`, no action.** Kept struck
+   rather than deleted because it is the second claim in this report that aged out from under me, and
+   the pattern is the finding: anything asserted about the index must be re-measured, not inherited
+   from a sibling's message or from my own earlier note (§6.1 RETRACTION, §10 NEXT item 4).
 2. **Decide where the corpus build lives.** The command exists and is documented; nothing executes it.
    A `-BuildCorpus` flag on `scripts/bootstrap.ps1` would turn a three-paragraph instruction into a
    command a clone cannot skip.
@@ -876,9 +888,10 @@ Cost measured: 0.20–0.38 s wall, no network, no subprocess, no write outside s
    budget should run it once in a scratch clone and paste the table.
 3. **R5 residue** (§6.1): `adb` and `openssl` are named by live probes and declared in no manifest.
    `adb` is not on this box at all, so `dynamic.device.frida` cannot run here either.
-4. **`manifests/tools.json` is still uncommitted on the station** (` M` in `git status` as of this
-   writing, holding `ops / SkillSpector` and `build / MSVC vcvars64`). Not mine to commit — its
-   author's call — but a clone from HEAD today misses both tools.
+4. ~~**`manifests/tools.json` is still uncommitted on the station**~~ — **WITHDRAWN, it was a stale
+   read.** Re-measured: `git status --porcelain manifests/tools.json` is empty and the file is
+   committed at `8ebf4cc`, so a clone from HEAD gets `ops / SkillSpector` and `build / MSVC vcvars64`.
+   Nothing to do here. See the RETRACTION in §6.1; do not go looking for this problem.
 5. **The 17 live `%TEMP%` wiki recipes** (§6.3) need an author, not a script. Full list with
    `file:line` is in any run's section 3.
 6. **Decide whether the two tools gates merge.** `scripts/verify-tools-manifest.py` (repo scripts,
