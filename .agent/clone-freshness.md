@@ -848,3 +848,44 @@ Cost measured: 0.20–0.38 s wall, no network, no subprocess, no write outside s
 3. **`adb` and `openssl`.** Both are named by live probes, neither is in any manifest. Declaring them
    costs two JSON lines; leaving them means a clone discovers the gap by failing.
 4. **The 17 live %TEMP% wiki recipes** (§6.3) need an author, not a script.
+---
+
+## 10. Wrap-up (session paused by Owner mid-task)
+
+- **Committed and pushed**, not left as a patch. `debugger-workstation` `main`: `070320a`, containing
+  exactly two files — `scripts/verify-clone-freshness.py` and this report. `<private-tree>` `master`:
+  `bd841bd`, one file — `wiki/methods/arsenal-clone.md`. Nothing of another writer's is in either
+  commit; `git diff --cached --name-only` was checked before committing.
+- **Nothing staged but unfinished.** No edit of mine is half-applied; both trees carry only my two
+  additions plus other agents' independent work, which I did not touch.
+- One lint fix landed after the runs in §3–§6 were captured: a blank line after
+  `from __future__ import annotations` (ruff `I001`). The station output was re-run after it and is
+  **byte-identical** to the paste above (`cmp` on the two captures). All exit codes in this report
+  are from runs I executed; nothing here is `[UNVERIFIED]`.
+
+### NEXT — cold-start notes, in the order I would do them
+
+1. **Wire it into the gate.** `scripts/verify-all.ps1` does not call
+   `scripts/verify-clone-freshness.py`. One line, but I do not own that file. Until then a clone is
+   only checked if a human remembers to run it — which is the same failure this script was written to
+   stop.
+2. **Run it over `crackme-corpus/tools/loop.py --list` semantics.** I verified the corpus *gate*, not
+   the corpus *runner*: I never executed `loop.py` (110 s + a Ghidra JVM), so "this command populates
+   the corpus" rests on `crackme-corpus/README.md:9-17`, `README.md:88-89` and the runner's own
+   existence — three documents plus a file listing, **not** one build. The next window that has
+   budget should run it once in a scratch clone and paste the table.
+3. **R5 residue** (§6.1): `adb` and `openssl` are named by live probes and declared in no manifest.
+   `adb` is not on this box at all, so `dynamic.device.frida` cannot run here either.
+4. **`manifests/tools.json` is still uncommitted on the station** (` M` in `git status` as of this
+   writing, holding `ops / SkillSpector` and `build / MSVC vcvars64`). Not mine to commit — its
+   author's call — but a clone from HEAD today misses both tools.
+5. **The 17 live `%TEMP%` wiki recipes** (§6.3) need an author, not a script. Full list with
+   `file:line` is in any run's section 3.
+6. **Decide whether the two tools gates merge.** `scripts/verify-tools-manifest.py` (repo scripts,
+   absolute paths) vs mine (registry probe strings). §7.1 states the boundary; merging is Main's call.
+
+### Scratch left behind (harmless, inside %TEMP%)
+
+- `%TEMP%\clonefresh-neg-095314-24928` — the pristine `git archive HEAD` export used for cases A/B/C,
+  including `scripts/verify-clone-freshness.MUTANT.py`, the one-line mutant. Delete whenever.
+- `%TEMP%\o-*.txt` — the full captured outputs whose middle sections §5 elides.
