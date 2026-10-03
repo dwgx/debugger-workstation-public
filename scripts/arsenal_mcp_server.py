@@ -21,9 +21,16 @@ inform decisions; contracts enforce them. If a proposal's value depends on the a
 true, it's asking for a contract, and the right place for that is the authorization layer, the
 transport, or the runtime rather than ToolAnnotations."*
 
-**So this file emits hints and ENFORCES the gate.** As of 2026-10-03 every call carries a
-`case_dir`, and `gate_check` runs `gate.ps1 -Action Check` on it before anything is executed:
-no grant naming the capability, no call. That sentence used to read "Every call still goes
+**So this file emits hints and ENFORCES the gate.** As of 2026-10-03 every call carries an
+AUTHORISATION CARRIER (`mission_id` or `case_dir`, exactly one of the two), and `gate_check`
+runs `gate.ps1 -Action Check` on the RESOLVED directory before anything is executed, passing
+`-CaseDir <resolved> -Capability <id>`, plus `-Target <the file the caller chose>` whenever the
+caller sent one, plus `-Invocation <the resolved argv>` on a SECOND ask that only a capability
+whose boundary is a command-line vocabulary ever spends. Measured: all sixteen tools declare
+both acquisition parameters OPTIONAL and put neither in `required`, so the sentence this
+replaces -- "every call carries a `case_dir`" -- was wrong about the wire, and what every call
+carries is exactly one carrier, and a call that carries neither is refused before the gate.
+That sentence used to read "Every call still goes
 through the same gate invocation and the same refuse-on-wrong-subject logic as a mission" --
 and grepping this file for `gate`, `grant` or `OwnerWord` found only that sentence and two like
 it, because no such call existed. Sixteen invocable capabilities were reachable from any MCP
@@ -36,8 +43,24 @@ not by making the sentence better.
 THE ACQUIRING CONTRACT, AND WHY `case_dir` ALONE WAS WRONG. The breaking change above fixed the
 hole -- a call now carries a grant -- and in doing so made the surface unusable in practice. A
 grant lives in a mission case directory under the missions root, and that root is a property of
-the STATION, not of the client: it is `E:/missions` by default and `mission.ps1 -CaseRoot`
-otherwise. So requiring every client to supply `case_dir` required every client to know
+the STATION, not of the client. Measured 2026-10-03: it is `E:/missions` when
+`DEBUGGER_MISSIONS_ROOT` is unset or blank -- 144 case directories on this station today -- and
+the only thing that moves it is that one environment variable. This paragraph also said "and
+`mission.ps1 -CaseRoot` otherwise", and that was FALSE: `-CaseRoot` is a parameter of a
+different program in a different process and nothing propagates it into this one. Measured: a
+grant minted into a mission run whose `-CaseRoot` was a %TEMP% scratch root is INVISIBLE here
+with the variable unset -- `mission_id='x'` refused `case_does_not_exist` at `E:/missions/x` --
+and resolves as soon as the variable names that root. A station that runs its missions under a
+custom `-CaseRoot` must set the variable, or this surface cannot see one of its cases.
+
+A MISSING ROOT IS NOT A DIAGNOSTIC OF ITS OWN, and inventing one would be a new false sentence
+here: with the variable naming a directory that does not exist, `mission_id='x'` refused
+`case_does_not_exist` with the resolved path printed under the absent root, and the `case_dir`
+form refused `case_dir_outside_root` for that same absent root. Both name the root they were
+measured against, and that is the only thing that tells a caller the ROOT is wrong rather than
+the case.
+
+So requiring every client to supply `case_dir` required every client to know
 something the client cannot know, and a contract that cannot be satisfied by a correct client is
 not a safety property, it is an outage. What a client can know is the MISSION's identifier.
 
@@ -51,15 +74,24 @@ the root by traversal, one that does not exist, one that is not a directory, and
 symlink or junction pointing out of the root are five different bugs in the client, and the
 answer says which one it is and prints the absolute path the server was about to use. A single
 "invalid case_dir" for all five teaches a caller nothing and is how a client ends up retrying a
-path that was never going to work.
+path that was never going to work. Measured: all five fire under exactly those names --
+`identifier_is_absolute`, `identifier_traversal`, `case_does_not_exist`,
+`case_is_not_a_directory`, `case_symlink_escapes_root` -- and the last one against a real
+`mklink /J` junction, because a control whose fixture is missing proves nothing about the thing
+it is named for. Every one of those refusals carries `resolved_case_dir` and `missions_root`;
+deleting those two keys from `_refuse` is the control, and the payloads lose them.
 
 WHAT IT DELIBERATELY DOES NOT DO. It does not expose a capability whose `invoke` is absent, and
 it does not accept a caller-supplied argv. Every tool takes exactly the capability's declared
 inputs and runs the capability's own runner -- there is no path by which an MCP client can cause
 an arbitrary command to run, which is the property that makes exposing read-oriented instruments
-to a model safe at all. It also refuses a capability whose argv still carries a placeholder fed
-by an upstream fact (`{input.function}`, `{input.outdir}`), because handing a subprocess a literal
-`{...}` is not a call, it is a crash waiting for a client to trigger.
+to a model safe at all. It also refuses a capability whose argv still carries a token this
+surface cannot fill, because handing a subprocess a literal `{...}` is not a call, it is a
+crash waiting for a client to trigger. Measured: four of the sixteen invocable capabilities,
+and the tokens are `{input.function}` (native.ida.decompile, native.disasm.capstone),
+`{input.token}` (crypto.jose.parse) and `{scratch:ghidra-out}` (native.ghidra.decompile). This
+paragraph named `{input.function}` and `{input.outdir}`, and `{input.outdir}` is in no invocable
+argv on this registry -- that entry carries it in prose, not in a command line.
 
 THE ACQUISITION CONTRACT, AND ITS HISTORY. `case_dir` became a REQUIRED parameter on all sixteen
 tools on 2026-10-03. Any existing client stopped working until it passed one, which was the
@@ -78,8 +110,21 @@ authorisation carrier is not a value to guess at: a caller that names two differ
 a bug, and picking one for it would pick the wrong one half the time.
 
 NEITHER FORM RELAXES THE TWO CONTROLS INSTALLED ON 2026-10-03. Resolution happens BEFORE the
-gate, and the gate still runs before anything is executed; a capability that binds an unbound
-`{input.*}` placeholder is still refused by name rather than handed to a subprocess as a literal.
+gate, and the gate still runs before anything is executed; a capability whose argv still carries
+an unbindable token is refused before any subprocess exists. Two limits on that sentence, both
+measured rather than assumed. The unbindable-token refusal NAMES the token -- in `error` and in
+`binds` -- but carries no `check_failed`, unlike the twelve resolution refusals that are
+reachable under their own names and both gate refusals, and `scripts/mcp-probe.py`'s P1 asserts
+that absence instead of a name. (Three of the fifteen names in `resolve_case` are shadowed by an
+earlier branch and cannot be reached: an absolute outside the root is caught before the `..`
+test, so `case_dir_traversal`, `identifier_escapes_root` and `case_dir_escapes_root` never fire.
+Measured, all three, and left in place rather than deleted -- an unreachable refusal name is a
+fact about the branch order, not an invitation to renumber.) And the two
+asks are not "the grant, then the prohibitions": for a capability whose boundary is a
+command-line vocabulary the FIRST ask cannot judge the grant at all, because with no
+`-Invocation` its only possible verdict is `no_forbidden_argv_token(invocation-absent)`, so the
+grant verdict arrives on the SECOND ask. That is why the refusal NAME is read out of what the
+gate said rather than out of which ask said it.
 """
 from __future__ import annotations
 
@@ -223,7 +268,13 @@ def _refuse(check: str, error: str, root: Path, resolved: Path, **extra: Any) ->
 def resolve_case(mission_id: str = "", case_dir: str = "") -> tuple[str, dict[str, Any] | None]:
     """Turn what the client sent into the case directory a grant can live in.
 
-    Returns `(case_dir, None)` on success or `("", refusal)` on any of nine named refusals. The
+    Returns `(case_dir, None)` on success or `("", refusal)` on a refusal that names the check
+    that failed. Measured 2026-10-03: FIFTEEN names are reachable from this function and TWELVE of
+    them fire under their own name. The three that cannot -- `case_dir_traversal`,
+    `identifier_escapes_root`, `case_dir_escapes_root` -- are shadowed by the branch above them,
+    because an absolute path that leaves the root is caught before the `".." in cand.parts` test
+    is consulted. They are kept: an unreachable name is a fact about branch order, and deleting
+    one would leave the next reader unable to tell which refusal it replaced. The
     two forms are NOT merged before the checks: which form was used decides what the checks
     mean, so `E:\\missions\\c01` is a legal `mission_id` and an illegal `case_dir`-shaped one is
     a different caller's bug with a different fix.
@@ -388,6 +439,29 @@ def gate_check(case_dir: str, cid: str, invocation: list[str] | None = None,
                    f"model's request. {detail}")
 
 
+def _is_prohibition_verdict(why: str) -> bool:
+    """Did the GATE say this refusal is the capability's own boundary, or did this file decide?
+
+    The discriminator is gate.ps1's own prefix, not a word. Measured 2026-10-03 across all
+    sixteen invocable capabilities and every refusal shape this surface can provoke:
+    `Invoke-ProhibitionGate` builds its refusals at exactly one construction site
+    (Get-ProhibitionRefusal, `error = "prohibition refused: $Code :: $Detail"`) and every one of
+    them carries that literal; no grant refusal does -- exit 3 "not inside the grant", exit 5
+    "no grant.json", exit 6 attestation, seal and registry-digest refusals, and exit 7's two
+    target verdicts were each read and none contains it.
+
+    THE SUBSTRING IT REPLACED WAS WRONG IN BOTH DIRECTIONS, and the direction that mattered was
+    the expensive one. `gate_check` quotes the gate's stdout, and a SUCCESSFUL payload carries
+    `prohibitions_enforced`, `prohibitions_unenforceable` and `prohibition_codes` -- so matching
+    the bare word also matches a pass. It did no harm only because the trigger was guarded by
+    `not ok`. And a word this general could match a grant refusal that merely mentioned a
+    prohibition, which is the one case where being wrong means spending a second gate invocation
+    on an answer already known. A prefix is a decision the gate made about this refusal; a word
+    is a coincidence in a message.
+    """
+    return "prohibition refused:" in str(why or "")
+
+
 def run_capability(cid: str, mission_id: str = "", case_dir: str = "", **kwargs) -> dict[str, Any]:
     """The single execution path. No caller-supplied argv, by construction -- and no call
     without a grant that names the capability, by construction too.
@@ -427,12 +501,22 @@ def run_capability(cid: str, mission_id: str = "", case_dir: str = "", **kwargs)
     # executed, but it is asked TWICE on purpose, and the reason is a capability boundary rather
     # than a grant. `gate_prohibitions` (2026-10-03) makes each capability's `gate_must_not_delegate`
     # enforceable, and an argv prohibition cannot be judged without the argv -- so the first ask
-    # carries no invocation, and a refusal whose text says "prohibition" is re-asked below WITH the
-    # resolved argv. A refusal that is about the GRANT is final on the first ask and never spends
-    # the second.
+    # carries no invocation, and a refusal the gate marked as a prohibition is re-asked below WITH
+    # the resolved argv. A refusal that is about the GRANT is final on the first ask and never
+    # spends the second.
+    #
+    # MEASURED 2026-10-03, and this is why the trigger is gate.ps1's OWN PREFIX rather than the
+    # bare word "prohibition": a success payload carries `prohibitions_enforced`,
+    # `prohibitions_unenforceable` and `prohibition_codes`, so a substring test on the word also
+    # matches a PASS -- it just happened not to matter while the trigger was unreachable on that
+    # path. Every refusal `Invoke-ProhibitionGate` produces opens with the literal
+    # `prohibition refused:` (gate.ps1 Get-ProhibitionRefusal, one construction site), and no
+    # grant refusal does: measured exit 3 "not inside the grant", exit 5 "no grant.json" and
+    # exit 6 attestation/registry refusals, none of which carry it. Matching the prefix cannot
+    # confuse the two, and cannot be confused by them.
     caller_target = str(kwargs.get("target") or "")
     ok, why = gate_check(resolved_case, cid, invocation=None, target=caller_target or None)
-    prohibition_pending = (not ok) and "prohibition" in why
+    prohibition_pending = (not ok) and _is_prohibition_verdict(why)
     if not ok and not prohibition_pending:
         return {"ok": False, "capability": cid, "error": f"{cid} refused by the gate: {why}",
                 "gate": "scripts/gate.ps1 -Action Check",
@@ -459,8 +543,13 @@ def run_capability(cid: str, mission_id: str = "", case_dir: str = "", **kwargs)
     # (native.ida.decompile, native.disasm.capstone, native.ghidra.decompile, crypto.jose.parse).
     #
     # Handing a subprocess a literal `{...}` is never right, and a tool that looks callable and
-    # is not is the exact failure this project keeps finding. So an unbound placeholder is a
-    # refusal that names the missing binding, not a process that guesses.
+    # is not the exact failure this project keeps finding. So an unbound placeholder is a
+    # refusal that names the missing binding in `error` and `binds`, not a process that guesses.
+    # IT CARRIES NO `check_failed`, unlike every other refusal in this file, and that is measured
+    # rather than incidental: `scripts/mcp-probe.py` asserts `check_failed is None` for it (P1).
+    # The token list is also not only `{input.*}` -- native.ghidra.decompile's is
+    # `{scratch:ghidra-out}` and crypto.jose.parse's is `{input.token}` -- so the check matches
+    # `\{[^}]+\}` rather than a prefix.
     leftover = sorted({t for a in argv for t in re.findall(r"\{[^}]+\}", str(a))})
     if leftover:
         return {"ok": False,
@@ -473,12 +562,36 @@ def run_capability(cid: str, mission_id: str = "", case_dir: str = "", **kwargs)
 
     # The second ask, and the only reason the gate is consulted twice: a capability's argv
     # prohibitions are claims about the CALL, so they cannot be judged from a capability name. If
-    # the first ask refused with a prohibition verdict, this one re-asks with the argv and its
-    # refusal is final -- it names the token or the operand that matched, which is the whole point
-    # of making the boundary machine-checkable.
+    # the first ask was refused as a prohibition, this one re-asks with the argv and its refusal is
+    # final -- it names the token or the operand that matched, which is the whole point of making
+    # the boundary machine-checkable.
+    #
+    # THE NAME FOLLOWS THE VERDICT, NOT THE ASK, and that is a correction rather than a style
+    # choice. Because the first ask carries no `-Invocation`, every capability whose boundary is a
+    # command-line vocabulary is refused by it with `no_forbidden_argv_token(invocation-absent)`
+    # whether or not the grant is any use -- so for those entries the GRANT verdict arrives on the
+    # SECOND ask. Measured 2026-10-03: native.pe.authenticode, native.pe.container and
+    # native.pe.packer, each inside the grant and each pointed at a file the grant does not name,
+    # came back `exit 7, the requested target is not the granted target` and were reported as
+    # `check_failed: capability_prohibition` with the note "this is the capability's
+    # gate_must_not_delegate, enforced" -- a boundary the gate never evaluated, asserted in the
+    # refusal a caller reads. native.pe.hardening, which carries no prohibitions, got the same
+    # gate answer and was correctly named `gate_denied_capability`. One name for two different
+    # reasons is how a caller is sent to fix the wrong thing, so the gate's own words pick it.
     if prohibition_pending:
         ok, why = gate_check(resolved_case, cid, invocation=argv, target=caller_target or None)
         if not ok:
+            if not _is_prohibition_verdict(why):
+                # A refusal the gate did not mark as a prohibition, on the second ask. It is still
+                # a refusal and still returns before any subprocess, but naming it as the
+                # capability's boundary would be the false claim this file has now made twice.
+                return {"ok": False, "capability": cid, "error": f"{cid} refused by the gate: {why}",
+                        "gate": "scripts/gate.ps1 -Action Check -Invocation <argv>",
+                        "resolved_case_dir": resolved_case, "missions_root": str(missions_root()),
+                        "invocation": argv,
+                        "check_failed": "gate_denied_capability",
+                        "note": "the boundary gate had nothing to say about this call and the "
+                                "GRANT did: this is the second ask's verdict, not a prohibition."}
             return {"ok": False, "capability": cid, "error": f"{cid} refused by its own boundary: {why}",
                     "gate": "scripts/gate.ps1 -Action Check -Invocation <argv>",
                     "resolved_case_dir": resolved_case, "invocation": argv,
