@@ -1760,12 +1760,20 @@
       "negative_control": {
         "id": "fuzz.differential.flawed_twin",
         "expect_exit": 1,
-        "why": "a run in which any flawed twin SURVIVES fails. Each twin has exactly one guard removed, in the way an analyst actually makes the mistake. The pcap twin's defect is silent -- Buffer.subarray clamps, so it reports capturedLength 1000 while returning 4 bytes, which a crash-counting fuzzer cannot see. That is the whole argument for a differential oracle over a crash counter.",
+        "why": "a run in which any flawed twin SURVIVES fails. The mutants are GENERATED, not hand-copied: the gate slices the shipped fuzz-lab/lab/pcap-reader.mjs as text and deletes exactly one brace-matched guard per mutant, so 'exactly one guard removed' is a property of the construction rather than a claim about it. A mutant counts as CAUGHT only when it diverges on the feed that provably exercises its OWN guard; divergence elsewhere is corroboration, not proof.",
         "control_plan": "run the campaign against each target's deliberately flawed twin",
         "kind": "plan",
         "plan_reason": "Requires running the campaign against each target's deliberately flawed twin, which is a lab sweep rather than a single command.",
         "plan_ref": "missing:fuzz-lab/tools/*no-oracle*",
-        "plan_note": "DECLARED A PLAN, NOT A CONTROL, ON 2026-10-02. Rule R21 refuses prose in negative_control.command, because a control nobody can execute cannot fail and therefore passes forever. The sentence is kept here rather than deleted: it is the negative design, which is real knowledge, and this project has been burned often enough by deleting things to keep. What this entry no longer claims is that it has a working control. It does not."
+        "command": "node fuzz-lab/tools/negative-gate.mjs",
+        "expect_output": "survived        0",
+        "caveat": "An eighth child re-assembles the parser with nothing removed and must be byte-identical to the imported module, so a mutant cannot be blamed for a difference inherited from the slicing. Five of the seven are caught SILENTLY -- a wrong refusal or a well-typed wrong value, visible only by comparison -- which is the class a shape-only check cannot see.",
+        "measured": [
+          "no arguments  -> exit 1 in ~1 s, 7/7 caught (2 LOUD, 5 SILENT), 0 survived, 0 temp dirs",
+          "--bogus       -> exit 2 (guard added 2026-10-05; the gate originally returned 1 for a stray argument, byte-identical to a clean refusal)",
+          "mutation off for G7 -> exit 0, G7 SURVIVED: the gate fails in the dangerous direction, because G7 is not load-bearing on the feeds shipped",
+          "node fuzz-lab/tools/loop.mjs --budget 40 -> exit 0, 24/24, LOOP CLOSED, 194.9 s"
+        ]
       },
       "provenance": {
         "source": "measured on this host 2026-09-30; four real defects found and fixed in this tree",
