@@ -56,9 +56,14 @@ Step 'reachability'           { python scripts/reachability-report.py }
 # DRIFT or on nothing having run at all. This budget is 150 s while the 27 entries measure ~261 s,
 # so entries were genuinely being skipped and the step reported green anyway. "One command judges
 # both trees" must not be able to say OK about a capability it never looked at.
-Step 'assert-probes (bounded, completeness required)' { python scripts/assert-probes.py --budget 150 --timeout 120 --require-complete }
-# The full sweep takes ~24 minutes on this host, dominated by fuzz.differential.parse. It is
-# listed, not run, and the list says which entry costs what is in the entry's own runtime_note.
+# Two entries cannot fit any useful budget: fuzz.differential.parse measures 195-663 s AND is
+# load-sensitive (documented in its own runtime_note), and native.crosscompare.ghidra analyses the
+# same binary with Ghidra twice, 143 s measured. Running them inside a shared budget is how
+# --require-complete turns this script permanently red; leaving them out is how it goes green
+# without looking at them. So they are named explicitly with timeouts that fit.
+Step 'assert-probes (bounded, completeness required)' { python scripts/assert-probes.py --budget 150 --timeout 120 --require-complete --skip-slow }
+Step 'assert-probes fuzz.differential.parse (slow, load-sensitive)' { python scripts/assert-probes.py fuzz.differential.parse --budget 800 --timeout 800 }
+Step 'assert-probes native.crosscompare.ghidra (slow, 2x Ghidra)' { python scripts/assert-probes.py native.crosscompare.ghidra --budget 400 --timeout 400 }
 Step 'assert-probes --list'   { python scripts/assert-probes.py --list }
 
 # WHAT THE REGISTRY CLAIMS THAT NOTHING READS, by name. This is a REPORT and exits 0 by design:

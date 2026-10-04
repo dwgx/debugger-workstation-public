@@ -743,6 +743,11 @@ def main() -> int:
                          "default is one re-run, because a single sample from a load-sensitive probe "
                          "is not a finding; --no-retry exists so the behaviour itself can be measured "
                          "from both sides rather than taken on trust.")
+    ap.add_argument("--skip-slow", action="store_true",
+                    help="exclude every entry that declares a runtime_note. The registry already "
+                         "marks those as not fitting a budget, so this keeps a bounded sweep from "
+                         "starting one and then timing out on it -- which is how a slow entry ends "
+                         "up run twice, once badly. Name the skipped ids in the summary.")
     ap.add_argument("--require-complete", action="store_true",
                     help="exit 1 if ANY entry was deferred by --budget without being measured. "
                          "A bounded run that silently skips entries is not a pass; without this "
@@ -784,6 +789,20 @@ def main() -> int:
         return 0
 
     todo = [c for c in caps if not args.ids or c["id"] in args.ids]
+
+    # --skip-slow reads the registry's OWN declaration rather than a list kept beside it. Measured
+    # 2026-10-05: verify-all.ps1 gained an explicit step for the two slow entries, and the bounded
+    # sweep kept trying to start them, so each would have run TWICE -- once inside a 150 s budget
+    # it cannot fit and once properly. A second hardcoded list would have been a third copy of a
+    # fact; this asks the registry instead, so an entry that grows a runtime_note is excluded
+    # automatically and nothing has to remember to update anything.
+    if args.skip_slow and not args.ids:
+        slow = {c["id"] for c in todo if (c.get("probe") or {}).get("runtime_note")}
+        if slow:
+            todo = [c for c in todo if c["id"] not in slow]
+            print(f"assert-probes: --skip-slow excluded {len(slow)} entr(y/ies) that declare a "
+                  f"runtime_note: {sorted(slow)}\n  They are run by name in "
+                  f"scripts/verify-all.ps1, each with a timeout that fits.\n")
     # ORDERED BY DECLARED COST, and that is two things at once. It makes a bounded sweep cover
     # more ground -- with declaration order a 150 s budget reached 13 of 27 entries and spent
     # most of itself on the first slow one it met -- and it gives `requires.wall_minutes` its
