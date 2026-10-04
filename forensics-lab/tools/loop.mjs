@@ -37,6 +37,30 @@ import { correlate, findTools, stationRoot } from './correlate.mjs';
 import { RECORD } from '../lab/mkimage.mjs';
 import * as S from '../lab/spec.mjs';
 
+// ARGUMENT REFUSAL. Added 2026-10-04. Measured on this tree: passing a path that does not exist
+// produced a normal green run and exit 0 -- every check "passed" while nothing anyone asked for
+// had been done. A regression suite that cannot fail on the thing you handed it reports a pass
+// for work nobody did, which is the one shape this station exists to reject.
+//
+// The precedent is already in this tree and this follows it rather than inventing a second
+// convention: crackme-corpus/tools/loop.py uses argparse and rejects `unrecognized arguments`
+// with exit 2. The JS loops had no argument parser at all, which is the defect. First
+// installation here landed mid-function and collided with an existing `extra` binding; a guard
+// inserted at the wrong scope is the same class of mistake as the bug it fixes, so the placement
+// is at module scope after the imports and nowhere else.
+const KNOWN_FLAGS = new Set('--json', '--quiet');
+const strayArgs = process.argv.slice(2)
+  .filter((a) => !KNOWN_FLAGS.has(a) && !a.startsWith('--only='));
+if (strayArgs.length) {
+  console.error(`loop: refusing an argument it would otherwise IGNORE: ${strayArgs.join(' ')}`);
+  console.error('  This is a regression suite over its own built fixtures. It has no --target.');
+  console.error('  Accepting an argument silently would report a pass for work nobody did.');
+  process.exit(2);
+}
+
+
+
+
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const LAB_ROOT = path.resolve(HERE, '..');
 /* PER-PROCESS, and D12_FORENSICS_WORK still wins for a caller that wants a shared one.

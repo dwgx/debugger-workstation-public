@@ -28,6 +28,29 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const STATION = path.resolve(LAB_ROOT, '..');
 const wantJson = process.argv.includes('--json');
 
+// ARGUMENTS ARE NOT DECORATIVE. Added 2026-10-04 after two independent agents passed this loop a
+// path that does not exist and got `{"total":27,"pass":27,"fail":0}` and exit 0, every time. A
+// probe that cannot fail on the thing you handed it is not a probe; it is a fixture that always
+// passes, and it is the exact shape this station refuses to ship. Measured, verbatim:
+//
+//     node managed-lab/tools/loop.mjs C:/definitely/not/here.dll   -> 27/27, exit 0
+//     node managed-lab/tools/loop.mjs <a real .jar>                 -> 27/27, exit 0
+//     node managed-lab/tools/loop.mjs --only=nonsense                -> 27/27, exit 0
+//
+// The corpus is hardcoded (five .dll paths) and only `--json` was ever read from argv, so an
+// argument was decoration. Now an unrecognised argument is a refusal, because silently ignoring
+// one is how a caller concludes they measured something they did not.
+const givenArgs = process.argv.slice(2).filter((a) => a !== '--json' && !a.startsWith('--json='));
+if (givenArgs.length) {
+  console.error(`managed-lab loop: refusing an argument it would otherwise IGNORE: ${givenArgs.join(' ')}`);
+  console.error('  This loop measures its OWN hardcoded five-assembly corpus. It has no --target and');
+  console.error('  no --only; it is a regression suite, not a general decompiler driver.');
+  console.error('  To measure your own assembly, run the solver directly:');
+  console.error('    node managed-lab/tools/solve-m01.mjs --asm <path.dll>');
+  console.error('  Accepting an argument silently would report a pass for work nobody did.');
+  process.exit(2);
+}
+
 /* ------------------------------------------------------------------ the corpus */
 
 const CORPUS = [

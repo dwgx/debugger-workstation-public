@@ -15,6 +15,24 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createServer, keyId } from '../lab/server.mjs';
 
+// ARGUMENT REFUSAL. Added 2026-10-04. Measured on this tree: passing a path that does not exist
+// produced a normal green run and exit 0 -- every check "passed" while nothing anyone asked for
+// had been done. A regression suite that cannot fail on the thing you handed it reports a pass
+// for work nobody did, which is the one shape this station exists to reject.
+//
+// The precedent is already in the tree and this follows it rather than inventing a second
+// convention: crackme-corpus/tools/loop.py uses argparse and rejects `unrecognized arguments`
+// with exit 2. The JS loops had no argument parser at all, which is the defect.
+const ALLOWED = new Set('--json', '--quiet');
+const extra = process.argv.slice(2).filter((a) => !ALLOWED.has(a) && !a.startsWith('--only='));
+if (extra.length) {
+  console.error(`loop: refusing an argument it would otherwise IGNORE: ${extra.join(' ')}`);
+  console.error('  This is a regression suite over its own built fixtures. It has no --target.');
+  console.error('  Accepting an argument silently would report a pass for work nobody did.');
+  process.exit(2);
+}
+
+
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 /* Per-run artifact directory. A fixed shared path was a real false-failure
    source: loop2.mjs spawns this script, so two concurrent runs both wrote
