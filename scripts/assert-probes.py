@@ -96,9 +96,29 @@ REPO = Path(__file__).resolve().parent.parent
 REG = REPO / "manifests" / "capabilities.json"
 
 # Never run here: long, parent-owned, or prose only an MCP session can execute. Always shown.
+#
+# CORRECTED 2026-10-04. The two IDA entries used to sit here with the reason "driven through the
+# idalib-mcp MCP device, not a CLI command". **That reason was false and the two probes are not
+# what the reason described.** Measured directly:
+#
+#     node native-lab/tools/loop.mjs --only=decompile   -> JSON-SUMMARY {"total":15,"pass":15,"fail":0}, exit 0
+#     node native-lab/tools/loop.mjs --only=list_funcs  -> JSON-SUMMARY {"total":6,"pass":6,"fail":0},   exit 0
+#
+# Both are ordinary CLI commands, both finish in about three seconds, and both emit a
+# machine-readable summary. The MCP device is *inside* the loop -- the loop starts idalib-mcp and
+# talks to it over loopback -- but that does not make the probe un-runnable, it makes it a CLI
+# command that happens to drive an MCP server.
+#
+# So this list was a hardcoded set carrying a comment that had drifted from the code, and it was
+# costing the arsenal REAL EVIDENCE: both capabilities sat in the registry marked
+# `evidence_binding: unverified` while a passing run was one command away. That is the project's
+# own failure mode wearing a hardcoded dict -- a rule no code path re-checks, asserting something
+# false about the thing it names.
+#
+# The four entries that REMAIN are skipped for reasons that are still true and are stated as
+# facts about the registry rather than about the code: state=planned, state=blocked, needs a
+# device, needs an authorized artifact.
 SKIP = {
-    "native.ida.decompile": "driven through the idalib-mcp MCP device, not a CLI command",
-    "native.ida.list_functions": "driven through the idalib-mcp MCP device, not a CLI command",
     "native.crosscompare.ghidra": "state=planned; no runnable command exists to check",
     "native.ghidra.emulate": "state=blocked; needs a runtime the registry does not have",
     "dynamic.device.frida": "state=absent; needs an attached device",
@@ -692,6 +712,11 @@ def main() -> int:
     ap.add_argument("ids", nargs="*", help="capability ids; default = every safe one")
     ap.add_argument("--timeout", type=int, default=180)
     ap.add_argument("--list", action="store_true", help="show what would run, run nothing")
+    ap.add_argument("--no-retry", dest="retry", action="store_false",
+                    help="report a single DRIFT as DRIFT instead of re-measuring it once. The "
+                         "default is one re-run, because a single sample from a load-sensitive probe "
+                         "is not a finding; --no-retry exists so the behaviour itself can be measured "
+                         "from both sides rather than taken on trust.")
     ap.add_argument("--budget", type=int, default=0,
                     help="stop starting new entries after this many seconds and NAME every entry "
                          "that was not run. 0 means no budget. Nothing skipped is ever counted as "
@@ -753,7 +778,35 @@ def main() -> int:
             deferred.append(c["id"])
             continue
         t0 = time.monotonic()
-        results.extend(check(c, args.timeout))
+        # ONE RE-RUN ON A SINGLE DRIFT, and the verdict it earns is its own.
+        #
+        # Measured 2026-10-03: `dynamic.win.frida` came back DRIFT inside a 24-entry sweep
+        # (recorded expect_exit=0, real=1 after 0.5s) and then passed SIX of six runs when driven
+        # directly, through the PowerShell wrapper, and through this file -- and it passed twice in
+        # a row immediately after failing. The machine was busy with other agents; frida's spawn is
+        # load-sensitive. That is a noisy sample, not a finding, and a gate that reports it as DRIFT
+        # is a gate that has to be re-run until it goes green, which is worse than no gate.
+        #
+        # So this is NOT a loosened timeout and NOT a suppressed verdict. A single DRIFT is
+        # re-measured; only a SECOND DRIFT is a DRIFT. `FLAKY` is counted and printed with both
+        # samples, and it does not set the exit code -- a probe that fails half the time under load
+        # is a fact about the probe, and hiding that fact would be the bigger lie.
+        first = check(c, args.timeout)
+        if any(k == "DRIFT" for k, _ in first) and args.retry:
+            second = check(c, args.timeout)
+            if not any(k == "DRIFT" for k, _ in second):
+                results.append(("FLAKY", f"{c['id']} DRIFTED on the first run and passed on the "
+                                         f"re-run, so this entry is NOT trustworthy either way: "
+                                         f"{first[0][1][:140]}"))
+                results.extend(v for v in second if v[0] != "OK")
+                print(f"  FLAKY     {c['id']}: passed on the re-run. One noisy sample is not a "
+                      f"finding and a repeating one is not a pass. Recorded, not hidden.")
+                ran.append((c["id"], time.monotonic() - t0))
+                continue
+            results.extend(first)
+            results.extend(second)
+        else:
+            results.extend(first)
         ran.append((c["id"], time.monotonic() - t0))
     elapsed = time.monotonic() - t_start
     if deferred:
@@ -781,6 +834,10 @@ def main() -> int:
              if deferred else f"{len(todo)} entries")
     print(f"\nassert-probes: {scope}; verdicts "
           + ", ".join(f"{v} {k}" for k, v in sorted(counts.items())) + ".")
+    if counts.get("FLAKY"):
+        print(f"\n{counts['FLAKY']} entry/entries passed on a re-run after a first DRIFT. That is "
+              f"NOT a pass and NOT a regression: it is an entry this sweep cannot decide, and the "
+              f"names are above. Treat each as unproven until its own runtime_note explains the noise.")
     if counts.get("TOOL-FAULT"):
         print("\nTOOL-FAULT is this script's problem, not the registry's: those commands never\n"
               "ran. Fix this script before reading anything else in this output.")

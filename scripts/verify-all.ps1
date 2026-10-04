@@ -8,6 +8,7 @@
 #   doc-facts.py              a live false claim in the charter's own headline paragraph
 #
 # Each was correct, and each was silently checking nothing.
+$t0 = Get-Date
 $repo = Split-Path -Parent $PSScriptRoot
 Set-Location $repo
 $script:fail = @()
@@ -137,6 +138,43 @@ Step 'artifact atomicity'      { python scripts/verify-atomic-artifacts.py }
 # Until those four are promoted the script exits 2 by design. Wiring it now would put a permanent
 # red in the chain, and a permanently red gate is a gate people learn to ignore. It is named here
 # so its absence is a decision with a reason rather than an oversight.
+
+# THE WIKI TREE, MEASURED FROM HERE. Every other gate in this file lives in this repository and
+# validates the wiki tree FROM THE OUTSIDE, via doc-facts.py reading numbers out of the manifests.
+# The wiki tree itself contains zero .py and zero .ps1 files, so until these two lines existed the
+# coupling ran one way only: change the station and the wiki can go red; change the wiki and
+# nothing can. `arsenal-two-tree-check.py` closes the other direction. ~1 s, two rules, five
+# controls.
+#
+# Its first run on the live tree was RED, which is why it earns the two lines: it found
+# `methods/arsenal-clone.md` -- added by that wiki tree's own most recent commit, bd841bd --
+# registered nowhere, plus six survey pages and a card template, plus a relative link in
+# `methods/repo-discovery-method.md` pointing at a directory that has never existed. Eight pages
+# and one broken pointer, none of which any command in either tree could see.
+Step 'wiki tree structure'   { python scripts/arsenal-two-tree-check.py }
+Step 'wiki tree selftest'    { python scripts/arsenal-two-tree-check.py --selftest }
+
+# RULE ENFORCEMENT, not structure. `arsenal-two-tree-check.py` above asks "is the wiki tree
+# internally coherent"; this asks "does anything the dossiers assert actually exist". It exists
+# because `docs/research/ecosystem-2026-10-02.md` -- the most-cited dossier in the estate --
+# cited eight worker reports **232 times** that were never written to disk, and 159 of those
+# citations pointed past the end of any surviving copy. `docs/research/WORKER-REPORT-LOSS.md`
+# has the loss table; 212 dead line numbers are now struck in place rather than deleted, and
+# this gate refuses any NEW unstruck one.
+#
+# It also REPORTS, at zero cost, two things no gate owns: R10, forbidden paths the wiki tree has
+# tracked anyway (`.agent/HANDOFF.md`, against its own AGENTS.md); and R11, the wired MCP
+# backends whose only provenance is a `git` URL -- including the egress warning on the one that
+# posts IOCs to a public API. Reports, not gates, because a permanently red gate is a gate
+# people learn to ignore.
+Step 'doctrine (R4 provenance)' { python scripts/arsenal-doctrine-check.py }
+Step 'doctrine selftest'        { python scripts/arsenal-doctrine-check.py --selftest }
+
+$elapsed = (Get-Date) - $t0
+Write-Host ""
+Write-Host ("VERIFY-ALL wall clock {0:mm\:ss}. ONE command, BOTH trees: the station gate set plus" -f $elapsed)
+Write-Host "  the wiki tree's own structure. Re-measure any single figure with its own command;"
+Write-Host "  every row of wiki/INDEX.md carries the command that produces it."
 
 Write-Host ""
 if ($script:fail.Count -eq 0) {

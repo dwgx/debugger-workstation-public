@@ -15,7 +15,8 @@
 // that forgets the check will be caught by something other than luck.
 
 import { spawn, execFileSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 
 const HOST = '127.0.0.1';
@@ -24,6 +25,46 @@ const MCP = `http://${HOST}:${PORT}/mcp`;
 const IDALIB = 'D:/Software/Developer/Python314/Scripts/idalib-mcp.exe';
 const TARGET = 'crackme-corpus/out/c01-stringobf.exe';
 const GROUND_TRUTH = 'FLAG{c01_strings_gave_you_this_decoy}'; // plaintext decoy in our own sample
+
+/* ARTIFACT, added 2026-10-04. Everything this loop asserted used to be a STRING match against
+   captured stdout, which means a stub printing the right sentences satisfies it — and
+   `assert-probes.py` says so on every OK it issues: "NOT a claim that the instrument ran".
+   Writing the summary to disk makes the verdict check the FILE SYSTEM, which is the one thing
+   a stub cannot fake without also writing a file. Same pattern `fuzz-lab/tools/loop.mjs`
+   already uses for `fuzz-lab/out/last-run.json`.
+   Written on EVERY exit path, including a failure, because "the artifact says the run failed"
+   is itself a fact a reader needs and its absence is not one. */
+const ARTIFACT_DIR = 'native-lab/out';
+// PER-TOOL, and that is the point. Both registry entries run this same file with a different
+// --only flag, so ONE fixed path would let a single tool's run satisfy the other entry's
+// `probe.produces` -- which is exactly the "a probe that cannot localise a fault is not much
+// of a probe" failure the --only split was introduced to avoid. One artifact per tool.
+const artifactPath = (tool) => `${ARTIFACT_DIR}/last-run-${tool}.json`;
+function writeArtifact(tool, extra = {}) {
+  const ARTIFACT = artifactPath(tool);
+  try {
+    mkdirSync(dirname(ARTIFACT), { recursive: true });
+    const payload = {
+      schema: 'native-lab/loop@1',
+      artifact_version: 1,
+      tool,
+      target: TARGET,
+      target_sha_note: 'see evidence/probes/*.probe.log for the hashed run record',
+      ground_truth: GROUND_TRUTH,
+      ...extra,
+      checks,
+      counts: {
+        total: checks.length,
+        pass: checks.filter((c) => c.ok).length,
+        fail: checks.filter((c) => !c.ok).length,
+      },
+    };
+    writeFileSync(ARTIFACT, JSON.stringify(payload, null, 2) + '\n', 'utf-8');
+    say(`ARTIFACT ${ARTIFACT}`);
+  } catch (e) {
+    say(`ARTIFACT WRITE FAILED: ${e.message} — the run happened but left nothing checkable`);
+  }
+}
 
 const checks = [];
 const say = (s) => process.stdout.write(`${s}\n`);
@@ -241,10 +282,18 @@ function finish() {
   }
   say('JSON-SUMMARY ' + JSON.stringify(summary.counts));
   process.stdout.write(`${JSON.stringify(summary)}\n`);
+  // Written LAST and on BOTH branches, so `ok:false` is a recorded fact rather than an
+  // absence. The tool name is the --only value, because the two registry entries point at the
+  // same loop with different flags and each needs its OWN artifact path resolved.
+  writeArtifact((process.argv.find((a) => a.startsWith('--only=')) || '').split('=')[1] || 'integration', {
+    only: (process.argv.find((a) => a.startsWith('--only=')) || '').split('=')[1] || null,
+    ok: failed.length === 0,
+  });
   process.exit(failed.length === 0 ? 0 : 1);
 }
 
 main().catch((e) => {
   process.stderr.write(`loop: ${e.stack || e.message}\n`);
+  writeArtifact('crashed', { ok: false, error: String(e.message || e) });
   process.exit(2);
 });

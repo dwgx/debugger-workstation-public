@@ -1,0 +1,12 @@
+# assert-probes evidence: native.ida.decompile control
+# command: node native-lab\tools\decompile.mjs crackme-corpus\out\c01-stringobf.exe 0xDEADBEEF
+# exit: 1
+# seconds: 2.89
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+{
+  "ok": false,
+  "addr": "0xDEADBEEF",
+  "error": "Decompilation failed at 0xdeadbeef"
+}

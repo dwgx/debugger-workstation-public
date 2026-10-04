@@ -1,0 +1,12 @@
+# assert-probes evidence: native.ida.list_functions control
+# command: node native-lab\tools\list-funcs.mjs README.md --json
+# exit: 1
+# seconds: 2.95
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+{
+  "ok": false,
+  "error": "no functions recovered from README.md",
+  "count": 0
+}

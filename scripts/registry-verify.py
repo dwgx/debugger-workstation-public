@@ -1303,21 +1303,22 @@ def r28_evidence_is_tracked_not_merely_present(reg, doc):
             continue
         if tracked is None:
             try:
-                r = subprocess.run(["git", "ls-files"], cwd=str(REPO_ROOT),
-                                   capture_output=True, text=True, timeout=60)
+                r = subprocess.run(["git", "ls-tree", "-r", "--name-only", "HEAD"],
+                                   cwd=str(REPO_ROOT), capture_output=True, text=True, timeout=60)
                 tracked = set(r.stdout.split("\n")) if r.returncode == 0 else set()
             except Exception:                                        # noqa: BLE001
                 tracked = set()
             if not tracked:
-                out.append("R28?: git ls-files produced nothing, so nothing here can be checked "
-                           "for tracking. Refusing to pass rather than pretending the evidence is "
-                           "committed.")
+                out.append("R28?: git ls-tree HEAD produced nothing, so nothing here can be "
+                           "checked for tracking. Refusing to pass rather than pretending the "
+                           "evidence is committed.")
                 return out
         if rl.replace("\\", "/") not in tracked:
             out.append(f"R28 {c.get('id','?')}: probe.run_log {rl!r} exists and its sha256 matches, "
-                       f"but git does not carry it. On this workstation that file is present and "
-                       f"checkable; in a clone it does not exist, so the binding is a claim about "
-                       f"one machine. Either commit it (and check .gitignore -- a blanket `*.log` "
+                       f"but HEAD does not carry it -- STAGED IS NOT COMMITTED. On this "
+                       f"workstation that file is present and checkable; in a clone it does "
+                       f"not exist, so the binding is a claim about one machine. Commit it (and "
+                       f"check .gitignore -- a blanket `*.log` "
                        f"will swallow a .log silently) or drop the binding and say the evidence is "
                        f"not retained.")
     return out

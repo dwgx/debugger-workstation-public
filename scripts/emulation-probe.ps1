@@ -18,10 +18,26 @@
     * Ground truth was NOT recovered. The corpus records FLAG{c01_string_table_xor} for
       c01, and the harness returned no decoded string.
 
-  A finding that outranks the blocker: javac reports EmulatorHelper and DefaultEmulator
-  as DEPRECATED AND MARKED FOR REMOVAL. Fixing the setup would mean building a durable
-  capability on a surface Ghidra intends to delete, so that needs deciding before the
-  work, not after.
+  ANSWERED 2026-10-04, and it changes the decision rather than settling it: there IS a
+  supported surface to build on. `ghidra.app.emulator.{EmulatorHelper,DefaultEmulator}` is
+  superseded by `ghidra.pcode.emu.PcodeEmulator`
+  (https://ghidra.re/ghidra_docs/api/ghidra/pcode/emu/PcodeEmulator.html), whose javadoc
+  states its purpose plainly -- "a p-code machine which executes on concrete bytes",
+  "a simple concrete bytes emulator suitable for unit testing and scripting".
+
+  Its `inject(Address, String)` is where this probe's bug is named: "The inject will need to
+  replicate the semantics of that call to the desired fidelity. IMPORTANT: The inject must also
+  return control to the calling function, usually by replicating the conventions of the target
+  platform." The scratch stack was never mapped, so the argument and return-address writes did
+  not land and execution returned to PC=0. The old helper did not make that obligation visible;
+  the new API states it. `createSharedState()` returns a `BytesPcodeExecutorState` whose
+  platform convention is the caller's job, and `checkLoad`/`checkStore` on
+  `AbstractPcodeMachine` exist to assert a store was legal.
+
+  SO the blocker is no longer "is this surface going away" -- it is "the successor exists and
+  the fix is to write against it, mapping the stack per the target platform's convention." That
+  is buildable work and it is the recommended route. Recorded in this header because this file
+  is where a session re-reading the blocker will look, not because a wiki page says so.
 
   Recorded as state=blocked in manifests/capabilities.json rather than claimed.
 

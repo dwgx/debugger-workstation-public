@@ -8,15 +8,21 @@
   present, and a tool that sits on disk looks like a capability until something asks
   whether it runs. This asks, and answers with evidence rather than presence.
 
-  Two independent blockers, both measured:
+  ONE blocker, and the other one was retracted 2026-10-04.
 
-    1. RUNTIME. The build is `net6`. This host has Microsoft.NETCore.App 8.0.31 and
-       10.0.11 and no 6.x. With DOTNET_ROLL_FORWARD=LatestMajor the process produces
-       NO OUTPUT and does not exit within 12 s. A silent hang is worse than an error:
-       a tool that errors tells you it is broken, and a tool that hangs looks exactly
-       like one that would have finished eventually.
+    0. RETRACTED -- RUNTIME. This header used to claim a runtime blocker: "the build
+       is net6, this host has 8.0.31 and 10.0.11 and no 6.x, and with
+       DOTNET_ROLL_FORWARD the process produces NO OUTPUT and does not exit within 12 s".
+       **That inference was wrong, and it was wrong because of how it was measured.** The
+       old start-up check gave the process no stdin, so a tool blocked on its prompt read
+       as a tool that would not launch. Measured directly on 2026-10-04: with no
+       roll-forward the process exits 0x80008096 and prints "You must install or update
+       .NET"; with DOTNET_ROLL_FORWARD it starts, stays alive, and waits for a target.
+       The runtime was never the obstacle. The lesson is in the doctrine file: a probe
+       that cannot tell FAILED-TO-START from WAITING-FOR-A-TARGET will keep inventing
+       blockers, and an invented blocker is worse than none because it looks measured.
 
-    2. TARGET. There is no authorized IL2CPP artifact on this host. global-metadata.dat
+    1. TARGET. There is no authorized IL2CPP artifact on this host. global-metadata.dat
        files DO exist here -- in the VIVE Hub installer -- and they are deliberately not
        used. They are third-party commercial software, and the arsenal gate is explicit:
        the object must be named by the Owner with checkable provenance, and "it is
@@ -71,26 +77,63 @@ Write-Host ("  6.x present        : " + $have6)
 Write-Host ("  tool present       : " + (Test-Path -LiteralPath $tool))
 
 # --- 2. start-up behaviour ----------------------------------------------------
+#
+# MEASURED 2026-10-04, and this block was WRONG until now. It used Start-Process with
+# -RedirectStandardOutput to a FILE, waited, and reported "NO OUTPUT and NO EXIT -- a silent
+# hang, not an error". From that it concluded blocker 1: "the build is net6 and this host has
+# no 6.x runtime".
+#
+# Both halves of that are wrong, and the same measurement error produced both.
+#
+#   * `Start-Process` cannot redirect stdin. The tool therefore had no input source and, once
+#     roll-forward had successfully started it under net10, it BLOCKED reading stdin. An
+#     interactive tool waiting for a prompt and a tool that fails to start are indistinguishable
+#     when you only look at "did it exit, and did the stdout file grow".
+#   * Verified directly on 2026-10-04: with `DOTNET_ROLL_FORWARD=Major` the process stays alive
+#     indefinitely and does NOT print the .NET error. Without it, it exits immediately with
+#     -2147450730 (0x80008096) and prints "You must install or update .NET". So roll-forward
+#     DOES work, and the runtime blocker was never real -- it was this block misreading a
+#     prompt as a hang.
+#
+# The fix is to give the process a real stdin and a real conversation, and to report which of
+# three states it is in: FAILED TO START / STARTED AND WAITING FOR A TARGET / EXITED. A probe
+# that cannot tell those apart will keep inventing blockers, and an invented blocker is worse
+# than none because it looks measured.
 $behaviour = 'not attempted'
 if (Test-Path -LiteralPath $tool) {
     $env:DOTNET_ROLL_FORWARD = 'LatestMajor'
-    $o = Join-Path $env:TEMP 'il2cpp_probe_out.txt'
-    $e = Join-Path $env:TEMP 'il2cpp_probe_err.txt'
-    $p = Start-Process -FilePath $tool -PassThru -NoNewWindow `
-            -RedirectStandardOutput $o -RedirectStandardError $e
-    Start-Sleep -Seconds $HangBudgetSec
-    if ($p.HasExited) {
-        $behaviour = "exited with code $($p.ExitCode) within ${HangBudgetSec}s"
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = $tool
+    $psi.UseShellExecute = $false
+    $psi.RedirectStandardInput = $true
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $proc = [System.Diagnostics.Process]::Start($psi)
+    $stdoutTask = $proc.StandardOutput.ReadToEndAsync()
+    $stderrTask = $proc.StandardError.ReadToEndAsync()
+    # Give it a conversation rather than silence: a newline answers a bare prompt, and a path
+    # would be answered by a run we are not authorised to do. Both are sent as INPUT, never as
+    # an argument, so nothing is analysed.
+    Start-Sleep -Seconds 4
+    try { $proc.StandardInput.WriteLine('') } catch { }
+    Start-Sleep -Seconds 4
+    if ($proc.HasExited) {
+        $behaviour = "STARTED and EXITED with code $($proc.ExitCode)"
     } else {
-        # No output and no exit. Recorded precisely, because this is the shape that
-        # reads as "still working" from a distance.
-        $behaviour = "NO OUTPUT and NO EXIT within ${HangBudgetSec}s -- a silent hang, not an error"
-        try { $p.Kill() } catch { }
+        $behaviour = ("STARTED OK and is WAITING FOR A TARGET -- it did not fail to launch. " +
+                      "Alive for ${HangBudgetSec}s+ with stdin answered; this is an interactive tool, not a hang.")
+        try { $proc.Kill() } catch { }
     }
-    $outLen = 0
-    try { $outLen = (Get-Item $o -ErrorAction SilentlyContinue).Length } catch { }
     Write-Host ("  start-up behaviour : " + $behaviour)
+    $outLen = 0
+    try { $outLen = ($stdoutTask.Result).Length } catch { }
     Write-Host ("  stdout bytes       : " + $outLen)
+    if ($outLen -gt 0) {
+        # Quoted, and only the first lines: the tool may echo a path or a version banner, and
+        # an echo is the receipt that it really ran.
+        $first = (($stdoutTask.Result -split "`n") | Where-Object { $_.Trim() } | Select-Object -First 4) -join ' | '
+        Write-Host ("  first output       : " + $first.Trim())
+    }
 }
 
 # --- 3. authorized target -----------------------------------------------------
@@ -111,9 +154,17 @@ Write-Host ('=' * 78)
 if ($available) {
     Write-Host 'IL2CPP AVAILABLE -- the runtime is present and the tool starts.'
 } else {
-    Write-Host 'IL2CPP ABSENT -- recorded, not hidden. Two blockers:'
-    Write-Host '  1. the build is net6 and this host has no 6.x runtime'
-    Write-Host '  2. no authorized IL2CPP artifact exists to run it against'
+    Write-Host 'IL2CPP ABSENT -- recorded, not hidden. ONE blocker, not two:'
+    Write-Host '  1. no authorized IL2CPP artifact exists to run it against'
+    Write-Host ''
+    Write-Host '  RETRACTED 2026-10-04: the second blocker this probe used to report --'
+    Write-Host '  "the build is net6 and this host has no 6.x runtime" -- WAS NEVER REAL.'
+    Write-Host '  It came from measuring start-up with no stdin, so a tool blocked on a'
+    Write-Host '  prompt read as a tool that would not launch. Measured directly: without'
+    Write-Host '  roll-forward the process exits 0x80008096 with "You must install or update'
+    Write-Host '  .NET"; with DOTNET_ROLL_FORWARD it starts and waits for a target. The'
+    Write-Host '  runtime was never the obstacle.'
+    Write-Host ''
     Write-Host 'What would unblock it: the Owner names an IL2CPP binary they own.'
 }
 Write-Host ('JSON-SUMMARY {"total":2,"pass":0,"fail":2}')
@@ -126,7 +177,6 @@ Write-Host ('JSON-SUMMARY {"total":2,"pass":0,"fail":2}')
     tool_present  = (Test-Path -LiteralPath $tool)
     behaviour     = $behaviour
     blockers      = @(
-        'net6 build; host has .NET 8.0.31 and 10.0.11 only',
         'no authorized IL2CPP artifact; third-party commercial binaries found on this host were deliberately not used'
     )
     unblocked_by  = 'the Owner naming an IL2CPP binary they own'

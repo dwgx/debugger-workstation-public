@@ -1059,6 +1059,348 @@ function Get-TreeHash {
     return ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes(($lines -join "`n"))))).Replace('-', '').ToLowerInvariant()
 }
 
+# -------------------------------------------------------------------- success_when
+#
+# WHAT THIS IS. A capability's `success_when` is the only sentence that says what its
+# output MEANS. This section evaluates that sentence, clause by clause, and refuses a
+# round that satisfies only part of it.
+#
+# MEASURED 2026-10-03, before this section existed. The whole evaluation was two regex
+# literals, both against `$cap.invoke.success_when`:
+#
+#     if ($cap.invoke.success_when -match 'ok == true'      -and $parsed.ok -ne $true) { ... }
+#     if ($cap.invoke.success_when -match 'code is non-null' -and $null -eq $parsed.code) { ... }
+#
+# Three defects, all measured against the 20 declarations in manifests/capabilities.json:
+#
+#   1. ONLY THE FIRST CONJUNCT FIRED. 15 of 20 matched one of the two literals, and only
+#      the clause each literal named was ever read; every SECOND conjunct was read by
+#      nothing. A round could satisfy `ok == true`, violate `count > 0`, and be recorded
+#      a success -- and `$declaredOk` decides the evidence record, the precondition gate
+#      and fact forwarding at once.
+#   2. FIVE FIRED ON NOTHING. Four because both literals read the `invoke` key, and the
+#      string `envelope` appeared nowhere in this file; the fifth
+#      (`mobile.apk.static/invoke`) says `manifest present`, with no `ok` token to match.
+#   3. NOTHING EVER SAID "I COULD NOT CHECK THIS". A declaration that matched no literal
+#      was, by construction, a declaration that was never checked -- and it read exactly
+#      like one that was checked and passed. That is the always-green failure wearing a
+#      declaration as its hat.
+#
+# THE RULE IMPLEMENTED HERE, which is the doctrine this file already keeps: a clause that
+# cannot be parsed is a clause that cannot be shown to hold, so it is NAMED and the round
+# is REFUSED. A half-understood sentence is not a passing sentence. Separately, a clause
+# whose SUBJECT this layer does not hold is named as not-checkable and downgrades the
+# VERDICT through a gate -- it does not refuse the round, because refusing there would
+# refuse the round: this script is not in a position to say the tool failed, and a refusal
+# there would be an accusation dressed as a check. It is named instead, and the
+# `success_when` gate in Get-Verdict refuses to let it pass unnoticed.
+
+# The evaluable span ends at the first mark separating a REQUIREMENT from registry
+# commentary. Every mark is forced by a real declaration: `;` by crypto.jose.parse and
+# four others, ` -- ` by native.ghidra.decompile/envelope, `, ` by native.pe.packer
+# (which continues into "which means Die's own verdict is ..."), and `. ` by
+# native.pe.authenticode / native.signature.certverify / net.pcap.selfparse.
+function Get-SuccessWhenSpan {
+    param([string]$Decl)
+    if (-not $Decl) { return '' }
+    $cut = $Decl.Length
+    foreach ($m in @(';', ' -- ', ', ', '. ')) {
+        $i = $Decl.IndexOf($m)
+        if ($i -ge 0 -and $i -lt $cut) { $cut = $i }
+    }
+    return $Decl.Substring(0, $cut).Trim()
+}
+
+# The clause grammar. Twelve patterns, ORDERED, and the order is the correctness: a
+# clause must be matched by its most specific shape first. `rules_matched is an integer`
+# matched by `field_equals` would compare the field against the string "an integer" and
+# therefore always fail, so the integer shape has to be tried before the `is <value>`
+# shape; `manifest present` has to be tried before anything that expects a verb.
+# Every pattern below is demanded by at least one of the 20 real declarations.
+$script:SwPatterns = @(
+    @{ kind = 'every_item_present'; rx = '(?i)^every\s+[\w\s]+?\s+has\s+a\s+result\s+object$'; why = 'native.ida.list_functions/envelope' },
+    @{ kind = 'object_carries';      rx = '(?i)^an\s+(?<field>[\w.]+)\s+block\s+carrying\s+(?<a>[\w.]+)\s+and\s+(?<b>[\w.]+)$'; why = 'native.pe.hardening/invoke' },
+    @{ kind = 'file_exists';         rx = '^(?<file>[\w.\-]+\.json)\s+(?i:exists)$'; why = 'native.ghidra.decompile and native.ghidra.emulate' },
+    @{ kind = 'field_length_equals'; rx = '^(?<a>[\w.]+)\.length\s*==\s*(?<b>[\w.]+)\.length$'; why = 'native.ida.list_functions/envelope' },
+    @{ kind = 'field_is_integer';    rx = '^(?<field>[\w.]+)\s+(?i:is\s+an\s+integer)$'; why = 'native.behaviour.capa/invoke' },
+    @{ kind = 'field_present';       rx = '^(?<field>[\w.]+)(?:\s+(?:array|field|key|object|list|map))?\s+(?i:is\s+non-null)$'; why = 'code / body.code / image_base' },
+    @{ kind = 'field_absent';        rx = '^(?<field>[\w.]+)(?:\s+(?:array|field|key|object|list|map))?\s+(?i:is\s+absent)$'; why = 'error is absent / body.error is absent' },
+    @{ kind = 'field_present';       rx = '^(?<field>[\w.]+)(?:\s+(?:array|field|key|object|list|map))?\s+(?i:is\s+present)$'; why = 'aslr is present / the rip_operands array is present' },
+    @{ kind = 'field_present';       rx = '^(?<field>[\w.]+)(?:\s+(?:array|field|key|object|list|map))?\s+present$'; why = 'manifest present / pinning present / claims present / triage present' },
+    @{ kind = 'field_gt';            rx = '^(?<field>[\w.]+)\s*>\s*(?<n>-?\d+)$'; why = 'count > 0 / runtime_hook_hit.count > 0' },
+    @{ kind = 'field_nonempty';      rx = '^(?<field>[\w.]+)\s+(?i:non-empty)$'; why = 'stdout non-empty' },
+    @{ kind = 'field_equals';        rx = '^(?<field>[\w.]+)\s*(?i:==|\bis\b)\s*(?<value>.+)$'; why = 'ok == true / verdict is INTERCEPT-PROVEN / verdict == MATCHES_GROUND_TRUTH' }
+)
+
+# Per-clause boilerplate, stripped only after the raw text missed every pattern. `every `
+# and `an ` are NOT here: both are part of the clause shapes the first two patterns need.
+$script:SwBoilerplate = '(?i)^(parsed\s+json\s+(?:has|with)\s+|parsed\s+json\s+|its\s+|the\s+)'
+
+# One clause -> zero or more predicates. Zero means UNRECOGNISED, and the caller refuses
+# the round; that is the whole contract. Recursion handles the one real shape that is a
+# conjunction joined by a LOWERCASE `and`: `summary.json exists and ok == true` and
+# `summary.json EXISTS and its ` + "`ok`" + ` is true`. A lowercase `and` is not a clause
+# separator on its own -- `an image block carrying arch and bintype` is ONE clause, and
+# the split is only attempted after every pattern has already refused the whole part.
+function ConvertTo-SuccessWhenClause {
+    param([string]$Text)
+    $t = ($Text -replace '`', '').Trim()
+    if (-not $t) { return @() }
+
+    $texts = @($t)
+    $stripped = ($t -replace $script:SwBoilerplate, '').Trim()
+    if ($stripped -and $stripped -ne $t) { $texts += $stripped }
+
+    foreach ($probe in $texts) {
+        foreach ($p in $script:SwPatterns) {
+            $m = [regex]::Match($probe, $p.rx)
+            if (-not $m.Success) { continue }
+            $c = [ordered]@{ kind = $p.kind; clause = $t; shape = $probe }
+            foreach ($g in @('field', 'file', 'value', 'a', 'b')) {
+                if ($m.Groups[$g].Success) { $c[$g] = $m.Groups[$g].Value }
+            }
+            if ($p.kind -eq 'field_gt') { $c['n'] = [int]$m.Groups['n'].Value }
+            return @($c)
+        }
+    }
+
+    # `-split` and `-match` are CASE-INSENSITIVE in PowerShell unless told otherwise, and an
+    # earlier version of this line split `an image block carrying arch and bintype` in two
+    # and lost both halves. UPPERCASE `AND` is the registry's conjunction marker; lowercase
+    # `and` joins only inside a clause shape the table above recognises as one clause.
+    # `-split` and `-match` are CASE-INSENSITIVE in PowerShell -- and Windows PowerShell
+    # 5.1's `-split` has no `-CaseSensitive` switch at all -- so an earlier version of this
+    # line divided `an image block carrying arch and bintype` in two and lost both halves.
+    # `[regex]::Split` defaults to case-sensitive, which is what a conjunction marker needs.
+    if ([regex]::IsMatch($t, '\s+and\s+')) {
+        $out = @()
+        foreach ($half in [regex]::Split($t, '\s+and\s+')) {
+            $sub = @(ConvertTo-SuccessWhenClause $half)
+            if ($sub.Count -eq 0) { return @() }
+            $out += $sub
+        }
+        if ($out.Count) { return @($out) }
+    }
+    return @()
+}
+
+# Dotted lookup: `runtime_hook_hit.count`, `body.code`. Returns $null for an absent path,
+# which every caller treats as "absent" -- and for `field_absent` that is the PASS.
+function Get-SuccessWhenField {
+    param($Subject, [string]$Path)
+    $cur = $Subject
+    foreach ($seg in ($Path -split '\.')) {
+        if ($null -eq $cur) { return $null }
+        if ($cur -is [System.Collections.IDictionary]) {
+            if (-not $cur.Contains($seg)) { return $null }
+            $cur = $cur[$seg]
+        } else {
+            $p = $cur.PSObject.Properties[$seg]
+            if ($null -eq $p) { return $null }
+            $cur = $p.Value
+        }
+    }
+    return $cur
+}
+
+# Length as a tool would read it: an array's element count, a string's character count.
+function Get-SuccessWhenLength {
+    param($V)
+    if ($null -eq $V) { return -1 }
+    if ($V -is [string]) { return $V.Length }
+    if ($V -is [System.Collections.ICollection]) { return $V.Count }
+    return @($V).Count
+}
+
+# ONE clause against ONE subject. Three outcomes, never two: `pass`, `fail`, or
+# `no_subject` -- and `no_subject` is not a quiet `pass`, it is the third state.
+function Test-SuccessWhenClause {
+    param($Clause, $Subject, [string]$FileRoot)
+
+    $name = $Clause.clause
+    $res = { param($s, $d) [ordered]@{ state = $s; detail = $d } }
+
+    if ($Clause.kind -eq 'file_exists') {
+        if (-not $FileRoot) {
+            return & $res 'no_subject' "$name : no directory is resolved for this round, so the file cannot be looked for"
+        }
+        $p = Join-Path $FileRoot $Clause.file
+        if (Test-Path -LiteralPath $p -PathType Leaf) { return & $res 'pass' "$name : $p exists" }
+        return & $res 'fail' "$name : $p does not exist"
+    }
+
+    if ($null -eq $Subject) {
+        $wanted = if ($Clause.field) { $Clause.field } else { 'the declared subject' }
+        return & $res 'no_subject' "$name : this layer holds no object carrying $wanted"
+    }
+
+    switch ($Clause.kind) {
+        'field_equals' {
+            $v = Get-SuccessWhenField $Subject $Clause.field
+            $want = $Clause.value
+            if ($want -match '^(?i)true$') { $hit = ($v -eq $true) }
+            elseif ($want -match '^(?i)false$') { $hit = ($v -eq $false) }
+            elseif ($null -eq $v) { $hit = $false }
+            else { $hit = ("$v" -eq $want) }   # case-insensitive: a tool may print MATCHES_ground_truth
+            $got = if ($null -eq $v) { 'field absent' } else { "'$v'" }
+            if ($hit) { return & $res 'pass' "$name : $got" }
+            return & $res 'fail' "$name : got $got, required $want"
+        }
+        'field_present' {
+            $v = Get-SuccessWhenField $Subject $Clause.field
+            if ($null -ne $v) { return & $res 'pass' "$name : present" }
+            return & $res 'fail' "$name : null or absent"
+        }
+        'field_absent' {
+            $v = Get-SuccessWhenField $Subject $Clause.field
+            if ($null -eq $v) { return & $res 'pass' "$name : absent" }
+            return & $res 'fail' "$name : present with value '$v'"
+        }
+        'field_is_integer' {
+            $v = Get-SuccessWhenField $Subject $Clause.field
+            if ($null -eq $v) { return & $res 'fail' "$name : field absent" }
+            $isInt = ($v -is [int] -or $v -is [long] -or $v -is [double] -or $v -is [decimal]) -or ("$v" -match '^-?\d+$')
+            if ($isInt) { return & $res 'pass' "$name : $v is an integer" }
+            return & $res 'fail' "$name : got '$v', which is not an integer"
+        }
+        'field_gt' {
+            $v = Get-SuccessWhenField $Subject $Clause.field
+            $num = 0.0
+            if ($null -eq $v -or -not [double]::TryParse("$v", [ref]$num)) {
+                $got = if ($null -eq $v) { 'field absent' } else { "'$v'" }
+                return & $res 'fail' "$name : got $got, which is not a number above $($Clause.n)"
+            }
+            if ($num -gt $Clause.n) { return & $res 'pass' "$name : $v > $($Clause.n)" }
+            return & $res 'fail' "$name : $v is not > $($Clause.n)"
+        }
+        'field_nonempty' {
+            $v = Get-SuccessWhenField $Subject $Clause.field
+            if ($null -ne $v -and (Get-SuccessWhenLength $v) -gt 0) { return & $res 'pass' "$name : non-empty" }
+            $got = if ($null -eq $v) { 'field absent' } else { 'empty' }
+            return & $res 'fail' "$name : $got"
+        }
+        'field_length_equals' {
+            $la = Get-SuccessWhenLength (Get-SuccessWhenField $Subject $Clause.a)
+            $lb = Get-SuccessWhenLength (Get-SuccessWhenField $Subject $Clause.b)
+            if ($la -lt 0 -or $lb -lt 0) {
+                $which = if ($la -lt 0) { $Clause.a } else { $Clause.b }
+                return & $res 'fail' "$name : $which is absent, so the lengths cannot be compared"
+            }
+            if ($la -eq $lb) { return & $res 'pass' "$name : $($Clause.a)=$la $($Clause.b)=$lb" }
+            return & $res 'fail' "$name : $($Clause.a)=$la but $($Clause.b)=$lb"
+        }
+        'every_item_present' {
+            # The collection is the subject itself when it IS a query array (the transport
+            # envelope's own shape), otherwise its `queries` member. Both shapes are real:
+            # the declaration names queries, and the caller decides which one it holds.
+            $isList = ($Subject -is [System.Collections.IEnumerable]) -and ($Subject -isnot [string]) -and ($Subject -isnot [System.Collections.IDictionary])
+            $coll = if ($isList) { @($Subject) } else { @(Get-SuccessWhenField $Subject 'queries') }
+            if ($coll.Count -eq 0) { return & $res 'fail' "$name : no query collection to check" }
+            $missing = @()
+            $i = 0
+            foreach ($it in $coll) {
+                $i++
+                if ($null -eq (Get-SuccessWhenField $it 'result')) { $missing += "query $i" }
+            }
+            if ($missing.Count) { return & $res 'fail' "$name : $($missing -join ', ') carry no result object" }
+            return & $res 'pass' "$name : $($coll.Count) query/queries each carry a result object"
+        }
+        'object_carries' {
+            # "an image block carrying arch and bintype": SOME element of the output, at the
+            # top level or one step inside a list, must carry both named fields non-null.
+            foreach ($cand in @($Subject.PSObject.Properties | ForEach-Object { $_.Value })) {
+                if ($null -eq $cand -or $cand -is [string]) { continue }
+                foreach ($el in @($cand)) {
+                    if ($null -eq $el -or $el -is [string] -or $el -is [ValueType]) { continue }
+                    $hasA = $null -ne (Get-SuccessWhenField $el $Clause.a)
+                    $hasB = $null -ne (Get-SuccessWhenField $el $Clause.b)
+                    if ($hasA -and $hasB) { return & $res 'pass' "$name : one carries $($Clause.a) and $($Clause.b)" }
+                }
+            }
+            $hasA = $null -ne (Get-SuccessWhenField $Subject $Clause.a)
+            $hasB = $null -ne (Get-SuccessWhenField $Subject $Clause.b)
+            if ($hasA -and $hasB) { return & $res 'pass' "$name : the object itself carries $($Clause.a) and $($Clause.b)" }
+            return & $res 'fail' "$name : no block carries $($Clause.a) and $($Clause.b)"
+        }
+    }
+    return & $res 'no_subject' "$name : no rule for clause kind '$($Clause.kind)'"
+}
+
+# The whole declaration, one section, one subject. Returns everything a reader needs to
+# check the claim by hand: the source string, the clauses with their outcomes, and the two
+# lists that are never allowed to be silent -- `unrecognised` and `no_subject`.
+function Get-SuccessWhenVerdict {
+    param(
+        [string]$Decl,
+        [string]$Section = 'invoke',
+        $Subject = $null,
+        [string]$SubjectLabel = 'none',
+        [string]$FileRoot = $null,
+        [string]$CapabilityId = ''
+    )
+
+    $span = Get-SuccessWhenSpan $Decl
+    $clauses = @(); $unrecognised = @(); $noSubject = @()
+    $fileSubject = $null; $fileLabel = ''
+
+    # `-CaseSensitive`, for the reason measured one function above: an insensitive split
+    # divides `an image block carrying arch and bintype` and loses both halves.
+    foreach ($part in [regex]::Split($span, '\s+AND\s+')) {
+        $preds = @(ConvertTo-SuccessWhenClause $part)
+        if ($preds.Count -eq 0) {
+            $unrecognised += $part.Trim()
+            continue
+        }
+        foreach ($c in $preds) {
+            if ($c.kind -eq 'file_exists') {
+                $r = Test-SuccessWhenClause $c $null $FileRoot
+                $clauses += [ordered]@{ clause = $c.clause; kind = $c.kind; state = $r.state; detail = $r.detail }
+                # A clause that FOLLOWS a file_exists is about that file. This is what makes
+                # `summary.json EXISTS and its ok is true` two requirements about one
+                # artifact rather than one about the filesystem and one about the envelope.
+                if ($r.state -eq 'pass') {
+                    $fileSubject = $null
+                    $fileLabel = "file:$($c.file)"
+                    try { $fileSubject = (Get-Content -LiteralPath (Join-Path $FileRoot $c.file) -Raw | ConvertFrom-Json) }
+                    catch { $fileSubject = $null }
+                }
+                if ($r.state -eq 'no_subject') { $noSubject += $r.detail }
+                continue
+            }
+            $subj = $Subject; $label = $SubjectLabel
+            if ($null -ne $fileSubject -or $fileLabel) {
+                $subj = $fileSubject; $label = $fileLabel
+                if ($null -eq $fileSubject) { $noSubject += "$($c.clause) : $($fileLabel) exists but did not parse as JSON, so it carries no field to read" }
+            }
+            $r = Test-SuccessWhenClause $c $subj $FileRoot
+            $clauses += [ordered]@{ clause = $c.clause; kind = $c.kind; subject = $label; state = $r.state; detail = $r.detail }
+            if ($r.state -eq 'no_subject') { $noSubject += $r.detail }
+        }
+    }
+
+    # A clause this script cannot parse is a clause that cannot be shown to hold, so the
+    # round is refused. A clause whose subject this layer does not hold is NOT a reason to
+    # refuse the round: this script is not in a position to say the tool failed, and
+    # refusing would be an accusation dressed as a check. It is named instead, and the
+    # `success_when` gate in Get-Verdict refuses to let it pass unnoticed.
+    $declared = ($unrecognised.Count -eq 0) -and (@($clauses | Where-Object { $_.state -eq 'fail' }).Count -eq 0)
+
+    return [ordered]@{
+        capability    = $CapabilityId
+        key           = $Section
+        decl          = $Decl
+        span          = $span
+        subject       = $SubjectLabel
+        file_root     = $FileRoot
+        ok            = $declared
+        complete      = ($declared -and ($noSubject.Count -eq 0))
+        clauses       = @($clauses)
+        unrecognised  = @($unrecognised)
+        no_subject    = @($noSubject)
+    }
+}
+
+
 # ------------------------------------------------------------------------------ intake
 
 function Invoke-Intake {

@@ -563,6 +563,49 @@ def find_dead(entries: list[dict], segments: set[str], files: set[str]):
         dead.append(entry)
     return dead, mismatch
 
+def find_absent_pins(entries: list[dict]) -> list[tuple[dict, str]]:
+    """-> entries whose declared dir+entry does not exist on disk.
+
+    ADDED 2026-10-04. Everything else in this file answers "does a SCRIPT name this tool?".
+    This answers a different and prior question: "does the tool the manifest pins actually sit
+    where the manifest says it does?" Nothing asked that, so a manifest can pin a path that
+    was never real, moved, or renamed, and the gate stays green -- the tool is simply filed
+    under "declared but never invoked", which reads like a benign classification rather than a
+    broken pin.
+
+    CORRECTION, and it matters: an earlier session wrote that tools.json has "no per-tool
+    directory in the schema". That was wrong. `dir` is right there on every entry, and the
+    reason 0 of 54 `entry` values resolve from the repo root is that they are relative to
+    `dir`, not to the root. The schema was fine; the question was never being asked.
+
+    NOT a failure by default. Two of 54 legitimately live inside `node_modules/` and `.venv/`,
+    which are installed dependencies rather than shipped tools -- a checkout without a
+    bootstrap has no copy, and that is not a broken pin. They are reported so the reader can
+    see them, but only a pin that is ABSENT and is NOT under an installed-dependency
+    directory fails the run.
+    """
+    INSTALLED_DEP = ("node_modules", ".venv", "venv", "site-packages", "__pycache__")
+    out = []
+    for entry in entries:
+        ent, drv = entry.get("entry"), entry.get("dir")
+        if not ent or not drv:
+            continue
+        full = os.path.join(REPO, drv.replace("/", os.sep), ent.replace("/", os.sep))
+        if not os.path.exists(full):
+            out.append((entry, full))
+    return out
+
+
+def absent_pin_reason(entry: dict, full: str) -> str:
+    parts = {p.lower() for p in full.replace("\\", "/").split("/")}
+    if parts & {"node_modules", ".venv", "venv", "site-packages", "__pycache__"}:
+        return ("inside an installed-dependency directory: a checkout without a bootstrap has "
+                "no copy. Not a broken pin, so this does not fail the run.")
+    if os.path.exists(os.path.join(REPO, str(entry.get("dir") or ""))):
+        return (f"its dir exists but {entry.get('entry')!r} is not in it -- the tool was moved, "
+                f"renamed or removed and the manifest still pins the old name")
+    return f"neither the dir {entry.get('dir')!r} nor the entry exists -- this pin was never real"
+
 
 def dead_reason(entry: dict) -> str:
     if entry.get("in_tree"):
@@ -595,6 +638,9 @@ def main() -> int:
     inv, excl = scan(sources)
     segments, seg_files = corpus_segments(sources)
     dead, mismatch = find_dead(entries, segments, seg_files)
+    absent_pins = find_absent_pins(entries)
+    broken_pins = [(e, f) for e, f in absent_pins
+                   if "installed-dependency" not in absent_pin_reason(e, f)]
 
     undeclared: list[tuple[str, str]] = []
     buckets: dict[str, list[str]] = {"declared": [], "in-tree": [], "os": []}
@@ -643,6 +689,16 @@ def main() -> int:
                   f"site(s) of {len(rec['sites'])}")
         print(f"             {reason}; {rec['spawns']} spawn / {rec['refs']} reference")
     print()
+    print("DECLARED PINS THAT DO NOT RESOLVE ON DISK  (dir + entry, relative to the repo root)")
+    if not absent_pins:
+        print("  none -- every declared dir+entry exists")
+    for entry, full in sorted(absent_pins, key=lambda m: (m[0]["category"], m[0]["name"])):
+        broken = (entry, full) in broken_pins
+        print(f"  {'BROKEN' if broken else 'note  '}  {entry['name']:<28} [{entry['category']}]")
+        print(f"           {full}")
+        print(f"           {absent_pin_reason(entry, full)}")
+    print()
+
 
     print("DECLARED BUT NEVER INVOKED  (reported, does not fail -- see docstring)")
     if not dead:
@@ -668,8 +724,9 @@ def main() -> int:
     print()
 
     print(f"tools: {len(entries)} declared, {len(inv)} invoked, "
-          f"{len(undeclared)} undeclared, {len(dead)} dead")
-    return 1 if undeclared else 0
+          f"{len(undeclared)} undeclared, {len(dead)} dead, "
+          f"{len(broken_pins)} broken pin(s)")
+    return 1 if (undeclared or broken_pins) else 0
 
 
 # --- self-test ----------------------------------------------------------------
