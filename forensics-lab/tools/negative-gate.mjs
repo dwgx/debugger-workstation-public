@@ -97,6 +97,13 @@ const WORK = process.env.D12_FORENSICS_NEGGATE_WORK || path.join(os.tmpdir(), `d
  * artefact" — a real finding. 2 means "I could not measure". Collapsing them would let an
  * unmeasurable gate read as a passing control, which is precisely what a negative control
  * must never do.
+ *
+ * COLLISION NOTE, kept because a reader diffing this file will hit it: the integrating agent
+ * landed an equivalent guard here independently while this one was being written, and both were
+ * briefly present — the first at line 87ff, the second below it, with the second unreachable
+ * because the first exits first. Two guards for one job is the same "only add, never remove"
+ * failure this file is meant to catch, so the duplicate was deleted rather than left to rot. One
+ * guard, at module scope, above every fixture the run builds.
  */
 const ALLOWED = new Set([]);   // no arguments are honoured; declared empty rather than omitted
 const STRAY = process.argv.slice(2).filter((a) => !ALLOWED.has(a));
