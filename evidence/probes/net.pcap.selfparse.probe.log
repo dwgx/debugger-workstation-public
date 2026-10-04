@@ -1,13 +1,13 @@
 # assert-probes evidence: net.pcap.selfparse probe
 # command: python net-reverse\tools\pcap_reader.py "$env:TEMP\net-reverse-lab\pcaps\dns-basic.pcap"
 # exit: 0
-# seconds: 0.18
+# seconds: 0.16
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
-# produces: D:\Software\Tool\WorkStation\debugger\native-lab\out\last-run-pcap_reader.json
-#   sha256: 0131180553a837fafc87068312eff664e115ec2766fe57ec3f03d90bea29ab1a
-#   bytes: 1038
+# produces: D:\Software\Tool\WorkStation\debugger\net-reverse\out\last-run-pcap_reader.json
+#   sha256: 9d8765bdf0ade71ca92262959436f8816afbd698b1dfe49c64318c4546c30df5
+#   bytes: 1121
 #   written-by-this-run: yes
 ------------------------------------------------------------------------
-{"ok": true, "exit": 0, "file": "%USERPROFILE%\\AppData\\Local\\Temp\\net-reverse-lab\\pcaps\\dns-basic.pcap", "pcap": {"version": "2.4", "snaplen": 262144, "linktype": 1, "endian": "little"}, "packets": 4, "bytes_on_wire": 348, "captured_bytes": 348, "frames_over_snaplen": 0, "ipv4": 4, "ipv6": 0, "tcp": 0, "udp": 4, "other_proto": 0, "dns_queries": 2, "dns_responses": 2, "distinct_flows": 2, "top_ports": [[4, 53211], [4, 53]], "limits": "NO REASSEMBLY AND NO TLS. A DNS name split across packets, or any encrypted payload, is not decoded here -- this reader counts what it can see and reports the rest as a limit rather than as an absence. Agreement with TShark on the counts is corroboration of the COUNTS only; it says nothing about names, and neither instrument here can say anything about content."}
-ARTIFACT native-lab/out/last-run-pcap_reader.json
+{"ok": true, "exit": 0, "file": "%USERPROFILE%\\AppData\\Local\\Temp\\net-reverse-lab\\pcaps\\dns-basic.pcap", "pcap": {"version": "2.4", "snaplen": 262144, "linktype": 1, "endian": "little"}, "packets": 4, "bytes_on_wire": 348, "captured_bytes": 348, "frames_over_snaplen": 0, "ipv4": 4, "ipv6": 0, "tcp": 0, "udp": 4, "other_proto": 0, "dns_queries": 2, "dns_responses": 2, "fragments_first": 0, "fragments_continuation": 0, "ipv6_ext_headers": 0, "distinct_flows": 2, "top_ports": [[4, 53211], [4, 53]], "limits": "NO REASSEMBLY AND NO TLS. A DNS name split across packets, or any encrypted payload, is not decoded here -- this reader counts what it can see and reports the rest as a limit rather than as an absence. Agreement with TShark on the counts is corroboration of the COUNTS only; it says nothing about names, and neither instrument here can say anything about content."}
+ARTIFACT net-reverse/out/last-run-pcap_reader.json

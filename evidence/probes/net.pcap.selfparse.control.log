@@ -1,7 +1,7 @@
 # assert-probes evidence: net.pcap.selfparse control
 # command: python net-reverse\tools\pcap_reader.py README.md
 # exit: 2
-# seconds: 0.18
+# seconds: 0.15
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
 ------------------------------------------------------------------------
