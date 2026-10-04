@@ -114,6 +114,13 @@ INDEX = "INDEX.md"
 # a non-page being counted as a page. `pages` drops it, so the counts are now 170 / 170.
 NOT_PAGES = ("literature/raw/",)
 
+# EDITOR BACKUPS ARE NOT PAGES. Measured 2026-10-04: a transient `INDEX.md~1` left by
+# whatever last wrote the file was scanned as a wiki page, counted in the total, and
+# would have been reported as an unreachable orphan -- an invented violation. A gate
+# that reports violations nobody wrote trains its reader to ignore it. Same filter as
+# doc-facts.py, which hit the identical file.
+BACKUP_SUFFIXES = re.compile(r"(~\d*|\.bak|\.orig|\.swp|\.rej)$")
+
 
 def _norm(target: str) -> str:
     """Strip a link down to the thing on disk: fragment, query, and title are not paths."""
@@ -191,7 +198,10 @@ def audit(wiki: pathlib.Path) -> tuple[list[str], list[str], int]:
             if dest.suffix == ".md" and dest.exists() and wiki.resolve() in dest.parents:
                 stack.append(dest)
 
-    on_disk = {p.resolve() for p in wiki.rglob("*.md")}
+    # Editor backups are not pages. See the note in doc-facts.py: a transient `INDEX.md~1`
+    # would otherwise be reported as an unreachable wiki page -- an invented violation.
+    on_disk = {p.resolve() for p in wiki.rglob("*.md")
+                if not BACKUP_SUFFIXES.search(p.name) and not p.name.startswith(".")}
     orphans = []
     for p in sorted(on_disk - seen):
         rel = p.relative_to(wiki.resolve()).as_posix()
@@ -339,7 +349,8 @@ def main() -> int:
     # "171 pages, 170 reachable" and then TREE CLEAN. A reader reads that 1-page gap as the
     # root; it was a non-page. 170/170 is the honest pair.
     total = len([p for p in (wiki / "wiki").rglob("*.md")
-                 if not p.relative_to(wiki / "wiki").as_posix().startswith(NOT_PAGES)])
+                 if not BACKUP_SUFFIXES.search(p.name)
+                 and not p.relative_to(wiki / "wiki").as_posix().startswith(NOT_PAGES)])
 
     if args.count:
         print(f"reachable: {reach}  unreachable: {len(orphans)}  dangling: {len(dangling)}  "

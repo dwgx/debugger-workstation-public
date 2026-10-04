@@ -414,8 +414,17 @@ def main() -> int:
     # cries wolf on archived truth is the failure this script exists to prevent, and it was
     # measured: the first run reported 16 violations of which 2 were exactly that.
     SKIP = {".git", ".agent", "literature"}
+    BACKUP_SUFFIXES = re.compile(r"(~\d*|\.bak|\.orig|\.swp|\.rej)$")
+    # EDITOR BACKUPS ARE NOT PAGES. Measured 2026-10-04: a transient `INDEX.md~1` left by
+    # whatever last wrote the file was scanned as a wiki page and reported a stale numeric
+    # claim that no one had written -- the drift was in a backup of a file that was fine.
+    # A gate that reports invented violations trains its reader to ignore it, so the filter
+    # belongs here rather than in a cleanup someone has to remember. `~`, `.bak`, `.orig`,
+    # `.swp` and a leading dot are all excluded; none of them is content anyone cites.
     targets = sorted(p for p in wiki.rglob("*.md")
-                     if not SKIP.intersection(p.relative_to(wiki).parts))
+                     if not SKIP.intersection(p.relative_to(wiki).parts)
+                     and not BACKUP_SUFFIXES.search(p.name)
+                     and not p.name.startswith("."))
 
     violations: list[str] = []
     unchecked = 0
