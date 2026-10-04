@@ -169,15 +169,15 @@ python scripts\assert-probes.py --list
 Prints a `SKIP` with a reason for each. That reason is a claim about the world, not about the
 script — verify it before you relay it (§2.3 is what happens when you don't).
 
-**23 of 27 are `state: observed`. That is NOT the same as "falsifiable".** Only **22 of 27**
+**23 of 27 are `state: observed`. That is NOT the same as "falsifiable".** Only **25 of 27**
 declare `probe.produces` — a path-bound artifact whose bytes must land on disk during the run.
 The rest are verified by **string matching**, and `assert-probes.py` says so itself on every OK:
 *"this entry declares no probe.produces, so this checker matched STRINGS only, and a stub which
 prints them satisfies it."*
 
 **So do not tell anyone 23 capabilities are cryptographically bound.** Say: 23 observed,
-**22 artifact-bound** -- 20 of the 23 observed. The three frida entries and
-`ops.skill.security` leave nothing behind yet; `native.crosscompare.ghidra` has no command. The gap is the honest measure of what a stub could still fake here.
+**25 artifact-bound** -- **all 23 observed capabilities**. The two without are
+`dynamic.device.frida` (no device) and `native.crosscompare.ghidra` (no runnable command). The gap is the honest measure of what a stub could still fake here.
 Closing it is mechanical — `scripts/probe_artifact.py` does it in one call per probe — and it is
 the next thing to close.
 

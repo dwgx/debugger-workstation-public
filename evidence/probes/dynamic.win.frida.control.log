@@ -1,0 +1,15 @@
+# assert-probes evidence: dynamic.win.frida control
+# command: & '.\Mobile-Android\objection\.venv\Scripts\frida.exe' -f "$env:TEMP\fridaprobe\target.exe" -q -t 6 -e 'var m=Process.mainModule;console.log(`NEG_CTL module_base=${m.base}`);console.log(`NEG_CTL handing the STATIC va 0x140001080 straight to Interceptor.attach`);Interceptor.attach(ptr(`0x140001080`),{onEnter:function(){}});'
+# exit: 1
+# seconds: 0.52
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+Spawned `%USERPROFILE%\AppData\Local\Temp\fridaprobe\target.exe`. Resuming main thread!
+usage: %USERPROFILE%\AppData\Local\Temp\fridaprobe\target.exe <password>
+NEG_CTL module_base=0x7ff6e4270000
+NEG_CTL handing the STATIC va 0x140001080 straight to Interceptor.attach
+Error: access violation accessing 0x140001080
+    at value (/frida/runtime/core.js:373)
+    at <eval> (<input>:1)
+Process terminated

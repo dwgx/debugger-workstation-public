@@ -1266,7 +1266,7 @@
         "expect_exit": 0,
         "last_run": "2026-09-30",
         "run_log": "evidence/probes/re.corpus.solve.probe.log",
-        "sha256": "3e1642363b6ab7ca37393c447cf9da24fca3e1e4b4a6e2d0b4215f8f26ab3d6b",
+        "sha256": "c08dff4df2336b09a2d070628982a99fbcae0704ce4b387319decc0c6fd917a5",
         "last_summary": "20 checks, 5 negative controls",
         "produces": "crackme-corpus/out/last-run-crackme_corpus.json",
         "produces_note": "Added 2026-10-05. Until now this entry matched STRINGS only. The loop now writes its challenge/check/negative-control record to disk, which matters MORE here than elsewhere: this is the one corpus the station builds itself, so a stub that prints 'CORPUS CLOSED' is the easiest stub in the tree to imagine."
@@ -1554,7 +1554,7 @@
         }
       ],
       "probe": {
-        "command": "& '.\\Mobile-Android\\objection\\.venv\\Scripts\\frida.exe' -f \"$env:TEMP\\fridaprobe\\target.exe\" -q -t 6 -e 'var m=Process.mainModule;console.log(`FRIDA_WIN module_base=${m.base}`);console.log(`FRIDA_WIN symbol_main=${DebugSymbol.fromName(`main`)}`);console.log(`FRIDA_WIN export_printf=${Module.getGlobalExportByName(`printf`)}`);console.log(`FRIDA_WIN rebased_main=${m.base.add(0x1080)}`);Interceptor.attach(m.base.add(0x1080),{onEnter:function(){console.log(`FRIDA_WIN HIT main`);}});'",
+        "command": "python scripts\\probe_wrapper.py --tool dynamic_win_frida --out-dir probe-artifacts -- powershell -NoProfile -ExecutionPolicy Bypass -File scripts\\probes\\dynamic_win_frida.ps1",
         "expect": "FRIDA_WIN symbol_main=0",
         "expect_exit": 0,
         "prepare": "New-Item -ItemType Directory -Force -Path \"$env:TEMP\\fridaprobe\" | Out-Null; Copy-Item '.\\crackme-corpus\\out\\c01-stringobf.exe' \"$env:TEMP\\fridaprobe\\target.exe\" -Force",
@@ -1563,7 +1563,9 @@
         "flake_note": "MEASURED FLAKE, and it is recorded because a probe that passes three times out of four is how a gate gets muted. 2026-10-03: inside one bounded verify-all sweep this probe reported DRIFT twice -- exit 1 where the entry declares 0, and the recorded expect string 'FRIDA_WIN symbol_main=0' absent. Run on its own, twice, it passed; and a later full sweep with the same budget passed it again with 0 DRIFT. The probe spawns a Windows PE under Frida's own `-t 6` second timeout, so on a loaded host the timeout can expire before the script prints, and the recorded expect then never appears because the run was cut short. NOT fixed by raising `-t`: loosening a timeout because a check failed is the move this registry exists to refuse. It is recorded so the next red run on this entry is read as 're-measure it alone first', which is what distinguishes a flake from a regression.",
         "last_summary": "target_sha256=2d59a3c5d3281782e254ed84d14f43768251096240cb85c492f56018b56fbf09 | Spawned `%USERPROFILE%\\AppData\\Local\\Temp\\fridaprobe\\target.exe`. Resuming main thread! | usage: ... <password> | FRIDA_WIN module_base=0x7ff7c3a30000 | FRIDA_WIN symbol_main=0 | FRIDA_WIN export_printf=0x7ffcf0e5d280 | FRIDA_WIN rebased_main=0x7ff7c3a31080 | Process terminated | PROBE EXIT=0 | NOTE: no `FRIDA_WIN HIT main` line was printed -- no callback fired, and does_not_prove says so.",
         "run_log": "evidence/probes/dynamic.win.frida.probe.log",
-        "sha256": "9225f60bab29188ae5551bf284193ce78596bb9e017dc0be8152054f58ad5907"
+        "sha256": "b18ff82729642ff8c5f8030a89ef88d833e93f324940d3e388c65602d611b579",
+        "produces": "probe-artifacts/last-run-dynamic_win_frida.json",
+        "produces_note": "Added 2026-10-05 via scripts/probe_wrapper.py. Until now this entry matched STRINGS only and printed its own weakness on every OK: 'NOT a claim that the instrument ran: a stub which prints them satisfies it.'\n\nTHE ONE-LINER WAS MOVED, NOT REWRITTEN. assert-probes.py writes a registry command byte-for-byte into a .ps1 and runs `powershell -File`; its docstring records that two earlier designs which sniffed for PowerShell markers and re-wrapped in `powershell -Command \"...\"` missed 8 commands and destroyed every command containing a double quote. So the original one-liner sits verbatim in scripts\\probes\\dynamic_win_frida.ps1 and the registry names that file.\n\nThe wrapper records the command, exit code, stdout, stderr and duration, and PASSES THE CHILD'S EXIT CODE THROUGH -- verified by running it on a child that exits 3 and getting 3 back -- so adding it cannot turn a red into a green. It deliberately does not judge the output: a wrapper that decided whether a run succeeded would be a second verdict beside assert-probes', and two verdicts drift."
       },
       "negative_control": {
         "id": "dynamic.win.frida.static_va_unrebased",
@@ -2398,7 +2400,7 @@
         }
       ],
       "probe": {
-        "command": "& \"$env:USERPROFILE\\.local\\bin\\skillspector.exe\" scan skills --no-llm --fail-on-findings --fail-on-incomplete",
+        "command": "python scripts\\probe_wrapper.py --tool ops_skill_security --out-dir probe-artifacts -- powershell -NoProfile -ExecutionPolicy Bypass -File scripts\\probes\\ops_skill_security.ps1",
         "expect": "Recommendation  SAFE",
         "expect_exit": 0,
         "expect_note": "CORRECTED 2026-10-02 by assert-probes.py. This read '\"issues\": []' -- JSON that SkillSpector v2.12.0 has never emitted. The tool prints a BOXED TEXT report: a risk block reading 'Score 0/100', 'Severity LOW', 'Recommendation SAFE', then a component table. Both substrings were re-derived from a live run and verified present before being written down, which is the whole point of checking instead of trusting.",
@@ -2407,9 +2409,11 @@
           "status": "verified"
         },
         "run_log": "evidence/probes/ops.skill.security.probe.log",
-        "sha256": "2542e17e8ce11584f0726ae16aab422a4591729b7a6a75424567303d0b6a2496",
+        "sha256": "cc587d4d69d1a068ba22c4a755373090b62d7f7541c16c8ab612fa1afb6591c5",
         "run_summary": "measured 2026-10-02 in that session, output pasted into the parent transcript and summarised in docs/research/ecosystem-2026-10-02.md: risk_assessment {score 0, severity LOW, recommendation SAFE, max_issue_severity NONE}, issues [], analysis_completeness {total_components 6, scanned_components 6, coverage_percent 100.0, is_complete true, execution_successful true, fully_inspected_files 6, partially_inspected_files 0, entirely_uninspected_files 0}. Negative control in the same session: exit 1, score 39, MEDIUM, CAUTION, max_issue_severity HIGH, 3 issues.",
-        "run_summary_note": "MOVED HERE 2026-10-03. This text WAS the value of run_log, and R17 accepted any non-empty string there as proof that state=observed is bound to a run -- which is the field gate.ps1 filters on when it decides what a grant may contain. A sentence is not a run. The file above is the run; this is what somebody read in it, which is a different claim and now says so."
+        "run_summary_note": "MOVED HERE 2026-10-03. This text WAS the value of run_log, and R17 accepted any non-empty string there as proof that state=observed is bound to a run -- which is the field gate.ps1 filters on when it decides what a grant may contain. A sentence is not a run. The file above is the run; this is what somebody read in it, which is a different claim and now says so.",
+        "produces": "probe-artifacts/last-run-ops_skill_security.json",
+        "produces_note": "Added 2026-10-05 via scripts/probe_wrapper.py. Until now this entry matched STRINGS only and printed its own weakness on every OK: 'NOT a claim that the instrument ran: a stub which prints them satisfies it.'\n\nTHE ONE-LINER WAS MOVED, NOT REWRITTEN. assert-probes.py writes a registry command byte-for-byte into a .ps1 and runs `powershell -File`; its docstring records that two earlier designs which sniffed for PowerShell markers and re-wrapped in `powershell -Command \"...\"` missed 8 commands and destroyed every command containing a double quote. So the original one-liner sits verbatim in scripts\\probes\\ops_skill_security.ps1 and the registry names that file.\n\nThe wrapper records the command, exit code, stdout, stderr and duration, and PASSES THE CHILD'S EXIT CODE THROUGH -- verified by running it on a child that exits 3 and getting 3 back -- so adding it cannot turn a red into a green. It deliberately does not judge the output: a wrapper that decided whether a run succeeded would be a second verdict beside assert-probes', and two verdicts drift."
       },
       "negative_control": {
         "id": "ops.skill.security.planted_poison",
@@ -2584,14 +2588,16 @@
         }
       ],
       "probe": {
-        "command": "$py='.\\Mobile-Android\\objection\\.venv\\Scripts\\python.exe'; $d=Join-Path $env:TEMP 'fridagate'; New-Item -ItemType Directory -Force -Path $d | Out-Null; Copy-Item '.\\crackme-corpus\\out\\c01-stringobf.exe' (Join-Path $d 'target.exe'); & $py '.\\native-lab\\tools\\frida_spawn_gate.py' (Join-Path $d 'target.exe') positive",
+        "command": "python scripts\\probe_wrapper.py --tool dynamic_win_frida_intercept --out-dir probe-artifacts -- powershell -NoProfile -ExecutionPolicy Bypass -File scripts\\probes\\dynamic_win_frida_intercept.ps1",
         "expect": "verdict=INTERCEPT-PROVEN",
         "expect_exit": 0,
         "last_run": "2026-10-02",
         "run_log": "evidence/probes/dynamic.win.frida.intercept.probe.log",
-        "sha256": "9006f67a6407c718ad78931a268e5b8a4fe4bbb4386783dbd26054721c73e81e",
+        "sha256": "c608f916bd4583e0bc21c94a6701f66eed6a8625b7263a25ea3e296ee77edc48",
         "run_summary": "run from the committed recipe at native-lab/tools/frida_spawn_gate.py: [pe] magic 0x20b entry_rva 5584 size_of_image 163840; [spawn] pid=46292 suspended=True; [js] module target.exe base 0x7ff79e010000 size 163840; [js] rebase ok=true target 0x7ff79e0115d0 inImage=true; [js] attached; [load] script loaded while main thread suspended; [resu] main thread resumed; ACCEPTED; FLAG{c01_string_table_xor}; [js] HIT at 0x7ff79e0115d0 tid 44248; [end] hit count=1; [end] verdict=INTERCEPT-PROVEN; exit 0",
-        "expect_note": "expect is the CONTRACT and it is deliberately a verdict string rather than the word HIT: a hook firing on some other address would still print HIT and still mean nothing. INTERCEPT-PROVEN is printed only after hit count>0 AND inImage true AND the address equals base+entry_rva. Read the [load] line too -- it is the ordering this entry exists to prove."
+        "expect_note": "expect is the CONTRACT and it is deliberately a verdict string rather than the word HIT: a hook firing on some other address would still print HIT and still mean nothing. INTERCEPT-PROVEN is printed only after hit count>0 AND inImage true AND the address equals base+entry_rva. Read the [load] line too -- it is the ordering this entry exists to prove.",
+        "produces": "probe-artifacts/last-run-dynamic_win_frida_intercept.json",
+        "produces_note": "Added 2026-10-05 via scripts/probe_wrapper.py. Until now this entry matched STRINGS only and printed its own weakness on every OK: 'NOT a claim that the instrument ran: a stub which prints them satisfies it.'\n\nTHE ONE-LINER WAS MOVED, NOT REWRITTEN. assert-probes.py writes a registry command byte-for-byte into a .ps1 and runs `powershell -File`; its docstring records that two earlier designs which sniffed for PowerShell markers and re-wrapped in `powershell -Command \"...\"` missed 8 commands and destroyed every command containing a double quote. So the original one-liner sits verbatim in scripts\\probes\\dynamic_win_frida_intercept.ps1 and the registry names that file.\n\nThe wrapper records the command, exit code, stdout, stderr and duration, and PASSES THE CHILD'S EXIT CODE THROUGH -- verified by running it on a child that exits 3 and getting 3 back -- so adding it cannot turn a red into a green. It deliberately does not judge the output: a wrapper that decided whether a run succeeded would be a second verdict beside assert-probes', and two verdicts drift."
       },
       "negative_control": {
         "id": "dynamic.win.frida.intercept.rebase_and_address_failures",

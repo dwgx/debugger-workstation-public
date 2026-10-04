@@ -1,0 +1,32 @@
+# assert-probes evidence: dynamic.win.frida.intercept control
+# command: powershell -NoProfile -ExecutionPolicy Bypass -File headless-lab\tools\frida_gate_control.ps1
+# exit: 3
+# seconds: 0.67
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+{"ok": true, "exit": 0, "mode": "neg-badaddr", "target": "%USERPROFILE%\\AppData\\Local\\Temp\\fridagate-ud_y57hm\\target.exe", "verdict": "NEGCTL-OK bad-address", "runtime_hook_hit": {"at": null, "count": 0, "tid": null}, "instrument_ordering": "spawn(suspended) -> create_script -> load -> resume. The CLI does the opposite and therefore cannot intercept; this ordering is the whole entry.", "caveat": "SELF-BUILT CORPUS TARGETS ONLY, run from a %TEMP% copy -- the repository original is staged and never executed. Instrumenting your own program on your own machine is not running a sample; running an UNTRUSTED one here is a STOP."}
+STAGE1_EXIT=0
+[stage] copied to %TEMP% %USERPROFILE%\AppData\Local\Temp\fridagate-ud_y57hm\target.exe (143872 bytes); the repository original is never executed
+[pe  ] {"magic": "0x20b", "entry_rva": 5584, "size_of_image": 163840}
+[spawn] pid=32556 suspended=True
+[js  ] {"kind": "module", "name": "target.exe", "base": "0x7ff772f00000", "size": 163840, "path": "%USERPROFILE%\\AppData\\Local\\Temp\\fridagate-ud_y57hm\\target.exe"}
+[js  ] {"kind": "rebase", "ok": true, "target": "0x7ff772f29000", "inImage": false}
+[js  ] {"kind": "attach-error", "target": "0x7ff772f29000", "message": "access violation accessing 0x7ff772f29000"}
+[load] script loaded while main thread suspended
+[end] module base resolved: 0x7ff772f00000 (target.exe)
+[end] rebase succeeded: yes -- target 0x7ff772f29000 is outside the image
+[end] attach failed for its OWN reason: access violation accessing 0x7ff772f29000
+[end] verdict=NEGCTL-OK bad-address (distinguishable from rebase failure)
+[stage] copied to %TEMP% %USERPROFILE%\AppData\Local\Temp\fridagate-6lmw2l3q\target.exe (143872 bytes); the repository original is never executed
+[pe  ] {"magic": "0x20b", "entry_rva": 5584, "size_of_image": 163840}
+[spawn] pid=45344 suspended=True
+[js  ] {"kind": "module", "name": "target.exe", "base": "0x7ff72e370000", "size": 163840, "path": "%USERPROFILE%\\AppData\\Local\\Temp\\fridagate-6lmw2l3q\\target.exe"}
+[js  ] {"kind": "rebase", "ok": false, "base": "null", "reason": "target module not loaded: base is null"}
+[js  ] {"kind": "compute-error", "message": "cannot read property 'base' of null"}
+[load] script loaded while main thread suspended
+[end] main-module base still reported: 0x7ff72e370000
+[end] reason=target module not loaded: base is null
+[end] failed while COMPUTING the address (no base): cannot read property 'base' of null
+[end] attach never attempted: attach_error=None
+[end] verdict=REBASE-FAILURE
