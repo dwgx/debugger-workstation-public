@@ -707,8 +707,11 @@ try {
    *
    * Written in the `finally` so it exists on EVERY exit path, including the failures: a control
    * that only leaves evidence when it passes is a control whose failures are unreviewable. The
-   * `artifact_ok` field says whether the comparison actually completed, so a reader can tell an
-   * artifact of a refusal from an artifact of a pass without parsing the whole summary.
+   * `findings` and `verdict` are copied from the summary the gate actually builds, whose real keys
+   * are arms / control / findings / verdict -- measured, not assumed. My first version of this block
+   * wrote `artifact_ok: summary.artifact_ok === true`, a key the summary has never had, so the
+   * field was permanently False: decoration that looks like evidence. `verdict` is what says OK or
+   * CONTROL FAILED, so it is the field a reader wants.
    */
   try {
     const outDir = path.join(HERE, '..', 'out');
@@ -720,10 +723,12 @@ try {
         schema: 'headless-lab/xcompare@1',
         control: summary.control,
         exit: exitCode,
-        artifact_ok: summary.artifact_ok === true,
+        findings: summary.findings,
+        verdict: summary.verdict,
         summary,
-        note: 'Written on every exit path. `ok` means the honest-refusal shape held; '
-            + 'artifact_ok says the comparison itself completed rather than bailing out.',
+        note: 'Written on every exit path. `ok` is the control\'s own verdict (exit 1 held); '
+            + '`findings` and `verdict` are the gate\'s, so an artifact of a refusal can be told '
+            + 'from an artifact of a pass without parsing the arms.',
       }, null, 2) + '\n',
       'utf8');
     line(`ARTIFACT ${path.join(outDir, 'last-run-xcompare.json')}`);
