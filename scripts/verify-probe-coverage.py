@@ -251,6 +251,16 @@ def main() -> int:
     print("=" * 100)
     print(f"registry : {reg}")
     print(f"entries  : {len(caps)}")
+    # STATED AT THE TOP, not only at the bottom. This script exits 0 whatever the counts are, by
+    # design: a D grade is a fact about what the registry declares, not a build failure. It ran
+    # inside verify-all.ps1 for a long time with that fact printed only in the final paragraph,
+    # which means a reader skimming twenty cyan `=== <name>` headers saw one more gate-shaped
+    # line among them that could never go red. The step is already named "(report)"; this makes
+    # the distinction survive being skimmed rather than only being read.
+    print("THIS IS A REPORT, NOT A GATE. It exits 0 whatever the counts are. A grade is a fact "
+          "about")
+    print("what the registry DECLARES, not a build failure -- read it, do not gate on it.")
+    print()
     if harness is None:
         print(f"harness  : assert-probes.py SKIP set UNAVAILABLE ({harness_err}); the 'never "
               f"executes' signal below is measured from probe.command only, which is a NARROWER "
