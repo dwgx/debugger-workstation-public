@@ -119,10 +119,32 @@ REG = REPO / "manifests" / "capabilities.json"
 # facts about the registry rather than about the code: state=planned, state=blocked, needs a
 # device, needs an authorized artifact.
 SKIP = {
-    "native.crosscompare.ghidra": "state=planned; no runnable command exists to check",
-    "native.ghidra.emulate": "state=blocked; needs a runtime the registry does not have",
-    "dynamic.device.frida": "state=absent; needs an attached device",
-    "native.il2cpp.symbols": "state=absent; needs an extracted IL2CPP metadata dump",
+    # The reason string is printed with every SKIP, and two of these carry a second sentence that
+    # is the part a reader actually needs. Measured 2026-10-05: `native.ghidra.emulate` and
+    # `native.il2cpp.symbols` have probes that RUN and PASS -- exit 0, output containing the
+    # recorded expect string -- and are skipped anyway. That is not by itself wrong: their expect
+    # strings are the blockage markers, which makes each probe a detector for the blockage ENDING.
+    # But because every non-observed entry is skipped, a blockage that goes away is invisible.
+    # So the SKIP line says so, rather than leaving it as a field in capabilities.json that
+    # nothing prints.
+    "native.crosscompare.ghidra":
+        "state=planned; no runnable command exists to check. NOTE: its probe.command was prose "
+        "until R36 flagged it on 2026-10-05; `powershell -File <prose>` exits 0 after printing "
+        "an error, so it would have read as a passing probe.",
+    "native.ghidra.emulate":
+        "state=blocked; needs a runtime the registry does not have. MEASURED 2026-10-05: its "
+        "probe DOES run and pass -- scripts/emulation-probe.ps1 exits 0 and prints the recorded "
+        "'PCODE EMULATION BLOCKED'. Skipped, so if the emulator API is ever fixed nothing will "
+        "report it.",
+    "dynamic.device.frida":
+        "state=absent; needs an attached device. VERIFIED 2026-10-05: frida 17.17.0 is present "
+        "and runs; its -U channel prints 'Waiting for USB device to appear...'. The tool is fine, "
+        "the hardware is absent -- genuinely blocked, not unexamined.",
+    "native.il2cpp.symbols":
+        "state=absent; needs an extracted IL2CPP metadata dump. MEASURED 2026-10-05: its probe "
+        "DOES run and pass -- scripts/il2cpp-probe.ps1 exits 0 and prints the recorded "
+        "'IL2CPP ABSENT'. Skipped, so supplying an authorized artifact later would change the "
+        "output silently.",
 }
 
 FAULT_MARKERS = ("is not recognized", "not recognized as an", "the term",
