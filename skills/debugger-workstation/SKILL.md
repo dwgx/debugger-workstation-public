@@ -1,14 +1,17 @@
 ---
 name: debugger-workstation
 description: >-
-  Reverse-engineering workstation (反编译, 逆向, decompile, unpack, Ghidra, IDA, x64dbg,
+  Reverse-engineering workstation (反编译, 逆向, decompile, unpack, 脱壳, Ghidra, IDA, x64dbg,
   JADX, Apktool, Il2CppDumper, AssetRipper, Frida, YARA, capa, FLOSS, PE, .NET, pcap,
-  内存取证, memory forensics). Auto-apply when the user wants to reverse a binary, analyse a
-  pcap or a memory image, unpack a game/APK/Unity IL2CPP, or the task is clearly RE — do
-  not wait to be named. Carries the traps that make an otherwise-correct agent answer wrong:
-  the PASS-line counting error, the IDA isError=false failure shape, the Start-Process
-  stdin trap, and the per-tool-directory path rule. Client MCP is debugger-router only.
-  Drive CLI tools via SmartCLI. Never dump 19 backends into user-global MCP.
+  内存取证, memory forensics, crackme, CTF binary). USE THIS WHENEVER the user mentions a
+  binary, executable, DLL, APK, IPA, JAR, .NET assembly, pcap, memory dump or crash dump, or
+  asks to decompile / disassemble / unpack / deobfuscate / analyse / reverse / 逆向 / 脱壳
+  anything — EVEN IF they never say the word "reverse" and even if they only paste a path.
+  Do not wait to be named. DO NOT USE for readable source code, for a live network host
+  rather than an artifact, or when nothing on disk is being analysed. Carries the traps that
+  make an otherwise-correct agent answer wrong: the PASS-line counting error, the IDA
+  isError=false failure shape, the Start-Process stdin trap, and the per-tool-directory
+  path rule. MCP is debugger-router only; never dump 19 backends into user-global MCP.
 ---
 
 # debugger-workstation

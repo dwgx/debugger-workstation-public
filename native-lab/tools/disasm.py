@@ -116,7 +116,26 @@ def main() -> int:
 
     data = pe.__data__[off:off + 0x200]
 
-    md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
+    # MODE FROM THE FILE, not from a constant. Fixed 2026-10-04 after an independent
+    # experiment built a 32-bit PE (Machine 0x014c) and this probe decoded it in 64-bit mode
+    # and reported ok:true with a confidently wrong operand width -- in the one instrument
+    # whose entire documented job is stating operand width correctly. A 64-bit decode of
+    # 32-bit bytes does not fail loudly; it invents REX prefixes and reads one instruction
+    # where there were two.
+    #
+    # IMAGE_FILE_MACHINE_I386 is 0x014c. Anything else x86-family is treated as 64-bit, and
+    # anything non-x86 is refused rather than guessed: capstone would decode ARM bytes as x86
+    # and produce plausible nonsense, which is the exact failure the mode fix exists to stop.
+    MACHINE = pe.FILE_HEADER.Machine
+    if MACHINE == 0x014C:                       # IMAGE_FILE_MACHINE_I386
+        _mode, _bits = capstone.CS_MODE_32, 32
+    elif MACHINE in (0x8664, 0xAA64):           # AMD64, ARM64EC
+        _mode, _bits = capstone.CS_MODE_64, 64
+    else:
+        refuse(3, f"Machine 0x{MACHINE:04x} is not x86/x64; this probe decodes x86-family "
+                  f"only. Decoding foreign-ISA bytes as x86 yields plausible nonsense rather "
+                  f"than an error, which is why it is refused here instead of guessed.")
+    md = capstone.Cs(capstone.CS_ARCH_X86, _mode)
     md.detail = True
 
 
@@ -189,7 +208,8 @@ def main() -> int:
         "exit": 0,
         "binary": args.binary,
         "image_base": hex(base),
-        "rva": hex(args.rva),
+        "machine": f"0x{MACHINE:04x}",
+        "decode_mode_bits": _bits,
         "file_offset": hex(off),
         "count": len(insns),
         "insns": insns,

@@ -175,6 +175,29 @@ async function main() {
     return finish();
   }
 
+  // STALE-DB PREFLIGHT, added 2026-10-04 after an independent verifier hit this: a truncated
+  // .id0/.id1 shadow with no .i64 makes idalib-mcp die with "Failed to open database", and the
+  // loop reports that as `FAIL idalib-mcp serves MCP over POST on loopback` -- a claim about the
+  // SERVER, when the fault is a leftover file next to the target. The guide's "15/15" was a lie
+  // to anyone whose first run on a fresh checkout hit it.
+  //
+  // This REPORTS the shadow as its own check rather than clearing it. Deleting an analyst's
+  // analysis database to make a test pass is the "fix the symptom by destroying state" move,
+  // and that shadow may hold hours of renamed-function work. Naming it is checkable; deleting it
+  // is not.
+  const shadowExts = ['.id0', '.id1', '.id2', '.nam', '.til'];
+  const shadows = shadowExts.filter((e) => existsSync(TARGET.replace(/\.exe$/i, e)));
+  const hasI64 = existsSync(TARGET.replace(/\.exe$/i, '.i64'));
+  if (shadows.length && !hasI64) {
+    add(false, 'no stale IDA database shadows our own target',
+      `${shadows.join(' ')} beside ${TARGET} with no .i64 -- an interrupted analysis left a `
+      + `truncated shadow. idalib-mcp will refuse the binary and that failure LOOKS like a `
+      + `server outage. Delete those side files yourself if the analysis is disposable.`);
+  } else if (shadows.length) {
+    add(true, 'IDA database shadow present and paired with its .i64',
+      `${shadows.join(' ')} + .i64 -- a complete prior analysis, fine to reuse`);
+  }
+
   const proc = spawn(IDALIB, ['--host', HOST, '--port', String(PORT), TARGET],
     { stdio: ['ignore', 'pipe', 'pipe'] });
   let stderr = '';

@@ -7,90 +7,618 @@
   "note_cheat_engine": "Cheat Engine 默认不更新、不自动下载,除非用户明确要求。",
   "tools": {
     "static-reversing": [
-      { "name": "Ghidra",          "version": "12.1.3", "dir": "Static-Reversing/Ghidra",      "entry": "ghidra_12.1.3_PUBLIC/ghidraRun.bat", "official_source": "https://github.com/NationalSecurityAgency/ghidra/releases", "needs": "Java", "verify": true },
-      { "name": "IDA Pro",         "version": "9.2", "dir": "Static-Reversing/IDA",   "official_source": "https://hex-rays.com/ida-pro", "auto_update": false, "verify": true, "entry": "ida.exe", "note": "商业软件,本仓库不下载不分发。**已实测安装并授权**:junction Static-Reversing\\IDA -> D:\\Software\\Tool\\Debugger\\IDA Professional 9.2,idapro.hexlic 存在,ida.exe + idat.exe 均在。agent 默认走 **idalib**(`D:\\Software\\Developer\\Python314\\Scripts\\idalib-mcp.exe`)或 `idat -A`,**不是** GUI 13337;13337 仅在人已开 ida.exe 时用(见 OWNER.md:13 / AGENTS.md:123 勿加第二台 IDA 服务)。2026-09-30 实测:idalib-mcp 起 HTTP 8745,66 工具,反编译自建 c01-stringobf 成功。**注意:其失败返回 isError=false + {code:null,error:...},封装必须查 error 字段。**" },
-      { "name": "ida-pro-mcp (idalib)", "version": "2.0.0", "dir": "D:/Software/Developer/Python314/Scripts/idalib-mcp.exe", "official_source": "https://github.com/mrexodia/ida-pro-mcp", "verify": true, "note": "pip 包 ida-pro-mcp 2.0.0(mrexodia)+ idapro 0.0.10(Hex-Rays SDK)。启动: `idalib-mcp --host 127.0.0.1 --port 8745 <binary>`;MCP 走 **POST** /mcp(GET 返回 405,是协议不是故障);每次调用需 database=<session_id>。与本文件 third_party 里登记的 stdio+13337 GUI 插件路径是**两条不同路径**,agent 用 idalib。" },
-      { "name": "PE-bear",         "version": "0.7.2",  "dir": "Static-Reversing/PE-bear",      "entry": "PE-bear.exe", "official_source": "https://github.com/hasherezade/pe-bear/releases", "verify": true },
-      { "name": "ImHex",           "version": "1.38.1", "dir": "Static-Reversing/ImHex",        "entry": "imhex-gui.exe", "official_source": "https://github.com/WerWolv/ImHex/releases", "verify": true },
-      { "name": "Detect It Easy",  "version": "3.21",   "dir": "Static-Reversing/die_win64_portable_3.21_x64", "entry": "die/die.exe", "official_source": "https://github.com/horsicq/DIE-engine/releases", "verify": true },
-      { "name": "capa",            "version": "9.4.0",  "dir": "Static-Reversing/capa",         "entry": "capa.exe", "official_source": "https://github.com/mandiant/capa/releases", "verify": true },
-      { "name": "FLOSS",           "version": "3.1.1",  "dir": "Static-Reversing/FLOSS",        "entry": "floss.exe", "official_source": "https://github.com/mandiant/flare-floss/releases", "verify": true },
-      { "name": "YARA-X",          "version": "1.20.0", "dir": "Static-Reversing/YARA-X",       "entry": "yr.exe", "official_source": "https://github.com/VirusTotal/yara-x/releases", "verify": true },
-      { "name": "ILSpy",           "version": "11.0.0.9375", "dir": "Static-Reversing/ILSpy",        "entry": "ILSpy.exe", "official_source": "https://github.com/icsharpcode/ILSpy/releases", "verify": true },
-      { "name": "ilspycmd",     "version": "11.0.0.9375", "dir": "Static-Reversing/ilspycmd", "entry": "ilspycmd.exe", "official_source": "https://www.nuget.org/packages/ilspycmd", "verify": true, "note": "dotnet tool --tool-path. SmartCLI-friendly ILSpy console." },
-      { "name": "dnSpyEx",         "version": "6.6.0",  "dir": "Static-Reversing/dnSpyEx",      "entry": "dnSpy.exe", "official_source": "https://github.com/dnSpyEx/dnSpy/releases", "verify": true },
-      { "name": "ReClass.NET",     "version": "1.2",    "dir": "Static-Reversing/ReClass.NET",  "entry": "x64/ReClass.NET.exe", "official_source": "https://github.com/ReClassNET/ReClass.NET/releases", "verify": true },
-      { "name": "radare2",         "version": "6.2.2", "dir": "Static-Reversing/radare2",      "entry": "radare2-6.2.2-w64/bin/radare2.exe", "official_source": "https://github.com/radareorg/radare2/releases", "verify": true, "note": "Zip extracts one version folder. r2mcp: `r2pm -Uci r2mcp`." }
+      {
+        "name": "Ghidra",
+        "version": "12.1.3",
+        "dir": "Static-Reversing/Ghidra",
+        "entry": "ghidra_12.1.3_PUBLIC/ghidraRun.bat",
+        "official_source": "https://github.com/NationalSecurityAgency/ghidra/releases",
+        "needs": "Java",
+        "verify": true
+      },
+      {
+        "name": "IDA Pro",
+        "version": "9.2",
+        "dir": "Static-Reversing/IDA",
+        "official_source": "https://hex-rays.com/ida-pro",
+        "auto_update": false,
+        "verify": true,
+        "entry": "ida.exe",
+        "note": "商业软件,本仓库不下载不分发。**已实测安装并授权**:junction Static-Reversing\\IDA -> D:\\Software\\Tool\\Debugger\\IDA Professional 9.2,idapro.hexlic 存在,ida.exe + idat.exe 均在。agent 默认走 **idalib**(`D:\\Software\\Developer\\Python314\\Scripts\\idalib-mcp.exe`)或 `idat -A`,**不是** GUI 13337;13337 仅在人已开 ida.exe 时用(见 OWNER.md:13 / AGENTS.md:123 勿加第二台 IDA 服务)。2026-09-30 实测:idalib-mcp 起 HTTP 8745,66 工具,反编译自建 c01-stringobf 成功。**注意:其失败返回 isError=false + {code:null,error:...},封装必须查 error 字段。**"
+      },
+      {
+        "name": "ida-pro-mcp (idalib)",
+        "version": "2.0.0",
+        "dir": "D:/Software/Developer/Python314/Scripts/idalib-mcp.exe",
+        "official_source": "https://github.com/mrexodia/ida-pro-mcp",
+        "verify": true,
+        "note": "pip 包 ida-pro-mcp 2.0.0(mrexodia)+ idapro 0.0.10(Hex-Rays SDK)。启动: `idalib-mcp --host 127.0.0.1 --port 8745 <binary>`;MCP 走 **POST** /mcp(GET 返回 405,是协议不是故障);每次调用需 database=<session_id>。与本文件 third_party 里登记的 stdio+13337 GUI 插件路径是**两条不同路径**,agent 用 idalib。"
+      },
+      {
+        "name": "PE-bear",
+        "version": "0.7.2",
+        "dir": "Static-Reversing/PE-bear",
+        "entry": "PE-bear.exe",
+        "official_source": "https://github.com/hasherezade/pe-bear/releases",
+        "verify": true
+      },
+      {
+        "name": "ImHex",
+        "version": "1.38.1",
+        "dir": "Static-Reversing/ImHex",
+        "entry": "imhex-gui.exe",
+        "official_source": "https://github.com/WerWolv/ImHex/releases",
+        "verify": true
+      },
+      {
+        "name": "Detect It Easy",
+        "version": "3.21",
+        "dir": "Static-Reversing/die_win64_portable_3.21_x64",
+        "entry": "die/die.exe",
+        "official_source": "https://github.com/horsicq/DIE-engine/releases",
+        "verify": true
+      },
+      {
+        "name": "capa",
+        "version": "9.4.0",
+        "dir": "Static-Reversing/capa",
+        "entry": "capa.exe",
+        "official_source": "https://github.com/mandiant/capa/releases",
+        "verify": true
+      },
+      {
+        "name": "FLOSS",
+        "version": "3.1.1",
+        "dir": "Static-Reversing/FLOSS",
+        "entry": "floss.exe",
+        "official_source": "https://github.com/mandiant/flare-floss/releases",
+        "verify": true
+      },
+      {
+        "name": "YARA-X",
+        "version": "1.20.0",
+        "dir": "Static-Reversing/YARA-X",
+        "entry": "yr.exe",
+        "official_source": "https://github.com/VirusTotal/yara-x/releases",
+        "verify": true
+      },
+      {
+        "name": "ILSpy",
+        "version": "11.0.0.9375",
+        "dir": "Static-Reversing/ILSpy",
+        "entry": "ILSpy.exe",
+        "official_source": "https://github.com/icsharpcode/ILSpy/releases",
+        "verify": true
+      },
+      {
+        "name": "ilspycmd",
+        "version": "11.0.0.9375",
+        "dir": "Static-Reversing/ilspycmd",
+        "entry": "ilspycmd.exe",
+        "official_source": "https://www.nuget.org/packages/ilspycmd",
+        "verify": true,
+        "note": "dotnet tool --tool-path. SmartCLI-friendly ILSpy console."
+      },
+      {
+        "name": "dnSpyEx",
+        "version": "6.6.0",
+        "dir": "Static-Reversing/dnSpyEx",
+        "entry": "dnSpy.exe",
+        "official_source": "https://github.com/dnSpyEx/dnSpy/releases",
+        "verify": true
+      },
+      {
+        "name": "ReClass.NET",
+        "version": "1.2",
+        "dir": "Static-Reversing/ReClass.NET",
+        "entry": "x64/ReClass.NET.exe",
+        "official_source": "https://github.com/ReClassNET/ReClass.NET/releases",
+        "verify": true
+      },
+      {
+        "name": "radare2",
+        "version": "6.2.2",
+        "dir": "Static-Reversing/radare2",
+        "entry": "radare2-6.2.2-w64/bin/radare2.exe",
+        "official_source": "https://github.com/radareorg/radare2/releases",
+        "verify": true,
+        "note": "Zip extracts one version folder. r2mcp: `r2pm -Uci r2mcp`."
+      },
+      {
+        "name": "rabin2",
+        "version": "6.2.2",
+        "dir": "Static-Reversing/radare2",
+        "entry": "radare2-6.2.2-w64/bin/rabin2.exe",
+        "official_source": "https://github.com/radareorg/radare2/releases",
+        "verify": true,
+        "note": "DECLARED 2026-10-04, and it should have been declared from the start. `native-lab/tools/hardening_probe.py` is built entirely on it -- every field of the native.pe.hardening capability's output comes from `rabin2 -I`. It was invisible to verify-tools-manifest.py because the probe spawns it as `subprocess.run([args.rabin2, ...])`: the executable name is a VARIABLE, and the checker harvests literal paths. So the gate reported '0 undeclared' for months while an undeclared binary did all the work. radare2 itself was declared, which is what made the gap easy to miss -- a reader reasonably assumes rabin2 is covered because radare2 is. Also measured 2026-10-04: rabin2 keys the PE canary flag off arch=cil rather than off a real cookie, so on a MANAGED assembly it returns canary:true as a constant. hardening_probe.py now returns mitigations:null for managed inputs rather than passing that through."
+      }
     ],
     "debuggers": [
-      { "name": "x64dbg",      "version": "snapshot", "dir": "Debuggers/x64dbg",      "entry": "release/x64/x64dbg.exe", "official_source": "https://github.com/x64dbg/x64dbg/releases", "verify": true },
-      { "name": "ScyllaHide",  "version": "latest",   "dir": "Debuggers/ScyllaHide",  "official_source": "https://github.com/x64dbg/ScyllaHide/releases", "verify": true },
-      { "name": "GH Injector", "version": "4.8",      "dir": "Debuggers/GH-Injector", "entry": "GH Injector SM - x64.exe", "official_source": "https://github.com/guidedhacking/GuidedHacking-Injector/releases", "verify": true, "note": "官方 zip 是注入器库 V4.8,入口是 Symbol Mapper GUI(GH Injector SM - x64.exe),不是 GH Injector.exe。" },
-      { "name": "Cheat Engine","version": "7.7", "dir": "Debuggers/Cheat Engine", "entry": "cheatengine-x86_64.exe", "official_source": "https://www.cheatengine.org/", "auto_update": false, "verify": true }
+      {
+        "name": "x64dbg",
+        "version": "snapshot",
+        "dir": "Debuggers/x64dbg",
+        "entry": "release/x64/x64dbg.exe",
+        "official_source": "https://github.com/x64dbg/x64dbg/releases",
+        "verify": true
+      },
+      {
+        "name": "ScyllaHide",
+        "version": "latest",
+        "dir": "Debuggers/ScyllaHide",
+        "official_source": "https://github.com/x64dbg/ScyllaHide/releases",
+        "verify": true
+      },
+      {
+        "name": "GH Injector",
+        "version": "4.8",
+        "dir": "Debuggers/GH-Injector",
+        "entry": "GH Injector SM - x64.exe",
+        "official_source": "https://github.com/guidedhacking/GuidedHacking-Injector/releases",
+        "verify": true,
+        "note": "官方 zip 是注入器库 V4.8,入口是 Symbol Mapper GUI(GH Injector SM - x64.exe),不是 GH Injector.exe。"
+      },
+      {
+        "name": "Cheat Engine",
+        "version": "7.7",
+        "dir": "Debuggers/Cheat Engine",
+        "entry": "cheatengine-x86_64.exe",
+        "official_source": "https://www.cheatengine.org/",
+        "auto_update": false,
+        "verify": true
+      }
     ],
     "mobile-android": [
-      { "name": "JADX",        "version": "1.5.6",  "dir": "Mobile-Android/jadx",       "entry": "bin/jadx.bat", "official_source": "https://github.com/skylot/jadx/releases", "verify": true },
-      { "name": "Apktool",     "version": "3.0.3",  "dir": "Mobile-Android/Apktool",    "entry": "apktool.jar", "official_source": "https://github.com/iBotPeaches/Apktool/releases", "needs": "Java", "verify": true },
-      { "name": "MobSF",       "version": "latest", "dir": "Mobile-Android/MobSF",      "official_source": "https://github.com/MobSF/Mobile-Security-Framework-MobSF", "verify": true },
-      { "name": "objection",   "version": "1.12.5", "dir": "Mobile-Android/objection",  "official_source": "https://github.com/sensepost/objection (pip)", "build": "python-venv", "verify": true }
+      {
+        "name": "JADX",
+        "version": "1.5.6",
+        "dir": "Mobile-Android/jadx",
+        "entry": "bin/jadx.bat",
+        "official_source": "https://github.com/skylot/jadx/releases",
+        "verify": true
+      },
+      {
+        "name": "Apktool",
+        "version": "3.0.3",
+        "dir": "Mobile-Android/Apktool",
+        "entry": "apktool.jar",
+        "official_source": "https://github.com/iBotPeaches/Apktool/releases",
+        "needs": "Java",
+        "verify": true
+      },
+      {
+        "name": "MobSF",
+        "version": "latest",
+        "dir": "Mobile-Android/MobSF",
+        "official_source": "https://github.com/MobSF/Mobile-Security-Framework-MobSF",
+        "verify": true
+      },
+      {
+        "name": "objection",
+        "version": "1.12.5",
+        "dir": "Mobile-Android/objection",
+        "official_source": "https://github.com/sensepost/objection (pip)",
+        "build": "python-venv",
+        "verify": true
+      }
     ],
     "network-http": [
-      { "name": "Reqable",     "version": "3.2.23",  "dir": "Network-HTTP/reqable-app-windows-x86_64", "entry": "Reqable.exe", "official_source": "https://github.com/reqable/reqable-app/releases", "verify": true },
-      { "name": "Wireshark",   "version": "4.6.8-portable", "dir": "Network-HTTP/Wireshark",   "entry": "portable/App/Wireshark/tshark.exe", "official_source": "https://www.wireshark.org/download.html", "note": "PAF extracted under portable/. Installer: WiresharkPortable64_4.6.8.paf.exe. Npcap installer is under Npcap-installer.", "verify": true },
-      { "name": "Npcap",       "version": "1.88", "dir": "Network-HTTP/Npcap-installer", "entry": "npcap-1.88.exe", "official_source": "https://npcap.com/dist/", "note": "Free installer is GUI-only (/S is OEM). download-tools.ps1 does not run it.", "verify": true }
+      {
+        "name": "Reqable",
+        "version": "3.2.23",
+        "dir": "Network-HTTP/reqable-app-windows-x86_64",
+        "entry": "Reqable.exe",
+        "official_source": "https://github.com/reqable/reqable-app/releases",
+        "verify": true
+      },
+      {
+        "name": "Wireshark",
+        "version": "4.6.8-portable",
+        "dir": "Network-HTTP/Wireshark",
+        "entry": "portable/App/Wireshark/tshark.exe",
+        "official_source": "https://www.wireshark.org/download.html",
+        "note": "PAF extracted under portable/. Installer: WiresharkPortable64_4.6.8.paf.exe. Npcap installer is under Npcap-installer.",
+        "verify": true
+      },
+      {
+        "name": "Npcap",
+        "version": "1.88",
+        "dir": "Network-HTTP/Npcap-installer",
+        "entry": "npcap-1.88.exe",
+        "official_source": "https://npcap.com/dist/",
+        "note": "Free installer is GUI-only (/S is OEM). download-tools.ps1 does not run it.",
+        "verify": true
+      }
     ],
     "unpackers-game": [
-      { "name": "7-Zip full",       "version": "26.02", "dir": "Unpackers-Game/7-Zip-full", "entry": "7z.exe", "official_source": "https://github.com/ip7z/7zip/releases", "verify": true },
-      { "name": "7-Zip extra",      "version": "26.02", "dir": "Unpackers-Game/7-Zip",      "entry": "7za.exe", "official_source": "https://github.com/ip7z/7zip/releases", "verify": true },
-      { "name": "Universal Extractor", "version": "RC3", "dir": "Unpackers-Game/UniExtract", "entry": "UniExtract/UniExtract.exe", "official_source": "https://github.com/Bioruebe/UniExtract2/releases", "verify": true },
-      { "name": "AssetRipper",      "version": "2.0.0", "dir": "Unpackers-Game/AssetRipper", "entry": "AssetRipper.GUI.Free.exe", "official_source": "https://github.com/AssetRipper/AssetRipper/releases", "verify": true },
-      { "name": "Il2CppDumper",     "version": "6.7.46", "dir": "Unpackers-Game/Il2CppDumper-net6-win-v6.7.46", "entry": "Il2CppDumper.exe", "official_source": "https://github.com/Perfare/Il2CppDumper/releases", "verify": true },
-      { "name": "GoReSym",          "version": "latest", "dir": "Unpackers-Game/GoReSym",    "entry": "GoReSym.exe", "official_source": "https://github.com/mandiant/GoReSym/releases", "verify": true },
-      { "name": "pyinstxtractor-ng","version": "latest", "dir": "Unpackers-Game/pyinstxtractor-ng", "entry": "pyinstxtractor-ng.exe", "official_source": "https://github.com/pyinstxtractor/pyinstxtractor-ng/releases", "verify": true },
-      { "name": "UPX",               "version": "5.2.1", "dir": "Unpackers-Game/upx", "entry": "upx-5.2.1-win64/upx.exe", "official_source": "https://github.com/upx/upx/releases", "verify": true, "note": "SmartCLI-friendly pack/unpack." }
+      {
+        "name": "7-Zip full",
+        "version": "26.02",
+        "dir": "Unpackers-Game/7-Zip-full",
+        "entry": "7z.exe",
+        "official_source": "https://github.com/ip7z/7zip/releases",
+        "verify": true
+      },
+      {
+        "name": "7-Zip extra",
+        "version": "26.02",
+        "dir": "Unpackers-Game/7-Zip",
+        "entry": "7za.exe",
+        "official_source": "https://github.com/ip7z/7zip/releases",
+        "verify": true
+      },
+      {
+        "name": "Universal Extractor",
+        "version": "RC3",
+        "dir": "Unpackers-Game/UniExtract",
+        "entry": "UniExtract/UniExtract.exe",
+        "official_source": "https://github.com/Bioruebe/UniExtract2/releases",
+        "verify": true
+      },
+      {
+        "name": "AssetRipper",
+        "version": "2.0.0",
+        "dir": "Unpackers-Game/AssetRipper",
+        "entry": "AssetRipper.GUI.Free.exe",
+        "official_source": "https://github.com/AssetRipper/AssetRipper/releases",
+        "verify": true
+      },
+      {
+        "name": "Il2CppDumper",
+        "version": "6.7.46",
+        "dir": "Unpackers-Game/Il2CppDumper-net6-win-v6.7.46",
+        "entry": "Il2CppDumper.exe",
+        "official_source": "https://github.com/Perfare/Il2CppDumper/releases",
+        "verify": true,
+        "requires_env": {
+          "DOTNET_ROLL_FORWARD": "Major"
+        },
+        "requires_env_note": "MEASURED 2026-10-04, twice, by two independent parties who reached opposite conclusions. This is a SELF-CONTAINED net6.0 publish: there is no sibling .dll and no .deps.json, so an external <app>.runtimeconfig.json is IGNORED by the host -- do not try to fix it that way, that was tried and measured as not working. Without the env var it exits 0x80131522 (rc -2147450730, 'no .NET 6 runtime'), which reads exactly like a missing executable. With DOTNET_ROLL_FORWARD=Major it starts and waits for a target. An independent tool-audit reported this tool as 'pinned, on disk, and unrunnable'; that finding reproduced the trap rather than the tool, and scripts/il2cpp-probe.ps1 had already retracted the identical false blocker. The registry stayed green through all of it because the PIN RESOLVES -- a resolvable pin says nothing about whether the binary runs, which is why verify-tools-manifest now checks dir+entry existence and this note carries the rest."
+      },
+      {
+        "name": "GoReSym",
+        "version": "latest",
+        "dir": "Unpackers-Game/GoReSym",
+        "entry": "GoReSym.exe",
+        "official_source": "https://github.com/mandiant/GoReSym/releases",
+        "verify": true
+      },
+      {
+        "name": "pyinstxtractor-ng",
+        "version": "latest",
+        "dir": "Unpackers-Game/pyinstxtractor-ng",
+        "entry": "pyinstxtractor-ng.exe",
+        "official_source": "https://github.com/pyinstxtractor/pyinstxtractor-ng/releases",
+        "verify": true
+      },
+      {
+        "name": "UPX",
+        "version": "5.2.1",
+        "dir": "Unpackers-Game/upx",
+        "entry": "upx-5.2.1-win64/upx.exe",
+        "official_source": "https://github.com/upx/upx/releases",
+        "verify": true,
+        "note": "SmartCLI-friendly pack/unpack."
+      }
     ],
     "system-forensics": [
-      { "name": "Sysinternals Suite", "version": "latest", "dir": "System-Forensics/SysinternalsSuite", "official_source": "https://learn.microsoft.com/sysinternals/downloads/sysinternals-suite", "verify": true },
-      { "name": "System Informer",    "version": "latest", "dir": "System-Forensics/systeminformer", "entry": "amd64/SystemInformer.exe", "official_source": "https://systeminformer.sourceforge.io/", "verify": true },
-      { "name": "Volatility 3",        "version": "2.28.0", "dir": "System-Forensics/volatility3", "official_source": "https://github.com/volatilityfoundation/volatility3/releases", "needs": "Python", "verify": true, "note": "内存镜像取证框架;volatility3-mcp 后端的前置(其 requirements 也会拉取)。win-exes 2.28.0 in _download-stage." }
+      {
+        "name": "Sysinternals Suite",
+        "version": "latest",
+        "dir": "System-Forensics/SysinternalsSuite",
+        "official_source": "https://learn.microsoft.com/sysinternals/downloads/sysinternals-suite",
+        "verify": true
+      },
+      {
+        "name": "System Informer",
+        "version": "latest",
+        "dir": "System-Forensics/systeminformer",
+        "entry": "amd64/SystemInformer.exe",
+        "official_source": "https://systeminformer.sourceforge.io/",
+        "verify": true
+      },
+      {
+        "name": "Volatility 3",
+        "version": "2.28.0",
+        "dir": "System-Forensics/volatility3",
+        "official_source": "https://github.com/volatilityfoundation/volatility3/releases",
+        "needs": "Python",
+        "verify": true,
+        "note": "内存镜像取证框架;volatility3-mcp 后端的前置(其 requirements 也会拉取)。win-exes 2.28.0 in _download-stage."
+      }
     ],
     "web-reverse": [
-      { "name": "web-reverse lab",          "version": "in-tree",  "dir": "web-reverse/lab",   "entry": "server.mjs",    "official_source": "in-tree (self-authored, no third party)", "in_tree": true, "verify": false, "needs": "Node >= 22", "note": "Loopback lab target: HMAC-signed POST /api/submit gate (401 bad/stale, 409 replayed, 200 accepted), readable /plain signer, obfuscated /obf signer (string array + mangled ids + flattened flow), /fingerprint bot-detection surface. Nothing is downloaded." },
-      { "name": "web-reverse capture",      "version": "in-tree",  "dir": "web-reverse/tools", "entry": "capture.mjs",   "official_source": "in-tree (self-authored, raw CDP)", "in_tree": true, "verify": false, "needs": "Node >= 22 (global WebSocket), Chrome; msedge.exe accepted as fallback", "note": "Drives a disposable lab Chrome over the devtools websocket: Network.requestWillBeSent + Runtime.addBinding XHR tap + Page.addScriptToEvaluateOnNewDocument. No npm install. tools/chrome.mjs resolves Chrome first, then msedge.exe, so BOTH are launched by absolute path -- naming the fallback here is what stops a clone from assuming Chrome is the only browser that works." },
-      { "name": "web-reverse recover",      "version": "in-tree",  "dir": "web-reverse/tools", "entry": "recover.mjs",   "official_source": "in-tree (self-authored)", "in_tree": true, "verify": false, "needs": "Node >= 22", "note": "Deobfuscation: locate string-array indirection, decode it, then verify key candidates by reproducing captured signatures with node:crypto and the server keyId. Reports nothing it did not reproduce." },
-      { "name": "web-reverse replay",       "version": "in-tree",  "dir": "web-reverse/tools", "entry": "replay.mjs",    "official_source": "in-tree (self-authored)", "in_tree": true, "verify": false, "needs": "Node >= 22", "note": "North-star proof for the JS domain: mint a valid request outside the browser. Verbatim copy must fail, recomputed signature must pass." },
-      { "name": "web-reverse fingerprint",  "version": "in-tree",  "dir": "web-reverse/tools", "entry": "fingerprint.mjs","official_source": "in-tree (self-authored)", "in_tree": true, "verify": false, "needs": "Node >= 22, Chrome; msedge.exe accepted as fallback", "note": "Bot-detection report: which signals fired, and how many points come from our own CDP instrumentation (--compare runs CDP vs no-CDP baselines). Detector/reporter only - no evasion, no spoofing." },
-      { "name": "web-reverse loop",         "version": "in-tree",  "dir": "web-reverse/tools", "entry": "loop.mjs",      "official_source": "in-tree (self-authored)", "in_tree": true, "verify": false, "needs": "Node >= 22, Chrome; msedge.exe accepted as fallback", "note": "One command that runs gate -> capture -> recover -> replay -> fingerprint and judges itself. Exit 0 = loop closed. Wrapper: scripts/web-reverse-lab.ps1" }
+      {
+        "name": "web-reverse lab",
+        "version": "in-tree",
+        "dir": "web-reverse/lab",
+        "entry": "server.mjs",
+        "official_source": "in-tree (self-authored, no third party)",
+        "in_tree": true,
+        "verify": false,
+        "needs": "Node >= 22",
+        "note": "Loopback lab target: HMAC-signed POST /api/submit gate (401 bad/stale, 409 replayed, 200 accepted), readable /plain signer, obfuscated /obf signer (string array + mangled ids + flattened flow), /fingerprint bot-detection surface. Nothing is downloaded."
+      },
+      {
+        "name": "web-reverse capture",
+        "version": "in-tree",
+        "dir": "web-reverse/tools",
+        "entry": "capture.mjs",
+        "official_source": "in-tree (self-authored, raw CDP)",
+        "in_tree": true,
+        "verify": false,
+        "needs": "Node >= 22 (global WebSocket), Chrome; msedge.exe accepted as fallback",
+        "note": "Drives a disposable lab Chrome over the devtools websocket: Network.requestWillBeSent + Runtime.addBinding XHR tap + Page.addScriptToEvaluateOnNewDocument. No npm install. tools/chrome.mjs resolves Chrome first, then msedge.exe, so BOTH are launched by absolute path -- naming the fallback here is what stops a clone from assuming Chrome is the only browser that works."
+      },
+      {
+        "name": "web-reverse recover",
+        "version": "in-tree",
+        "dir": "web-reverse/tools",
+        "entry": "recover.mjs",
+        "official_source": "in-tree (self-authored)",
+        "in_tree": true,
+        "verify": false,
+        "needs": "Node >= 22",
+        "note": "Deobfuscation: locate string-array indirection, decode it, then verify key candidates by reproducing captured signatures with node:crypto and the server keyId. Reports nothing it did not reproduce."
+      },
+      {
+        "name": "web-reverse replay",
+        "version": "in-tree",
+        "dir": "web-reverse/tools",
+        "entry": "replay.mjs",
+        "official_source": "in-tree (self-authored)",
+        "in_tree": true,
+        "verify": false,
+        "needs": "Node >= 22",
+        "note": "North-star proof for the JS domain: mint a valid request outside the browser. Verbatim copy must fail, recomputed signature must pass."
+      },
+      {
+        "name": "web-reverse fingerprint",
+        "version": "in-tree",
+        "dir": "web-reverse/tools",
+        "entry": "fingerprint.mjs",
+        "official_source": "in-tree (self-authored)",
+        "in_tree": true,
+        "verify": false,
+        "needs": "Node >= 22, Chrome; msedge.exe accepted as fallback",
+        "note": "Bot-detection report: which signals fired, and how many points come from our own CDP instrumentation (--compare runs CDP vs no-CDP baselines). Detector/reporter only - no evasion, no spoofing."
+      },
+      {
+        "name": "web-reverse loop",
+        "version": "in-tree",
+        "dir": "web-reverse/tools",
+        "entry": "loop.mjs",
+        "official_source": "in-tree (self-authored)",
+        "in_tree": true,
+        "verify": false,
+        "needs": "Node >= 22, Chrome; msedge.exe accepted as fallback",
+        "note": "One command that runs gate -> capture -> recover -> replay -> fingerprint and judges itself. Exit 0 = loop closed. Wrapper: scripts/web-reverse-lab.ps1"
+      }
     ],
     "crypto-lab": [
-      { "name": "crypto-lab target",   "version": "in-tree", "dir": "crypto-lab/lab",   "entry": "server.mjs",   "official_source": "in-tree (self-authored, node:crypto only)", "in_tree": true, "verify": false, "needs": "Node >= 24", "note": "Loopback JWT issuer (5 profiles: strong, weak-claims, none, confusion, weak-secret) plus 4 verifiers (strict, confused, none-accepting, naive), each responding with the exact checks it performed. GET /api/health /api/jwks /api/posture. RSA keypair is generated at runtime into crypto-lab/keys/ (gitignored) - no key material in git, HMAC secrets are published fake constants." },
-      { "name": "crypto-lab analyzer", "version": "in-tree", "dir": "crypto-lab/tools", "entry": "analyze.mjs",  "official_source": "in-tree (self-authored, ZERO dependencies)", "in_tree": true, "verify": false, "needs": "Node >= 24", "note": "THE DELIVERABLE. Given a JWS it reports header, every claim with its meaning, expiry status, algorithm family, signature verdict, and which weakness classes are present (unsigned-none, algorithm-confusion, weak-claim-validation, claim-provenance). Findings carry id/severity/class/evidence/why. exit 0 analysed, 2 usage, 3 bad input, 4 --expect mismatch. Never dereferences a jku/x5u key URL." },
-      { "name": "crypto-lab oracle (node)", "version": "9.0.3", "dir": "crypto-lab/node_modules/jsonwebtoken", "entry": "tools/oracle-node.mjs", "official_source": "https://www.npmjs.com/package/jsonwebtoken (npm, isolated in crypto-lab/package.json)", "verify": false, "needs": "Node >= 24", "note": "Independent implementation #1, used only to cross-check the analyzer. Not committed (crypto-lab/node_modules is gitignored); recreate with `npm install` inside crypto-lab/. Measured: it refuses `alg:none` under a pinned RS256 allowlist ('jwt signature is required') and refuses HS256 keyed on a PEM public key ('secretOrPublicKey must be a symmetric key when using HS256')." },
-      { "name": "crypto-lab oracle (python)", "version": "PyJWT 2.15.1 + cryptography 50.0.1", "dir": "crypto-lab/.venv", "entry": "tools/oracle.py", "official_source": "https://pypi.org/project/PyJWT/ and https://pypi.org/project/cryptography/ (pip, isolated in crypto-lab/.venv)", "verify": false, "needs": "Python >= 3.10 (3.14.7 here)", "note": "Independent implementation #2, different lineage from jsonwebtoken. Not committed (.venv is gitignored); recreate with `python -m venv .venv && .venv/Scripts/python -m pip install -r crypto-lab/requirements.txt`. Measured: InvalidKeyError on HS256-with-a-public-key, and PyJWT requires an explicit algorithms allowlist." },
-      { "name": "crypto-lab loop",     "version": "in-tree", "dir": "crypto-lab/tools", "entry": "loop.mjs",     "official_source": "in-tree (self-authored)", "in_tree": true, "verify": false, "needs": "Node >= 24, both oracles", "note": "Self-judging North Star proof: 12 classification cases (exact finding-id sets), a 5x4 issuer x verifier acceptance matrix, three-implementation agreement, and a live negative control on the --expect guard. Exit 0 = every weakness class was classified as expected. Wrapper: scripts/crypto-lab.ps1 (also scripts/agent-cli.ps1 crypto-lab ...)." }
+      {
+        "name": "crypto-lab target",
+        "version": "in-tree",
+        "dir": "crypto-lab/lab",
+        "entry": "server.mjs",
+        "official_source": "in-tree (self-authored, node:crypto only)",
+        "in_tree": true,
+        "verify": false,
+        "needs": "Node >= 24",
+        "note": "Loopback JWT issuer (5 profiles: strong, weak-claims, none, confusion, weak-secret) plus 4 verifiers (strict, confused, none-accepting, naive), each responding with the exact checks it performed. GET /api/health /api/jwks /api/posture. RSA keypair is generated at runtime into crypto-lab/keys/ (gitignored) - no key material in git, HMAC secrets are published fake constants."
+      },
+      {
+        "name": "crypto-lab analyzer",
+        "version": "in-tree",
+        "dir": "crypto-lab/tools",
+        "entry": "analyze.mjs",
+        "official_source": "in-tree (self-authored, ZERO dependencies)",
+        "in_tree": true,
+        "verify": false,
+        "needs": "Node >= 24",
+        "note": "THE DELIVERABLE. Given a JWS it reports header, every claim with its meaning, expiry status, algorithm family, signature verdict, and which weakness classes are present (unsigned-none, algorithm-confusion, weak-claim-validation, claim-provenance). Findings carry id/severity/class/evidence/why. exit 0 analysed, 2 usage, 3 bad input, 4 --expect mismatch. Never dereferences a jku/x5u key URL."
+      },
+      {
+        "name": "crypto-lab oracle (node)",
+        "version": "9.0.3",
+        "dir": "crypto-lab/node_modules/jsonwebtoken",
+        "entry": "tools/oracle-node.mjs",
+        "official_source": "https://www.npmjs.com/package/jsonwebtoken (npm, isolated in crypto-lab/package.json)",
+        "verify": false,
+        "needs": "Node >= 24",
+        "note": "Independent implementation #1, used only to cross-check the analyzer. Not committed (crypto-lab/node_modules is gitignored); recreate with `npm install` inside crypto-lab/. Measured: it refuses `alg:none` under a pinned RS256 allowlist ('jwt signature is required') and refuses HS256 keyed on a PEM public key ('secretOrPublicKey must be a symmetric key when using HS256')."
+      },
+      {
+        "name": "crypto-lab oracle (python)",
+        "version": "PyJWT 2.15.1 + cryptography 50.0.1",
+        "dir": "crypto-lab/.venv",
+        "entry": "tools/oracle.py",
+        "official_source": "https://pypi.org/project/PyJWT/ and https://pypi.org/project/cryptography/ (pip, isolated in crypto-lab/.venv)",
+        "verify": false,
+        "needs": "Python >= 3.10 (3.14.7 here)",
+        "note": "Independent implementation #2, different lineage from jsonwebtoken. Not committed (.venv is gitignored); recreate with `python -m venv .venv && .venv/Scripts/python -m pip install -r crypto-lab/requirements.txt`. Measured: InvalidKeyError on HS256-with-a-public-key, and PyJWT requires an explicit algorithms allowlist."
+      },
+      {
+        "name": "crypto-lab loop",
+        "version": "in-tree",
+        "dir": "crypto-lab/tools",
+        "entry": "loop.mjs",
+        "official_source": "in-tree (self-authored)",
+        "in_tree": true,
+        "verify": false,
+        "needs": "Node >= 24, both oracles",
+        "note": "Self-judging North Star proof: 12 classification cases (exact finding-id sets), a 5x4 issuer x verifier acceptance matrix, three-implementation agreement, and a live negative control on the --expect guard. Exit 0 = every weakness class was classified as expected. Wrapper: scripts/crypto-lab.ps1 (also scripts/agent-cli.ps1 crypto-lab ...)."
+      }
     ],
     "forensics-lab": [
-      { "name": "forensics-lab scenario",  "version": "in-tree", "dir": "forensics-lab/lab",   "entry": "spec.mjs",      "official_source": "in-tree (self-authored, no third party)", "in_tree": true, "verify": false, "needs": "Node >= 22", "note": "THE GROUND TRUTH, in one file: 8 processes (1 spliced out of the EPROCESS list), 5 VADs (1 injected private RWX PE, 1 PE-shaped READONLY data decoy, 1 load-list-backed image region), 4 sockets, 5 handles, and 3 artifact sets. Frozen clock 2026-03-14T02:17:33Z, no wall-clock and no randomness, so the image is byte-reproducible. External IP 203.0.113.23 is RFC 5737 TEST-NET-3 and the C2 name uses .invalid (RFC 2606) - both are documentation-only and unroutable. Read only by tools/loop.mjs; the analyser never sees it." },
-      { "name": "forensics-lab payload",   "version": "in-tree", "dir": "forensics-lab/lab/payload", "entry": "d12payload.c", "official_source": "in-tree (self-authored C, MSVC 2022)", "in_tree": true, "verify": false, "needs": "MSVC 2022 (optional)", "note": "The self-authored PE embedded in the injected region, so 'there is a PE here' is checkable by a tool that is not this lab. INNOCUOUS: one exported marker string, no network, no injection, no persistence, no evasion. Built with `lab/payload/build.bat` (cl /LD /O1 /Brepro), verified byte-reproducible across two runs. The DLL is gitignored; without it the lab falls back to lab/mkimage.mjs:buildMinimalPe, a hand-built PE that DieE still calls PE64. No third-party binary is committed." },
-      { "name": "forensics-lab generator", "version": "in-tree", "dir": "forensics-lab/lab",   "entry": "mkimage.mjs",   "official_source": "in-tree (self-authored)", "in_tree": true, "verify": false, "needs": "Node >= 22", "note": "Writes the D12IMG container: a self-describing header, UTF-16LE string table, region contents, EPROCESS pool blocks with a real doubly-linked ActiveProcessLinks chain, socket chain, VAD chain, handle blocks, and 3 independent artifacts (Amcache-shaped TSV, binary MAM-like .pf files, SRUM-shaped TSV). Fixed-stride records with offsets asserted against the spec on every build. Artifacts land in %TEMP%\\d12-forensics-lab, never in the repo." },
-      { "name": "forensics-lab triage",    "version": "in-tree", "dir": "forensics-lab/tools", "entry": "triage.mjs",    "official_source": "in-tree (self-authored, ZERO dependencies)", "in_tree": true, "verify": false, "needs": "Node >= 22", "note": "The instrument. Volatility-equivalent plugins over the image: banners (refuses a file that is not a D12LAB container, and refuses a stride mismatch), pslist (follows ActiveProcessLinks.flink), psscan (sweeps the pool by signature - a different walk, so the two can disagree), malfind (private + executable + structurally valid PE via e_lfanew, minus regions a load-list module backs), netscan, handlescan, plus one parser per artifact format. Every claim carries source, method and tier. Never reads the spec or the fixture's UNLK flag." },
-      { "name": "forensics-lab analyzer",  "version": "in-tree", "dir": "forensics-lab/tools", "entry": "analyze.mjs",   "official_source": "in-tree (self-authored, ZERO dependencies)", "in_tree": true, "verify": false, "needs": "Node >= 22", "note": "THE DELIVERABLE, and the triangulation invariant as code: a claim is INFERRED only when >= 2 distinct source GROUPS support it, where a group is an acquisition path (MEM/AM/PF/SRUM), not a file. Five prefetch files are one source; one image read by six plugins is still one source. Tiers OBSERVED/INFERRED/POSSIBLE/REJECTED. The planted decoy is not special-cased: it falls out of the same rule as everything else, so there is no `if (decoy)` anywhere. exit 0 analysed, 3 unreadable target, 4 --expect mismatch." },
-      { "name": "forensics-lab correlate", "version": "in-tree", "dir": "forensics-lab/tools", "entry": "correlate.mjs", "official_source": "in-tree (self-authored)", "in_tree": true, "verify": false, "needs": "Node >= 22, DieE, YARA-X, Volatility 3 (all in-tree)", "note": "Carves the injected region to a real file and hands the bytes to independent implementations: DieE (expects PE64) and YARA-X with a lab rule (expects the marker hit). Also runs a CAPABILITY PROBE against real Volatility 3 and records its refusal verbatim, because 'it cannot consume a synthetic image' is a claim and this is the evidence. States explicitly that tool agreement raises confidence in an OBSERVED value and does NOT add a source group." },
-      { "name": "forensics-lab loop",      "version": "in-tree", "dir": "forensics-lab/tools", "entry": "loop.mjs",      "official_source": "in-tree (self-authored)", "in_tree": true, "verify": false, "needs": "Node >= 22", "note": "Self-judging North Star proof, 37 assertions: determinism, triage, exact findings-set comparison against the ground truth, decoy rejection, the Volatility probe, and FOUR negative controls (A clean image yields no injection finding; B a one-byte tamper removes the finding while an independent one survives; C deleting SRUM demotes the injection to POSSIBLE; D --expect with a wrong set exits 4). Exit 0 = loop closed, 9 = an assertion failed. Wrapper: scripts/forensics-lab.ps1 (also scripts/agent-cli.ps1 forensics-lab ...)." }
+      {
+        "name": "forensics-lab scenario",
+        "version": "in-tree",
+        "dir": "forensics-lab/lab",
+        "entry": "spec.mjs",
+        "official_source": "in-tree (self-authored, no third party)",
+        "in_tree": true,
+        "verify": false,
+        "needs": "Node >= 22",
+        "note": "THE GROUND TRUTH, in one file: 8 processes (1 spliced out of the EPROCESS list), 5 VADs (1 injected private RWX PE, 1 PE-shaped READONLY data decoy, 1 load-list-backed image region), 4 sockets, 5 handles, and 3 artifact sets. Frozen clock 2026-03-14T02:17:33Z, no wall-clock and no randomness, so the image is byte-reproducible. External IP 203.0.113.23 is RFC 5737 TEST-NET-3 and the C2 name uses .invalid (RFC 2606) - both are documentation-only and unroutable. Read only by tools/loop.mjs; the analyser never sees it."
+      },
+      {
+        "name": "forensics-lab payload",
+        "version": "in-tree",
+        "dir": "forensics-lab/lab/payload",
+        "entry": "d12payload.c",
+        "official_source": "in-tree (self-authored C, MSVC 2022)",
+        "in_tree": true,
+        "verify": false,
+        "needs": "MSVC 2022 (optional)",
+        "note": "The self-authored PE embedded in the injected region, so 'there is a PE here' is checkable by a tool that is not this lab. INNOCUOUS: one exported marker string, no network, no injection, no persistence, no evasion. Built with `lab/payload/build.bat` (cl /LD /O1 /Brepro), verified byte-reproducible across two runs. The DLL is gitignored; without it the lab falls back to lab/mkimage.mjs:buildMinimalPe, a hand-built PE that DieE still calls PE64. No third-party binary is committed."
+      },
+      {
+        "name": "forensics-lab generator",
+        "version": "in-tree",
+        "dir": "forensics-lab/lab",
+        "entry": "mkimage.mjs",
+        "official_source": "in-tree (self-authored)",
+        "in_tree": true,
+        "verify": false,
+        "needs": "Node >= 22",
+        "note": "Writes the D12IMG container: a self-describing header, UTF-16LE string table, region contents, EPROCESS pool blocks with a real doubly-linked ActiveProcessLinks chain, socket chain, VAD chain, handle blocks, and 3 independent artifacts (Amcache-shaped TSV, binary MAM-like .pf files, SRUM-shaped TSV). Fixed-stride records with offsets asserted against the spec on every build. Artifacts land in %TEMP%\\d12-forensics-lab, never in the repo."
+      },
+      {
+        "name": "forensics-lab triage",
+        "version": "in-tree",
+        "dir": "forensics-lab/tools",
+        "entry": "triage.mjs",
+        "official_source": "in-tree (self-authored, ZERO dependencies)",
+        "in_tree": true,
+        "verify": false,
+        "needs": "Node >= 22",
+        "note": "The instrument. Volatility-equivalent plugins over the image: banners (refuses a file that is not a D12LAB container, and refuses a stride mismatch), pslist (follows ActiveProcessLinks.flink), psscan (sweeps the pool by signature - a different walk, so the two can disagree), malfind (private + executable + structurally valid PE via e_lfanew, minus regions a load-list module backs), netscan, handlescan, plus one parser per artifact format. Every claim carries source, method and tier. Never reads the spec or the fixture's UNLK flag."
+      },
+      {
+        "name": "forensics-lab analyzer",
+        "version": "in-tree",
+        "dir": "forensics-lab/tools",
+        "entry": "analyze.mjs",
+        "official_source": "in-tree (self-authored, ZERO dependencies)",
+        "in_tree": true,
+        "verify": false,
+        "needs": "Node >= 22",
+        "note": "THE DELIVERABLE, and the triangulation invariant as code: a claim is INFERRED only when >= 2 distinct source GROUPS support it, where a group is an acquisition path (MEM/AM/PF/SRUM), not a file. Five prefetch files are one source; one image read by six plugins is still one source. Tiers OBSERVED/INFERRED/POSSIBLE/REJECTED. The planted decoy is not special-cased: it falls out of the same rule as everything else, so there is no `if (decoy)` anywhere. exit 0 analysed, 3 unreadable target, 4 --expect mismatch."
+      },
+      {
+        "name": "forensics-lab correlate",
+        "version": "in-tree",
+        "dir": "forensics-lab/tools",
+        "entry": "correlate.mjs",
+        "official_source": "in-tree (self-authored)",
+        "in_tree": true,
+        "verify": false,
+        "needs": "Node >= 22, DieE, YARA-X, Volatility 3 (all in-tree)",
+        "note": "Carves the injected region to a real file and hands the bytes to independent implementations: DieE (expects PE64) and YARA-X with a lab rule (expects the marker hit). Also runs a CAPABILITY PROBE against real Volatility 3 and records its refusal verbatim, because 'it cannot consume a synthetic image' is a claim and this is the evidence. States explicitly that tool agreement raises confidence in an OBSERVED value and does NOT add a source group."
+      },
+      {
+        "name": "forensics-lab loop",
+        "version": "in-tree",
+        "dir": "forensics-lab/tools",
+        "entry": "loop.mjs",
+        "official_source": "in-tree (self-authored)",
+        "in_tree": true,
+        "verify": false,
+        "needs": "Node >= 22",
+        "note": "Self-judging North Star proof, 37 assertions: determinism, triage, exact findings-set comparison against the ground truth, decoy rejection, the Volatility probe, and FOUR negative controls (A clean image yields no injection finding; B a one-byte tamper removes the finding while an independent one survives; C deleting SRUM demotes the injection to POSSIBLE; D --expect with a wrong set exits 4). Exit 0 = loop closed, 9 = an assertion failed. Wrapper: scripts/forensics-lab.ps1 (also scripts/agent-cli.ps1 forensics-lab ...)."
+      }
     ],
     "fuzz-lab": [
-      { "name": "fuzz-lab corpus",    "version": "in-tree", "dir": "fuzz-lab/lab",   "entry": "corpus.mjs",     "official_source": "in-tree (self-authored, ZERO dependencies)", "in_tree": true, "verify": false, "needs": "Node >= 24", "note": "27 seeds built from OTHER LABS' deterministic generators (the 5 synthetic pcaps, the 7 binary .pf records + D12IMG + 2 TSV artifacts, 5 signed JOSE tokens, 6 committed JS sources) - never random bytes, because a mutation fuzzer spends its budget on structurally hopeless inputs. Built TWICE per run and the hashes compared, so determinism is measured rather than asserted. That check earned its place: it caught web-reverse/static/gen-obf.mjs being non-deterministic (javascript-obfuscator's internal RNG is not reached by --seed), and those seeds were dropped. Artifacts land in %TEMP%\\fuzz-lab, never in the repo." },
-      { "name": "fuzz-lab mutator",   "version": "in-tree", "dir": "fuzz-lab/lab",   "entry": "mutate.mjs",     "official_source": "in-tree (self-authored)", "in_tree": true, "verify": false, "needs": "Node >= 24", "note": "12 NAMED strategies aimed at the fields parsers actually trust: intInject (2/4/8-byte boundary integers over a length or count field, LE and BE), truncate (biased to just past a header boundary - this is the over-read probe), chunk{Delete,Duplicate,Insert,Zero}, byteSplice/alphabetSplice, textRun/textRepeat (the ReDoS probes). xoshiro128** seeded from the run id, so any input is re-derivable. The recipe IS the inverse of the mutation and it round-trips exactly (2400/2400 verified) - recording the step-count draw, the strategy-selection draw and the alphabet VALUES, all three of which were bugs that silently produced wrong bytes." },
-      { "name": "fuzz-lab pcap reader", "version": "in-tree", "dir": "fuzz-lab/lab",  "entry": "pcap-reader.mjs", "official_source": "in-tree (self-authored, written FOR this lab)", "in_tree": true, "verify": false, "needs": "Node >= 24", "note": "A libpcap reader, written for the fuzzer because the station had a pcap WRITER (net-reverse/lab/pcap-writer.mjs) and no JS reader - net-reverse shells out to tshark, and a third-party dissector is not a target this repo may claim. Handles all four magics and both byte orders, bounds every declared length against the file, and reports truncation rather than throwing. Ships with a deliberately flawed twin whose defect is SILENT rather than loud: it subarrays incl_len unchecked, and Buffer.subarray clamps, so it returns a 4-byte frame while REPORTING 1000. A crash-counting fuzzer sees nothing there; a differential oracle sees the lie." },
-      { "name": "fuzz-lab driver",    "version": "in-tree", "dir": "fuzz-lab/lab",   "entry": "driver.mjs",     "official_source": "in-tree (self-authored)", "in_tree": true, "verify": false, "needs": "Node >= 24", "note": "One child process per input, for ENFORCEMENT rather than isolation: a regex backtracking through a 400 KB claim never yields to the event loop, so the only way to bound a hang is to kill the process. Hard per-input wall clock (4 s) and a hard V8 heap ceiling (192 MB via --max-old-space-size). Five outcome classes, and the load-bearing distinction is rejected-vs-uncaught: a parser that DECLARES its refusals has handled hostile input correctly, anything else is a finding. worker.mjs deliberately has NO self-abort timer - it could not fire during a synchronous hang, so it would have been a safety net that was dead code." },
-      { "name": "fuzz-lab triage",    "version": "in-tree", "dir": "fuzz-lab/lab",   "entry": "triage.mjs",     "official_source": "in-tree (self-authored)", "in_tree": true, "verify": false, "needs": "Node >= 24", "note": "Delta-debugging minimisation (coarse chunk removal, then byte-wise) against the REAL subprocess with the REAL ceilings - minimising against a cheaper predicate risks reducing to something that only misbehaves in-process, and the reduced case would not reproduce. The reproducer BYTES are written to the gitignored crashes/ dir; the RECIPE (run id, seed hash, strategy chain, reduced hash) is the committed form, and tools/replay.mjs re-derives the bytes and checks the hash. A reproducer is hostile input against parsers this repo ships, so it does not belong in git next to them." },
-      { "name": "fuzz-lab loop",      "version": "in-tree", "dir": "fuzz-lab/tools", "entry": "loop.mjs",       "official_source": "in-tree (self-authored)", "in_tree": true, "verify": false, "needs": "Node >= 24", "note": "Self-judging North Star proof over 4 targets: corpus stability -> campaign -> triage (every finding reproduced from its recipe, minimised, reduced case re-verified) -> THE NEGATIVE CONTROL -> regressions. Exit 0 is NOT available to a run that found nothing: a surviving flawed twin fails the run, because a fuzzer that cannot catch a parser with no bounds checks has not shown it can catch anything. That check already earned its place - an early run reported the web-triage twin SURVIVED, and the cause was a mutator whose text inputs were too SMALL to trip a quadratic regex. Fixed by widening the strategy, not by weakening the assertion. Exit 0 loop closed, 9 an assertion failed. Wrapper: scripts/fuzz-lab.ps1 (also scripts/agent-cli.ps1 fuzz-lab ...)." }
+      {
+        "name": "fuzz-lab corpus",
+        "version": "in-tree",
+        "dir": "fuzz-lab/lab",
+        "entry": "corpus.mjs",
+        "official_source": "in-tree (self-authored, ZERO dependencies)",
+        "in_tree": true,
+        "verify": false,
+        "needs": "Node >= 24",
+        "note": "27 seeds built from OTHER LABS' deterministic generators (the 5 synthetic pcaps, the 7 binary .pf records + D12IMG + 2 TSV artifacts, 5 signed JOSE tokens, 6 committed JS sources) - never random bytes, because a mutation fuzzer spends its budget on structurally hopeless inputs. Built TWICE per run and the hashes compared, so determinism is measured rather than asserted. That check earned its place: it caught web-reverse/static/gen-obf.mjs being non-deterministic (javascript-obfuscator's internal RNG is not reached by --seed), and those seeds were dropped. Artifacts land in %TEMP%\\fuzz-lab, never in the repo."
+      },
+      {
+        "name": "fuzz-lab mutator",
+        "version": "in-tree",
+        "dir": "fuzz-lab/lab",
+        "entry": "mutate.mjs",
+        "official_source": "in-tree (self-authored)",
+        "in_tree": true,
+        "verify": false,
+        "needs": "Node >= 24",
+        "note": "12 NAMED strategies aimed at the fields parsers actually trust: intInject (2/4/8-byte boundary integers over a length or count field, LE and BE), truncate (biased to just past a header boundary - this is the over-read probe), chunk{Delete,Duplicate,Insert,Zero}, byteSplice/alphabetSplice, textRun/textRepeat (the ReDoS probes). xoshiro128** seeded from the run id, so any input is re-derivable. The recipe IS the inverse of the mutation and it round-trips exactly (2400/2400 verified) - recording the step-count draw, the strategy-selection draw and the alphabet VALUES, all three of which were bugs that silently produced wrong bytes."
+      },
+      {
+        "name": "fuzz-lab pcap reader",
+        "version": "in-tree",
+        "dir": "fuzz-lab/lab",
+        "entry": "pcap-reader.mjs",
+        "official_source": "in-tree (self-authored, written FOR this lab)",
+        "in_tree": true,
+        "verify": false,
+        "needs": "Node >= 24",
+        "note": "A libpcap reader, written for the fuzzer because the station had a pcap WRITER (net-reverse/lab/pcap-writer.mjs) and no JS reader - net-reverse shells out to tshark, and a third-party dissector is not a target this repo may claim. Handles all four magics and both byte orders, bounds every declared length against the file, and reports truncation rather than throwing. Ships with a deliberately flawed twin whose defect is SILENT rather than loud: it subarrays incl_len unchecked, and Buffer.subarray clamps, so it returns a 4-byte frame while REPORTING 1000. A crash-counting fuzzer sees nothing there; a differential oracle sees the lie."
+      },
+      {
+        "name": "fuzz-lab driver",
+        "version": "in-tree",
+        "dir": "fuzz-lab/lab",
+        "entry": "driver.mjs",
+        "official_source": "in-tree (self-authored)",
+        "in_tree": true,
+        "verify": false,
+        "needs": "Node >= 24",
+        "note": "One child process per input, for ENFORCEMENT rather than isolation: a regex backtracking through a 400 KB claim never yields to the event loop, so the only way to bound a hang is to kill the process. Hard per-input wall clock (4 s) and a hard V8 heap ceiling (192 MB via --max-old-space-size). Five outcome classes, and the load-bearing distinction is rejected-vs-uncaught: a parser that DECLARES its refusals has handled hostile input correctly, anything else is a finding. worker.mjs deliberately has NO self-abort timer - it could not fire during a synchronous hang, so it would have been a safety net that was dead code."
+      },
+      {
+        "name": "fuzz-lab triage",
+        "version": "in-tree",
+        "dir": "fuzz-lab/lab",
+        "entry": "triage.mjs",
+        "official_source": "in-tree (self-authored)",
+        "in_tree": true,
+        "verify": false,
+        "needs": "Node >= 24",
+        "note": "Delta-debugging minimisation (coarse chunk removal, then byte-wise) against the REAL subprocess with the REAL ceilings - minimising against a cheaper predicate risks reducing to something that only misbehaves in-process, and the reduced case would not reproduce. The reproducer BYTES are written to the gitignored crashes/ dir; the RECIPE (run id, seed hash, strategy chain, reduced hash) is the committed form, and tools/replay.mjs re-derives the bytes and checks the hash. A reproducer is hostile input against parsers this repo ships, so it does not belong in git next to them."
+      },
+      {
+        "name": "fuzz-lab loop",
+        "version": "in-tree",
+        "dir": "fuzz-lab/tools",
+        "entry": "loop.mjs",
+        "official_source": "in-tree (self-authored)",
+        "in_tree": true,
+        "verify": false,
+        "needs": "Node >= 24",
+        "note": "Self-judging North Star proof over 4 targets: corpus stability -> campaign -> triage (every finding reproduced from its recipe, minimised, reduced case re-verified) -> THE NEGATIVE CONTROL -> regressions. Exit 0 is NOT available to a run that found nothing: a surviving flawed twin fails the run, because a fuzzer that cannot catch a parser with no bounds checks has not shown it can catch anything. That check already earned its place - an early run reported the web-triage twin SURVIVED, and the cause was a mutator whose text inputs were too SMALL to trip a quadratic regex. Fixed by widening the strategy, not by weakening the assertion. Exit 0 loop closed, 9 an assertion failed. Wrapper: scripts/fuzz-lab.ps1 (also scripts/agent-cli.ps1 fuzz-lab ...)."
+      }
     ],
     "ops": [
-      { "name": "SkillSpector",  "version": "2.12.0", "dir": "%USERPROFILE%\\.local\\bin\\skillspector.exe", "official_source": "https://github.com/NVIDIA/skillspector", "auto_update": false, "verify": true, "note": "NVIDIA SkillSpector. Launched UNCONDITIONALLY by headless-lab/tools/skill_security_control.ps1:24 -- that command IS the ops.skill.security negative control, so a clone that cannot run it cannot run the registry at all, which is why this was a real gap and not a cosmetic one. Measured 2026-10-03 on this station: skillspector.exe --version prints 'SkillSpector v2.12.0'. NOT on PATH and NOT in the system Python: it comes from `uv tool install git+https://github.com/NVIDIA/skillspector.git`, which lands a self-contained venv plus this launcher, and the bare name `skillspector` does NOT resolve on PyPI. `dir` holds the whole path and there is deliberately no `entry`, following the idalib record above: a host-absolute path is not resolvable relative to the repo, so declaring an `entry` beside it would make every declared-location checker report it absent." }
+      {
+        "name": "SkillSpector",
+        "version": "2.12.0",
+        "dir": "%USERPROFILE%\\.local\\bin\\skillspector.exe",
+        "official_source": "https://github.com/NVIDIA/skillspector",
+        "auto_update": false,
+        "verify": true,
+        "note": "NVIDIA SkillSpector. Launched UNCONDITIONALLY by headless-lab/tools/skill_security_control.ps1:24 -- that command IS the ops.skill.security negative control, so a clone that cannot run it cannot run the registry at all, which is why this was a real gap and not a cosmetic one. Measured 2026-10-03 on this station: skillspector.exe --version prints 'SkillSpector v2.12.0'. NOT on PATH and NOT in the system Python: it comes from `uv tool install git+https://github.com/NVIDIA/skillspector.git`, which lands a self-contained venv plus this launcher, and the bare name `skillspector` does NOT resolve on PyPI. `dir` holds the whole path and there is deliberately no `entry`, following the idalib record above: a host-absolute path is not resolvable relative to the repo, so declaring an `entry` beside it would make every declared-location checker report it absent."
+      }
     ],
     "build": [
-      { "name": "MSVC vcvars64", "version": "2022",   "dir": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat", "official_source": "https://visualstudio.microsoft.com/downloads/", "auto_update": false, "verify": true, "note": "The VC developer environment, not a single tool: four lab builds shell out to vcvars64.bat and then compile with cl/link, so the .bat is the thing a clone must have. crackme-corpus/tools/build-c.ps1:26-30, headless-lab/tools/build.ps1:32-35 and managed-lab/tools/build.ps1:40-43 probe five candidate paths and hard-fail (exit 3, or a throw) when none exists; forensics-lab/lab/payload/build.bat:5 calls one path unconditionally. Measured 2026-10-03 on this station: PRESENT at ...\\2022\\Community and ...\\18\\Community, ABSENT at ...\\2022\\Professional, ...\\2022\\Enterprise and the x86 BuildTools path. Only forensics-lab/payload had this recorded at all, as the `needs` string 'MSVC 2022 (optional)' on an in-tree entry, which is why three labs were building on a dependency nothing named. `dir` holds the whole path and there is deliberately no `entry`, following the idalib record above." }
+      {
+        "name": "MSVC vcvars64",
+        "version": "2022",
+        "dir": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat",
+        "official_source": "https://visualstudio.microsoft.com/downloads/",
+        "auto_update": false,
+        "verify": true,
+        "note": "The VC developer environment, not a single tool: four lab builds shell out to vcvars64.bat and then compile with cl/link, so the .bat is the thing a clone must have. crackme-corpus/tools/build-c.ps1:26-30, headless-lab/tools/build.ps1:32-35 and managed-lab/tools/build.ps1:40-43 probe five candidate paths and hard-fail (exit 3, or a throw) when none exists; forensics-lab/lab/payload/build.bat:5 calls one path unconditionally. Measured 2026-10-03 on this station: PRESENT at ...\\2022\\Community and ...\\18\\Community, ABSENT at ...\\2022\\Professional, ...\\2022\\Enterprise and the x86 BuildTools path. Only forensics-lab/payload had this recorded at all, as the `needs` string 'MSVC 2022 (optional)' on an in-tree entry, which is why three labs were building on a dependency nothing named. `dir` holds the whole path and there is deliberately no `entry`, following the idalib record above."
+      }
     ]
   }
 }

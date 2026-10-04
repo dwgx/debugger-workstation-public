@@ -256,6 +256,28 @@ def tokenize(text: str) -> set[str]:
 WINROOT = re.compile(r"^/([a-z])(?=(?:/|$))")
 
 
+# --- WHAT THIS GATE CANNOT SEE (measured 2026-10-04, not suspected) ------------------------
+#
+# It harvests LITERAL executable paths out of source lines. A probe that names its binary
+# through a variable is invisible to it:
+#
+#     subprocess.run([args.rabin2, "-I", args.binary])      # <- invisible
+#     subprocess.run(["rabin2", "-I", args.binary])          # <- visible
+#
+# `rabin2` did all the work behind the native.pe.hardening capability and was absent from
+# tools.json for the whole life of that capability, because of exactly this line. The gate
+# printed "0 undeclared" throughout, which is true and useless: it means "no UNDECLARED tool is
+# named by literal path in the scanned source", not "every binary this tree runs is declared".
+#
+# It is worse than a missed tool, because `radare2` WAS declared, so a reader reasonably assumes
+# rabin2 is covered. An undeclared binary that a human attributes to a declared neighbour is
+# harder to notice than one that is missing outright.
+#
+# So: read "0 undeclared" as scoped to literals. Closing this properly means either resolving
+# the argv dataflow or having probes declare the tools they invoke -- the manifest is now the
+# place for that (`requires_env` on Il2CppDumper is the same idea for a different gap).
+
+
 def norm_path(text: str) -> str:
     t = text.replace("/", "\\").lower().rstrip("\\")
     return WINROOT.sub(lambda m: m.group(1) + ":", t)

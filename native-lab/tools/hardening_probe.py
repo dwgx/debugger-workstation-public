@@ -105,6 +105,46 @@ def main() -> int:
                   "reporting an empty mitigation profile as a clean one",
                parsed_keys=sorted(info)[:10])
 
+    # A MANAGED PE has no native mitigation posture to report. Measured 2026-10-04 by an
+    # independent experiment that built three managed PEs of different size and content:
+    # rabin2 returned canary:"true" on ALL THREE, including a bare Console.WriteLine with no
+    # buffer and no arguments, and none of them contains a cookie, a __security_check_cookie,
+    # a LOAD_CONFIG directory, or a single native stack frame. rabin2 keys the flag off
+    # arch=cil rather than off an actual cookie, so it is a CONSTANT on this population.
+    #
+    # That constant is more dangerous than a wrong flag on a native binary, because rabin2 IS
+    # discriminating for native x86 -- so the two populations never overlap and nothing else
+    # would ever have caught it. Passing it through would be reporting an instrument's habit
+    # as a fact about the binary, which is the one thing this project exists to stop.
+    managed = str(info.get("arch", "")).lower() in ("cil", "mono", "dotnet") or \
+        str(info.get("lang", "")).lower() in ("cil", "csharp", "f#", "vb")
+    if managed:
+        result_managed = {
+            "managed": True,
+            "reason": ("this is a MANAGED assembly; the image has no native stack frames, so "
+                       "native mitigation flags do not apply to it. rabin2 still reports them "
+                       "and they are constants on this population, not readings."),
+            "reported_by_rabin2_but_not_meaningful": {k: info.get(k) for k in MITIGATION_FIELDS},
+            "what_to_read_instead": ("ask a MANAGED-lane capability (managed.il.decompile, or "
+                                     "ilspycmd) about the IL. For hardening, the questions that "
+                                     "matter are strong-naming and cross-assembly tampering, "
+                                     "which are not native mitigations and are not in this file."),
+        }
+        print(json.dumps({
+            "ok": True, "exit": 0, "binary": args.binary,
+            "image": {k: info.get(k) for k in ("arch", "bits", "class", "bintype", "machine",
+                                               "os", "subsys", "lang")},
+            "mitigations": None,
+            "managed": result_managed,
+            "caveat": ("MITIGATIONS ARE NULL, NOT EMPTY, ON PURPOSE. An empty dict would read "
+                       "as 'measured, nothing found'; null reads as 'this question does not "
+                       "apply here, and here is why'. Do not fill it in from the rabin2 values "
+                       "above -- they are the fabricated ones this check exists to catch."),
+        }))
+        write_artifact("hardening_probe", {"ok": True, "exit": 0, "binary": args.binary,
+                                           "mitigations": None, "managed": result_managed})
+        return 0
+
     mitigations = {k: info.get(k) for k in MITIGATION_FIELDS}
     result = {
         "ok": True, "exit": 0, "binary": args.binary,
