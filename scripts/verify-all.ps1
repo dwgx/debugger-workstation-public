@@ -51,7 +51,12 @@ Step 'reachability'           { python scripts/reachability-report.py }
 # It now runs for a BOUNDED time and names every entry it did not run. A partial sweep that says
 # so is worth having; a partial sweep that reports a green whole is worse than no sweep.
 # Raise the budget (or run the entry by id) when you want the rest.
-Step 'assert-probes (bounded)' { python scripts/assert-probes.py --budget 150 --timeout 120 }
+# --require-complete, added 2026-10-05. WITHOUT IT THIS STEP COULD NOT FAIL. Measured: a bounded
+# sweep deferred 9 of 10 entries and assert-probes.py still exited 0, because it failed only on
+# DRIFT or on nothing having run at all. This budget is 150 s while the 27 entries measure ~261 s,
+# so entries were genuinely being skipped and the step reported green anyway. "One command judges
+# both trees" must not be able to say OK about a capability it never looked at.
+Step 'assert-probes (bounded, completeness required)' { python scripts/assert-probes.py --budget 150 --timeout 120 --require-complete }
 # The full sweep takes ~24 minutes on this host, dominated by fuzz.differential.parse. It is
 # listed, not run, and the list says which entry costs what is in the entry's own runtime_note.
 Step 'assert-probes --list'   { python scripts/assert-probes.py --list }

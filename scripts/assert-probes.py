@@ -717,6 +717,10 @@ def main() -> int:
                          "default is one re-run, because a single sample from a load-sensitive probe "
                          "is not a finding; --no-retry exists so the behaviour itself can be measured "
                          "from both sides rather than taken on trust.")
+    ap.add_argument("--require-complete", action="store_true",
+                    help="exit 1 if ANY entry was deferred by --budget without being measured. "
+                         "A bounded run that silently skips entries is not a pass; without this "
+                         "flag a deferred entry is reported but does not change the exit code.")
     ap.add_argument("--budget", type=int, default=0,
                     help="stop starting new entries after this many seconds and NAME every entry "
                          "that was not run. 0 means no budget. Nothing skipped is ever counted as "
@@ -863,8 +867,33 @@ def main() -> int:
     if nothing_measured:
         print(f"\nREFUSING TO PASS: all {faults} of {measured} entries that ran failed to start, so "
               f"nothing was measured. That is not a green run; it is no run.")
-    return 1 if (counts.get("DRIFT") or nothing_measured) else 0
+    # DEFERRED IS NOT A PASS. Measured 2026-10-05: a bounded sweep deferred 9 of 10 entries and
+    # this function still returned 0, because it failed only on DRIFT or on nothing having been
+    # measured at all. scripts/verify-all.ps1 runs this with `--budget 150` and calls the step
+    # green on the exit code alone, so the project's headline "one command judges both trees"
+    # could report success while capabilities went unverified. The 150 s budget is below the
+    # ~261 s these 27 entries need, so this is not hypothetical.
+    #
+    # This is the third shape of the day's recurring false-green, and the one living in the
+    # harness itself: a check that cannot FAIL, wearing the costume of a check. Bounded runs are
+    # legitimate, so the default is unchanged -- but a caller that needs completeness must be
+    # able to ask for it and have the answer change the exit code.
+    #
+    # NOTE, because I got it wrong the first time: this block first sat BELOW the `return` and was
+    # dead code. The mutation run caught it at once -- --require-complete did not change the exit
+    # code while a real deferral was on screen. A flag that does not flip the verdict when the
+    # condition is visibly met is the same defect as the gate that cannot fail.
+    if deferred:
+        if args.require_complete:
+            print(f"\nREFUSING TO PASS: {len(deferred)} of {len(todo)} entries were DEFERRED by the "
+                  f"budget and were NEVER MEASURED. They are not OK and they are not DRIFT -- they "
+                  f"are UNPROVEN. Raise --budget or run them by id:\n"
+                  f"    python scripts/assert-probes.py {' '.join(deferred)}")
+            return 1
+        print(f"\n{len(deferred)} entry/entries were DEFERRED by --budget and were NEVER MEASURED. "
+              f"That is not a pass. Pass --require-complete to make it one.")
 
+    return 1 if (counts.get("DRIFT") or nothing_measured) else 0
 
 if __name__ == "__main__":
     sys.exit(main())
