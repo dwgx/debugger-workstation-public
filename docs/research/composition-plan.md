@@ -35,7 +35,7 @@ that produced this.
 > `plan.json` closes that; adding a sixth edge does not.
 
 **Why this deserves its own document rather than a section.** The estate's own diagnosis,
-confirmed and made worse by measurement (`w1-composition.md:6-12`):
+confirmed and made worse by measurement (`w1-composition.md~~:6-12~~`):
 
 > *"The repo's diagnosis is **CONFIRMED and worse than stated**: the gap is not coverage, it
 > is composition, and the layer that was supposed to fix it — `mission.ps1` — **does not read
@@ -51,7 +51,7 @@ confirmed and made worse by measurement (`w1-composition.md:6-12`):
 
 Columns: `consumes.inputs[].name:type` (**bold** = has a `from` edge) →
 `produces.facts[].key:type` → `question_types` → has `invoke`?
-Source: `w1-composition.md:23-48`, whose line anchors I spot-verified today.
+Source: `w1-composition.md~~:23-48~~`, whose line anchors I spot-verified today.
 
 | # | id | state | consumes (name:type) | produces (key:type) | question_types | invoke | lane |
 |---|---|---|---|---|---|---|---|
@@ -92,7 +92,7 @@ with none bound by a `fact_map`** (§4.3).
 
 **Only 3 of 15 capabilities have an `invoke`** — `native.ida.decompile`,
 `native.ida.list_functions`, `native.ghidra.decompile`. Verified today; the mission loop can
-call those and record `skipped_no_invoke` for the other twelve (`w1-composition.md:250-251`).
+call those and record `skipped_no_invoke` for the other twelve (`w1-composition.md~~:250-251~~`).
 
 ---
 
@@ -100,7 +100,7 @@ call those and record `skipped_no_invoke` for the other twelve (`w1-composition.
 
 ### 2.1 Declared: exactly one, and it is the wrong one
 
-A program walked the whole JSON tree for a `from` key (`w1-composition.md:54-57`):
+A program walked the whole JSON tree for a `from` key (`w1-composition.md~~:54-57~~`):
 
 ```
 DECLARED EDGES (consumes.inputs[].from): 1
@@ -108,11 +108,11 @@ DECLARED EDGES (consumes.inputs[].from): 1
 ```
 
 `capabilities.json:43-46` is the **only** `from` block in **1493 lines**; 14 capabilities
-consume inputs that name no producer (`w1-composition.md:59-60`). Re-verified today:
+consume inputs that name no producer (`w1-composition.md~~:59-60~~`). Re-verified today:
 `grep -c '"from"' manifests/capabilities.json` → **1**.
 
 **And that single declared edge is misaligned with the edge the loop binds**
-(`w1-composition.md:64-70`):
+(`w1-composition.md~~:64-70~~`):
 
 ```
 DECLARED edge (consumes.inputs[].from):
@@ -128,7 +128,7 @@ Re-verified today: `capabilities.json:43-46` declares `"field": "native.func.add
 **not** `consumes.inputs[].from`, so the registry's own note at `:138` describes something
 that does not happen.
 
-**Why the chain fires anyway** (`w1-composition.md:79-94`): the loop survives on a
+**Why the chain fires anyway** (`w1-composition.md~~:79-94~~`): the loop survives on a
 coincidence inside the tool. `native-lab/tools/list-funcs.mjs:56` emits both keys as
 siblings, so `native.func.named[0]` happens to be a usable argument, and
 `native-lab/tools/decompile.mjs:33-39` re-resolves the name to an address itself — **a
@@ -146,12 +146,12 @@ list-funcs.mjs  --emits-->  native.func.named[0]  --argv[2]-->  decompile.mjs
 
 ### 2.2 Chainable as declared: one pair, zero triples
 
-`w1-composition.md:98-102`: pairs = **1**; triples = **0**; of 15 capabilities **14 are
+`w1-composition.md~~:98-102~~`: pairs = **1**; triples = **0**; of 15 capabilities **14 are
 roots and 14 are leaves**. The graph is a 2-node path with 13 isolated vertices.
 
 ### 2.3 The graph that complete declarations would produce
 
-`w1-composition.md:106-118`. Every type-compatible producer→consumer pair was enumerated
+`w1-composition.md~~:106-118~~`. Every type-compatible producer→consumer pair was enumerated
 (produced fact of type *T* feeding a consumed input of type *T*), then filtered to pairs
 that are semantically defensible: **31 raw type-compatible pairs, 7 survive** as real
 chains.
@@ -167,11 +167,11 @@ chains.
 | 7 | `jose.parse → fuzz.differential.parse` | `crypto.jose.claims` | structure→string | same line, `jose` leg |
 
 **The diff, as one line: `6 missing edges, 1 declared-but-misaligned`**
-(`w1-composition.md:120`).
+(`w1-composition.md~~:120~~`).
 
 ### 2.4 The validator is blind to all of it
 
-`w1-composition.md:126-148`. The registry was mutated in memory and the real validator run
+`w1-composition.md~~:126-148~~`. The registry was mutated in memory and the real validator run
 against each mutant:
 
 ```
@@ -194,7 +194,7 @@ Three consequences, each a control that cannot fire:
 
 - `R4` (`registry-verify.py:130-155`) only type-checks inputs that **have** a `from`. Since
   only one input has one, **R4's cross-lab guarantee covers 1 of 42 consumed inputs**
-  (`w1-composition.md:143`).
+  (`w1-composition.md~~:143~~`).
 - `R10` checks `consumes_fact` existence but **never checks that `consumes_fact` and
   `consumes.inputs[].from.field` name the same fact** — which is exactly the §2.1
   misalignment.
@@ -203,7 +203,7 @@ Three consequences, each a control that cannot fire:
   cases).
 
 And the registry validates clean today — `capabilities: 15`, `REGISTRY CLEAN`, exit 0
-(`w1-composition.md:151-155`). Re-verified on the morning of 2026-10-02: 15 capabilities,
+(`w1-composition.md~~:151-155~~`). Re-verified on the morning of 2026-10-02: 15 capabilities,
 one `from` block.
 **Clean, and blind to composition. That is the whole finding.**
 
@@ -256,7 +256,7 @@ one `from` block.
 
 The enum is closed at `mission.ps1:85-93` — **Q1.identify, Q2.locate, Q3.behaviour, Q4.data,
 Q5.vuln-shape, Q6.crypto, Q7.origin** (confirmed today from the registry's declared set).
-**Two routing tables exist and nothing reconciles them** (`w1-composition.md:163-167`):
+**Two routing tables exist and nothing reconciles them** (`w1-composition.md~~:163-167~~`):
 `mission.ps1` hardcodes `needs` per question; the registry declares `question_types` per
 capability.
 
@@ -273,12 +273,12 @@ I rebuilt this table today from both sources. `mission_runs` is `$QUESTION_TYPES
 | **Q6.crypto** | **∅ — 0 steps** | **1** (`crypto.jose.parse`) | **1** | dead question |
 | Q7.origin | `list_functions` | 6 | 6 | **routes `list_functions`, which the registry does not list for Q7** |
 
-Source for every cell: `w1-composition.md:169-177`, rebuilt against
+Source for every cell: `w1-composition.md~~:169-177~~`, rebuilt against
 `manifests/capabilities.json` and `scripts/mission.ps1:105` on 2026-10-02.
 
 ### 3.1 Q3, Q4, Q6 route nothing
 
-`w1-composition.md:187-199`. `needs = @()` ⇒ zero planned steps. Proven by running Plan:
+`w1-composition.md~~:187-199~~`. `needs = @()` ⇒ zero planned steps. Proven by running Plan:
 
 ```
 $ powershell -File scripts\mission.ps1 -Action Plan -QuestionType Q6.crypto ...
@@ -291,7 +291,7 @@ $ powershell -File scripts\mission.ps1 -Action Plan -QuestionType Q6.crypto ...
 `mission.ps1:28-29`: *"A stage that did not run is an unasked question, not a clean answer —
 and it is the one gap that produces no error to notice."* Here there is not even a STOP note,
 because the STOP note is generated from `$reg.capabilities`, not from the plan
-(`w1-composition.md:199`).
+(`w1-composition.md~~:199~~`).
 
 **What else would also have produced this observation:** a question type legitimately with
 no applicable capability. The discriminator is that 7, 6 and 1 capabilities respectively
@@ -300,7 +300,7 @@ is `state: observed` with a working lab behind it.
 
 ### 3.2 The two hard contradictions
 
-`w1-composition.md:179-186`. **Q5 and Q7 route capabilities the registry does not list for
+`w1-composition.md~~:179-186~~`. **Q5 and Q7 route capabilities the registry does not list for
 them.** `mission.ps1:90` sends Q5.vuln-shape to `list_functions` + `decompile`; the registry
 declares **only** `fuzz.differential.parse` for Q5 (`:980-983`). `mission.ps1:92` sends
 Q7.origin to `list_functions`; the registry lists six others for Q7 and **not**
@@ -310,7 +310,7 @@ registry cannot object, because no rule reads `question_types`.
 
 ### 3.3 Real analyst questions, routable or not
 
-`w1-composition.md:201-212`:
+`w1-composition.md~~:201-212~~`:
 
 | Question | Q | Routable today? |
 |---|---|---|
@@ -327,7 +327,7 @@ registry cannot object, because no rule reads `question_types`.
 
 ## 4. Ranked registry patches
 
-Ranked by **composition bought per line changed** (`w1-composition.md:339-341`). Each is a
+Ranked by **composition bought per line changed** (`w1-composition.md~~:339-341~~`). Each is a
 JSON fragment for `manifests/capabilities.json`. **The write path belongs to the sibling
 that owns that file, and these must land as one coherent change.**
 
@@ -367,7 +367,7 @@ currently making about itself.**
 `['-NoProfile','-ExecutionPolicy','Bypass','-File','scripts/ghidra-headless.ps1','-Sample','{target}','-OutDir','{outdir}']`.
 `mission.ps1` substitutes only `{target}` (`:294`) and `{input.x}` (`:295`); running the
 exact substitution loop over the real argv leaves the placeholder intact
-(`w1-composition.md:286-291`):
+(`w1-composition.md~~:286-291~~`):
 
 ```
 resolved argv: [ … "-Sample" "C:\some\target.exe" "-OutDir" "{outdir}" ]
@@ -498,7 +498,7 @@ with `invoke`. `R10` already checks argv shape, script existence and `success_wh
 
 **`[UNVERIFIED]` — carried, not dropped:** P7's proposed argv shapes are read off each
 tool's CLI parser (`pcap-lab.mjs:126`, `analyze.mjs:663`, `clrlib.mjs:179`) but were **not
-executed** (`w1-composition.md:509-511`). The `--json` envelopes exist; whether the fact
+executed** (`w1-composition.md~~:509-511~~`). The `--json` envelopes exist; whether the fact
 lands on the declared key is untested.
 
 ### P8 — Bind the three orphan artifacts *(3 lines; closes the fact/artifact hole)*
@@ -538,7 +538,7 @@ reproducer to a later step.
 | P8 | 3 | binds 3 orphan artifacts | yes |
 | P7 | ~8 each | makes P3/P4/P5 reachable | yes |
 
-`w1-composition.md:491-493` is explicit that P1, P2 and P6 are still worth landing because
+`w1-composition.md~~:491-493~~` is explicit that P1, P2 and P6 are still worth landing because
 P1 and P2 remove active falsehoods, while P3, P4, P5, P7 and P8 are **inert** until the
 selection mechanism changes.
 
@@ -643,7 +643,7 @@ attached; that is what makes it a result rather than a gap.**
 
 Target: `crackme-corpus/out/c01-stringobf.exe` — Owner-authored, self-built, the same object
 `mission.ps1:689` uses for its selftest. **Read the declarations; ran no analysis**
-(`w1-composition.md:262`, `:504-505`).
+(`w1-composition.md~~:262~~`, `:504-505`).
 
 | Hop | Declared? | Executable today? | Fact at N == fact consumed at N+1? |
 |---|---|---|---|
@@ -657,9 +657,9 @@ Target: `crackme-corpus/out/c01-stringobf.exe` — Owner-authored, self-built, t
 **The strongest chain the estate can actually execute today is two hops long**, and even it
 lies about which fact crosses the arrow. Everything past hop 2 is blocked by **declaration
 gaps, not missing tools** — the Ghidra install, the wrapper, the scripts and the project
-machinery are all present (`w1-composition.md:330-333`).
+machinery are all present (`w1-composition.md~~:330-333~~`).
 
-**Hop 3's two blockers, named** (`w1-composition.md:284-296`): **A** — `argv` contains
+**Hop 3's two blockers, named** (`w1-composition.md~~:284-296~~`): **A** — `argv` contains
 `"{outdir}"` and the substitution loop leaves it verbatim (P2 fixes this). **B** — even with
 the path fixed, `native.ghidra.summary` (`:1106`) is consumed by nothing and
 `native.crosscompare.ghidra` (`:1217`) has no `invoke`, so the loop cannot call it at all.
@@ -668,7 +668,7 @@ the path fixed, `native.ghidra.summary` (`:1106`) is consumed by nothing and
 
 ## 6. Blockers that are not registry problems
 
-`w1-composition.md:484-500`. Three things gate this work and **no amount of JSON fixes
+`w1-composition.md~~:484-500~~`. Three things gate this work and **no amount of JSON fixes
 them.**
 
 1. **`mission.ps1` must be changed or nothing composes.** `:85-93` (hardcoded table),
@@ -696,7 +696,7 @@ them.**
    still prevented only by a note in the registry.
 
 **Consequences of the selection mechanism, as they stood on 2026-10-02 morning**
-(`w1-composition.md:243-253`) — **and what they are now** (all re-verified 2026-10-02,
+(`w1-composition.md~~:243-253~~`) — **and what they are now** (all re-verified 2026-10-02,
 afternoon):
 
 1. ~~**No topological sort exists.** Ordering is literal hashtable order.~~ →
@@ -719,7 +719,7 @@ afternoon):
    `plan 0 step(s)` + exit 0. See `review-2026-10-02.md` §9.
 
 **The grep evidence, and the fact that its conclusion flipped between two runs on one day.**
-`w1-composition.md:233-239` claimed `question_types` was read by zero lines of code. The
+`w1-composition.md~~:233-239~~` claimed `question_types` was read by zero lines of code. The
 morning re-run found exactly one reader — a scope filter on evidence already produced, which
 is a safety check and not a router — and the conclusion was that the routing half stood:
 
@@ -757,7 +757,7 @@ of it, and the three refusals in §4a are the reason that substitution was safe 
 
 ## 7. What was not verified
 
-Carried verbatim from `w1-composition.md:502-513`, because a composition plan that hides
+Carried verbatim from `w1-composition.md~~:502-513~~`, because a composition plan that hides
 its bounds is a diagram.
 
 - `[UNVERIFIED]` **No analysis was run.** Every hop in §5 was determined by reading

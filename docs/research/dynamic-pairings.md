@@ -4,7 +4,7 @@
 read in full. Every fact key, address and measurement carries its `w1-debugpairing.md:line`
 or the command that produced it. **Read-only:** nothing in either repo was modified.
 
-**The North Star applied here** (`w1-debugpairing.md:6-8`): *a capability without a run is a
+**The North Star applied here** (`w1-debugpairing.md~~:6-8~~`): *a capability without a run is a
 claim.* Every pairing below is tagged **[MEASURED]** (a command on this host produced the
 number), **[READ]** (the cited source was opened and the quoted text is in it), or
 **[UNVERIFIED]**.
@@ -20,12 +20,12 @@ status of four other pairings from *documents* to *three lines of glue*.
 
 `dynamic.device.frida` is `state: absent`, `requires.admin: true`,
 `escalation_class: impossible`, with the negative control *"any Frida attach while adb
-reports no device"* (`w1-debugpairing.md:736-738`). **Every one of those is a statement
+reports no device"* (`w1-debugpairing.md~~:736-738~~`). **Every one of those is a statement
 about Android, and the ID encodes it.**
 
 ### 1.2 What the host does
 
-`[MEASURED]` on this host, no device, no adb (`w1-debugpairing.md:740-752`):
+`[MEASURED]` on this host, no device, no adb (`w1-debugpairing.md~~:740-752~~`):
 
 ```
 $ frida-ps --version
@@ -54,7 +54,7 @@ wave brief):
 - **`DebugSymbol.fromName('main')` returns `0`** on our static crackme.
 - **Not yet reproduced: an `onEnter` callback firing.** `[UNVERIFIED]`
 
-**The full hook cycle, `[MEASURED]`** (`w1-debugpairing.md:755-768`) — on **our own
+**The full hook cycle, `[MEASURED]`** (`w1-debugpairing.md~~:755-768~~`) — on **our own
 self-built crackme**, a copy taken to `%TEMP%`; *the repo binary was never executed from its
 own directory*:
 
@@ -73,14 +73,14 @@ on `mainModule.base.add(rva)` both fired; the process was resumed and ran to com
 ### 1.3 The verdict, and what it deliberately does NOT change
 
 > **Verdict: new capability entry `dynamic.win.frida`, `state: observed` on the evidence
-> above.** (`w1-debugpairing.md:775-776`)
+> above.** (`w1-debugpairing.md~~:775-776~~`)
 
 > **Recommendation: do not mutate `dynamic.device.frida`** — it is correctly absent for its
 > own lane and the honesty pair (`proves` / `does_not_prove`) is load-bearing. **Add a
 > sibling.** The device entry stays the device entry; the new one is Windows-local and
-> explicitly self-built-targets-only. (`w1-debugpairing.md:776-779`)
+> explicitly self-built-targets-only. (`w1-debugpairing.md~~:776-779~~`)
 
-**Why this dominates the survey** (`w1-debugpairing.md:781-782`):
+**Why this dominates the survey** (`w1-debugpairing.md~~:781-782~~`):
 
 > *"P1, P2, P4 and P5 all need a dynamic sink on a Windows PE. Without P16 every one of them
 > is a document. With it, they are three lines of glue."*
@@ -88,7 +88,7 @@ on `mainModule.base.add(rva)` both fired; the process was resumed and ran to com
 **And the recommendation is constrained by a red line, recorded here rather than left
 implicit:** a Windows-local Frida capability runs target code. AGENTS.md §5 lists *"Running
 untrusted samples on the host (offer a VM; the owner decides)"* as brief-then-follow
-(`w1-debugpairing.md:1070-1072`). The measured run above was against **our own
+(`w1-debugpairing.md~~:1070-1072~~`). The measured run above was against **our own
 Owner-authored, self-built crackme** — which is exactly the case the estate permits. The
 capability entry must say so in its `does_not_prove`, and this dossier does not propose
 widening it.
@@ -126,7 +126,7 @@ things.** The dossier keeps both rather than picking the flattering one:
 
 | | what fired | what it proves |
 |---|---|---|
-| §1.2's transcript (`w1-debugpairing.md:755-768`) | `onEnter` **did** fire, via `-l script.js` with the Python API ordering | interception is achievable on this host **with that ordering** |
+| §1.2's transcript (`w1-debugpairing.md~~:755-768~~`) | `onEnter` **did** fire, via `-l script.js` with the Python API ordering | interception is achievable on this host **with that ordering** |
 | the registered `probe.command` | `onEnter` did **not** fire — the CLI resumes the main thread before the script loads | the registered command proves the instrument reached the process and resolved addresses; **not** that it caught a call |
 
 An entry that quoted §1.2's transcript and shipped the CLI command would be claiming a result
@@ -210,7 +210,7 @@ A static VA is in the **image's** address space, not the target's. So `native.fu
 **cannot** be the link into a hook — and on this box the image is ASLR'd, so a hook built
 from it does not merely misbehave, it faults.
 
-**The negative control, actually run** (`w1-debugpairing.md:147-168`) — hooking the static
+**The negative control, actually run** (`w1-debugpairing.md~~:147-168~~`) — hooking the static
 VA directly:
 
 ```
@@ -229,7 +229,7 @@ usage: c01-stringobf.exe <password>
 HIT main via module-relative offset
 ```
 
-**The control fails loudly, which is the point** (`w1-debugpairing.md:165-168`): an
+**The control fails loudly, which is the point** (`w1-debugpairing.md~~:165-168~~`): an
 un-rebased handoff does not silently hook the wrong thing, it faults. A registry entry that
 declared `native.dec.code` as the direct input to a hook would therefore *pass on a
 non-ASLR image and fail on this one* — **the silent-accept failure in a new costume.**
@@ -254,7 +254,7 @@ re-randomised every run, so a `runtime.*` address is valid for exactly one proce
 lifetime."*
 
 **The typed link, which is therefore a pair and not a single fact**
-(`w1-debugpairing.md:138-146`) — **and which shipped**:
+(`w1-debugpairing.md~~:138-146~~`) — **and which shipped**:
 
 > **`native.func.rva`** (fact key, type `address`) **+ `runtime.module.base`** (fact key,
 > type `address`) → sum → **`dynamic.hook.addr`** (fact key, type `address`, the value handed
@@ -284,11 +284,11 @@ is the fastest path from "I have a PE" to "I have a live address" on this host.
 
 ## 3. The 23 pairings, each with its typed fact
 
-**Legend** (`w1-debugpairing.md:1105-1107`): *Expressible* = every fact on the chain already
+**Legend** (`w1-debugpairing.md~~:1105-1107~~`): *Expressible* = every fact on the chain already
 has a producer in `manifests/capabilities.json`. *Fact key* = a new key is needed but an
 existing capability produces the input. *Capability* = a new registry entry is required.
 
-Source for the whole table: `w1-debugpairing.md:1109-1133`.
+Source for the whole table: `w1-debugpairing.md~~:1109-1133~~`.
 
 ### 3.1 Static → dynamic hand-off
 
@@ -306,7 +306,7 @@ association, *"can diff the full Windows kernel in less than a minute"*) and Ghi
 machine instructions · Storage location … · many forms of compiler transformation · even
 some forms of deliberate obfuscation"*, running on local **H2** on all platforms) `[READ]`.
 **Status: Fact key.**
-**The independence constraint, which is load-bearing** (`w1-debugpairing.md:199-203`): the
+**The independence constraint, which is load-bearing** (`w1-debugpairing.md~~:199-203~~`): the
 registry says *"Independence is about the family, not the tool id."* ghidriff, Ghidra
 Version Tracking and BSim are **all p-code correlators** — one family. **A `confirmed`
 verdict on a cross-compare must not cite two of these as agreeing.** The registry's
@@ -317,7 +317,7 @@ class is currently undeclared.
 Typed link: `native.func.addr` → `emu.api.pc` (new) — **valid only because
 `emu.imagebase == native.pe.imagebase`, and that equality must itself be a declared fact,
 not an assumption.**
-`[MEASURED]` on our own crackme (`w1-debugpairing.md:219-245`):
+`[MEASURED]` on our own crackme (`w1-debugpairing.md~~:219-245~~`):
 ```
 $ speakeasy -t …\out\c01-stringobf.exe --no-mp -o spk-c01.json
 0x140008a33: 'KERNEL32.LoadLibraryExW("api-ms-win-core-fibers-l1-1-2", …)' -> 0x77000000
@@ -331,7 +331,7 @@ Report: `report_version 1.1.0`, `arch x64`, `emulation_total_runtime 0.065 s`, 1
 **The join, measured:** Speakeasy's 20 distinct PCs against IDA's 362 functions —
 **20/20 land inside an IDA-known function**, and `start_addr 0x1400015d0` is exactly
 `ImageBase + AddressOfEntryPoint`, which IDA names `start`.
-**The negative control that must exist** (`w1-debugpairing.md:253-262`): Speakeasy refuses
+**The negative control that must exist** (`w1-debugpairing.md~~:253-262~~`): Speakeasy refuses
 unknown APIs (`error.type == "unsupported_api"`), and its `doc/limitations.md` says APIs
 present in the bundled win32metadata DB but without a hand-written handler are emulated
 *from the declaration alone*. **Measured caveat:** in our run every one of the 36 calls
@@ -345,7 +345,7 @@ Typed link: `native.func.addr` (sink) ← `dynamic.taint.path` (new, type `struc
 `{source_addr, sink_addr, ops, tainted_bytes}`).
 **Status: Capability, and the deepest gap.** There is no `taint` fact type, and the seven
 verdict gates have no taint-aware member — *"a taint path is not 'observed' in the gate's
-sense unless it is also observed in a second family"* (`w1-debugpairing.md:292-296`).
+sense unless it is also observed in a second family"* (`w1-debugpairing.md~~:292-296~~`).
 **Host feasibility `[MEASURED]`:** Triton publishes `cp312-abi3-win_amd64` (abi3 ⇒ installs
 on 3.14.7). **PANDA is out** — no Windows wheel, and its README confines the distributable
 to *"64-bit Ubuntu 22.04"*.
@@ -355,12 +355,12 @@ Highest-value pairing in the survey and the most expensive to stand up: it needs
 **P5 — emulated GDB server as the hand-off bus.**
 Typed link: `native.dec.saved` + `native.func.rva` → `emu.gdb.breakpoint` (new) →
 `emu.api.pc`.
-**The honesty tax the sources impose** (`w1-debugpairing.md:336-341`): an emulated stop is
+**The honesty tax the sources impose** (`w1-debugpairing.md~~:336-341~~`): an emulated stop is
 **not** a runtime observation of the target. Under `native.ghidra.emulate`'s existing rule
 (*"Instrumented-about-instrumented results cannot be the terminal answer"*) an emulated
 result must be labelled `evidence_source: emulator`, distinct from `decompiler`.
 
-**Why the IDA path matters here `[MEASURED]`** (`w1-debugpairing.md:342-348`): `gdb` and
+**Why the IDA path matters here `[MEASURED]`** (`w1-debugpairing.md~~:342-348~~`): `gdb` and
 `gdb-multiarch` are not on PATH and no LLVM exists, so the front end named by *both* upstream
 documents is unavailable. **The only documented client this station owns is IDA Pro 9.2** —
 and we additionally own its remote-GDB stub plus 22 `dbg_*` tools, every one decorated
@@ -376,7 +376,7 @@ rule is about the family, and a DBT is a different family from a debug API. **Fr
 coverage and Intel Pin coverage would be genuinely independent witnesses; Frida and
 `dbg_*` would not be.**"*
 **Status: Fact key, BLOCKED-ON-LLVM.**
-Of the published instrument list, on this host (`w1-debugpairing.md:368-382`):
+Of the published instrument list, on this host (`w1-debugpairing.md~~:368-382~~`):
 
 | option | status here | why |
 |---|---|---|
@@ -390,7 +390,7 @@ Of the published instrument list, on this host (`w1-debugpairing.md:368-382`):
 
 > **"So Frida is the only DBT-family instrument that is actually usable on this host, and P16
 > is not merely the cheapest dynamic option — it is the *only unblocked* one."**
-> — `w1-debugpairing.md:380-382`
+> — `w1-debugpairing.md~~:380-382~~`
 
 ### 3.2 Differential analysis
 
@@ -413,7 +413,7 @@ comparison matters; CmpLog measures it"* — corpus note N-15 applied.
 **Status: Capability, BLOCKED-ON-LLVM `[MEASURED]`.** The technique is by construction
 compile-time-only: a **second build** with `AFL_LLVM_CMPLOG=1`. No `clang`/`clang-cl`
 anywhere, and AFL++ ships no Windows build.
-**The irony worth flagging to the Owner** (`w1-debugpairing.md:461-463`): the binary-only
+**The irony worth flagging to the Owner** (`w1-debugpairing.md~~:461-463~~`): the binary-only
 alternatives that *would* work on MSVC — QEMU mode, Frida mode, Unicorn mode, Nyx — are all
 **excluded by AFL++ from value profiling**, so there is no MSVC-compatible substitute for the
 semantic oracle.
@@ -423,7 +423,7 @@ Typed link: `native.dec.code` → `fuzz.oracle.distance` (new) → `fuzz.finding
 **Status: Fact key, BLOCKED-ON-LLVM.**
 **The transferable, compiler-free part** — two failure modes from AFL++'s own docs that
 apply to *any* distance-scored analyser, **including our `fuzz-lab` minimiser**
-(`w1-debugpairing.md:472-494`): the **inverted gradient** (a `strncmp` return of `-1` is one
+(`w1-debugpairing.md~~:472-494~~`): the **inverted gradient** (a `strncmp` return of `-1` is one
 byte from a match but has maximal hamming weight against `0`), and the **false minimum that
 holds a frontier slot forever** because its distance can never reach zero. A review note, not
 a new capability.
@@ -445,18 +445,18 @@ Typed links: `net.flow.summary` (existing) → `net.protocol.field` (new) →
 check of our own parser) and `fuzz.finding.outcome`.
 **Status: Fact key — no new capability; `net.pcap.analyse` is the producer.** Cheapest
 high-value pairing in the survey.
-**The transferable insight, and it is a real one** (`w1-debugpairing.md:557-562`):
+**The transferable insight, and it is a real one** (`w1-debugpairing.md~~:557-562~~`):
 NetPlier's strongest evidence is a *cross-side* constraint we do not have anywhere — **the
 lab origin and the lab client are both ours, so we can assert that the response to request
 *i* must correlate with request *i*.** `net-reverse/lab/echo-server.mjs` already logs both
 directions. That makes remote coupling a **checkable oracle** rather than a probabilistic
 prior — corpus N-30's "tool agreement is not source independence" applied in a new
 direction.
-**The one external ground truth in the survey** (`w1-debugpairing.md:543-551`): NetPlier
+**The one external ground truth in the survey** (`w1-debugpairing.md~~:543-551~~`): NetPlier
 ships **9 real pcaps × 100 messages** (`dhcp dnp3 icmp modbus ntp smb smb2 tftp
 zeroaccess`) with per-protocol inferred fields. Its reported accuracy figures
 (100 % homogeneity / 97.9 % completeness) are **the authors' claims, not verified by us**
-(`w1-debugpairing.md:1208-1210`); **the 9 pcaps are, and their existence is a directory
+(`w1-debugpairing.md~~:1208-1210~~`); **the 9 pcaps are, and their existence is a directory
 listing.**
 
 ### 3.3 Emulation and sandboxing
@@ -471,7 +471,7 @@ listing.**
 2. `lznt1` is sdist-only and **builds fine** on 3.14.7.
 3. **Runtime is 0.065 s** for a 143 KB PE to the first unsupported API. *"This is not a
    heavyweight lane; it is a triage instrument."*
-**The venv conflict, stated as a decision** (`w1-debugpairing.md:591-609`): the three
+**The venv conflict, stated as a decision** (`w1-debugpairing.md~~:591-609~~`): the three
 emulation candidates pin **mutually exclusive** Unicorn versions —
 `speakeasy-emulator` `==1.0.2`, `qiling` `>=2.0.1`, `angr` `==2.1.4` (optional extra only).
 **speakeasy and Qiling cannot coexist in one environment.** And Qiling's Windows fuzzing
@@ -481,7 +481,7 @@ adopting P11 must repeat the install; nobody inherits it from this report."*
 
 **P12 — Ghidra p-code emulation: keep it blocked, for a *better* reason than we had.**
 The recorded reason (deprecated API) is true and **not the only reason.** Two more, from the
-Ghidra 12 help tree (`w1-debugpairing.md:638-657`):
+Ghidra 12 help tree (`w1-debugpairing.md~~:638-657~~`):
 - **Emulation Service**: pure emulation *"typically does require significant state
   initialization and dependency stubbing, except in limited circumstances."*
 - **Invalidate Emulator Cache**: *"If you do not invalidate the cache, the effects of your
@@ -532,7 +532,7 @@ Typed links: `native.func.rva` + `runtime.module.base` → `dynamic.native.hook`
 `dynamic.native.event` → verdict. Plus **`dynamic.spawn.gated`** (new, type `verdict`) so the
 gate can record *which mode was used* — otherwise an attach-only run and a spawn-gated run
 produce the same fact set and **the distinction is unrecoverable after the fact.**
-**The rule** (`w1-debugpairing.md:805-811`): spawn-gate when the behaviour is in **init**;
+**The rule** (`w1-debugpairing.md~~:805-811~~`): spawn-gate when the behaviour is in **init**;
 attach when it is in steady state and you have a live PID; trace (Stalker) when you do not
 yet know which addresses matter.
 **The two failure shapes, both named:** attach-only ⇒ **you have already missed init, and the
@@ -549,7 +549,7 @@ verbatim — *"record host **and** digest together"* — and
 shape-tolerant walk. The lab's own `ApiClient.java` states the provenance: *"The digests are
 syntactically valid but are fixtures, not a real certificate's SPKI"* — corpus N-05 applied
 to the app's own test material.
-**STOP — recorded as a result, not an omission** (`w1-debugpairing.md:846-853`): the
+**STOP — recorded as a result, not an omission** (`w1-debugpairing.md~~:846-853~~`): the
 mitmproxy documentation for this area lists `apk-mitm`, `objection`, `ssl-kill-switch2`,
 `android-unpinper` as tools to intercept **pinned** connections. **All four are
 pinning-defeat tools. We adopt none of them, and no pinning-strip recipe is recorded
@@ -559,7 +559,7 @@ already does with our own hooks.
 ### 3.5 Memory forensics
 
 **P19 — acquisition → analysis, and the one fact that makes an image trustworthy.**
-Typed link — the cleanest in the survey (`w1-debugpairing.md:883-887`):
+Typed link — the cleanest in the survey (`w1-debugpairing.md~~:883-887~~`):
 > **`forensics.mem.image`** (new, `bytes_ref` + a hash field) → **`forensics.kernel.pdb_guid`**
 > (new, `{pdb_name, guid, age, build}`) → **`forensics.artefact.rows`** (existing) — and a
 > **mismatch is a REFUSAL, not a warning.**
@@ -574,7 +574,7 @@ a real acquisition produces."* Measured by the lab: `banners` exit 0, `windows.p
 exit 1, `yarascan.YaraScan` exit 1, and forcing `-e` / `--single-location` / `--stackers`
 does not help because *"the stacker finds no banner, so no layer is built."* **That refusal
 is asserted by `loop.mjs` because "'it cannot' is a claim and this is the evidence."**
-**Trustworthiness as three checks, not adjectives** (`w1-debugpairing.md:898-908`):
+**Trustworthiness as three checks, not adjectives** (`w1-debugpairing.md~~:898-908~~`):
 (1) acquisition method is declared, and because WinPmem's read-device interface computes the
 hash **in userspace over the device stream**, the hash is a property of the acquisition, not
 of a later copy; (2) **the PDB GUID round-trips** — a plugin against a mismatched pack
@@ -652,7 +652,7 @@ that fails when the tool is absent** — the shape of control the estate already
 
 ## 4. Expressible today vs needs a capability
 
-Full table at `w1-debugpairing.md:1109-1133`. Sorted here by what they block on, because the
+Full table at `w1-debugpairing.md~~:1109-1133~~`. Sorted here by what they block on, because the
 sorting is the decision.
 
 ### 4.1 Expressible today — 3
@@ -681,7 +681,7 @@ P2 · P5b* · P8* · P9* · P10 · P17 · P18 · P19 · P20 · P21 · P22  (* = 
 | P12 | Ghidra p-code emulation | **blocked by choice, deliberately** |
 | P13 | Qiling | **measured rejection** — `pillow<11` has no cp314 win wheel |
 
-**Count, as the source states it** (`w1-debugpairing.md:1135-1138`): *"**23 pairings. 3
+**Count, as the source states it** (`w1-debugpairing.md~~:1135-1138~~`): *"**23 pairings. 3
 expressible today, 11 need only a new fact key, 9 need a new capability entry.** Of those 9:
 **4 are BLOCKED-ON-LLVM** (P5b, P7, P8, P9 — all one gate, one install), 1 is blocked by
 choice (P12, deliberately), 1 is a measured rejection (P13), and **3 are actionable today**
@@ -691,7 +691,7 @@ choice (P12, deliberately), 1 is a measured rejection (P13), and **3 are actiona
 
 ## 5. The refusals: the mirror image of every pairing
 
-`w1-debugpairing.md:1031-1099`. *"The line is not 'is it hard' — it is 'who owns the
+`w1-debugpairing.md~~:1031-1099~~`. *"The line is not 'is it hard' — it is 'who owns the
 artefact'."*
 
 **S1 — third-party commercial binaries: STOP.** A third-party commercial binary is never an
@@ -742,7 +742,7 @@ for P11 would mean treating 36 parameterised API names as 36 observations.
 
 ## 6. What was not verified
 
-Carried from `w1-debugpairing.md:1197-1221` without softening.
+Carried from `w1-debugpairing.md~~:1197-1221~~` without softening.
 
 - `[UNVERIFIED]` **No IDA → GDB-RSP attach (P5).** Documented by both projects; requires an
   interactive debugger selection that could not be driven headlessly.

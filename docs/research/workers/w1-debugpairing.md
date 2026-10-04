@@ -1,0 +1,5 @@
+> RECOVERED 2026-10-04  from ~/.omp/agent/sessions/--D--Project-<private-tree>--/2026-10-01T15-49-39-407Z_01a0f828/DebugPairing.md (0 lines).
+> This is the agent final-answer REMNANT, not the report the dossier cites. Read
+> docs/research/WORKER-REPORT-LOSS.md before treating any line here as evidence.
+
+"\n<summary>Surveyed external debugging-pairing technique families and expressed each as a typed fact chain in the station's own vocabulary. 23 pairings across 7 required areas, each with technique name, tools, per-step artefact, the typed link between steps, and an expressible-today vs needs-new-capability verdict. 5 STOP rejections recorded with reasons. Read knowledge-corpus.md first; no card duplicated.</summary>\n<status>DONE</status>\n<report_path>%USERPROFILE%/AppData/Local/Temp/w1-debugpairing.md</report_path>\n<acceptance>\n<drew_at_least_12_pairings>23 (P1-P5b, P6-P22), all with named technique, tools, per-step artefact, typed link</drew_at_least_12_pairings>\n<typed_links_in_our_vocabulary>true\n"

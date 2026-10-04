@@ -2,13 +2,13 @@
 
 **Date:** 2026-10-02 · **Source:** `w1-toolperf.md` (588 lines, agent `ToolPerf`), read in
 full; every row below carries its `w1-toolperf.md:line` and the command that produced it.
-**Host conditions during measurement** (`w1-toolperf.md:42-46`): `31.4 GiB` RAM total,
+**Host conditions during measurement** (`w1-toolperf.md~~:42-46~~`): `31.4 GiB` RAM total,
 `3.5–5.7 GiB` available, **81.9–88.7 % used** — the parent was using the machine
 throughout. This is why absolute times carry a wide spread and why the RAM figures should
 be read as "peak under contention", not "peak on an idle box."
 
 **Read this before the numbers, because the instrument was wrong first — twice**
-(`w1-toolperf.md:10-32`):
+(`w1-toolperf.md~~:10-32~~`):
 
 1. `CIM`/`WMI` is dead on this box. A first harness sampled RSS through
    `Get-CimInstance Win32_Process` and got *nothing*, silently. The same call returned an
@@ -20,7 +20,7 @@ be read as "peak under contention", not "peak on an idle box."
    report would have "measured" that concurrency is free.**
 
 > *"Had I trusted v1 or v2 I would have 'measured' that concurrency is free."*
-> — `w1-toolperf.md:26`
+> — `w1-toolperf.md~~:26~~`
 
 Only the third version (`contend.py` v3, per-child thread owns the whole lifecycle) is
 trustworthy. Both earlier RSS samplers also died on `psutil.NoSuchProcess` for the Ghidra
@@ -30,7 +30,7 @@ i.e. **the most expensive probes looked free**. The shipped sampler records
 
 **Harness:** `%USERPROFILE%/AppData/Local/Temp/w1perf/` (`measure2.py`, `contend.py`,
 `leaktest.ps1`); raw per-run JSON in `...\w1perf\logs\`.
-**Disclosed side effect** (`w1-toolperf.md:38-40`): `psutil` 7.2.2 was `pip install`ed into
+**Disclosed side effect** (`w1-toolperf.md~~:38-40~~`): `psutil` 7.2.2 was `pip install`ed into
 `D:\Software\Developer\Python314` as the measurement instrument. Outside both repos. No
 repo file, config, or manifest was touched.
 
@@ -41,7 +41,7 @@ repo file, config, or manifest was touched.
 `n` = runs. `wall` min/med/max in seconds. `tree MB` = peak RSS summed over the probe
 **and all its descendants**, sampled at 50–250 ms. `disk Δ` = bytes appearing in the
 watched `out/` dir across a run. **Source for the whole table:
-`w1-toolperf.md:58-74`.**
+`w1-toolperf.md~~:58-74~~`.**
 
 | # | probe | n | wall min | wall med | wall max | spread | tree MB (peak) | biggest proc | disk Δ / run | exit |
 |---|-------|---|----------|----------|----------|--------|----------------|--------------|---------------|------|
@@ -61,7 +61,7 @@ watched `out/` dir across a run. **Source for the whole table:
 | 14 | `crackme-corpus/tools/loop.py` | 3 | 113.48 | **119.48** | 139.95 | 26.47 | **1410.6** | java.exe 1189.0 | +2 B | 0 |
 | 15 | `fuzz-lab/tools/loop.mjs --budget 40` | 4 | 33.10 | 704.70 | **1071.37** | 1038.27 | 542.5 | node.exe 80.8 | +2.2…+4.7 KB | 0,0,**9**,0 |
 
-**Reproduction of any row** (`w1-toolperf.md:79-89`), e.g. row 12:
+**Reproduction of any row** (`w1-toolperf.md~~:79-89~~`), e.g. row 12:
 
 ```
 D:/Software/Developer/Python314/python.exe \
@@ -73,15 +73,15 @@ D:/Software/Developer/Python314/python.exe \
   --reps 3 --watch D:/Software/Tool/WorkStation/debugger/out --interval 0.1
 ```
 
-**Not run, by instruction** (`w1-toolperf.md:76-77`): `scripts/smoke-all.ps1` — the parent
+**Not run, by instruction** (`w1-toolperf.md~~:76-77~~`): `scripts/smoke-all.ps1` — the parent
 was using the machine.
 
 ---
 
 ## 2. The routing rule the numbers imply
 
-Three tiers, derived in `w1-toolperf.md:475-518`. The rule underneath them is stated at
-`w1-toolperf.md:512-518`:
+Three tiers, derived in `w1-toolperf.md~~:475-518~~`. The rule underneath them is stated at
+`w1-toolperf.md~~:512-518~~`:
 
 > **RAM, not time, is the scarce resource.** The three heaviest probes are
 > `ghidra-failopen` (1448 MB), `crackme-corpus` (1411 MB), `emulation-probe` (1322 MB) —
@@ -92,7 +92,7 @@ Three tiers, derived in `w1-toolperf.md:475-518`. The rule underneath them is st
 
 ### ALWAYS — every mission (≤ 3 s, ≤ 250 MB, no shared port)
 
-`w1-toolperf.md:475-485`
+`w1-toolperf.md~~:475-485~~`
 
 | probe | cost | why |
 |---|---|---|
@@ -100,13 +100,13 @@ Three tiers, derived in `w1-toolperf.md:475-518`. The rule underneath them is st
 | `native-lab/tools/loop.mjs` | 2.13 s, 247.9 MB | cheap **but port-bound** — see §4 |
 | `scripts/smoke-tools.ps1` | 2.84 s, 169.5 MB, spread 0.06 s | tool-presence check, writes nothing |
 
-**The caveat belongs on the tier, not in it** (`w1-toolperf.md:483-485`): `native-lab` is
+**The caveat belongs on the tier, not in it** (`w1-toolperf.md~~:483-485~~`): `native-lab` is
 Tier-A by cost and **must not run concurrently with any other 8745 consumer**. Its own
 `portFree()` guard turns that into a clean refusal rather than a corruption.
 
 ### ON-DEMAND — when the question type needs it (3–14 s)
 
-`w1-toolperf.md:487-501`
+`w1-toolperf.md~~:487-501~~`
 
 | probe | run when | cost |
 |---|---|---|
@@ -120,11 +120,11 @@ Tier-A by cost and **must not run concurrently with any other 8745 consumer**. I
 | `managed-lab/tools/loop.mjs` | .NET assembly in scope | 13.46 s, ilspycmd |
 
 Whole tier B serially: **~57 s**. As one concurrent batch: **8.40 s** measured
-(`w1-toolperf.md:500-501`, trial 2 of §3.4) — because none of them collide on ports.
+(`w1-toolperf.md~~:500-501~~`, trial 2 of §3.4) — because none of them collide on ports.
 
 ### NEVER on a mission — dedicated cadence only
 
-`w1-toolperf.md:503-510`
+`w1-toolperf.md~~:503-510~~`
 
 | probe | cost | why it cannot be a mission step |
 |---|---|---|
@@ -135,14 +135,14 @@ Whole tier B serially: **~57 s**. As one concurrent batch: **8.40 s** measured
 
 ### The distinction that makes the rule a rule
 
-`w1-toolperf.md:368-400`. Measured boots: `node -e console.log(1)` = **0.035 s**,
+`w1-toolperf.md~~:368-400~~`. Measured boots: `node -e console.log(1)` = **0.035 s**,
 `python -c print(1)` = **0.033 s**, `java -version` = **0.04 s**,
 `powershell -NoProfile -Command 1` = **0.18 s**. One full Ghidra headless run on the
 140.5 KB crackme, isolated: **20.7 s / 21.9 s wall, 981.7 MB / 1201.7 MB**, 23 processes.
 
 > *"Ghidra's fixed cost is ~21 s and ~1.0–1.2 GB per launch, and it barely depends on the
 > input. The JVM itself boots in 0.04 s; the ~21 s is Ghidra framework init + analysis of
-> one 140 KB PE."* — `w1-toolperf.md:368-371`
+> one 140 KB PE."* — `w1-toolperf.md~~:368-371~~`
 
 So there are **two different kinds of expensive thing**:
 
@@ -150,10 +150,10 @@ So there are **two different kinds of expensive thing**:
   real work and it scales with what they examine.
 - **Ghidra-backed probes are startup-bound.** `emulation-probe` at 17.68 s is *less than one*
   Ghidra launch and delivers zero capability (recorded `blocked`); its fixed-start share is
-  **>100 %** (`w1-toolperf.md:386`). `crackme-corpus` is 4 Ghidra launches (74 %) plus ~35 s
+  **>100 %** (`w1-toolperf.md~~:386~~`). `crackme-corpus` is 4 Ghidra launches (74 %) plus ~35 s
   of MSVC builds and solver work.
 
-**A cold start is not a cost.** `w1-toolperf.md:325-330`: a 21.65 s `forensics-lab` sample
+**A cold start is not a cost.** `w1-toolperf.md~~:325-330~~`: a 21.65 s `forensics-lab` sample
 inside a concurrent batch looked like contention; re-measured solo immediately after it
 returned **5.99 / 6.14 / 6.40 s**, and 6.77 s in a pair test. The 21.65 s was a cold cache
 first run — the same effect as row 7's 22.30 s outlier and row 8's 17.32 s.
@@ -161,7 +161,7 @@ first run — the same effect as row 7's 22.30 s outlier and row 8's 17.32 s.
 
 **One more cost that is not RAM:** `net-reverse` and `web-reverse` spawn heavily despite
 modest wall time — **60** and **51** distinct child processes, 13 concurrent at peak
-(`w1-toolperf.md:402-404`). Their cost is process churn, and that is what would bite under
+(`w1-toolperf.md~~:402-404~~`). Their cost is process churn, and that is what would bite under
 parallel load.
 
 ---
@@ -169,12 +169,12 @@ parallel load.
 ## 3. The contention claim — REFUTED
 
 `HANDOFF.md:233` and `:257` assert the aggregate smoke *"contends on three Ghidra-consuming
-probes and is killed by timeout"* (`w1-toolperf.md:229-231`). Three separate claims, tested
+probes and is killed by timeout"* (`w1-toolperf.md~~:229-231~~`). Three separate claims, tested
 separately.
 
 ### 3.1 Do the three Ghidra-consuming probes serialise? **No.**
 
-All three launched simultaneously by `contend.py` v3 (`w1-toolperf.md:238-253`):
+All three launched simultaneously by `contend.py` v3 (`w1-toolperf.md~~:238-253~~`):
 
 ```
 D:/Software/Developer/Python314/python.exe contend.py --spec spec-ghidra3.json \
@@ -191,7 +191,7 @@ D:/Software/Developer/Python314/python.exe contend.py --spec spec-ghidra3.json \
   {"label":"crackme-corpus","concurrentWall":103.47,"exit":0,"timedOut":false, …}]}
 ```
 
-**The refutation, as an arithmetic identity** (`w1-toolperf.md:255-261`): solo medians for
+**The refutation, as an arithmetic identity** (`w1-toolperf.md~~:255-261~~`): solo medians for
 the same three are 24.77 + 17.68 + 119.48 = **161.93 s**; the concurrent batch wall is
 **103.47 s**. So concurrency **saved ~59 s** (0.64× of serial) rather than costing time,
 `allPassed: true`, and the claim "killed by timeout" did not reproduce at any concurrency
@@ -200,7 +200,7 @@ it is when serial.
 
 ### 3.2 Does contention show up as a slowdown at all? **Yes, but only as wall-time noise.**
 
-`w1-toolperf.md:263-276`
+`w1-toolperf.md~~:263-276~~`
 
 | probe | solo med | concurrent | Δ |
 |---|---|---|---|
@@ -215,14 +215,14 @@ this row is a *refutation with a caveat* and not a clean win.
 
 ### 3.3 What is real in that sentence, and what replaces it
 
-`w1-toolperf.md:332-343`. Not reproduced: the contention/timeout claim. Real and
+`w1-toolperf.md~~:332-343~~`. Not reproduced: the contention/timeout claim. Real and
 undocumented: **(a)** concurrent Ghidra work pushes the box to **3.4 GB / 61 processes** at
 88 % RAM, which is where `psutil` began failing with
 `OSError [WinError 1455] The paging file is too small` during the first measurement pass;
 **(b)** the genuine contention is *fixed ports*, where it is a hard `EADDRINUSE`, not a
 timeout. §4.
 
-**Replacement wording, proposed** (`w1-toolperf.md:342-343`, quoted rather than invented):
+**Replacement wording, proposed** (`w1-toolperf.md~~:342-343~~`, quoted rather than invented):
 
 > Concurrent Ghidra probes do not serialise; the batch is bounded by the longest and all
 > pass. The real hazards are **peak RSS** (3.4 GB / 61 procs for three Ghidra JVMs, which
@@ -231,7 +231,7 @@ timeout. §4.
 
 ### 3.4 The cheap tier overlaps cleanly, twice
 
-`w1-toolperf.md:315-323`. Five labs simultaneously (`net-trustcheck`, `crypto-lab`,
+`w1-toolperf.md~~:315-323~~`. Five labs simultaneously (`net-trustcheck`, `crypto-lab`,
 `web-reverse`, `forensics-lab`, `mobile-lab`), two independent trials:
 
 | trial | batch wall | sum of the five | peak MB | all passed |
@@ -248,7 +248,7 @@ Trial 1's 21.65 s was the cold-cache artefact of §2, not contention.
 This is the finding that changes what a "concurrency" fix should look like. A timeout
 degrades; an `EADDRINUSE` does not.
 
-`w1-toolperf.md:283-293`:
+`w1-toolperf.md~~:283-293~~`:
 
 | pair | ports | batch wall | sum | peak MB | all passed |
 |---|---|---|---|---|---|
@@ -261,12 +261,12 @@ degrades; an `EADDRINUSE` does not.
   native-lab-A 1.08 s exit 1 | JSON-SUMMARY {"total":2,"pass":1,"fail":1}
   native-lab-B 2.02 s exit 0 | JSON-SUMMARY {"total":15,"pass":15,"fail":0}
 ```
-Quoted verbatim from `w1-toolperf.md:289-292`. The two `exit 1` rows are the port losers;
+Quoted verbatim from `w1-toolperf.md~~:289-292~~`. The two `exit 1` rows are the port losers;
 the two `exit 0` rows are the winners. Note `native-lab-A` still prints a
 `JSON-SUMMARY {"total":2,"pass":1,"fail":1}` — it reports the collision as a **failed
 control** rather than crashing, which is the `portFree()` guard of §4's last paragraph.
 
-The loser's stderr, reproduced (`w1-toolperf.md:297-301`):
+The loser's stderr, reproduced (`w1-toolperf.md~~:297-301~~`):
 
 ```
 loop: Error: listen EADDRINUSE: address already in use 127.0.0.1:8791
@@ -275,13 +275,13 @@ loop: Error: listen EADDRINUSE: address already in use 127.0.0.1:8791
     at node:net:2448:7
 ```
 
-**Port sources** (`w1-toolperf.md:304-308`): `crypto-lab/lab/server.mjs:318`
+**Port sources** (`w1-toolperf.md~~:304-308~~`): `crypto-lab/lab/server.mjs:318`
 (`port = 8791`); `native-lab/tools/ida-client.mjs:23` and `native-lab/tools/loop.mjs:22`
 (`PORT = 8745`); the `net-reverse` TLS origin `127.0.0.1:8443`
 (`net-reverse/README.md:113`); `scripts/ghidra-headless.ps1 -Http` on `127.0.0.1:8080`
 (`docs/TOOLS_INDEX.md:39`).
 
-**The asymmetry, which is a real finding** (`w1-toolperf.md:310-313`): `native-lab` degrades
+**The asymmetry, which is a real finding** (`w1-toolperf.md~~:310-313~~`): `native-lab` degrades
 more gracefully than `crypto-lab` — it has a `portFree()` guard (`loop.mjs:105`, `:122`) and
 reports `{"total":2,"pass":1,"fail":1}` rather than crashing. **`crypto-lab` has no such
 guard and dies on an uncaught `EADDRINUSE`.** So the two labs present the same shape of
@@ -303,15 +303,15 @@ mission that touches 8791 or 8745 in parallel with a smoke, inherits a crash.
 
 ## 5. `fuzz-lab --budget 40` — an unexplained failure mode, not a number
 
-**Four runs, and the spread is the finding** (`w1-toolperf.md:531-540`):
+**Four runs, and the spread is the finding** (`w1-toolperf.md~~:531-540~~`):
 
 > 4 runs: `1071.37 s` exit 0, **`33.10 s` exit 9**, `704.70 s` exit 0, `982.05 s` exit 0.
 
 The matrix row carries the same: wall min **33.10**, med 704.70, max **1071.37**, spread
-**1038.27** (`w1-toolperf.md:74`).
+**1038.27** (`w1-toolperf.md~~:74~~`).
 
 **The 33.10 s run exited 9 and failed the negative control.** From the captured output
-(`w1-toolperf.md:203-214`):
+(`w1-toolperf.md~~:203-214~~`):
 
 ```
 fuzz-lab — run id fuzz-2026-10-01T17-36-01-544Z
@@ -334,12 +334,12 @@ one is not:
 - **Known:** the source warns about exactly this budget sensitivity
   (`fuzz-lab/tools/loop.mjs:57-65`).
 - **Known:** the 33.10 s run finished in **1/20th** the time of the others, which
-  `w1-toolperf.md:537-538` says *"suggests it short-circuited rather than ran fully"*.
+  `w1-toolperf.md~~:537-538~~` says *"suggests it short-circuited rather than ran fully"*.
 - **Not known:** why. The 1038.27 s spread across four runs of an identical command is not
   explained, and a 33.10 s outlier that is also the only non-zero exit is not explained by
   a slower host.
 - **Consequence, and it is the consequence that matters:** the documented floor of 40 **is
-  not a reliable floor** (`w1-toolperf.md:535`). A harness whose clean runs can mean
+  not a reliable floor** (`w1-toolperf.md~~:535~~`). A harness whose clean runs can mean
   nothing and whose failure is not reproducible is not a regression gate at any cadence.
 
 **Recorded, not patched** — this is a harness-reliability finding outside the measuring
@@ -351,7 +351,7 @@ agent's brief.
 
 ### 6.1 Per-run disk deltas are flat
 
-`w1-toolperf.md:408-423`, after ~25 probe runs:
+`w1-toolperf.md~~:408-423~~`, after ~25 probe runs:
 
 | location | size |
 |---|---|
@@ -369,7 +369,7 @@ everything else **0 bytes**. Every lab rewrites its output in place. `fuzz-lab/c
 
 ### 6.2 Did `E:` grow? **No — it did not move by a single unit.**
 
-`w1-toolperf.md:425-434`:
+`w1-toolperf.md~~:425-434~~`:
 
 ```
 Start of session : E: 28.014 GiB free  (28686.8 MiB)
@@ -378,7 +378,7 @@ After 14 Ghidra runs, contention trials, 5 crackme runs: E: 28.014 GiB free (286
 
 Command: `Get-Volume -DriveLetter E | Select-Object SizeRemaining` — identical to the byte
 before and after ~25 probe executions. **Why:** Ghidra projects go to `%TEMP%` on **C:**,
-not `E:` (`w1-toolperf.md:436-444`).
+not `E:` (`w1-toolperf.md~~:436-444~~`).
 
 **And the number I re-measured today, with its date and command, because a recorded number
 decays.** This dossier's `E:` figure appears in at least three source reports and is worth
@@ -393,8 +393,8 @@ DriveLetter SizeGiB FreeGiB
 ```
 (measured 2026-10-02 by this dossier, `docs/research/cost-matrix.md`)
 
-`E:` free agrees with `w1-toolperf.md:428` and with the parent's figure. `D:` does **not**
-agree with `w1-agentworkflow.md:46`, which recorded `168.42` free of 640.12 measured the
+`E:` free agrees with `w1-toolperf.md~~:428~~` and with the parent's figure. `D:` does **not**
+agree with `w1-agentworkflow.md~~:46~~`, which recorded `168.42` free of 640.12 measured the
 same day; today it is **165.13**. **Three capacity figures have gone stale in this project
 before** (73.7, 20.17/15.19, ~14), and this is now a fourth: the same command, the same day,
 a 3.29 GiB difference, because the disk is live. Any figure about disk in this dossier
@@ -403,7 +403,7 @@ carries its date for that reason.
 ### 6.3 The handoff's leak claim — not reproducible
 
 `HANDOFF.md:254` claims *"18.1 MB of stale `%TEMP%\ghidra-proj-*` on `E:` — 5 directories
-that hold data."* Measured (`w1-toolperf.md:446-467`):
+that hold data."* Measured (`w1-toolperf.md~~:446-467~~`):
 
 ```
 BEFORE  ghidra-proj count=1  bytes=586
@@ -429,7 +429,7 @@ decision.
 Recorded here because a cost table that does not carry this invites a false capability
 claim, which is the standard this dossier holds (`README.md:20-21`).
 
-**`emulation-probe.ps1` exits 0 while printing `fail:1`** (`w1-toolperf.md:156-172`):
+**`emulation-probe.ps1` exits 0 while printing `fail:1`** (`w1-toolperf.md~~:156-172~~`):
 
 ```
 PCODE EMULATION BLOCKED -- recorded, not claimed.
@@ -452,7 +452,7 @@ is also the second-heaviest RAM item in the estate for a verdict recorded as `bl
 
 ## 8. What is UNVERIFIABLE here
 
-Carried from `w1-toolperf.md:549-558` without softening, because a cost model that hides
+Carried from `w1-toolperf.md~~:549-558~~` without softening, because a cost model that hides
 its bounds is a claim.
 
 | item | what is missing | what would measure it |
@@ -464,7 +464,7 @@ its bounds is a claim.
 | **Per-probe `E:` attribution** | `E:` never moved, so there is nothing to attribute. Ghidra writes to `C:` `%TEMP%` | nothing to measure — this is a settled negative |
 | **20+ PowerShell lab wrappers** | the underlying `tools/loop.mjs` entry points were measured; the wrappers add an untimed layer | `measure2.py --file powershell.exe --arg -File scripts/<lab>.ps1 --arg loop --reps 3` per wrapper |
 
-**Dependencies on siblings, not fetched** (`w1-toolperf.md:560-570`): a `portFree()` guard
+**Dependencies on siblings, not fetched** (`w1-toolperf.md~~:560-570~~`): a `portFree()` guard
 for `crypto-lab` (parity with `native-lab`) belongs at `crypto-lab/lab/server.mjs:318`;
 `manifests/capabilities.json` has no cost fields, and adding measured `wall_s` /
 `peak_rss_mb` per capability would let `gate.ps1` refuse an over-budget mission.

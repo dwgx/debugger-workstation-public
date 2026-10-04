@@ -92,13 +92,26 @@ import tempfile
 LINK = re.compile(r"\]\(\s*<?([^)<>\s]+)>?")
 INDEX = "INDEX.md"
 
-# Directories that are not pages and must not be demanded a row. `raw/` is an import dump
-# area and `literature/raw/` is reachable from `literature/README.md` anyway; both are listed
-# so that a future README that forgets to link them does not produce a red for a file that
-# was never meant to be a page. Measured against the live tree: excluding them changes
-# nothing today -- the transitive closure already reaches `literature/raw/TOPGITHUBSECURITYLAB.md`
-# -- which is the point of measuring before excluding. An exclusion that fixes a red is a
-# gate that has been told what to say.
+# Directories that are not pages and must not be demanded a row.
+#
+# CORRECTED 2026-10-04. The comment here used to claim: "Measured against the live tree:
+# excluding them changes nothing today -- the transitive closure already reaches
+# literature/raw/TOPGITHUBSECURITYLAB.md". **That measurement was false, and two independent
+# parties caught it.** Recomputing the closure with the filter removed yields EXACTLY ONE
+# unreachable page: `literature/raw/TOPGITHUBSECURITYLAB.md`, which is on disk. The exclusion was
+# not measuring nothing; it was hiding one real orphan.
+#
+# The exclusion itself is still CORRECT -- but for a different reason than the one it gave.
+# `literature/raw/` is a raw import dump: HackerOne report exports, CSV scrapes, a
+# pentesterland JSON blob. `wiki/INDEX.md:132` says so in as many words ("Raw dumps in
+# `literature/raw/`"). Those are DATA, not wiki pages, and demanding an INDEX row for each would
+# be demanding that scraped bytes be curated. So it stays excluded -- on the grounds that they
+# are not pages, which is checkable, rather than on a measurement that does not hold.
+#
+# And the page COUNT is now honest about it. The filter used to be applied only to the orphan
+# sweep, so the run printed "171 pages, 170 reachable" and then declared the tree clean -- a
+# difference of one that a reader would reasonably read as the root page, and which was actually
+# a non-page being counted as a page. `pages` drops it, so the counts are now 170 / 170.
 NOT_PAGES = ("literature/raw/",)
 
 
@@ -321,7 +334,12 @@ def main() -> int:
         return 2
 
     orphans, dangling, reach = audit(wiki / "wiki")
-    total = len(list((wiki / "wiki").rglob("*.md")))
+    # Agrees with the orphan sweep. It used to be a raw rglob of everything under wiki/, so a
+    # raw dump counted as a page while being exempted from being an orphan -- printing
+    # "171 pages, 170 reachable" and then TREE CLEAN. A reader reads that 1-page gap as the
+    # root; it was a non-page. 170/170 is the honest pair.
+    total = len([p for p in (wiki / "wiki").rglob("*.md")
+                 if not p.relative_to(wiki / "wiki").as_posix().startswith(NOT_PAGES)])
 
     if args.count:
         print(f"reachable: {reach}  unreachable: {len(orphans)}  dangling: {len(dangling)}  "

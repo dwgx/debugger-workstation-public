@@ -6,7 +6,21 @@ repos), `w1-debugpairing.md` (1237 lines, 23 pairings — its composition half i
 `dynamic-pairings.md`). Every figure carries its `w1-*.md:line` or the command that
 produced it.
 
-**The yardstick, and where it comes from.** `w1-mcprev.md:9-16` names the test and every row
+> ## ⚠ 2026-10-04 — every `w1-*.md` citation below is dead. Read this first.
+>
+> The sources named below were **never written to disk**. They survive only as the subagents'
+> final-answer summaries under `workers/`, and **159 of the 230 citations in this file point
+> past the end of what survives**. `w1-mcprev.md` — the yardstick every §1 row is judged
+> against, at `w1-mcprev.md~~:9-16~~` — **has no surviving copy at all**.
+>
+> **Full loss table and what it means for each figure: [`WORKER-REPORT-LOSS.md`](WORKER-REPORT-LOSS.md).**
+> Reproduce with `python scripts/arsenal-doctrine-check.py`.
+>
+> Nothing above is struck, because the conclusions may still be right. But **a citation is not
+> provenance until somebody can open it**, and these cannot be opened. Treat §2's cost figures
+> as `[UNVERIFIED]`.
+
+**The yardstick, and where it comes from.** `w1-mcprev.md~~:9-16~~` names the test and every row
 in §1 is judged against it: the recorded audit of the server we already run
 (`docs/research/ida-mcp-source-study.md`) found `--unsafe` reversed by **one unauthenticated
 `POST /config`** while the author had the server running, with the resulting policy
@@ -20,12 +34,12 @@ A tool server's own flags are not a boundary.
 
 1. **No MCP server in §1 was installed or started.** All posture claims are source- and
    README-derived as cited, with dispatch-time enforcement *read but not exercised*
-   (`w1-mcprev.md:213-215`). Everything in that table marked "enforced at dispatch" is a
+   (`w1-mcprev.md~~:213-215~~`). Everything in that table marked "enforced at dispatch" is a
    **source claim, `[UNVERIFIED]` as a measurement**.
 2. **No package in §2 was installed.** Disk figures are **download bytes**, verified via
    `gh api repos/<r>/releases` asset `size` and HTTP `HEAD` `Content-Length`
-   (`w1-retoolchain.md:30-33`). Installed footprint is `UNVERIFIABLE`
-   (`w1-retoolchain.md:216`).
+   (`w1-retoolchain.md~~:30-33~~`). Installed footprint is `UNVERIFIABLE`
+   (`w1-retoolchain.md~~:216~~`).
 
 ---
 
@@ -33,7 +47,7 @@ A tool server's own flags are not a boundary.
 
 ### 1.1 The posture table
 
-Full source: `w1-mcprev.md:28-54`. Stars/licence/language from `gh api repos/OWNER/REPO` on
+Full source: `w1-mcprev.md~~:28-54~~`. Stars/licence/language from `gh api repos/OWNER/REPO` on
 2026-10-02. Condensed to the columns that changed a verdict; the transport/auth/blast-radius
 columns are in the source row-for-row.
 
@@ -65,14 +79,14 @@ columns are in the source row-for-row.
 | 24 | `P4nda0s/IDA-NO-MCP` | **2,039** | **NONE — no LICENSE file** | fork of #1 | none | REJECT |
 | 25 | `smadi0x86/Hallucina` | 8 | GPL-3.0 | **not an MCP server** — an LLVM 17 obfuscator | n/a | **ADOPT as a negative control** |
 
-Row 25 is included deliberately (`w1-mcprev.md:54`): its stated purpose is *"to confuse and
+Row 25 is included deliberately (`w1-mcprev.md~~:54~~`): its stated purpose is *"to confuse and
 hallucinate LLM clients used with custom MCP servers for disassemblers such as Ghidra and
 IDA PRO."* It is the only public weapon aimed at our exact threat model, and it is how an
 adversary manufactures the "malicious sample's strings."
 
 ### 1.2 The finding: only two servers survive their own yardstick
 
-`w1-mcprev.md:71-79`:
+`w1-mcprev.md~~:71-79~~`:
 
 > **`r2mcp` checks `tool_available()` on every dispatch** (`tools.c:284`, called at `:1387`),
 > so the set cannot be widened from inside. **`ida-mcp-rs`** enforces `ToolFilter::is_enabled`
@@ -86,7 +100,7 @@ rebuild the registry from an import-time snapshot and **both persist the result 
 IDB**. That is the recorded study's measured failure reproduced in a second codebase.
 
 **"Safe mode" is a curated deny-list, and deny-lists are where the holes are**
-(`w1-mcprev.md:81-89`): `ida-mcp-rs --read-only` removes 19 named tools; counting its
+(`w1-mcprev.md~~:81-89~~`): `ida-mcp-rs --read-only` removes 19 named tools; counting its
 82-tool registry against that list, `open_idb`, `open_dsc`, `close_idb`, `load_debug_info`
 and its siblings **survive by explicit design** ("lifecycle/discovery tools stay enabled so
 the server stays usable"). `open_idb` takes an arbitrary path and can write an `.i64` next to
@@ -95,7 +109,7 @@ it — *"you may not modify the analysis, but you may point it at any file on th
 a new tool must be classified before it exists.
 
 **Every RE debugger is `SANDBOX ONLY` by construction, and four of them say so themselves**
-(`w1-mcprev.md:98-105`). `radare2-mcp`, `frida-mcp`, `lldb-mcp`, `gdb-mcp` all drive a
+(`w1-mcprev.md~~:98-105~~`). `radare2-mcp`, `frida-mcp`, `lldb-mcp`, `gdb-mcp` all drive a
 process, so they run the target. `mrphrazer`'s two headless servers state the trade
 plainly. That honesty is worth something — it is a containment claim you can check, unlike
 a `--read-only` flag. The genuinely surprising entry is `0xeb/lldb-agent`: **one** tool,
@@ -104,7 +118,7 @@ of an embedded Python. Maximum reach, minimum surface, no licence.
 
 ### 1.3 Three repos have no licence at all
 
-`w1-mcprev.md:91-96`, confirmed by listing each repo root for `LICENSE` / `COPYING` /
+`w1-mcprev.md~~:91-96~~`, confirmed by listing each repo root for `LICENSE` / `COPYING` /
 `NOTICE` — **not by trusting the badge**:
 
 | repo | ★ | why it matters |
@@ -124,7 +138,7 @@ about licensing. Our own `mcp-backends.json` already flags two vendored dnSpy re
 **These are proposals with no run on record**, per the standard this dossier holds. None of
 these five servers was installed, started, or probed; the mitigations below are what would
 *have* to be true for the adoption to be safe, not something that has been demonstrated.
-Source: `w1-mcprev.md:111-135`.
+Source: `w1-mcprev.md~~:111-135~~`.
 
 1. **`axelmierczuk/tenrec`** (MIT, 177★, 9 plugins) — *stdio only, so there is no port and
    no auth surface to get wrong.* Gate the `Bytes` (patches) and `Comments` (IDB mutation)
@@ -144,7 +158,7 @@ Source: `w1-mcprev.md:111-135`.
    `-H 127.0.0.1:<port> -a <token>` and **never** `-A`/`0.0.0.0`. **This is the one server
    whose safety property is enforced per-dispatch and is worth copying as a design.**
 
-**The five rules that follow from the table, in priority order** (`w1-mcprev.md:189-211`):
+**The five rules that follow from the table, in priority order** (`w1-mcprev.md~~:189-211~~`):
 
 1. **Stdio over HTTP, everywhere.** Ten of these servers have no auth and no port, so stdio
    is the mitigation for all of them at once.
@@ -166,7 +180,7 @@ Source: `w1-mcprev.md:111-135`.
 
 ### 2.1 What this box has — verified, because it gates every verdict
 
-`w1-retoolchain.md:42-53`:
+`w1-retoolchain.md~~:42-53~~`:
 
 | Fact | Value | How verified |
 |---|---|---|
@@ -180,7 +194,7 @@ Source: `w1-mcprev.md:111-135`.
 | Installed pip RE packages | **`capstone==5.0.9`, `pefile==2024.8.26`** — nothing else from this survey | `pip list` |
 | `yr` / `yara-x` / `capa` / `floss` | **not on PATH in that shell** | `Get-Command` → empty |
 
-**A correction this survey made to its own wording** (`w1-debugpairing.md:78-100`): writing
+**A correction this survey made to its own wording** (`w1-debugpairing.md~~:78-100~~`): writing
 that `gcc`/`clang`/`cl` were "all ABSENT from PATH" is true but misleading, and the
 difference changes a verdict. `cl.exe` **is** installed; it is simply not initialised on
 PATH. The gate is therefore not "no compiler" — it is **no LLVM**. The only near-miss
@@ -188,7 +202,7 @@ anywhere on the box is `lld-link.exe` under `rustup\toolchains\…\gcc-ld\`, whi
 linker shim, not a compiler: it cannot compile C, cannot be `clang-cl`, and there is no
 `clang` or `clang-cl` beside it.
 
-**Consequence that drives the whole survey** (`w1-retoolchain.md:55`):
+**Consequence that drives the whole survey** (`w1-retoolchain.md~~:55~~`):
 
 > **There is no LLVM on this machine.** One LLVM install (374 MB download, verified for
 > 21.1.0) is the single gate for **libFuzzer, Intel PIN pintools, AFL++ Windows, atheris,
@@ -198,20 +212,20 @@ The four rows it gates, and why each is LLVM-blocked specifically:
 
 | row | why it needs LLVM, not merely "a compiler" | source |
 |---|---|---|
-| **Intel Pin 4.4** | *"Starting with Pin 4.0, a MSVC toolset compatible kit is no longer provided… On Windows, LLVM with clang-cl toolset is supported"* | `w1-retoolchain.md:113` |
-| **AFL++ 5.03c** | requires `clang` **and has no Windows build at all** | `w1-retoolchain.md:114` |
-| **atheris 3.1.0** | requires `clang` / `clang-cl`; its wheels are `cp312/cp313/cp314-manylinux_x86_64` **only** (36.8 MB of unusable Linux wheels) | `w1-retoolchain.md:116` |
-| **LLVM + clang-cl → libFuzzer** | `clang-cl /fsanitize=fuzzer harness.c /Fe:harness.exe` | `w1-retoolchain.md:109` |
+| **Intel Pin 4.4** | *"Starting with Pin 4.0, a MSVC toolset compatible kit is no longer provided… On Windows, LLVM with clang-cl toolset is supported"* | `w1-retoolchain.md~~:113~~` |
+| **AFL++ 5.03c** | requires `clang` **and has no Windows build at all** | `w1-retoolchain.md~~:114~~` |
+| **atheris 3.1.0** | requires `clang` / `clang-cl`; its wheels are `cp312/cp313/cp314-manylinux_x86_64` **only** (36.8 MB of unusable Linux wheels) | `w1-retoolchain.md~~:116~~` |
+| **LLVM + clang-cl → libFuzzer** | `clang-cl /fsanitize=fuzzer harness.c /Fe:harness.exe` | `w1-retoolchain.md~~:109~~` |
 
-**A sibling reached the same conclusion from the other direction** (`w1-debugpairing.md:98-100`):
+**A sibling reached the same conclusion from the other direction** (`w1-debugpairing.md~~:98-100~~`):
 *"every row previously blocked on 'no compiler on PATH' is now marked **BLOCKED-ON-LLVM**,
 with LLVM named as the single gate. None is blocked on policy, and none would unblock by
 installing MSVC — only by installing LLVM."* Two independent measurements, one conclusion.
-`w1-debugpairing.md:1211-1216` re-verified it a third time and found nothing.
+`w1-debugpairing.md~~:1211-1216~~` re-verified it a third time and found nothing.
 
 **LLVM is the highest-leverage single install available to this station** — and it is the
 one thing this survey found that a capability registry cannot express on its own
-(`w1-debugpairing.md:1140-1144`).
+(`w1-debugpairing.md~~:1140-1144~~`).
 
 ### 2.2 Top 8 by capability per gigabyte
 
@@ -222,7 +236,7 @@ host. `ADOPT` is the surveying agent's recommendation ranking, not a capability:
 it and then running a command that proves it.
 
 
-`w1-retoolchain.md:197-208`, ranked on *new named domain closed ÷ verified bytes consumed*.
+`w1-retoolchain.md~~:197-208~~`, ranked on *new named domain closed ÷ verified bytes consumed*.
 
 | Rank | Pick | Verified cost | What it buys | Verdict |
 |---|---|---|---|---|
@@ -236,7 +250,7 @@ it and then running a command that proves it.
 | **8** | **retdec v5.0** | **165.6 MB** | independent LLVM decompiler, headless CLI | ADOPT — the disagreement check against IDA/Ghidra |
 
 **Adopt-set total:** ≈ **1.12 GB** of verified download bytes — the report's own arithmetic
-at `w1-retoolchain.md:208` lists the components as LIEF 4.1 + unicorn 15.9 + keystone 1.4 +
+at `w1-retoolchain.md~~:208~~` lists the components as LIEF 4.1 + unicorn 15.9 + keystone 1.4 +
 speakeasy 19.4 + libfuzzer-dotnet 1.5 + angr 69.9 + retdec 165.6 + DynamoRIO 466.2 +
 LLVM 374.3, which sums to ≈1.12 GB, and that sum is labelled "≈ 1.12 GB … = **4 % of the
 28.01 GiB free**". **The percentage is arithmetically inconsistent with the components** —
@@ -247,13 +261,13 @@ are counted once each and the rest are the smaller wheels — the itemised sum i
 components visible so a reader can re-add them). Installed footprint is `UNVERIFIABLE`;
 budget **~5 GB** to be safe. That still leaves >22 GiB.
 
-**Order of work, loop-first** (`w1-retoolchain.md:210`): 1) Speakeasy in a private venv →
+**Order of work, loop-first** (`w1-retoolchain.md~~:210~~`): 1) Speakeasy in a private venv →
 D14 loop. 2) Unicorn/Keystone/LIEF → D14/D13 primitives. 3) WinAFL+DynamoRIO → D11.
 4) SharpFuzz → D4. 5) angr → D3. 6) LLVM → **only when a mission needs libFuzzer/PIN/atheris.**
 
 ### 2.3 Six traps found before writing the table — the instrument, not the subject
 
-`w1-retoolchain.md:59-67`. Each of these would have produced a wrong answer, and each is
+`w1-retoolchain.md~~:59-67~~`. Each of these would have produced a wrong answer, and each is
 carried because the failure is silent:
 
 1. **`pip install speakeasy` installs the wrong product.** PyPI `speakeasy 2.0.0` is *"Metrics
@@ -261,7 +275,7 @@ carried because the failure is silent:
 2. **`speakeasy-emulator` pins `unicorn==1.0.2`.** Direct conflict with the `unicorn 2.1.4`
    an angr/Qiling-era engine wants. **Isolate it in its own venv** or it silently downgrades
    an engine you already rely on. A sibling measured the deeper form of this
-   (`w1-debugpairing.md:591-609`): the three emulation candidates pin **mutually exclusive**
+   (`w1-debugpairing.md~~:591-609~~`): the three emulation candidates pin **mutually exclusive**
    Unicorn versions, so speakeasy and Qiling **cannot coexist in one environment**; and
    Unicorn 1.0.2 **does not import on Python 3.14.7** (`ModuleNotFoundError: No module named
    'distutils'`), fixed by `pip install "setuptools<81"`.
@@ -295,7 +309,7 @@ re-propose:
 | goblin | REJECT | duplicates `pefile` + `LIEF`; adds no loop |
 | KLEE / SymCC / muesli / QSYM | REJECT | Linux/clang-only, or 404, or archived |
 | AFL++ / honggfuzz / atheris | DEFER | blocked on LLVM (§2.1) |
-| Qiling | DEFER | GPL-2.0, rootfs dependency; and a sibling **measured the install failing** on 3.14.7 via `python-fx → pillow<11` with no prebuilt Windows wheel (`w1-debugpairing.md:666-702`) |
+| Qiling | DEFER | GPL-2.0, rootfs dependency; and a sibling **measured the install failing** on 3.14.7 via `python-fx → pillow<11` with no prebuilt Windows wheel (`w1-debugpairing.md~~:666-702~~`) |
 | Miasm | DEFER | pip resolves but **no Windows-supported command on the project's own docs** |
 | unblob | DEFER | firmware-shaped; every external extractor is **apt-only**; no Windows install path documented |
 | yara-python 4.5.4 | REJECT | wheels stop at `cp313` ⇒ source build on 3.14; YARA-X already covers us |
@@ -306,7 +320,7 @@ re-propose:
 | Binary Ninja | DEFER | Free tier is disassembler-only; Personal $199 / Commercial $1799 is Owner money for what IDA already gives |
 
 **The adopt-side rows that are gated on the debugging lane, not on tool availability**
-(`w1-retoolchain.md:231`): **DynamoRIO / Dr. Fuzz attach to processes.** That is an
+(`w1-retoolchain.md~~:231~~`): **DynamoRIO / Dr. Fuzz attach to processes.** That is an
 `ALLOW_LOCAL` / `STOP` boundary, not a tool-availability question — the same for WinAFL's
 `-A <module>` attach mode. Flagged, not decided. The red team's independent finding is in
 `review-2026-10-02.md` §2 (`H1`: *the grant binds a FILE and has no vocabulary for a
@@ -318,7 +332,7 @@ PROCESS*).
 
 ### 3.1 A rubric that does not exist
 
-`w1-revskills.md:8-23`. The brief cited
+`w1-revskills.md~~:8-23~~`. The brief cited
 `docs/research/skill-adoption-checklist.md` as "10 hard blocks before adopting any
 third-party skill or MCP". Measured:
 
@@ -330,7 +344,7 @@ glob **/*adoption*  under the whole debugger repo
 ```
 
 Rather than invent ten blocks and pass them off as ours, the survey derived its rubric from
-rules that **are** written down, citing each (`w1-revskills.md:25-38`): B1 no licence file =
+rules that **are** written down, citing each (`w1-revskills.md~~:25-38~~`): B1 no licence file =
 no grant; B2 share-alike text imposes an obligation; B3 GPL/AGPL may be *run* but not
 vendored; B4 refuse machine-global registry as capability identity; B5 refuse
 environment-injected policy; B6 implicit preconditions an agent cannot satisfy are a defect;
@@ -338,13 +352,13 @@ B7 a contributing-guide rule no validator enforces is a preference; B8 no third-
 is ever an analysis target; B9 the North Star; B10 no phone-home, no executed downloaded
 code, no API key we do not hold.
 
-> **The checklist the brief cites was never written.** — `w1-revskills.md:23`
+> **The checklist the brief cites was never written.** — `w1-revskills.md~~:23~~`
 
 That is a finding, and it is not closed by this dossier.
 
 ### 3.2 The already-vendored four — a duplicate-adoption failure, prevented
 
-`w1-revskills.md:73-87`. `mcp/` already vendors MCP servers. **Four "top candidates" from
+`w1-revskills.md~~:73-87~~`. `mcp/` already vendors MCP servers. **Four "top candidates" from
 the search results are already here:**
 
 | in-tree path | upstream | consequence |
@@ -361,7 +375,7 @@ Three more in-tree were also found already present: `mcp/GhidraMCP`
 > *"Recommending these as new adoptions would have been a **duplicate-adoption failure** —
 > exactly the 'only add, never subtract' chronic failure in reverse. `radare2-mcp` upstream
 > latest is `1.8.8` (2026-09-06, ships `r2mcp-windows.zip` **with a `.sha256`**); the useful
-> action is **upgrade + hash verify**, not install."* — `w1-revskills.md:87`
+> action is **upgrade + hash verify**, not install."* — `w1-revskills.md~~:87~~`
 
 **Verified today, 2026-10-02:** all five directories exist —
 `mcp/radare2-mcp`, `mcp/frida-mcp`, `mcp/ida-pro-mcp`, `mcp/GhidraMCP`,
@@ -376,7 +390,7 @@ four is; the origin URLs are carried as the survey recorded them.
 **Proposals, no run on record.** The commands in this section are the proof each adoption
 would owe, not a record of one.
 
-`w1-revskills.md:136-252`. **Nothing below was run to completion — installing was out of
+`w1-revskills.md~~:136-252~~`. **Nothing below was run to completion — installing was out of
 scope.** Every command is written against the measured host state.
 
 | # | pick | ★ / licence | why | the risk that is named, not buried |
@@ -389,7 +403,7 @@ scope.** Every command is written against the measured host state.
 
 ### 3.4 The refusals, with the licence reason stated
 
-`w1-revskills.md:296-318`. A rejection with a reason is a result; these are the ones worth
+`w1-revskills.md~~:296-318~~`. A rejection with a reason is a result; these are the ones worth
 carrying:
 
 | repo | block | reason |
@@ -406,7 +420,7 @@ carrying:
 
 ### 3.5 Two instrument defects from this survey, both of which nearly produced a wrong answer
 
-`w1-revskills.md:44-51`:
+`w1-revskills.md~~:44-51~~`:
 
 1. **`gh search repos` returns exit 0 and an empty body.** `gh search repos "reverse
    engineering skill claude" --sort stars --order desc --limit 10` printed nothing and exited
@@ -419,7 +433,7 @@ carrying:
    is a false negative, not evidence of absence.**
 
 Plus: **GitHub secondary rate limit hit 12 of 30 queries**; *"An `ERROR` is not a zero."*
-And a bounded-fetch lesson worth keeping (`w1-revskills.md:262`): the fetch took the first 40
+And a bounded-fetch lesson worth keeping (`w1-revskills.md~~:262~~`): the fetch took the first 40
 files in tree order, so `knife`'s `main.rs` — where its entire CLI lives — was never
 retrieved. **A bounded fetch is not a whole repo, and every "no egress found" verdict
 inherits that bound.** The same report corrected its own first table entry after re-checking:
@@ -429,7 +443,7 @@ capability is **one code path from live**.
 
 ### 3.6 The borrow list, because these are shapes not code
 
-`w1-revskills.md:277-292`, condensed. Each is specific enough to implement.
+`w1-revskills.md~~:277-292~~`, condensed. Each is specific enough to implement.
 
 1. **`re-mcp` attribute-denylist sandbox** — including the CPython `fromlist` escape at
    `:449`, and the note that `_sandbox_getattr` exists *because* `from X import Y` resolves
@@ -461,7 +475,7 @@ Full treatment in `dynamic-pairings.md`. Summarised here because the *vocabulary
 finding, and it is a correction to the brief itself.
 
 **Two of the three example fact keys in the brief do not exist in the registry**
-(`w1-debugpairing.md:12-48`):
+(`w1-debugpairing.md~~:12-48~~`):
 
 | brief said | registry actually has | consequence |
 |---|---|---|
@@ -475,7 +489,7 @@ finding, and it is a correction to the brief itself.
 `string`, `structure`, `verdict`. **Six declared fact types are never produced by anything.**
 
 **Count: 23 pairings — 3 expressible today, 11 need only a new fact key, 9 need a new
-capability entry** (`w1-debugpairing.md:1135-1138`). Of those 9: **4 are BLOCKED-ON-LLVM**
+capability entry** (`w1-debugpairing.md~~:1135-1138~~`). Of those 9: **4 are BLOCKED-ON-LLVM**
 (P5b, P7, P8, P9 — all one gate, one install), 1 is blocked by choice (P12, deliberately),
 1 is a measured rejection (P13), and **3 are actionable today** (P1, P3, P16).
 
@@ -485,10 +499,10 @@ capability entry** (`w1-debugpairing.md:1135-1138`). Of those 9: **4 are BLOCKED
 
 - **No MCP server installed or started.** All of §1 is source- and README-derived. *"where I
   say 'enforced at dispatch', that is a source claim, not a measurement"* — `[UNVERIFIED]`
-  (`w1-mcprev.md:6-7`, `:213-215`).
+  (`w1-mcprev.md~~:6-7~~`, `:213-215`).
 - **No package installed.** All disk figures in §2 are **download** bytes; installed
-  footprint is `UNVERIFIABLE` (`w1-retoolchain.md:216`).
-- **Six explicit `UNVERIFIABLE`s from the toolchain survey** (`w1-retoolchain.md:214-224`):
+  footprint is `UNVERIFIABLE` (`w1-retoolchain.md~~:216~~`).
+- **Six explicit `UNVERIFIABLE`s from the toolchain survey** (`w1-retoolchain.md~~:214-224~~`):
   installed size of any package after extraction; `LLVM-23.1.2-win64.exe` size (21.1.0 was
   measured at 374.3 MB); whether `frida` / `objection` / `capa` / `floss` / `yara-x` are
   actually runnable — **not on PATH in that survey's shell, and the main inventory lists
@@ -498,9 +512,9 @@ capability entry** (`w1-debugpairing.md:1135-1138`). Of those 9: **4 are BLOCKED
 - **The per-directory upstream origins in §3.2 are not reproducible today** — the
   directories' `git remote.origin.url` now reports the monorepo. Existence verified;
   origin carried as recorded.
-- **`[UNVERIFIED]` `rea`'s subcommand names** (`w1-revskills.md:252`).
+- **`[UNVERIFIED]` `rea`'s subcommand names** (`w1-revskills.md~~:252~~`).
 - **A bounded fetch is not a whole repo** — every "no egress found" verdict in §3 inherits
-  a 40-file cap (`w1-revskills.md:262`).
+  a 40-file cap (`w1-revskills.md~~:262~~`).
 
 ---
 

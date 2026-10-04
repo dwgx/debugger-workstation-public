@@ -32,6 +32,18 @@ the decision layer over these findings.
 | `dynamic-pairings.md` | 23 pairings, each with the typed fact that links step N to N+1: 3 expressible today, 11 need only a fact key, 9 need a capability. Leads with the finding that **the Android Frida entry is correctly absent but a Windows-local Frida capability is real**, which turned four static→dynamic pairings from documents into three lines of glue. **Both halves of that are now on the record** (§1.3a, §1.3b): `dynamic.win.frida` shipped **without** claiming interception — the `frida -f` CLI resumes the main thread before the script loads, so no `onEnter` fired — and the gap was then closed by a **sibling** capability, `dynamic.win.frida.intercept`, which publishes `instrument.ordering` and `runtime.hook.hit` as measured facts. Carries `DebugSymbol.fromName('main') → 0` as the reason RVA-plus-module-base transfer is mandatory, not stylistic, the four different runtime module bases one binary produced in one session, and that `frida-ps -ai` **hangs 300 s** rather than refusing — so it is neither a probe nor a control. |
 | `pairing-two-decompilers.md` | The **first pairing ever measured here**, because all eight mission artifacts on `E:\missions\` carry the *identical* chain `native.ida.list_functions → native.ida.decompile` — the orchestrator had never chosen differently, so no pairing had a run behind it. IDA Pro **2.60 s** vs Ghidra headless **18.5 s** on the same `main` at RVA `0x1080`. They **agree on structure** — same three-way branch, same two XOR-decode calls, same `strlen`+`strcmp` — so a structural claim genuinely is corroborated. They **differ where it is decisive**: IDA inlines the XOR constants `11, 90, 5, 51`, Ghidra leaves `DAT_` references, and those are **bytes** — read as u32, `DAT_140017342` is `734042`. Verified with `pefile`, so IDA is right and Ghidra merely un-propagated. **A corroborating instrument that supplies plausible-but-wrong-width text is more dangerous than none.** Changes nothing about `independence` (both are `decompiler`, so one opinion twice) and must not be cited as if it did. |
 
+## 2026-10-04
+
+Two documents were written this round and **were not indexed here at all** until an archaeology
+pass asked which navigation points could reach them. This README is the only entry point into
+`docs/research/`, so an unindexed file here is an unreachable one — the same defect
+`arsenal-two-tree-check.py` exists to catch in the wiki tree, in the tree that has no checker.
+
+| File | What it establishes |
+|---|---|
+| `WORKER-REPORT-LOSS.md` | **The largest provenance loss in this project.** Eight worker reports cited 230 times by `ecosystem-2026-10-02.md` were never written to disk; `w1-mcprev.md` — the yardstick every §1 row is judged against — has no copy anywhere. Recovery was attempted and **proven impossible**: the harness persists a subagent's final answer (718 bytes), not its report (1237 lines). Carries the loss table and the per-dossier strike count. |
+| `2026-10-04-two-tree-and-dead-code.md` | Two findings from one session. (a) `mission.ps1` carries a **342-line, never-executed** `Get-SuccessWhenVerdict` with zero call sites, while `MISSION SELFTEST OK: 71 controls` reported green — the diff added **0** controls (71 before, 71 after). (b) The same file **would not load**: `$span -split '\s+AND\s+' -CaseSensitive`, and `-split` has no `-CaseSensitive` switch, which killed `mission selftest` and `mission ablate` alike. The reasoning for leaving (a) unwired is §3 Finding B. |
+
 ---
 
 ## Two premises in this dossier were wrong when written and are corrected in place
