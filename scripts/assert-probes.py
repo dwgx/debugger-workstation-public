@@ -127,10 +127,6 @@ SKIP = {
     # But because every non-observed entry is skipped, a blockage that goes away is invisible.
     # So the SKIP line says so, rather than leaving it as a field in capabilities.json that
     # nothing prints.
-    "native.crosscompare.ghidra":
-        "state=planned; no runnable command exists to check. NOTE: its probe.command was prose "
-        "until R36 flagged it on 2026-10-05; `powershell -File <prose>` exits 0 after printing "
-        "an error, so it would have read as a passing probe.",
     "native.ghidra.emulate":
         "state=blocked; needs a runtime the registry does not have. MEASURED 2026-10-05: its "
         "probe DOES run and pass -- scripts/emulation-probe.ps1 exits 0 and prints the recorded "

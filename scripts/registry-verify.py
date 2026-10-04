@@ -358,6 +358,51 @@ _RUNNABLE_VERBS = frozenset({
 })
 
 
+def r37_skip_dict_agrees_with_state(reg, doc):
+    """Nothing may sit in assert-probes' SKIP dict while its registry state is `observed`.
+
+    Measured 2026-10-05, and I committed the drift before I noticed it. Promoting
+    `native.crosscompare.ghidra` from planned to observed left the id in assert-probes.py's
+    hardcoded SKIP dict, so the harness kept skipping an entry the registry now calls observed --
+    and the entry with the strongest control in the tree, which measures 399 decompiled bodies
+    across two real Ghidra analyses, was the one being skipped.
+
+    The cause is structural rather than careless: SKIP and `state` are TWO SOURCES for the same
+    fact, and nothing compared them. The same shape bit me twice more today -- a `skip_note`
+    written into capabilities.json while the same words went into the SKIP reason string, and a
+    `kind: "plan"` left behind on an entry that had gained a command. Three instances of "the
+    registry says X and some other file says not-X".
+
+    The rule is the narrow one that would have caught all three. The SKIP dict is allowed to be
+    more conservative than `state` (that is what a SKIP is), never less: an entry may be
+    skipped while observed only if something says so, and the gate reads that something from the
+    registry rather than trusting a hand-maintained list.
+    """
+    import importlib.util as _ilu
+    here = pathlib.Path(__file__).resolve()
+    harness = here.parent / "assert-probes.py"
+    if not harness.exists():
+        return []
+    try:
+        spec = _ilu.spec_from_file_location("_ap_probe", harness)
+        mod = _ilu.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        skip = getattr(mod, "SKIP", {})
+    except Exception as exc:                                    # noqa: BLE001
+        return [f"R37 could not read assert-probes.SKIP to reconcile it with the registry "
+                f"({exc}). Two sources for the same fact, and the check itself is not running."]
+    out = []
+    for c in reg if isinstance(reg, list) else reg.get("capabilities", []):
+        cid = c.get("id", "?")
+        if cid in skip and c.get("state") == "observed":
+            out.append(
+                f"R37 {cid}: state is `observed` but it is still in assert-probes.py's SKIP dict "
+                f"({skip[cid][:60]!r}...), so the harness skips a capability the registry calls "
+                f"observed. Remove it from SKIP, or set the state to whatever it really is. A "
+                f"skip nobody reads is how a control stops being evidence.")
+    return out
+
+
 def r36_probe_command_is_runnable(reg, doc):
     """`probe.command` must be something a shell can run, not a sentence about where to look.
 
@@ -1747,7 +1792,7 @@ RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r20_fact_map_declares, r21_control_command_runnable,
          r22_ungrantable_needs_a_reason, r23_escalation_class_needs_a_reason,
          r24_input_types_are_declared, r25_plan_needs_a_checkable_ref,
-         r36_probe_command_is_runnable,
+         r36_probe_command_is_runnable, r37_skip_dict_agrees_with_state,
          r35_control_buckets_reconcile,
          r26_bare_braces_survive_the_shell,
          r27_probe_exit_has_one_spelling,

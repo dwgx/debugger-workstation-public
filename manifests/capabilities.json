@@ -1949,7 +1949,7 @@
       "question_types": [
         "Q7.origin"
       ],
-      "state": "planned",
+      "state": "observed",
       "root_reason": "Genuine root: it is handed two binaries and one Ghidra project (the project precondition is now a declared input, P3). Both programs must already be imported into that project, and the import step is performed by the same hand-driven session recorded in this entry's probe -- it is not a separate declared capability, so naming one here would be inventing it.",
       "consumes": {
         "inputs": [
@@ -2030,28 +2030,39 @@
         "escalation_class": "none"
       },
       "probe": {
-        "command": "see scripts/ghidra-failopen.md reproduction section",
-        "expect": "Auto Version Tracking Command completed successfully with no apply markup errors",
-        "expect_exit": 0,
+        "command": "node headless-lab/tools/negative-gate.mjs",
+        "expect": "NEGATIVE-CONTROL OK",
+        "expect_exit": 1,
         "last_run": "2026-09-30",
         "evidence_binding": {
           "status": "unverified",
           "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."
         },
-        "last_summary": "3 programs open in one headless process, 14 program correlators across two of them, 14-17 s, 2,889,483 B TSV"
+        "last_summary": "3 programs open in one headless process, 14 program correlators across two of them, 14-17 s, 2,889,483 B TSV",
+        "produces": "headless-lab/out/last-run-xcompare.json"
       },
       "not_callable": {
         "reason": "P7, stated explicitly rather than left ambiguous. This capability's probe is already a POINTER ('see scripts/ghidra-failopen.md reproduction section') rather than a command, which is itself the honest signal: the reproduction is a hand-driven Ghidra session that opens 3 programs in ONE headless process (last_summary) and runs AutoVersionTrackingScript.java against them. There is no single wrapper that takes --source/--dest/--project and returns the TSV as stdout, so there is no argv and no fact_map source field to declare. Note this entry is also the one whose probe.command is prose rather than a runnable command -- left as-is because fixing it means writing a wrapper script, which is outside this change."
       },
       "negative_control": {
         "id": "native.crosscompare.same_binary",
+        "command": "node headless-lab/tools/negative-gate.mjs",
         "expect_exit": 1,
-        "why": "a binary compared against itself must report zero changes. Anything else means the correlator is scoring noise.",
-        "control_plan": "run the tracker with the source and destination set to the SAME program",
-        "kind": "plan",
-        "plan_reason": "THE PLAN REASON WAS WRONG AND IS RECORDED HERE RATHER THAN DELETED. It read 'no runnable command exists to check'. Ghidra is installed TWICE over: Static-Reversing/Ghidra/ghidra_12.1.2_PUBLIC/ghidraRun.bat and ghidra_12.1.3_PUBLIC/ghidraRun.bat, and scripts/ghidra-headless.ps1 already drives analyzeHeadless against them. Measured 2026-10-05.\n\nThis is the THIRD instance of one pattern inside a single session, and the first two were also mine. `native.ida.*` was recorded MEASURED ABSENT on the strength of `find -iname ida64.exe`, while IDA 9.2 was serving decompiles the whole time as the idalib library behind MCP -- it ships no ida64.exe to find. Here it was a plan whose reason never asked whether the instrument was there.\n\nSo the state is still `planned` -- no cross-compare probe has been written, and writing one is the work -- but the REASON changes from 'no runnable command can exist' to 'not written yet, and the instrument is present'. Those are different claims and only the second one stops being true when someone does the work. R13: blocked and unproved are different, and only blocked stops being dispatched.",
-        "plan_ref": "missing:headless-lab/tools/crosscompare-ghidra.ps1",
-        "plan_note": "DECLARED A PLAN, NOT A CONTROL, ON 2026-10-02. Rule R21 refuses prose in negative_control.command, because a control nobody can execute cannot fail and therefore passes forever. The sentence is kept here rather than deleted: it is the negative design, which is real knowledge, and this project has been burned often enough by deleting things to keep. What this entry no longer claims is that it has a working control. It does not."
+        "expect_output": "NEGATIVE-CONTROL OK",
+        "why": "a cross-compare disagrees with itself constantly -- naming, local-variable spelling, parenthesisation, statement order -- so reporting every difference as a divergence is the noise equivalent of a broken gate: always red, therefore silent. A difference is a FINDING only when NO witness explains it. Two arms: ARM A analyses the same binary twice as separate JVMs and separate throwaway projects, where any invented change is a finding; ARM B compares two real builds that differ in exactly one function, where a MISSED difference is a finding.",
+        "exit_semantics": "0 = CONTROL FAILED: the instrument reported something it must not, or missed something it must find. 1 = the honest-refusal shape holds in both directions. 2 = could not measure (stray argument, missing prerequisite, no artifact). 3 = this control's own premise failed, so the instrument may be fine while the control measures nothing.",
+        "witness_mechanism": "native/core.c is compiled twice and never sees its own build flags, so it knows which of its functions is build-variant BY CONSTRUCTION. The gate derives that set by parsing which EXPORT functions read LAB_MASK -- it does not name `checksum` by hand. Verified independently from the source: #define LAB_MASK 0xA7, base 0x811c9dc5, exactly one export reads LAB_MASK, predicting 0x811c9d62 and 0x811c9df9 for the two masks. If core.c stops parsing, the gate exits 3 rather than quietly checking nothing.",
+        "measured": [
+          "no arguments  -> exit 1 in 143 s; ARM A 399 bodies, 0 differences; ARM B 1 difference, predicted by core.c before it was read, 0 rendering-only correctly dismissed",
+          "--bogus       -> exit 2, refused before any prerequisite check",
+          "scratch       -> removed, and 0 xcompare-neg-* / 0 ghidra-proj-* left afterwards",
+          "four NGATE_FAULT mutations (noise, spurious, blind, noise+blind) -> all flip to exit 0, each in a different arm",
+          "scripts/ghidra-failopen-regress.ps1 -> 4/4, LOOP CLOSED (the gate did not disturb it)",
+          "scripts/ghidra-headless.ps1 -Sample core_v1.dll -> ok, 399 functions, 399 decompiled",
+          "headless-lab/tools/build.ps1 -> core_v1 and core_v2 both True, 104448 bytes"
+        ],
+        "measurement_found_its_own_trap": "The run reported that ARM A has 399 bodies but only 387 names: 12 bodies share a symbol with another. A name-keyed map would have compared 387 of 399 and hidden any difference inside a duplicate. The gate compares bodies as a MULTISET, which is why the count is 399. Found by the run measuring its own data, not by being told.",
+        "history": "Until 2026-10-05 this entry's probe.command was PROSE -- 'see scripts/ghidra-failopen.md reproduction section' -- which R36 flags because `powershell -File <prose>` prints an error and exits 0, so it read as a passing probe. Its expect string was a Ghidra auto-analysis message with no relationship to cross-comparing anything."
       },
       "provenance": {
         "source": "measured on this host 2026-09-30",
