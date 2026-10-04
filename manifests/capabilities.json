@@ -2100,7 +2100,9 @@
         "expect": "IL2CPP ABSENT",
         "expect_exit": 0,
         "last_run": "2026-09-30",
-        "last_summary": "net6 build under DOTNET_ROLL_FORWARD=LatestMajor: no output, no exit within 12 s (killed). Runtime inventory: Microsoft.NETCore.App 8.0.31 and 10.0.11 only."
+        "last_summary": "net6 build under DOTNET_ROLL_FORWARD=LatestMajor: no output, no exit within 12 s (killed). Runtime inventory: Microsoft.NETCore.App 8.0.31 and 10.0.11 only.",
+        "produces": "probe-artifacts/last-run-il2cpp_probe.json",
+        "produces_note": "DOCUMENTED, NOT ENFORCED. Added 2026-10-05: the probe now records its refusal to disk -- an artifact whose ok is false and whose verdict carries the capability's state, so a refusal someone can open later is not indistinguishable from a probe that never ran. But this entry is state=absent/blocked, so assert-probes SKIPS it and never checks the artifact. Naming it here is a record of where the answer lands, not a check."
       },
       "negative_control": {
         "id": "native.il2cpp.absent_is_reported",
@@ -2215,7 +2217,9 @@
         "expect": "PCODE EMULATION BLOCKED",
         "expect_exit": 0,
         "last_run": "2026-09-30",
-        "last_summary": "API reached, compiled, ran 15 p-code steps and returned to PC=0; output buffer 48 bytes all zero; ground truth FLAG{c01_string_table_xor} NOT recovered"
+        "last_summary": "API reached, compiled, ran 15 p-code steps and returned to PC=0; output buffer 48 bytes all zero; ground truth FLAG{c01_string_table_xor} NOT recovered",
+        "produces": "probe-artifacts/last-run-emulation_probe.json",
+        "produces_note": "DOCUMENTED, NOT ENFORCED. Added 2026-10-05: the probe now records its refusal to disk -- an artifact whose ok is false and whose verdict carries the capability's state, so a refusal someone can open later is not indistinguishable from a probe that never ran. But this entry is state=absent/blocked, so assert-probes SKIPS it and never checks the artifact. Naming it here is a record of where the answer lands, not a check."
       },
       "negative_control": {
         "id": "native.ghidra.emulate.must_not_claim_success",
@@ -2932,9 +2936,11 @@
         "expect_exit": 0,
         "last_run": "2026-10-02",
         "run_log": "evidence/probes/native.function.match.probe.log",
-        "sha256": "768bc07e200cab4f20a494d07743ba34a47a90cbcb09ee75389b9e2a5b1a2a41",
+        "sha256": "b12efe0adea93b0d0d0b1876976cba1e6ff50e10161070f363f44b305628b183",
         "run_summary": "identity control (same content, two filenames): ok=true src_fns 511 dst_fns 511 matched 511 rate 100%, ~30 s. negative control (c01-stringobf.exe vs c03_antidebug.exe): src_fns 511 dst_fns 515 matched 192 rate 37.6%, ~48 s. refusal: a non-PE file returns {ok:false, exit:2, 'Ghidra produced no function-hash table for at least one input'} and TRUE_EXIT=2; a missing path returns TRUE_EXIT=1.",
-        "expect_note": "CORRECTED 2026-10-02, and this is the SECOND entry carrying the same defect as native.pe.packer: expect read '\"match_rate\": 37.6' with a space while the tool emits compact JSON, '\"match_rate\":37.6'. Two entries invented the same spacing means the space was a habit rather than a measurement, which is the real lesson -- and it is why assert-probes.py now exists instead of relying on the next reader to notice."
+        "expect_note": "CORRECTED 2026-10-02, and this is the SECOND entry carrying the same defect as native.pe.packer: expect read '\"match_rate\": 37.6' with a space while the tool emits compact JSON, '\"match_rate\":37.6'. Two entries invented the same spacing means the space was a habit rather than a measurement, which is the real lesson -- and it is why assert-probes.py now exists instead of relying on the next reader to notice.",
+        "produces": "probe-artifacts/last-run-match_functions.json",
+        "produces_note": "Added 2026-10-05 via scripts/probe_artifact.ps1, the PowerShell member of a family with the .py and .mjs writers. Until now this entry declared no artifact, so assert-probes matched STRINGS only and printed its own weakness on every OK: 'NOT a claim that the instrument ran: a stub which prints them satisfies it.' The probe now writes the SAME object it prints to stdout, so the verdict checks the FILESYSTEM."
       },
       "negative_control": {
         "id": "native.function.match.non_pe_refused",
@@ -3101,9 +3107,11 @@
         "expect_exit": 0,
         "last_run": "2026-10-02",
         "run_log": "evidence/probes/native.pe.packer.probe.log",
-        "sha256": "99e868031a85e5d9d11b1263cbebe78bfed937ef5e9ca758df2584885253f3c2",
+        "sha256": "f01b107bdecb736a396caa67f330bbf73080776db724ee1228a0e3ca154a3a36",
         "run_summary": "ok:true exit:0 target c01-stringobf.exe size 143872 die_score 6.15091 die_verdict 'not packed' packed false score_is_advisory true. Control: README.md -> ok:false exit:2 first_bytes '2320', TRUE_EXIT=2. Raw diec.exe on the same README.md returns 'Total 5.26547: not packed' with exit 0, which is the defect this wrapper exists to fix. Re-measured 2026-10-02 for the expect correction: stdout carries prose plus \"not packed\",\"packed\":false,\"die_verdict\":... -- compact JSON, no space after the colon.",
-        "expect_note": "CORRECTED 2026-10-02. This read '\"packed\": false' with a space, and the tool emits PowerShell's ConvertTo-Json form with NO space -- measured output contains \"packed\":false. A literal substring check against the old string FAILS on a perfectly healthy probe, which is the worst kind of registry defect: it trains you to distrust your own instrument. Separately, this probe prints human prose as well as JSON, so the assertion has to be a substring of the JSON island and not of the whole stream."
+        "expect_note": "CORRECTED 2026-10-02. This read '\"packed\": false' with a space, and the tool emits PowerShell's ConvertTo-Json form with NO space -- measured output contains \"packed\":false. A literal substring check against the old string FAILS on a perfectly healthy probe, which is the worst kind of registry defect: it trains you to distrust your own instrument. Separately, this probe prints human prose as well as JSON, so the assertion has to be a substring of the JSON island and not of the whole stream.",
+        "produces": "probe-artifacts/last-run-triage_packer.json",
+        "produces_note": "Added 2026-10-05 via scripts/probe_artifact.ps1, the PowerShell member of a family with the .py and .mjs writers. Until now this entry declared no artifact, so assert-probes matched STRINGS only and printed its own weakness on every OK: 'NOT a claim that the instrument ran: a stub which prints them satisfies it.' The probe now writes the SAME object it prints to stdout, so the verdict checks the FILESYSTEM."
       },
       "negative_control": {
         "id": "native.pe.packer.non_pe_refused",

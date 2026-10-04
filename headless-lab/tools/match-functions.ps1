@@ -110,7 +110,13 @@ foreach ($h in $a.Keys) {
     }
 }
 
-[ordered]@{
+# Result written to disk as well as stdout, so the registry verdict rests on a FILE.
+# assert-probes says an entry with no `probe.produces` was "matched STRINGS only, and a
+# stub which prints them satisfies it". Added 2026-10-05; see scripts/probe_artifact.ps1,
+# the PowerShell member of a family with the .py and .mjs writers.
+. (Join-Path $PSScriptRoot '..\..\scripts\probe_artifact.ps1')
+
+$result = [ordered]@{
     ok                = $true
     exit              = 0
     source            = $sourcePath
@@ -122,5 +128,8 @@ foreach ($h in $a.Keys) {
     identical_inputs  = ($sourcePath -eq $destPath)
     pairs             = $matched
     caveat            = 'CONTENT HASH, NOT SIMILARITY. Identical function bytes match. A function merely recompiled, reordered or re-optimised will NOT match. A miss means not-proven-identical, never different-code.'
-} | ConvertTo-Json -Depth 5 -Compress | Write-Output
+}
+$json = $result | ConvertTo-Json -Depth 5 -Compress
+Write-Output $json
+Write-ProbeArtifact -Tool 'match_functions' -OutDir 'probe-artifacts' -Payload $result | Out-Null
 exit 0

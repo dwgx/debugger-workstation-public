@@ -1,8 +1,12 @@
 # assert-probes evidence: native.pe.packer probe
 # command: powershell -NoProfile -ExecutionPolicy Bypass -File headless-lab\tools\triage-packer.ps1 -Target crackme-corpus\out\c01-stringobf.exe
 # exit: 0
-# seconds: 12.57
+# seconds: 0.51
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
+# produces: D:\Software\Tool\WorkStation\debugger\probe-artifacts\last-run-triage_packer.json
+#   sha256: d68536be4924b0e3cbd805701e6f9d94d486a299181bbb9e9116b008d61061ff
+#   bytes: 1440
+#   written-by-this-run: yes
 ------------------------------------------------------------------------
 {"ok":true,"precondition":"PASS means it is safe to decompile. A packed target reports ok:false and the mission skips every downstream round rather than analysing a stub.","target":"D:\\Software\\Tool\\WorkStation\\debugger\\crackme-corpus\\out\\c01-stringobf.exe","size":143872,"die_score":6.15091,"die_verdict":"not packed","packed":false,"caveat":"DERIVED FROM DIE\u0027S OWN VERDICT, NOT FROM A NUMERIC THRESHOLD. The first draft computed packed as (6.15091 -ge 5) with a hand-picked 5.0, and the very next probe proved that wrong: this binary is emphatically not packed -- Die says \u0027not packed\u0027 -- yet it scores 6.15091, so the threshold reported packed:true and would have BLOCKED EVERY DECOMPILATION in the arsenal. A gate that always says yes is as useless as one that always says no, and it is the same defect as a scanner scoring our own router 100/100 CRITICAL: a confident number with no denominator behind it. Die already decided; the score is reported as evidence but nothing branches on it. AND the limit that survives all of this: \u0027not packed\u0027 means no packer SIGNATURE matched, not that the binary is proven unpacked -- a custom or modified packer matches nothing. It is a green light to look, never proof.","score_is_advisory":true}

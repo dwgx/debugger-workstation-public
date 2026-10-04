@@ -1,0 +1,8 @@
+# assert-probes evidence: native.function.match control
+# command: powershell -NoProfile -ExecutionPolicy Bypass -File headless-lab\tools\match_functions_control.ps1
+# exit: 2
+# seconds: 20.78
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+{"ok":false,"exit":2,"error":"Ghidra produced no function-hash table for at least one input"}

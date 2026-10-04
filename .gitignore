@@ -166,6 +166,21 @@ forensics-lab/lab/payload/*.exe
 managed-lab/**/obj/
 headless-lab/**/obj/
 
+# --- probe-artifacts (2026-10-05) ---
+# Written by scripts/probe_artifact.{py,mjs,ps1} during a run. Same category as the out/ rules
+# above: regenerated every time the probe runs, and assert-probes checks it as "a file THIS RUN
+# wrote" -- so a committed copy would be a stale claim about a past run, not evidence of one.
+# The durable record is evidence/probes/*.probe.log plus its sha256 in capabilities.json, which
+# R17 and R28 keep both in git and in HEAD.
+/probe-artifacts/
+/native-lab/out/
+/web-reverse/out/
+/crypto-lab/out/
+/forensics-lab/out/
+/net-reverse/out/
+/mobile-lab/out/
+/crackme-corpus/out/
+
 # .agent/research duplicates docs/research -- the tracked copy is canonical.
 .agent/research/
 

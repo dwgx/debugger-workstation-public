@@ -1,0 +1,8 @@
+# assert-probes evidence: native.pe.packer control
+# command: powershell -NoProfile -ExecutionPolicy Bypass -File headless-lab\tools\triage-packer.ps1 -Target README.md
+# exit: 3
+# seconds: 0.39
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+{"ok":false,"exit":3,"error":"not a PE: first two bytes are 2320, expected 4D5A (\u0027MZ\u0027). Die would have scored this anyway and said \u0027not packed\u0027.","not_my_subject":true,"first_bytes":"2320","size":13709}

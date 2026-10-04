@@ -90,7 +90,13 @@ if ($null -eq $score) {
     Refuse 2 "diec.exe produced no parseable Total line; refusing rather than guessing 'not packed'" @{ raw_lines = @($out).Count }
 }
 
-[ordered]@{
+# Result written to disk as well as stdout, so the registry verdict rests on a FILE.
+# assert-probes says an entry with no `probe.produces` was "matched STRINGS only, and a
+# stub which prints them satisfies it". Added 2026-10-05; see scripts/probe_artifact.ps1,
+# the PowerShell member of a family with the .py and .mjs writers.
+. (Join-Path $PSScriptRoot '..\..\scripts\probe_artifact.ps1')
+
+$result = [ordered]@{
     # `ok` IS THE PRECONDITION VERDICT, and that is a semantic change made on 2026-10-02. It was
     # hard-coded $true regardless of the verdict, which is right for an EVIDENCE round and wrong
     # for a PRECONDITION one: this entry now declares invoke.gate_role = "precondition", and the
@@ -107,5 +113,8 @@ if ($null -eq $score) {
     packed     = ($verdict -notmatch 'not\s+packed') -and ("$verdict" -match 'packed')
     caveat     = "DERIVED FROM DIE'S OWN VERDICT, NOT FROM A NUMERIC THRESHOLD. The first draft computed packed as ($score -ge $PackedAtOrAbove) with a hand-picked 5.0, and the very next probe proved that wrong: this binary is emphatically not packed -- Die says 'not packed' -- yet it scores 6.15091, so the threshold reported packed:true and would have BLOCKED EVERY DECOMPILATION in the arsenal. A gate that always says yes is as useless as one that always says no, and it is the same defect as a scanner scoring our own router 100/100 CRITICAL: a confident number with no denominator behind it. Die already decided; the score is reported as evidence but nothing branches on it. AND the limit that survives all of this: 'not packed' means no packer SIGNATURE matched, not that the binary is proven unpacked -- a custom or modified packer matches nothing. It is a green light to look, never proof."
     score_is_advisory = $true
-} | ConvertTo-Json -Compress | Write-Output
+}
+$json = $result | ConvertTo-Json -Compress
+Write-Output $json
+Write-ProbeArtifact -Tool 'triage_packer' -OutDir 'probe-artifacts' -Payload $result | Out-Null
 exit 0

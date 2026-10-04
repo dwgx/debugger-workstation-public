@@ -128,5 +128,12 @@ if ($AsControl) {
 }
 Write-Host ('=' * 78)
 Write-Host 'JSON-SUMMARY {"total":1,"pass":0,"fail":1}'
+# The refusal is recorded on disk, and that is the point. These two probes exist to answer
+# ABSENT / BLOCKED, and a refusal nobody can open later is indistinguishable from a probe
+# that was never run. An artifact whose ok is $false with the reason attached is a durable
+# answer; an absent file is not an answer at all. Added 2026-10-05.
+. (Join-Path $PSScriptRoot 'probe_artifact.ps1')
+
+Write-ProbeArtifact -Tool 'emulation_probe' -OutDir 'probe-artifacts' -Payload ([ordered]@{ ok = $false; verdict = 'BLOCKED'; reason = 'PCODE EMULATION BLOCKED -- recorded, not claimed'; as_control = $AsControl }) | Out-Null
 if ($AsControl) { exit 1 }
 exit 0

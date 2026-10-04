@@ -53,6 +53,16 @@ param(
     [switch]$AsControl
 )
 
+# The refusal is recorded on disk, and that is the point. This probe exists to answer ABSENT,
+# and a refusal nobody can open later is indistinguishable from a probe that was never run.
+# An artifact with ok = $false and the reason attached is a durable answer; an absent file is
+# not an answer at all. Added 2026-10-05.
+#
+# AT SCRIPT SCOPE, immediately after the param block. The first attempt placed this between
+# two halves of a multi-line Write-Host statement; it PARSED, and silently never ran, which is
+# the worst of both -- a helper that looks loaded and is not.
+. (Join-Path $PSScriptRoot 'probe_artifact.ps1')
+
 $ErrorActionPreference = 'Continue'
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $RepoRoot
@@ -207,7 +217,23 @@ if ($AsControl) {
     Write-Host '  instead of counting the .exe, and answers ABSENT.'
     Write-Host '  A run that exits 0 here would mean the tool started and a target existed'
     Write-Host '  -- i.e. that the probe had stopped being able to fail.'
+    Write-ProbeArtifact -Tool 'il2cpp_probe' -OutDir 'probe-artifacts' -Payload ([ordered]@{ ok = $false; verdict = 'ABSENT'; reason = $Message }) | Out-Null
     exit 1
 }
 
+# `ok` here is about the PROBE, not the capability. This probe exits 0 when it correctly
+# reports that IL2CPP is ABSENT -- a successful measurement of an absence. The first
+# attempt wrote verdict = 'PRESENT' on this path, which is the confident-wrong shape this
+# project exists to reject: the artifact would have said a capability is available while
+# the registry says `absent`. The verdict field now carries the capability's state and
+# `ok` carries whether the probe itself worked.
+$capVerdict = if ($available) { 'present' } else { 'absent' }
+Write-ProbeArtifact -Tool 'il2cpp_probe' -OutDir 'probe-artifacts' -Payload ([ordered]@{
+    ok              = $true          # the PROBE ran and answered; not a capability claim
+    capability      = 'native.il2cpp.symbols'
+    verdict         = $capVerdict    # the CAPABILITY's state
+    tool_on_disk    = (Test-Path -LiteralPath $tool)
+    runtime_6x      = $have6
+    why             = 'the probe asks the runtime and the target, not whether the .exe is on disk'
+}) | Out-Null
 exit 0
