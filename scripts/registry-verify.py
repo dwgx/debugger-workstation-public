@@ -310,6 +310,47 @@ def r21_control_command_runnable(reg, doc):
     return out
 
 
+def r35_control_buckets_reconcile(reg, doc):
+    """runnable and plan must not overlap, and a runnable control must not still call itself a plan.
+
+    Measured 2026-10-05. Converting `fuzz.differential.parse` from a declared plan to an
+    executable control removed its `plan_note` but left `kind: "plan"` behind. Two counters then
+    counted it twice -- one reading `command`, the other reading `kind` -- and doc-facts.py
+    reported **25 runnable controls + 3 declared plans for a registry of 27**. Nothing failed,
+    because both numbers were individually correct and only their SUM was impossible, and no
+    check anywhere compared them against the total.
+
+    That is the "it cannot count" shape from this project's own recurring-false-green page, in a
+    gate rather than in a tool: two right answers nobody added up. The same sweep found
+    `managed.il.decompile` still carrying a 2026-10-02 note that said "declared a plan, not a
+    control" while a working `command` sat beside it -- verified working before the note was
+    removed, not assumed from the absence of the note.
+    """
+    caps = reg if isinstance(reg, list) else reg.get("capabilities", [])
+    runnable = {c.get("id", "?") for c in caps
+                if str(((c.get("negative_control") or {}).get("command")) or "").strip()}
+    plans = {c.get("id", "?") for c in caps
+             if (c.get("negative_control") or {}).get("kind") == "plan"}
+    out = []
+    both = sorted(runnable & plans)
+    if both:
+        out.append(
+            f"R35 {len(both)} entrie(s) declare BOTH a negative_control.command and kind='plan', so "
+            f"the runnable and plan buckets overlap and the counts cannot reconcile: {both}. A plan "
+            f"that became executable must lose kind='plan' in the SAME edit that adds the command.")
+    stale = sorted(
+        c.get("id", "?") for c in caps
+        if c.get("id", "?") in runnable
+        and "DECLARED A PLAN" in str((c["negative_control"].get("plan_note") or "")).upper()
+    )
+    if stale:
+        out.append(
+            f"R35 {len(stale)} entrie(s) have a runnable negative_control.command but a plan_note "
+            f"still saying DECLARED A PLAN: {stale}. The note outlived the plan, so the entry "
+            f"describes itself as something it stopped being.")
+    return out
+
+
 def r25_plan_needs_a_checkable_ref(reg, doc):
     """A declared plan must point at something a machine can check, or admit it cannot.
 
@@ -1650,6 +1691,7 @@ RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r20_fact_map_declares, r21_control_command_runnable,
          r22_ungrantable_needs_a_reason, r23_escalation_class_needs_a_reason,
          r24_input_types_are_declared, r25_plan_needs_a_checkable_ref,
+         r35_control_buckets_reconcile,
          r26_bare_braces_survive_the_shell,
          r27_probe_exit_has_one_spelling,
          r28_evidence_is_tracked_not_merely_present,
