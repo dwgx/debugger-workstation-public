@@ -326,8 +326,16 @@ def check_produces(cid: str, specs: list[str], cmd: str,
     return ("fresh" if fresh else "stale"), out, after
 
 
-def load() -> list[dict]:
-    return json.load(open(REG, encoding="utf-8"))["capabilities"]
+def load(registry: Path | None = None) -> list[dict]:
+    """Read the capability list. `registry` overrides the default path.
+
+    Added 2026-10-05 so this script can be run against a MUTATED COPY of the registry. Without it
+    the probe suite could not be mutation-tested at all without editing
+    `manifests/capabilities.json`, and this project does not edit the real registry to make a
+    test convenient. `verify-probe-coverage.py` grew the same argument earlier for the same
+    reason, and it is what closed the matrix row that motivated this.
+    """
+    return json.load(open(registry or REG, encoding="utf-8"))["capabilities"]
 
 
 def run(cmd: str, timeout: int, env: dict | None = None) -> tuple[int, str, float]:
@@ -725,6 +733,10 @@ def main() -> int:
                     help="stop starting new entries after this many seconds and NAME every entry "
                          "that was not run. 0 means no budget. Nothing skipped is ever counted as "
                          "a pass.")
+    ap.add_argument("--registry", default=None, metavar="PATH",
+                    help="read a COPY of the registry instead of manifests/capabilities.json, so "
+                         "the suite can be mutation-tested without editing the real one. This "
+                         "script never writes to either.")
     ap.add_argument("--save-evidence", metavar="DIR", default=None,
                     help="write each probe's and control's REAL output to DIR/<id>.<kind>.log")
     ap.add_argument("--require-produces", action="store_true",
@@ -739,7 +751,7 @@ def main() -> int:
         if not EVIDENCE_DIR.is_absolute():
             EVIDENCE_DIR = REPO / EVIDENCE_DIR
 
-    caps = load()
+    caps = load(Path(args.registry) if args.registry else None)
     known = {c["id"] for c in caps}
     if args.ids:
         missing = set(args.ids) - known
