@@ -80,16 +80,30 @@ def refuse(code: int, error: str, **extra):
 
 
 def _truncation_report(path: str):
-    """-> (declared_end, file_size) if the file is shorter than its own section table says, else None.
+    """-> (declared_end, file_size) if the file was genuinely CUT, else None.
 
     A PE header declares every section's SizeOfRawData and PointerToRawData at the FRONT of the
     file, so truncating the tail leaves those declarations intact and both pefile and rabin2 parse
     the result without complaint. Nothing downstream notices, which is why this has to be checked
     explicitly: the mitigation flags would describe a file that cannot execute.
 
-    The check is deliberately about the WHOLE file rather than about any one section. A section
-    whose raw data runs past the end is the signal; a single odd section is not, because some
-    linkers legitimately leave SizeOfRawData larger than the bytes present.
+    THE FIRST VERSION OF THIS WAS WRONG, and the docstring it shipped with said so while the code
+    did the opposite. It refused whenever `max(PointerToRawData + SizeOfRawData) > file_size`, and
+    its own comment claimed "a single odd section is not [a signal], because some linkers
+    legitimately leave SizeOfRawData larger than the bytes present". Measured 2026-10-05: taking
+    the corpus binary and adding 0x4000 to the last section's SizeOfRawData -- changing the header
+    only, adding no bytes -- produced exit 2 and "the file is TRUNCATED". A linker that over-declares
+    got told its binary cannot execute. Prose in a docstring is not a constraint on the code below
+    it, and nothing tested the two against each other.
+
+    THE DISCRIMINATOR IS PointerToRawData, not SizeOfRawData. Cutting a file short leaves at least
+    one section whose PointerToRawData lies PAST the end of the file: that section is not partly
+    present, it is entirely absent, and no amount of plausible header arithmetic invents it.
+    Over-declaring SizeOfRawData never moves a PointerToRawData, because a linker that pads a
+    section's declared size has still placed that section somewhere real in the output.
+
+    So: truncation means a section starts beyond EOF. Both a 50% cut and a 1 KB cut satisfy it,
+    and an over-declaring linker does not.
     """
     try:
         import pefile as _pe
@@ -97,10 +111,13 @@ def _truncation_report(path: str):
         size = _os.path.getsize(path)
         pe = _pe.PE(path, fast_load=True)
         end = 0
+        starts_past_eof = False
         for s in pe.sections:
             end = max(end, s.PointerToRawData + s.SizeOfRawData)
+            if s.PointerToRawData >= size:
+                starts_past_eof = True
         pe.close()
-        return (end, size) if end > size else None
+        return (end, size) if (end > size and starts_past_eof) else None
     except Exception:                                              # noqa: BLE001
         return None            # cannot tell -> do not invent a truncation claim
 
