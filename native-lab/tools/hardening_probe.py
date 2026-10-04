@@ -29,6 +29,13 @@ import pathlib
 import subprocess
 import sys
 
+# Added 2026-10-04 so this probe stops being a string match. `assert-probes.py` decides an entry
+# is real by matching substrings in stdout, and prints its own weakness on every OK: "NOT a
+# claim that the instrument ran: a stub which prints them satisfies it." 22 of 27 capabilities
+# were in exactly that position. Writing the result to disk moves the verdict onto the
+# filesystem, which a stub has to also write to fake. See scripts/probe_artifact.py.
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "scripts"))
+from probe_artifact import write_artifact  # noqa: E402
 # RESOLVED RELATIVE TO THIS FILE. Measured 2026-10-03 by an independent audit: this hardcoded the
 # ORIGINAL station's absolute rabin2 path, so a clone at any other path silently measured with the
 # original machine's binary and reported PASS. Passing number, wrong machine. RABIN2_ENV overrides.
@@ -116,6 +123,7 @@ def main() -> int:
             "is trusted."),
     }
     print(json.dumps(result))
+    write_artifact("hardening_probe", result)
     return 0
 
 

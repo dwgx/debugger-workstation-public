@@ -1,0 +1,8 @@
+# assert-probes evidence: native.pe.hardening control
+# command: python native-lab\tools\hardening_probe.py README.md
+# exit: 2
+# seconds: 0.24
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+{"ok": false, "exit": 2, "error": "rabin2 ran but returned no recognisable info block; refusing rather than reporting an empty mitigation profile as a clean one", "parsed_keys": ["binsz", "bits", "canary", "crypto", "endian", "havecode", "injprot"]}

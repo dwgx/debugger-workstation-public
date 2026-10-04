@@ -20,6 +20,14 @@ import pathlib
 import subprocess
 import sys
 
+# Added 2026-10-04 so this probe stops being a string match. `assert-probes.py` matches
+# substrings in stdout and prints its own weakness on every OK: "NOT a claim that the
+# instrument ran: a stub which prints them satisfies it." 22 of 27 capabilities were in
+# exactly that position. Writing the result to disk moves the verdict onto the filesystem.
+# See scripts/probe_artifact.py.
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "scripts"))
+from probe_artifact import write_artifact  # noqa: E402
+
 # RESOLVED RELATIVE TO THIS FILE, and that is a fix rather than a style choice.
 # Measured 2026-10-03 by an independent audit: this used to hardcode the ORIGINAL station's
 # absolute path. Run from a clone at any other path it did not refuse -- it found capa.exe on the
@@ -84,7 +92,7 @@ def main() -> int:
             "lib": meta.get("lib"),
         })
 
-    print(json.dumps({
+    result = {
         "ok": True,
         "exit": 0,
         "binary": args.binary,
@@ -99,7 +107,9 @@ def main() -> int:
                    "malicious. It is also NOT a trust-boundary analysis: nothing here answers "
                    "'where does this trust something it should not'. Read a hit as 'look here', "
                    "which is also what the rule library's own docstrings mean."),
-    }))
+    }
+    print(json.dumps(result))
+    write_artifact("capa_probe", result)
     return 0
 
 

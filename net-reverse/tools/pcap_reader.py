@@ -24,6 +24,14 @@ import ipaddress
 import json
 import struct
 import sys
+import pathlib
+
+# Added 2026-10-04 so this reader stops being a string match. `assert-probes.py`
+# matches substrings in stdout and says so itself: "NOT a claim that the instrument
+# ran: a stub which prints them satisfies it." Writing the parse to disk moves the
+# verdict onto the filesystem. See scripts/probe_artifact.py.
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "scripts"))
+from probe_artifact import write_artifact  # noqa: E402
 
 PCAP_MAGIC_LE = 0xA1B2C3D4
 PCAP_MAGIC_BE = 0xD4C3B2A1
@@ -179,7 +187,9 @@ def main() -> int:
     ap.add_argument("pcap")
     args = ap.parse_args()
     try:
-        print(json.dumps(parse(args.pcap)))
+        result = parse(args.pcap)
+        print(json.dumps(result))
+        write_artifact("pcap_reader", result)
     except IsADirectoryError:
         die(2, f"{args.pcap} is a directory")
     except FileNotFoundError:

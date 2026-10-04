@@ -1,6 +1,6 @@
 # Arsenal map (this clone)
 
-Install root: `D:\Software\Tool\WorkStation\debugger`. Relative paths below. Pins match disk 2026-09-20, not always upstream latest.
+Install root: `D:\Software\Tool\WorkStation\debugger`. Relative paths below. Pins match disk 2026-09-20, not always upstream latest. **Re-verified 2026-10-04: every path below still resolves** (checked by resolving each basename inside its category directory; see the per-tool-directory note in SKILL.md).
 
 | Lane | Tool | Entry |
 |---|---|---|

@@ -166,16 +166,16 @@ python scripts\assert-probes.py --list
 Prints a `SKIP` with a reason for each. That reason is a claim about the world, not about the
 script — verify it before you relay it (§2.3 is what happens when you don't).
 
-**23 of 27 are `state: observed`. That is NOT the same as "falsifiable".** Only **5 of 27**
-declare `probe.produces` (a path-bound artifact), and only **4** of the 28 logs in
-`evidence/probes/` actually carry a `sha256:` line. The rest are verified by **string matching**,
-and the runner says so itself: *"this entry declares no probe.produces, so this checker matched
-STRINGS only, and a stub which prints them satisfies it."* `verify-all.ps1` records the same:
-"24 of 27 OK verdicts are STRINGS ONLY".
+**23 of 27 are `state: observed`. That is NOT the same as "falsifiable".** Only **8 of 27**
+declare `probe.produces` — a path-bound artifact whose bytes must land on disk during the run.
+The rest are verified by **string matching**, and `assert-probes.py` says so itself on every OK:
+*"this entry declares no probe.produces, so this checker matched STRINGS only, and a stub which
+prints them satisfies it."*
 
-**So do not tell anyone 23 capabilities are cryptographically bound.** Say: 23 observed, 5
-artifact-bound. The gap between those two numbers is the honest measure of what a stub could
-still fake here, and it is the next thing to close.
+**So do not tell anyone 23 capabilities are cryptographically bound.** Say: 23 observed,
+**8 artifact-bound**. The gap is the honest measure of what a stub could still fake here.
+Closing it is mechanical — `scripts/probe_artifact.py` does it in one call per probe — and it is
+the next thing to close.
 
 The four that are genuinely unavailable — saying so is the correct answer:
 

@@ -1,0 +1,8 @@
+# assert-probes evidence: net.pcap.selfparse control
+# command: python net-reverse\tools\pcap_reader.py README.md
+# exit: 2
+# seconds: 0.18
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+{"ok": false, "exit": 2, "error": "not a pcap: magic 0x65642023 is neither 0xa1b2c3d4 nor its byte-swapped twin", "first_bytes": "23206465"}

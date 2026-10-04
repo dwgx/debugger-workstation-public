@@ -1,8 +1,13 @@
 # assert-probes evidence: native.behaviour.capa probe
 # command: python native-lab\tools\capa_probe.py crackme-corpus\out\c01-stringobf.exe
 # exit: 0
-# seconds: 28.74
+# seconds: 26.65
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
+# produces: D:\Software\Tool\WorkStation\debugger\native-lab\out\last-run-capa_probe.json
+#   sha256: ee5a6aa37de8bf12da04e5d22f9225378512e830c404143588de9c5ffd05dff7
+#   bytes: 2819
+#   written-by-this-run: yes
 ------------------------------------------------------------------------
 {"ok": true, "exit": 0, "binary": "crackme-corpus\\out\\c01-stringobf.exe", "capa_version": "(not reported in -j output)", "rules_matched": 14, "namespaces": {"linking/runtime-linking": 1, "(none)": 4, "load-code/pe": 1, "host-interaction/process/terminate": 1, "data-manipulation/compression": 1, "host-interaction/file-system/files/list": 1, "host-interaction/environment-variable": 2, "host-interaction/file-system/write": 1, "host-interaction/file-system/meta": 1, "anti-analysis": 1}, "matches": [{"rule": "link function at runtime on Windows", "namespace": "linking/runtime-linking", "lib": false}, {"rule": "create or open file", "namespace": "(none)", "lib": true}, {"rule": "change memory protection", "namespace": "(none)", "lib": true}, {"rule": "PEB access", "namespace": "(none)", "lib": true}, {"rule": "contain loop", "namespace": "(none)", "lib": true}, {"rule": "parse PE header", "namespace": "load-code/pe", "lib": false}, {"rule": "terminate process", "namespace": "host-interaction/process/terminate", "lib": false}, {"rule": "decompress data using QuickLZ", "namespace": "data-manipulation/compression", "lib": false}, {"rule": "enumerate files on Windows", "namespace": "host-interaction/file-system/files/list", "lib": false}, {"rule": "query environment variable", "namespace": "host-interaction/environment-variable", "lib": false}, {"rule": "write file on Windows", "namespace": "host-interaction/file-system/write", "lib": false}, {"rule": "get file size", "namespace": "host-interaction/file-system/meta", "lib": false}, {"rule": "set environment variable", "namespace": "host-interaction/environment-variable", "lib": false}, {"rule": "reference analysis tools strings", "namespace": "anti-analysis", "lib": false}], "caveat": "capa MATCHES A RULE, IT DOES NOT PROVE BEHAVIOUR. A rule hit means the instructions for a known pattern are present -- 'change memory protection' says the capability exists, not that it was used, and not that it was malicious. It is also NOT a trust-boundary analysis: nothing here answers 'where does this trust something it should not'. Read a hit as 'look here', which is also what the rule library's own docstrings mean."}
+ARTIFACT native-lab/out/last-run-capa_probe.json
