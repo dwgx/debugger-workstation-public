@@ -209,3 +209,13 @@ scripts/mission-ablate-*.ps1
 # Emacs lock and auto-save dots
 \#*\#
 .\#*
+
+# Ghidra's analyzeHeadless writes its logs beside wherever it was invoked from, so a run
+# launched from the repo root leaves STRAY-EXTRA/ holding analyzeHeadless.log and .log.err.
+# Measured 2026-10-05: 56 KB of it, and the directory's own name says what it is. Same
+# category as the out/ rules -- regenerated every run, never an input, never evidence.
+STRAY-EXTRA/
+
+# A three-line throwaway I wrote on 2026-10-05 to run one probe by hand (a BOM-prefixed
+# ps1 holding `node fuzz-lab/tools/loop.mjs --budget 40` and `exit $LASTEXITCODE`).
+# assert-probes.py runs every command itself; the file was never referenced by anything.
