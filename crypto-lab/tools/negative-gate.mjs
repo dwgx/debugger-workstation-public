@@ -44,7 +44,6 @@
  *
  * ARGUMENT REFUSAL, for the same reason loop.mjs has it: a control that silently ignores a flag
  * someone passed it is a control that can be made to report a green it did not measure.
- */
  *
  * WHY node:http AND NOT fetch(). MEASURED, not stylistic. `loop.mjs` makes dozens of `fetch`
  * calls and exits 0, so the obvious guess is that `fetch` is fine here too. It is not, on the
@@ -59,6 +58,7 @@
  * left pooled in the parent. node:http issues a fresh connection per request here, and it is
  * what web-reverse/tools/negative-gate.mjs already uses, so this follows the existing
  * convention rather than establishing a second one.
+ */
 import crypto from 'node:crypto';
 import http from 'node:http';
 import path from 'node:path';
@@ -108,6 +108,30 @@ function claimReadiness(p) {
     ['sub non-empty string', typeof p.sub === 'string' && !!p.sub, `sub=${p.sub}`],
     ['jti non-empty string', typeof p.jti === 'string' && !!p.jti, `jti=${p.jti}`],
   ];
+}
+
+/* One request per token, over a fresh connection. See the node:http note at the top for why
+ * this is not `fetch` — the pooled keep-alive socket is what turns a correct exit 4 into 9. */
+function verifyStrict(port, token) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify({ token });
+    const req = http.request(
+      {
+        hostname: '127.0.0.1', port, path: '/api/verify/strict', method: 'POST',
+        headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(body) },
+      },
+      (res) => {
+        let b = '';
+        res.setEncoding('utf8');
+        res.on('data', (d) => { b += d; });
+        res.on('end', () => {
+          try { resolve(JSON.parse(b)); } catch (e) { reject(new Error(`verify response was not JSON: ${e.message}`)); }
+        });
+      },
+    );
+    req.on('error', reject);
+    req.end(body);
+  });
 }
 
 const lab = createLab({ log: () => {} });
@@ -177,12 +201,7 @@ try {
     }
     line(`    verdict  token is STRUCTURALLY VALID and semantically current — nothing below may be blamed on its shape`);
 
-    const r = await fetch(`${base}/api/verify/strict`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ token: c.token }),
-    });
-    const v = await r.json();
+    const v = await verifyStrict(addr.port, c.token);
 
     if (v.accept) {
       anyAccepted = true;
