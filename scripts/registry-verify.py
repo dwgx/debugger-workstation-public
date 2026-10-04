@@ -351,6 +351,62 @@ def r35_control_buckets_reconcile(reg, doc):
     return out
 
 
+
+_RUNNABLE_VERBS = frozenset({
+    "node", "python", "python3", "py", "powershell", "pwsh", "cmd", "uv", "uvx", "bash", "sh",
+    "dotnet", "java", "javac", "adb", "git", "docker", "pip", "npx", "cargo", "go", "make",
+})
+
+
+def r36_probe_command_is_runnable(reg, doc):
+    """`probe.command` must be something a shell can run, not a sentence about where to look.
+
+    R21 already refuses prose in `negative_control.command`. There was no equivalent for
+    `probe.command`, and the asymmetry is what let this through:
+
+        native.crosscompare.ghidra
+          command : see scripts/ghidra-failopen.md reproduction section
+          expect  : Auto Version Tracking Command completed successfully with no apply markup errors
+
+    A pointer to documentation is not a command. The `expect` string is worse than useless
+    there: it is a Ghidra auto-analysis message with no relationship to cross-comparing two
+    decompilers, so the entry reads as a probe that would catch a divergence and cannot.
+
+    Measured, and this is the part worth recording: `powershell -File <anything-not-.ps1>`
+    prints "Processing -File ... failed because the file does not have a .ps1 extension"
+    and **exits 0**. So the prose command does not merely look wrong -- running it produces an
+    error message on stdout with a SUCCESS exit code. Anything keying on the exit code reads a
+    failure as a pass. That is the same shape as a deferred probe (R--require-complete) and as
+    the budget path before it: an instrument that cannot fail.
+
+    The rule is about the COMMAND being runnable. The entry may still be planned, blocked or
+    absent -- that is a separate, honest claim with its own evidence. What it may not do is
+    present prose as the thing the harness executes.
+    """
+    out = []
+    for c in reg if isinstance(reg, list) else reg.get("capabilities", []):
+        cmd = str(((c.get("probe") or {}).get("command")) or "").strip()
+        if not cmd:
+            continue
+        head = cmd.split()[0].lower() if cmd.split() else ""
+        # RUNNABLE is a local inside r10_invoke_must_be_runnable, not a module global, so
+        # naming it here raised NameError at call time. Reference my own tuple instead.
+        # Membership, NOT startswith-with-a-trailing-space. `cmd.split()[0]` is "node", never
+        # "node ", so the first version of this matched nothing and fired on all 27 entries --
+        # including ten `node <path>.mjs` commands that are perfectly runnable. Same family as the
+        # `new Set('--json')` bug this session: a plausible string test that is quietly always-false
+        # in one direction or the other, and only a run against the real tree shows which.
+        if head in _RUNNABLE_VERBS:
+            continue
+        out.append(
+            f"R36 {c.get('id','?')}: probe.command is not a runnable command -- {cmd[:70]!r}. "
+            f"The harness executes this string; prose is executed as a filename, and "
+            f"`powershell -File <non-.ps1>` exits 0 after printing an error, so the entry reads as "
+            f"a passing probe that measured nothing. Either give it a command that runs, or move "
+            f"the prose to plan_reason and declare the entry planned -- which is a claim a reader "
+            f"can check, whereas this is one they cannot.")
+    return out
+
 def r25_plan_needs_a_checkable_ref(reg, doc):
     """A declared plan must point at something a machine can check, or admit it cannot.
 
@@ -1691,6 +1747,7 @@ RULES = (r1_not_empty, r_shape, r2_observed_needs_probe, r3_honesty_pair,
          r20_fact_map_declares, r21_control_command_runnable,
          r22_ungrantable_needs_a_reason, r23_escalation_class_needs_a_reason,
          r24_input_types_are_declared, r25_plan_needs_a_checkable_ref,
+         r36_probe_command_is_runnable,
          r35_control_buckets_reconcile,
          r26_bare_braces_survive_the_shell,
          r27_probe_exit_has_one_spelling,
