@@ -191,3 +191,21 @@ headless-lab/**/obj/
 # `git add -A` then commits it as though it were source. Measured: that is exactly what
 # happened here. These files are never inputs and never evidence.
 scripts/mission-ablate-*.ps1
+
+# Editor auto-save and lock files. Measured 2026-10-05: opening README.md left
+# README.md.id0 (16 KB), .id1 (40 KB), .nam (8 KB) and .til (8 KB) beside it -- GDB/emacs
+# auto-save siblings, each a real copy of the file, all untracked, all noise. The earlier
+# `*~` / `*.bak` rules cover a different editor's habit; this is the same category from a
+# different tool, and it needs its own patterns because the suffixes are numeric.
+*.id0
+*.id1
+*.id2
+*.id3
+*.nam
+*.til
+*.swp
+*.swo
+*~
+# Emacs lock and auto-save dots
+\#*\#
+.\#*
