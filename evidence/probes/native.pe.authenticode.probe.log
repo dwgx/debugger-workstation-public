@@ -1,9 +1,13 @@
 # assert-probes evidence: native.pe.authenticode probe
 # command: python headless-lab\tools\authenticode.py crackme-corpus\out\c01-stringobf.exe
 # exit: 0
-# seconds: 0.23
+# seconds: 0.19
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
+# produces: D:\Software\Tool\WorkStation\debugger\native-lab\out\last-run-authenticode.json
+#   sha256: 5136cdb56dd3626d7ab06f9c833e555c8a1df36f61976780e20de1b231b76791
+#   bytes: 742
+#   written-by-this-run: yes
 ------------------------------------------------------------------------
 {
  "ok": true,
@@ -17,3 +21,4 @@
  "signed": false,
  "reason": "no certificate table: IMAGE_DIRECTORY_ENTRY_SECURITY is empty"
 }
+ARTIFACT native-lab/out/last-run-authenticode.json

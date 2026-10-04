@@ -26,6 +26,16 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import pathlib
+
+# Added 2026-10-04 so this probe stops being a string match. `assert-probes.py` decides an
+# entry is real by matching substrings in captured stdout and prints its own weakness on
+# every OK: "NOT a claim that the instrument ran: a stub which prints them satisfies it."
+# Writing the result to disk moves the verdict onto the filesystem, which a stub has to
+# also write to fake. See scripts/probe_artifact.py.
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "scripts"))
+from probe_artifact import write_artifact  # noqa: E402
+
 
 try:
     import capstone
@@ -190,6 +200,7 @@ def main() -> int:
                   "references, and it cannot tell you what the code MEANS.",
     }
     text = json.dumps(out, indent=1)
+    write_artifact("disasm", out if "disasm" != "cert_verify" else result)
     if args.json_out:
         with open(args.json_out, "w", encoding="utf-8") as fh:
             fh.write(text)

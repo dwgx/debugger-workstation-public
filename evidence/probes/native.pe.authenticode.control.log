@@ -1,0 +1,9 @@
+# assert-probes evidence: native.pe.authenticode control
+# command: powershell -NoProfile -ExecutionPolicy Bypass -File headless-lab\tools\authenticode_control.ps1
+# exit: 2
+# seconds: 0.42
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+{"ok": true, "exit": 0, "fixture": "%USERPROFILE%\\AppData\\Local\\Temp\\signed-fixture.exe", "cert_offset": 143872, "cert_len": 48, "payload": "ARSENAL-FIXTURE-NOT-A-REAL-SIGNATURE\u0000"}
+{"ok": false, "exit": 2, "error": "certificate table at file offset 0x23200 runs past the end of a 143860-byte file; the directory is pointing outside the file"}

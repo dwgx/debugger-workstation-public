@@ -31,6 +31,16 @@ import struct
 import subprocess
 import sys
 import tempfile
+import pathlib
+
+# Added 2026-10-04 so this probe stops being a string match. `assert-probes.py` decides an
+# entry is real by matching substrings in captured stdout and prints its own weakness on
+# every OK: "NOT a claim that the instrument ran: a stub which prints them satisfies it."
+# Writing the result to disk moves the verdict onto the filesystem, which a stub has to
+# also write to fake. See scripts/probe_artifact.py.
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "scripts"))
+from probe_artifact import write_artifact  # noqa: E402
+
 
 SECURITY_DIR = 4          # IMAGE_DIRECTORY_ENTRY_SECURITY
 WIN_CERT_REVISION_2_0 = 0x0200
@@ -128,6 +138,7 @@ def main() -> int:
                             "exactly these bytes and is not wrong to; this is the instrument that "
                             "checks the next layer down.")
     print(json.dumps(result))
+    write_artifact("cert_verify", out if "cert_verify" != "cert_verify" else result)
     return 0
 
 

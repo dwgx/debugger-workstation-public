@@ -1,8 +1,13 @@
 # assert-probes evidence: native.signature.certverify probe
 # command: python native-lab\tools\cert_verify.py "$env:TEMP\signed-fixture.exe"
 # exit: 0
-# seconds: 0.44
+# seconds: 0.19
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
+# produces: D:\Software\Tool\WorkStation\debugger\native-lab\out\last-run-cert_verify.json
+#   sha256: 0c9318eff8a93d0f6d80e14389e8c57a977fd051764f29df49c5afc2f7584aba
+#   bytes: 876
+#   written-by-this-run: yes
 ------------------------------------------------------------------------
-{"ok": true, "exit": 0, "binary": "%USERPROFILE%\\AppData\\Local\\Temp\\signed-fixture.exe", "security_offset": 143872, "win_certificate": {"dwLength": 48, "wRevision": "0x200", "wCertificateType": "0x2", "revision_is_2_0": true, "is_pkcs_signed_data": true, "body_bytes": 40}, "der_parsed": false, "verifiable": false, "cert_state": "not_der", "reason": "988E0000:error:0680009B:asn1 encoding routines:ASN1_get_object:too long:../openssl-3.5.7/crypto/asn1/asn1_lib.c:95:", "caveat": "THE HEADER IS STILL VALID-LOOKING AND THE BYTES ARE STILL NOT A CERTIFICATE. native.pe.authenticode reports dwLength and wRevision off exactly these bytes and is not wrong to; this is the instrument that checks the next layer down."}
+{"ok": true, "exit": 0, "binary": "%USERPROFILE%\\AppData\\Local\\Temp\\signed-fixture.exe", "security_offset": 143872, "win_certificate": {"dwLength": 48, "wRevision": "0x200", "wCertificateType": "0x2", "revision_is_2_0": true, "is_pkcs_signed_data": true, "body_bytes": 40}, "der_parsed": false, "verifiable": false, "cert_state": "not_der", "reason": "D06B0000:error:0680009B:asn1 encoding routines:ASN1_get_object:too long:../openssl-3.5.7/crypto/asn1/asn1_lib.c:95:", "caveat": "THE HEADER IS STILL VALID-LOOKING AND THE BYTES ARE STILL NOT A CERTIFICATE. native.pe.authenticode reports dwLength and wRevision off exactly these bytes and is not wrong to; this is the instrument that checks the next layer down."}
+ARTIFACT native-lab/out/last-run-cert_verify.json

@@ -1,9 +1,13 @@
 # assert-probes evidence: native.disasm.capstone probe
 # command: python native-lab\tools\disasm.py crackme-corpus\out\c01-stringobf.exe --rva 0x1080 --count 40
 # exit: 0
-# seconds: 0.30
+# seconds: 0.22
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
+# produces: D:\Software\Tool\WorkStation\debugger\native-lab\out\last-run-disasm.json
+#   sha256: eee2614afb4096860d382c952bbf14eb8151c2764cd58dc2691358d2e6e24ecd
+#   bytes: 6708
+#   written-by-this-run: yes
 ------------------------------------------------------------------------
 {
  "ok": true,
@@ -291,3 +295,4 @@
  ],
  "caveat": "A DISASSEMBLER IS NOT A DECOMPILER. These are instructions, not recovered logic: no lifting, no type recovery, no control-flow reconstruction. It corroborates structure and resolves operands the decompilers leave as references, and it cannot tell you what the code MEANS."
 }
+ARTIFACT native-lab/out/last-run-disasm.json

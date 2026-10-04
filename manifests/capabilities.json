@@ -3300,9 +3300,11 @@
         "expect_exit": 0,
         "last_run": "2026-10-02",
         "run_log": "evidence/probes/native.disasm.capstone.probe.log",
-        "sha256": "63214a692238babb71bdb6db15ef70c587cd82742b76335522aeba11273fe55d",
+        "sha256": "352a6d55d0c2df91a7f61b15811a6bc2e147bf0301d9e35382c4bb8a1a35e83d",
         "run_summary": "ok:true rva 0x1080 file_offset 0x480 count 40. RIP-REL operands: 0x140022080 dword 769630770; 0x140022000 dword 1734439797; 0x140017342 width=byte byte=90 dword=734042; 0x140017344 width=dword byte=11 dword=11; 0x140017330 dword 41361174; 0x140017343 width=byte byte=51 dword=2867; 0x140017364 width=dword byte=5 dword=5; 0x140017348 dword 1096567660; 0x140017368 dword 1195461702; 0x140022018 dword 1162495314. 0.18 s. Re-measured 2026-10-02 for the expect correction: --rva 0x1080 --count 40 returns ok:true, image_base 0x140000000, first insn {addr: 0x140001080, mnemonic: mov}, and zero 'width=byte' fields.",
-        "expect_note": "CORRECTED 2026-10-02 by assert-probes.py. This read '0x140017342 width=byte', but the recorded probe disassembles --rva 0x1080, and that invocation emits NO width= field at all: measured, grep -c 'width=byte' over its real output returns 0. The old string came from a DIFFERENT invocation, so the entry asserted a fact about a run it does not name. Worse, the value it asserted -- the operand WIDTH that Ghidra's DAT_ loses -- is the whole reason this instrument exists, so the string that got checked was not even the property worth checking. The replacement is what this command really emits: the first instruction at 0x140001080."
+        "expect_note": "CORRECTED 2026-10-02 by assert-probes.py. This read '0x140017342 width=byte', but the recorded probe disassembles --rva 0x1080, and that invocation emits NO width= field at all: measured, grep -c 'width=byte' over its real output returns 0. The old string came from a DIFFERENT invocation, so the entry asserted a fact about a run it does not name. Worse, the value it asserted -- the operand WIDTH that Ghidra's DAT_ loses -- is the whole reason this instrument exists, so the string that got checked was not even the property worth checking. The replacement is what this command really emits: the first instruction at 0x140001080.",
+        "produces": "native-lab/out/last-run-disasm.json",
+        "produces_note": "Added 2026-10-04. Until now this entry declared no artifact, so assert-probes matched STRINGS only and printed its own weakness on every OK: 'NOT a claim that the instrument ran: a stub which prints them satisfies it.' The probe now writes this file, so the verdict checks the FILESYSTEM. See scripts/probe_artifact.py."
       },
       "negative_control": {
         "id": "native.disasm.capstone.non_executable_section_refused",
@@ -3476,9 +3478,11 @@
         "expect_exit": 0,
         "last_run": "2026-10-02",
         "run_log": "evidence/probes/native.pe.authenticode.probe.log",
-        "sha256": "b9869e6f21c93380775f66fc022f1784b94e62a422033fed5d6b8a0e015d6b7c",
+        "sha256": "919d4729c2f75cb740f55ff5e08bbf276aef6e562fedb7e66b39dd7389d3e7e1",
         "run_summary": "crackme-corpus/out/c01-stringobf.exe: security_va_is_a 'FILE OFFSET (not an RVA)', security_offset 0, security_size 0, signed false, reason 'no certificate table: IMAGE_DIRECTORY_ENTRY_SECURITY is empty'. exit 0. All seven corpus binaries measured identical. Self-authored fixture: security_offset 143872, signed true, dwLength 48, revision_is_2_0 true, type_is_pkcs_signed_data true, blob_ascii_head 'ARSENAL-FIXTURE-NOT-A-REAL-SIGNATURE'. non-PE README.md: exit 1.",
-        "expect_note": "expect asserts ABSENCE, which is the honest reading for this corpus and the opposite of what the negative control asserts. A gate whose positive case had to be asserted would be asserting a result this corpus cannot produce; the two-sided control is what carries the meaning."
+        "expect_note": "expect asserts ABSENCE, which is the honest reading for this corpus and the opposite of what the negative control asserts. A gate whose positive case had to be asserted would be asserting a result this corpus cannot produce; the two-sided control is what carries the meaning.",
+        "produces": "native-lab/out/last-run-authenticode.json",
+        "produces_note": "Added 2026-10-04. Until now this entry declared no artifact, so assert-probes matched STRINGS only and printed its own weakness on every OK: 'NOT a claim that the instrument ran: a stub which prints them satisfies it.' The probe now writes this file, so the verdict checks the FILESYSTEM. See scripts/probe_artifact.py."
       },
       "negative_control": {
         "id": "native.pe.authenticode.certificate_table_past_eof_refused",
@@ -3757,11 +3761,13 @@
         "expect_exit": 0,
         "last_run": "2026-10-02",
         "run_log": "evidence/probes/native.signature.certverify.probe.log",
-        "sha256": "0a1a9ed15aaf1414b586c01a4bcfe2f63c22c809a2de27ad9dacebc17745684b",
+        "sha256": "e5bb893b345aae67a78ffcb9e0f3df36d0228d99b37afa881e211a7ccffbca54",
         "run_summary": "fixture: {ok:true, exit:0, security_offset:143872, win_certificate:{dwLength:48, wRevision:'0x200', wCertificateType:'0x2', revision_is_2_0:true, is_pkcs_signed_data:true, body_bytes:40}, der_parsed:false, verifiable:false, cert_state:'not_der'}, TRUE_EXIT=0.\n\nThe 7-digit prefix on OpenSSL's error line is TRANSIENT (the audit saw '182B0000:...' where an earlier run recorded 'ECB80000:...') and is deliberately NOT quoted here. Only the stable parts are recorded: the 0680009B code, the 'ASN1_get_object:too long' text and der_parsed:false. Storing a per-process prefix as if it were reproducible is how a volatile value becomes a false claim the next time the library is rebuilt.",
         "prepare": "python headless-lab\\tools\\authenticode.py crackme-corpus\\out\\c01-stringobf.exe --make-control \"$env:TEMP\\signed-fixture.exe\"   # the fixture is GENERATED, not committed",
         "expect_note": "This is the one probe in the registry whose expectation is a REFUSAL, and that is the point rather than an embarrassment: the capability under test is 'can this tell DER from non-DER', and the fixture is a known non-DER body. If the fixture is ever replaced with a real signature this expectation must become true, and that is the correct time to notice.",
-        "prepare_note": "$env:TEMP, NOT %TEMP%. assert-probes.py runs each recorded command by writing it to a .ps1 and invoking `powershell -File`, and %TEMP% is a CMD token PowerShell does not expand -- so the probe pointed at a literal path named '%TEMP%\\signed-fixture.exe', which does not exist. It failed with exit 2 and assert-probes correctly reported BOTH a wrong exit and a missing expect string. This is the third %TEMP%/%env:TEMP% confusion in this registry (native.pe.hardening's rabin2 probe would have hit it too had it used one), and the fix is the PowerShell spelling."
+        "prepare_note": "$env:TEMP, NOT %TEMP%. assert-probes.py runs each recorded command by writing it to a .ps1 and invoking `powershell -File`, and %TEMP% is a CMD token PowerShell does not expand -- so the probe pointed at a literal path named '%TEMP%\\signed-fixture.exe', which does not exist. It failed with exit 2 and assert-probes correctly reported BOTH a wrong exit and a missing expect string. This is the third %TEMP%/%env:TEMP% confusion in this registry (native.pe.hardening's rabin2 probe would have hit it too had it used one), and the fix is the PowerShell spelling.",
+        "produces": "native-lab/out/last-run-cert_verify.json",
+        "produces_note": "Added 2026-10-04. Until now this entry declared no artifact, so assert-probes matched STRINGS only and printed its own weakness on every OK: 'NOT a claim that the instrument ran: a stub which prints them satisfies it.' The probe now writes this file, so the verdict checks the FILESYSTEM. See scripts/probe_artifact.py."
       },
       "negative_control": {
         "id": "native.signature.certverify.non_pe_refused",

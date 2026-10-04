@@ -1,0 +1,8 @@
+# assert-probes evidence: native.disasm.capstone control
+# command: python native-lab\tools\disasm.py crackme-corpus\out\c01-stringobf.exe --rva 0x17000
+# exit: 2
+# seconds: 0.21
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+{"ok": false, "exit": 2, "error": "RVA 0x17000 is in section '.rdata' (Characteristics 0x40000040), which is NOT executable. Decoding it yields plausible-looking instructions built out of data bytes; pass --force only if you know that section really holds code.", "section": ".rdata", "characteristics": "0x40000040"}

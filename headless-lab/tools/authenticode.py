@@ -28,6 +28,16 @@ import argparse
 import json
 import struct
 import sys
+import pathlib
+
+# Added 2026-10-04 so this probe stops being a string match. `assert-probes.py` decides an
+# entry is real by matching substrings in captured stdout and prints its own weakness on
+# every OK: "NOT a claim that the instrument ran: a stub which prints them satisfies it."
+# Writing the result to disk moves the verdict onto the filesystem, which a stub has to
+# also write to fake. See scripts/probe_artifact.py.
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "scripts"))
+from probe_artifact import write_artifact  # noqa: E402
+
 
 WIN_CERT_REVISION_2_0 = 0x0200
 WIN_CERT_TYPE_PKCS_SIGNED_DATA = 0x0002
@@ -162,6 +172,7 @@ def main() -> int:
                               f"{dd.Size}; the table is inconsistent and must not be trusted")
 
     print(json.dumps(out, indent=1))
+    write_artifact("authenticode", out if "authenticode" != "cert_verify" else result)
     return 0
 
 
