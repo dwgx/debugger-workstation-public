@@ -22,7 +22,13 @@ import { fileURLToPath } from 'node:url';
 // The precedent is already in the tree and this follows it rather than inventing a second
 // convention: crackme-corpus/tools/loop.py uses argparse and rejects `unrecognized arguments`
 // with exit 2. The JS loops had no argument parser at all, which is the defect.
-const ALLOWED = new Set('--json', '--quiet');
+// `new Set('--json', '--quiet')` was wrong twice over: Set takes ONE argument, so the
+// second was silently discarded, and the first is a STRING, so it iterated into
+// Set{'-','j','s','o','n'}. BOTH flags were therefore refused by the guard meant to allow
+// them. Found 2026-10-05: I had verified these guards refuse a bogus argument and pass with
+// none, but never that they ACCEPT a real one. A guard that refuses everything looks exactly
+// like a guard that works until you try to use it.
+const ALLOWED = new Set(['--json', '--quiet']);
 const extra = process.argv.slice(2).filter((a) => !ALLOWED.has(a) && !a.startsWith('--only='));
 if (extra.length) {
   console.error(`loop: refusing an argument it would otherwise IGNORE: ${extra.join(' ')}`);

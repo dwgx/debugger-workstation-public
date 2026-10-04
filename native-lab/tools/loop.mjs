@@ -30,7 +30,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 // installation here landed mid-function and collided with an existing `extra` binding; a guard
 // inserted at the wrong scope is the same class of mistake as the bug it fixes, so the placement
 // is at module scope after the imports and nowhere else.
-const KNOWN_FLAGS = new Set('--json');
+const KNOWN_FLAGS = new Set(['--json']);
 const strayArgs = process.argv.slice(2)
   .filter((a) => !KNOWN_FLAGS.has(a) && !a.startsWith('--only='));
 if (strayArgs.length) {

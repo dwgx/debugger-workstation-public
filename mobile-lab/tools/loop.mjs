@@ -41,7 +41,7 @@ import { writeRunArtifact } from '../../scripts/probe_artifact.mjs';
 // The precedent is already in the tree and this follows it rather than inventing a second
 // convention: crackme-corpus/tools/loop.py uses argparse and rejects `unrecognized arguments`
 // with exit 2. The JS loops had no argument parser at all, which is the defect.
-const ALLOWED = new Set('--json');
+const ALLOWED = new Set(['--json']);
 const extra = process.argv.slice(2).filter((a) => !ALLOWED.has(a) && !a.startsWith('--only='));
 if (extra.length) {
   console.error(`loop: refusing an argument it would otherwise IGNORE: ${extra.join(' ')}`);
