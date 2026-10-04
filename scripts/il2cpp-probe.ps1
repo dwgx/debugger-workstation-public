@@ -53,6 +53,7 @@ param(
     [switch]$AsControl
 )
 
+
 # The refusal is recorded on disk, and that is the point. This probe exists to answer ABSENT,
 # and a refusal nobody can open later is indistinguishable from a probe that was never run.
 # An artifact with ok = $false and the reason attached is a durable answer; an absent file is

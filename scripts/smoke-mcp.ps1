@@ -5,6 +5,9 @@
 #>
 param([string]$InstallRoot = '')
 
+
+. (Join-Path $PSScriptRoot 'assert-no-stray-args.ps1')
+Assert-NoStrayArgs -ScriptName 'smoke-mcp.ps1'
 $ErrorActionPreference = 'Stop'
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 if (-not $InstallRoot) { $InstallRoot = $RepoRoot }

@@ -36,6 +36,7 @@
 [CmdletBinding()]
 param([string[]]$Include = @(), [switch]$Json)
 
+
 $ErrorActionPreference = 'Continue'
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $RepoRoot

@@ -77,6 +77,34 @@ def refuse(code: int, error: str, **extra):
     sys.exit(code)
 
 
+
+
+def _truncation_report(path: str):
+    """-> (declared_end, file_size) if the file is shorter than its own section table says, else None.
+
+    A PE header declares every section's SizeOfRawData and PointerToRawData at the FRONT of the
+    file, so truncating the tail leaves those declarations intact and both pefile and rabin2 parse
+    the result without complaint. Nothing downstream notices, which is why this has to be checked
+    explicitly: the mitigation flags would describe a file that cannot execute.
+
+    The check is deliberately about the WHOLE file rather than about any one section. A section
+    whose raw data runs past the end is the signal; a single odd section is not, because some
+    linkers legitimately leave SizeOfRawData larger than the bytes present.
+    """
+    try:
+        import pefile as _pe
+        import os as _os
+        size = _os.path.getsize(path)
+        pe = _pe.PE(path, fast_load=True)
+        end = 0
+        for s in pe.sections:
+            end = max(end, s.PointerToRawData + s.SizeOfRawData)
+        pe.close()
+        return (end, size) if end > size else None
+    except Exception:                                              # noqa: BLE001
+        return None            # cannot tell -> do not invent a truncation claim
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("binary")
@@ -144,6 +172,25 @@ def main() -> int:
         write_artifact("hardening_probe", {"ok": True, "exit": 0, "binary": args.binary,
                                            "mitigations": None, "managed": result_managed})
         return 0
+
+    # IS THE FILE EVEN COMPLETE? Measured 2026-10-05 by an independent verifier: truncating the
+    # corpus binary to 50% and to 1 KB left this probe reporting `ok: true, exit: 0` with a full
+    # mitigation profile. A PE stores its headers first, so a truncated file still has intact
+    # headers, and both pefile and rabin2 read only headers. The probe was therefore describing
+    # the mitigations of a file that cannot execute -- and a caller reading "not hardened" would
+    # proceed to decompile something that is not a binary.
+    #
+    # Same shape as the managed and relocs guards below: check the SUBJECT rather than inferring
+    # it from a header. Every section's raw data must fit inside the file.
+    _t = _truncation_report(args.binary)
+    if _t is not None:
+        _declared_end, _file_size = _t
+        refuse(2, f"the file is TRUNCATED, so its mitigation profile would describe headers "
+                  f"rather than the binary: the last section ends at 0x{_declared_end:x} but the "
+                  f"file is only 0x{_file_size:x} bytes. A PE puts its headers first, so a "
+                  f"half-file parses cleanly and pefile and rabin2 both read headers only -- this "
+                  f"is not a corrupt-file signal, it is the ABSENCE of a whole-file signal.",
+               declared_end=_declared_end, file_size=_file_size)
 
     mitigations = {k: info.get(k) for k in MITIGATION_FIELDS}
 

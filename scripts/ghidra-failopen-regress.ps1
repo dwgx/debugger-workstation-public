@@ -1,6 +1,14 @@
 $repo = 'D:\Software\Tool\WorkStation\debugger'
 Set-Location $repo
 
+# ARGUMENT REFUSAL. This script declares NO param block, so every argument it is handed lands in
+# $args and is silently ignored -- the strongest form of the defect. Measured 2026-10-05 on this
+# very script: `ghidra-failopen-regress.ps1 C:/nope/nothing.dll` printed LOOP CLOSED, 4 of 4
+# green, exit 0, having measured nothing the caller asked for. A script that accepts an
+# argument it cannot honour reports a pass for work nobody did.
+. (Join-Path $PSScriptRoot 'assert-no-stray-args.ps1')
+Assert-NoStrayArgs -ScriptName 'ghidra-failopen-regress.ps1'
+
 $wrapper = 'scripts\ghidra-headless.ps1'
 $bad  = Join-Path $env:TEMP 'gh-regress-notabinary.txt'
 $good = Join-Path (Join-Path $repo 'crackme-corpus\out') 'c01-stringobf.exe'

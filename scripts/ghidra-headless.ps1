@@ -16,6 +16,9 @@ param(
     [string]$PostScript = '',
     [string[]]$PostArgs = @()
 )
+
+. (Join-Path $PSScriptRoot 'assert-no-stray-args.ps1')
+Assert-NoStrayArgs -ScriptName 'ghidra-headless.ps1'
 $ErrorActionPreference = 'Stop'
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 if (-not $InstallRoot) { $InstallRoot = $RepoRoot }
