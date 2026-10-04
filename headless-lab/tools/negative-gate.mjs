@@ -698,6 +698,39 @@ try {
   }
   if (scratch) line(`  scratch ${scratch} removed: ${fs.existsSync(scratch) ? 'NO -- LEFT BEHIND' : 'yes'}`);
   line('GATE-SUMMARY ' + JSON.stringify(summary));
+
+  /* THE ARTIFACT, because every other artifact-bound entry in this registry leaves a file and
+   * this one did not. Added 2026-10-05 after the parent's registry edit declared
+   * `probe.produces: headless-lab/out/last-run-xcompare.json` WITHOUT checking that this gate
+   * wrote it -- it printed GATE-SUMMARY and nothing else, so assert-probes reported DRIFT and was
+   * right to. Declaring a path is not producing it.
+   *
+   * Written in the `finally` so it exists on EVERY exit path, including the failures: a control
+   * that only leaves evidence when it passes is a control whose failures are unreviewable. The
+   * `artifact_ok` field says whether the comparison actually completed, so a reader can tell an
+   * artifact of a refusal from an artifact of a pass without parsing the whole summary.
+   */
+  try {
+    const outDir = path.join(HERE, '..', 'out');
+    fs.mkdirSync(outDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(outDir, 'last-run-xcompare.json'),
+      JSON.stringify({
+        ok: exitCode === 1,
+        schema: 'headless-lab/xcompare@1',
+        control: summary.control,
+        exit: exitCode,
+        artifact_ok: summary.artifact_ok === true,
+        summary,
+        note: 'Written on every exit path. `ok` means the honest-refusal shape held; '
+            + 'artifact_ok says the comparison itself completed rather than bailing out.',
+      }, null, 2) + '\n',
+      'utf8');
+    line(`ARTIFACT ${path.join(outDir, 'last-run-xcompare.json')}`);
+  } catch (e) {
+    line('negative-gate: could not write the artifact (' + (e && e.message ? e.message : e) + ')');
+    if (exitCode === 0) exitCode = 2;
+  }
 }
 
 process.exit(exitCode);
