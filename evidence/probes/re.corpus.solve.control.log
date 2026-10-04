@@ -1,0 +1,15 @@
+# assert-probes evidence: re.corpus.solve control
+# command: python crackme-corpus/challenges/c01-stringobf/solve.py --exe crackme-corpus/out/c01-stringobf.exe --ghidra-out crackme-corpus/out/c01-stringobf-ghidra --expect-password WRONG-ON-PURPOSE-0000 --expect-flag "FLAG{c01_string_table_xor}"
+# exit: 1
+# seconds: 0.72
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+== c01 :: string-table obfuscation (rotate + XOR)
+ghidra: 2 decoder call site(s) recovered from decompiled C
+ghidra: callee FUN_140001000 -> for (local_18 = 0; local_18 < param_2; local_18 = local_18 + 1) {
+ghidra: body      -> *(byte *)(param_5 + local_18) = *(byte *)(param_1 + (local_18 + param_3) % param_2) ^ param_4;
+r2:     18 bytes @ 0x140017330  rot=11 mask=0x5a  -> 'C01-TABLE-XOR-9F2A'
+r2:     26 bytes @ 0x140017348  rot=5 mask=0x33  -> 'FLAG{c01_string_table_xor}'
+binary: rc=0 ACCEPTED | FLAG{c01_string_table_xor}
+FAIL password 'C01-TABLE-XOR-9F2A' != expected 'WRONG-ON-PURPOSE-0000'

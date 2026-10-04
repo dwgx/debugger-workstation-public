@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import pathlib
 import sys
 
 IMAGE_SCN_MEM_EXECUTE = 0x20000000
@@ -112,7 +113,7 @@ def main() -> int:
                note="a truncated PE can parse and yield a section table while carrying fewer "
                     "than five data-directory entries.")
 
-    print(json.dumps({
+    result = {
         "ok": True,
         "exit": 0,
         "binary": args.binary,
@@ -135,7 +136,15 @@ def main() -> int:
                    "aslr.dynamic_base is a HEADER CLAIM by whoever built the file: it is the "
                    "reason a runtime module base must be read rather than assumed, not proof "
                    "that the image is relocated on any particular run."),
-    }))
+    }
+    print(json.dumps(result))
+    # Written to disk so the verdict rests on a FILE. Added 2026-10-05: native.pe.container's
+    # probe was a 200-character inline `python -c` that matched three hex strings and left
+    # nothing, so it was verified by substring like the rest -- and this script already emits
+    # every one of those facts as JSON. See scripts/probe_artifact.py.
+    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "scripts"))
+    from probe_artifact import write_artifact  # noqa: E402
+    write_artifact("pe_probe", result)
     return 0
 
 

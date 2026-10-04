@@ -1,8 +1,13 @@
 # assert-probes evidence: native.pe.container probe
-# command: python -c "import pefile;pe=pefile.PE(r'crackme-corpus\out\c01-stringobf.exe');print(hex(pe.OPTIONAL_HEADER.ImageBase),hex(pe.OPTIONAL_HEADER.AddressOfEntryPoint),hex(pe.OPTIONAL_HEADER.DllCharacteristics))"
+# command: python native-lab\tools\pe_probe.py crackme-corpus\out\c01-stringobf.exe
 # exit: 0
-# seconds: 0.20
+# seconds: 0.23
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
+# produces: D:\Software\Tool\WorkStation\debugger\native-lab\out\last-run-pe_probe.json
+#   sha256: 92710c94d8eaa9422269daea08580d88ec5dc54648a1b1bae09ed4c7e8bb5b73
+#   bytes: 2088
+#   written-by-this-run: yes
 ------------------------------------------------------------------------
-0x140000000 0x15d0 0x8160
+{"ok": true, "exit": 0, "binary": "crackme-corpus\\out\\c01-stringobf.exe", "sha256": "2d59a3c5d3281782e254ed84d14f43768251096240cb85c492f56018b56fbf09", "size": 143872, "machine": "0x8664", "is_64bit": true, "image_base": "0x140000000", "entry_rva": "0x15d0", "dll_characteristics": "0x8160", "aslr": {"dynamic_base": true, "nx_compat": true, "high_entropy_va": true, "bit": "IMAGE_DLLCHARACTERISTICS_DYNAMICBASE 0x0040"}, "sections": [{"name": ".text", "virtual_address": "0x1000", "virtual_size": 87760, "raw_size": 88064, "executable": true, "writable": false}, {"name": ".rdata", "virtual_address": "0x17000", "virtual_size": 43690, "raw_size": 44032, "executable": false, "writable": false}, {"name": ".data", "virtual_address": "0x22000", "virtual_size": 7200, "raw_size": 3072, "executable": false, "writable": true}, {"name": ".pdata", "virtual_address": "0x24000", "virtual_size": 4896, "raw_size": 5120, "executable": false, "writable": false}, {"name": ".fptable", "virtual_address": "0x26000", "virtual_size": 256, "raw_size": 512, "executable": false, "writable": true}, {"name": ".reloc", "virtual_address": "0x27000", "virtual_size": 1664, "raw_size": 2048, "executable": false, "writable": false}], "security_directory": {"is_a": "FILE OFFSET (not an RVA)", "offset": 0, "size": 0}, "caveat": "CONTAINER FACTS ONLY. No instruction is decoded and no code is interpreted. aslr.dynamic_base is a HEADER CLAIM by whoever built the file: it is the reason a runtime module base must be read rather than assumed, not proof that the image is relocated on any particular run."}
+ARTIFACT native-lab/out/last-run-pe_probe.json

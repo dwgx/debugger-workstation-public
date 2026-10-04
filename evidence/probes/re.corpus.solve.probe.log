@@ -1,9 +1,13 @@
 # assert-probes evidence: re.corpus.solve probe
 # command: python crackme-corpus/tools/loop.py
 # exit: 0
-# seconds: 132.29
+# seconds: 98.65
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
+# produces: D:\Software\Tool\WorkStation\debugger\crackme-corpus\out\last-run-crackme_corpus.json
+#   sha256: 77d2fd2d33c9c02ff68f8602526c8c222d55097fdad82bdaa296522c56c5e760
+#   bytes: 1541
+#   written-by-this-run: yes
 ------------------------------------------------------------------------
 
 ==============================================================================
@@ -21,7 +25,7 @@ crackme-corpus
   PASS  decompile c03                      GHIDRA "D:\Software\Tool\WorkStation\debugger\Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\support\analyzeHeadless.bat" %USERPROFILE%\AppData\Local\T
   PASS  solve c03                               a flag captured with a debugger attached is not evidence.
   PASS  negative control c03               exit 1 (want non-zero)
-  PASS  build c04                          Time Elapsed 00:00:02.08
+  PASS  build c04                          Time Elapsed 00:00:00.59
   PASS  decompile c04                      Latest version is '11.1.0.9782' (yours is '11.0.0.9375')
   PASS  solve c04                               managed code decompiled to source; string table unmasked; opcode permutation inverted; control flow honoured.
   PASS  negative control c04               exit 1 (want non-zero)
@@ -30,5 +34,6 @@ crackme-corpus
   PASS  solve c05                               layout from two tools: 6 fields (0:2B, 4:4B, 8:2B, 10:4B, 14:4B, 18:2B), 20-byte records, digest over [0..13], key over [4..17], decoy bit 0x02
   PASS  negative control c05               exit 1 (want non-zero)
 
-CORPUS CLOSED: 5 challenge(s), 20 checks, 5 negative controls, 132.1s
+CORPUS CLOSED: 5 challenge(s), 20 checks, 5 negative controls, 98.5s
 Every challenge solved from its binary, and every solver was shown to reject a wrong answer.
+ARTIFACT crackme-corpus/out/last-run-crackme_corpus.json

@@ -1267,7 +1267,9 @@
         "last_run": "2026-09-30",
         "run_log": "evidence/probes/re.corpus.solve.probe.log",
         "sha256": "3e1642363b6ab7ca37393c447cf9da24fca3e1e4b4a6e2d0b4215f8f26ab3d6b",
-        "last_summary": "20 checks, 5 negative controls"
+        "last_summary": "20 checks, 5 negative controls",
+        "produces": "crackme-corpus/out/last-run-crackme_corpus.json",
+        "produces_note": "Added 2026-10-05. Until now this entry matched STRINGS only. The loop now writes its challenge/check/negative-control record to disk, which matters MORE here than elsewhere: this is the one corpus the station builds itself, so a stub that prints 'CORPUS CLOSED' is the easiest stub in the tree to imagine."
       },
       "not_callable": {
         "reason": "P7, stated explicitly rather than left ambiguous. crackme-corpus/tools/loop.py is a CORPUS driver: its usage (:12-14) is '--no-build | --only c03 | --list', so --only selects a CHALLENGE ID from the corpus ramp, not an arbitrary binary path. This capability's `binary` input is a path_ref, and the corpus solver builds its own binaries from labkit.py rather than accepting one, so there is no argv that consumes a caller-supplied binary and returns re.solve.answer. Declaring an invoke would invent an entry point."
@@ -2749,14 +2751,16 @@
         }
       ],
       "probe": {
-        "command": "python -c \"import pefile;pe=pefile.PE(r'crackme-corpus\\out\\c01-stringobf.exe');print(hex(pe.OPTIONAL_HEADER.ImageBase),hex(pe.OPTIONAL_HEADER.AddressOfEntryPoint),hex(pe.OPTIONAL_HEADER.DllCharacteristics))\"",
-        "expect": "0x140000000 0x15d0 0x8160",
+        "command": "python native-lab\\tools\\pe_probe.py crackme-corpus\\out\\c01-stringobf.exe",
+        "expect": "\"image_base\": \"0x140000000\"",
         "expect_exit": 0,
         "last_run": "2026-10-02",
         "run_log": "evidence/probes/native.pe.container.probe.log",
-        "sha256": "b8bc67a395bd1c446ad9ed1f0a474aa9ce4552ec5bd65ef7578d46e06a71d1ed",
+        "sha256": "9dc5eb6ea514d71fab5f685f62b80feac831b8144a753ffdeb158e3de453e743",
         "run_summary": "python -c \"import pefile,hashlib;b=open('crackme-corpus/out/c01-stringobf.exe','rb').read();print(hashlib.sha256(b).hexdigest());pe=pefile.PE(data=b);print(hex(pe.OPTIONAL_HEADER.ImageBase),hex(pe.OPTIONAL_HEADER.AddressOfEntryPoint),hex(pe.OPTIONAL_HEADER.DllCharacteristics),bool(pe.OPTIONAL_HEADER.DllCharacteristics&0x40))\" -> sha256 2d59a3c5d3281782e254ed84d14f43768251096240cb85c492f56018b56fbf09, 0x140000000 0x15d0 0x8160 True; .text 0x1000 -> 0x166d0 and main 0x1080 inside True. 0.14 s.",
-        "expect_note": "Three values, all of which other entries depend on. DllCharacteristics 0x8160 with bit 0x40 set is the ASLR claim, and it is now confirmed by a parser rather than inferred from hook behaviour."
+        "expect_note": "RE-POINTED 2026-10-05, and this is the smallest useful change in the registry. The command was a 200-character inline `python -c` that printed three hex values joined by spaces and expected the literal '0x140000000 0x15d0 0x8160'. Two problems: an inline one-liner cannot leave an artifact, so it was string-matched like every other entry; and native-lab/tools/pe_probe.py ALREADY emitted all three facts as JSON, with the docstring explaining that both frida entries rest on the base this reads. So the maintained script was being bypassed by a one-liner duplicating it. The expect string is now one field rather than three, because the other two are in the artifact this run writes -- the string carries the headline, the file carries the reading.",
+        "produces": "native-lab/out/last-run-pe_probe.json",
+        "produces_note": "Added 2026-10-05 via scripts/probe_artifact.py. Before this the entry matched STRINGS only and a stub printing three hex values satisfied it."
       },
       "negative_control": {
         "id": "native.pe.container.non_pe_is_refused",

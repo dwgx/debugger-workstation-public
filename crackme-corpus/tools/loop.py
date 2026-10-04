@@ -255,6 +255,20 @@ def main():
     if a.json:
         print("JSON " + json.dumps({"challenges": len(sel), "checks": len(steps),
                                     "pass": len(steps) - len(failed), "fail": len(failed)}))
+
+    # Result to disk as well as stdout. assert-probes says an entry with no `probe.produces`
+    # was "matched STRINGS only, and a stub which prints them satisfies it" -- and this loop
+    # builds its own binaries, so it is the one place where a stub is easiest to imagine.
+    # Added 2026-10-05; see scripts/probe_artifact.py.
+    sys.path.insert(0, os.path.join(ROOT, "..", "scripts"))
+    from probe_artifact import write_artifact
+    write_artifact("crackme_corpus", {
+        "ok": not failed,
+        "challenges": len(sel),
+        "negative_controls": n_neg,
+        "checks": [{"ok": s["pass"], "name": s["label"]} for s in steps],
+    }, out_dir="crackme-corpus/out")
+
     return 0 if not failed else 9
 
 

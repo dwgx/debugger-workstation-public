@@ -1,0 +1,17 @@
+# assert-probes evidence: native.pe.container control
+# command: python -c "import pefile; pefile.PE('README.md')"
+# exit: 1
+# seconds: 0.20
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import pefile; pefile.PE('README.md')
+                   ~~~~~~~~~^^^^^^^^^^^^^
+  File "D:\Software\Developer\Python314\Lib\site-packages\pefile.py", line 2941, in __init__
+    self.__parse__(name, data, fast_load)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Software\Developer\Python314\Lib\site-packages\pefile.py", line 3082, in __parse__
+    raise PEFormatError("DOS Header magic not found.")
+pefile.PEFormatError: 'DOS Header magic not found.'

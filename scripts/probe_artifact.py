@@ -39,25 +39,31 @@ import sys
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
-def artifact_path(tool: str) -> str:
+def artifact_path(tool: str, out_dir: str = "native-lab/out") -> str:
     """-> repo-relative path for this tool's artifact.
 
     The tool name is slugified rather than trusted: it reaches here from a command line, and a
-    name containing a path separator would otherwise write outside the output directory.
+    name containing a path separator would otherwise write outside the output directory. That
+    is a directory-traversal guard, not tidiness.
+
+    `out_dir` is a PARAMETER. It used to be baked into the return value as "native-lab/out",
+    which is the defect that put net-reverse's reader evidence inside another lab -- measured
+    2026-10-04, and fixed at the call site there, but the default that caused it was still here.
+    A default nobody can see is a default nobody overrides.
     """
     safe = "".join(c if (c.isalnum() or c in "-_.") else "_" for c in tool).strip("._")
     if not safe:
         raise ValueError(f"probe_artifact: unusable tool name {tool!r}")
-    return f"native-lab/out/last-run-{safe}.json"
+    return f"{out_dir}/last-run-{safe}.json"
 
 
 def write_artifact(tool: str, payload: dict, out_dir: str = "native-lab/out") -> str:
-    """Write `payload` to this tool's artifact. Never raises -- a probe must not fail because
-    its bookkeeping failed, so a write error is printed and the probe still returns its verdict.
+    """Write `payload` to this tool's artifact. Never raises -- a probe must not fail because its
+    bookkeeping failed, so a write error is printed and the probe still returns its verdict.
 
     Returns the repo-relative path, or "" if the write failed.
     """
-    rel = artifact_path(tool)
+    rel = artifact_path(tool, out_dir)
     try:
         full = REPO_ROOT / out_dir / pathlib.Path(rel).name
         full.parent.mkdir(parents=True, exist_ok=True)
@@ -67,7 +73,20 @@ def write_artifact(tool: str, payload: dict, out_dir: str = "native-lab/out") ->
             "tool": tool,
             **payload,
         }
-        full.write_text(json.dumps(doc, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        # COUNTS ARE DERIVED, not left to the caller. The .mjs member has always done this; this
+        # one did not, so a caller that passed `checks` got an artifact with counts: null while
+        # the sibling language produced real ones -- and a reader comparing the two would have to
+        # know that the difference was an accident of implementation rather than a difference in
+        # what was measured. Measured 2026-10-05 on crackme-corpus, which passed checks and got
+        # null.
+        checks = payload.get("checks")
+        if isinstance(checks, list) and all(isinstance(c, dict) for c in checks):
+            doc["counts"] = {
+                "total": len(checks),
+                "pass": sum(1 for c in checks if c.get("ok") or c.get("pass")),
+                "fail": sum(1 for c in checks if not (c.get("ok") or c.get("pass"))),
+            }
+        out = full.write_text(json.dumps(doc, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         print(f"ARTIFACT {out_dir}/{full.name}", file=sys.stderr)
         return rel
     except Exception as exc:  # noqa: BLE001
