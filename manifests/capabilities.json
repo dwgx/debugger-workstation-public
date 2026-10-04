@@ -545,9 +545,11 @@
         "expect_exit": 0,
         "last_run": "2026-09-30",
         "run_log": "evidence/probes/web.js.cdp.probe.log",
-        "sha256": "fb6d693a3b7be80df2572d5170a1abccc4819c4e28572a3e0135b48465bde1cf",
+        "sha256": "b60385f73475386876967f0a52e39418fdc091eb29103dfc62192b1bd61b8ccd",
         "last_summary": "6 checks",
-        "expect_note": "CORRECTED 2026-10-02 by assert-probes.py. This read '6/6', a tally the loop does not print. Measured output ends 'LOOP CLOSED: signature captured, algorithm recovered, request minted outside the browser, gate accepted it.' A tally is also the weaker assertion: it says a count but not WHICH checks, so a run that passed four and failed two could still be described as 4/6 by eye. The loop's own closing marker names what it actually proved."
+        "expect_note": "CORRECTED 2026-10-02 by assert-probes.py. This read '6/6', a tally the loop does not print. Measured output ends 'LOOP CLOSED: signature captured, algorithm recovered, request minted outside the browser, gate accepted it.' A tally is also the weaker assertion: it says a count but not WHICH checks, so a run that passed four and failed two could still be described as 4/6 by eye. The loop's own closing marker names what it actually proved.",
+        "produces": "web-reverse/out/last-run-web-reverse.json",
+        "produces_note": "Added 2026-10-04 via scripts/probe_artifact.mjs, the JS mirror of the existing scripts/probe_artifact.py. Until now this entry declared no artifact, so assert-probes matched STRINGS only and printed its own weakness on every OK: 'NOT a claim that the instrument ran: a stub which prints them satisfies it.' The loop now writes its check list to disk on EVERY exit path, so the verdict checks the FILESYSTEM. mobile-lab writes on all three of its exits, because 'skipped and nothing failed' (exit 8) is a different claim from 'closed' (exit 0) and the artifact is where that distinction survives. Verified by running each loop: crypto-lab 17/17, forensics-lab 37/37, managed-lab 27/27, web-reverse 6/6, mobile-lab LOOP CLOSED."
       },
       "not_callable": {
         "reason": "P7, stated explicitly rather than left ambiguous. The probe proves the capability runs; there is deliberately no invoke. web-reverse/tools/chrome.mjs exposes NO standalone CLI: it is a module other tools IMPORT (net-reverse/tools/intercept.mjs:24-25 imports launchChrome from it and CDP from cdp.mjs), and the only driver that speaks to it is web-reverse/tools/loop.mjs, which runs the lab's own fixed 6 checks against a lab-served page rather than a caller-supplied URL. So there is no argv shape that takes this capability's `url` input and returns a typed fact; declaring an invoke here would be inventing an entry point that does not exist. UNVERIFIED: if a URL-taking wrapper is added later, this entry gains an invoke and the fact_map key must be read off that wrapper's real stdout, not guessed."
@@ -646,12 +648,14 @@
         "expect_exit": 0,
         "last_run": "2026-09-30",
         "run_log": "evidence/probes/crypto.jose.parse.probe.log",
-        "sha256": "f923c2a0f598811e881baeb710b737cfa240d7aee7adec99c14c15685e175626",
+        "sha256": "ca8dd9b2c6792cb20d05618d6a02cf47e5d2da17fdbfaae8a528b1b194e5eff0",
         "last_summary": "17 checks",
         "env": {
           "CRYPTO_LAB_PORT": "8799"
         },
-        "env_note": "THIS PROBE NEEDS AN ENVIRONMENT VARIABLE, AND THE DEFAULT PORT IS CONTESTED. crypto-lab/tools/loop.mjs hardcodes PORT 8791 and honours CRYPTO_LAB_PORT. Measured 2026-10-02: with the default, the loop dies with 'Error: listen EADDRINUSE: address already in use 127.0.0.1:8791' and the holder is <project>\\HomeWorkKiller\\.venv\\...\\atlas_server.py --port 8791 -- a DIFFERENT project of the Owner's, started 14:42 that day. That server is not ours and was not touched.\n\nWith CRYPTO_LAB_PORT=8799 the loop emits exactly the recorded 'JSON-SUMMARY {\"total\":17,\"pass\":17,\"fail\":0}' and exits 0. So the recorded expect was never wrong and the DRIFT assert-probes reported was this collision, not a stale string.\n\nassert-probes.py grew an `env` reader because of it: a checker that cannot set an environment variable will report this drift on every run for as long as that other project is up, and a gate that cries wolf gets switched off. That is the same lesson doc-facts.py already carries."
+        "env_note": "THIS PROBE NEEDS AN ENVIRONMENT VARIABLE, AND THE DEFAULT PORT IS CONTESTED. crypto-lab/tools/loop.mjs hardcodes PORT 8791 and honours CRYPTO_LAB_PORT. Measured 2026-10-02: with the default, the loop dies with 'Error: listen EADDRINUSE: address already in use 127.0.0.1:8791' and the holder is <project>\\HomeWorkKiller\\.venv\\...\\atlas_server.py --port 8791 -- a DIFFERENT project of the Owner's, started 14:42 that day. That server is not ours and was not touched.\n\nWith CRYPTO_LAB_PORT=8799 the loop emits exactly the recorded 'JSON-SUMMARY {\"total\":17,\"pass\":17,\"fail\":0}' and exits 0. So the recorded expect was never wrong and the DRIFT assert-probes reported was this collision, not a stale string.\n\nassert-probes.py grew an `env` reader because of it: a checker that cannot set an environment variable will report this drift on every run for as long as that other project is up, and a gate that cries wolf gets switched off. That is the same lesson doc-facts.py already carries.",
+        "produces": "crypto-lab/out/last-run-crypto-lab.json",
+        "produces_note": "Added 2026-10-04 via scripts/probe_artifact.mjs, the JS mirror of the existing scripts/probe_artifact.py. Until now this entry declared no artifact, so assert-probes matched STRINGS only and printed its own weakness on every OK: 'NOT a claim that the instrument ran: a stub which prints them satisfies it.' The loop now writes its check list to disk on EVERY exit path, so the verdict checks the FILESYSTEM. mobile-lab writes on all three of its exits, because 'skipped and nothing failed' (exit 8) is a different claim from 'closed' (exit 0) and the artifact is where that distinction survives. Verified by running each loop: crypto-lab 17/17, forensics-lab 37/37, managed-lab 27/27, web-reverse 6/6, mobile-lab LOOP CLOSED."
       },
       "invoke": {
         "runner": "node",
@@ -909,8 +913,10 @@
         "expect_exit": 0,
         "last_run": "2026-09-30",
         "run_log": "evidence/probes/forensics.memory.artefact.probe.log",
-        "sha256": "76561502e6f39d308dec236acfedace23b97feeab878c8981e1f26cc43c00c12",
-        "last_summary": "37 checks (74 PASS lines -- each check prints a verdict and its evidence)"
+        "sha256": "3f25d2fcd13d568faec674ceda4a3a9ba89c253d9de6f3d76a80bddb443638aa",
+        "last_summary": "37 checks (74 PASS lines -- each check prints a verdict and its evidence)",
+        "produces": "forensics-lab/out/last-run-forensics-lab.json",
+        "produces_note": "Added 2026-10-04 via scripts/probe_artifact.mjs, the JS mirror of the existing scripts/probe_artifact.py. Until now this entry declared no artifact, so assert-probes matched STRINGS only and printed its own weakness on every OK: 'NOT a claim that the instrument ran: a stub which prints them satisfies it.' The loop now writes its check list to disk on EVERY exit path, so the verdict checks the FILESYSTEM. mobile-lab writes on all three of its exits, because 'skipped and nothing failed' (exit 8) is a different claim from 'closed' (exit 0) and the artifact is where that distinction survives. Verified by running each loop: crypto-lab 17/17, forensics-lab 37/37, managed-lab 27/27, web-reverse 6/6, mobile-lab LOOP CLOSED."
       },
       "invoke": {
         "runner": "node",
@@ -1024,8 +1030,10 @@
         "expect_exit": 0,
         "last_run": "2026-09-30",
         "run_log": "evidence/probes/managed.il.decompile.probe.log",
-        "sha256": "749d21ae8638901042cfb9d3b5a694149e3be398d841395ec8f373ada68420ef",
-        "last_summary": "27 checks (46 PASS lines -- count unique names, not rows)"
+        "sha256": "55cee48f2904f55329218c3ff69664da6241a9bdd70d352c1bfb11f246b02cc4",
+        "last_summary": "27 checks (46 PASS lines -- count unique names, not rows)",
+        "produces": "managed-lab/out/last-run-managed-lab.json",
+        "produces_note": "Added 2026-10-04 via scripts/probe_artifact.mjs, the JS mirror of the existing scripts/probe_artifact.py. Until now this entry declared no artifact, so assert-probes matched STRINGS only and printed its own weakness on every OK: 'NOT a claim that the instrument ran: a stub which prints them satisfies it.' The loop now writes its check list to disk on EVERY exit path, so the verdict checks the FILESYSTEM. mobile-lab writes on all three of its exits, because 'skipped and nothing failed' (exit 8) is a different claim from 'closed' (exit 0) and the artifact is where that distinction survives. Verified by running each loop: crypto-lab 17/17, forensics-lab 37/37, managed-lab 27/27, web-reverse 6/6, mobile-lab LOOP CLOSED."
       },
       "not_callable": {
         "reason": "P7, stated explicitly rather than left ambiguous. managed-lab/tools/loop.mjs is a CORPUS driver, not a single-assembly entry point: it builds and solves the whole m01..m05 set and only honours --json for its own summary (:29). The per-sample solvers (solve-m01.mjs .. solve-m05.mjs) each hardcode their own assembly and ilspy-out path (tools/loop.py:150-152 shows the same shape: --dll and --ilspy-out are computed from the challenge record, not from argv a caller can supply). So there is no argv that takes THIS capability's `assembly` input and returns managed.method.code. Declaring an invoke would invent an entry point."
@@ -1137,8 +1145,10 @@
         "expect_exit": 0,
         "last_run": "2026-09-30",
         "run_log": "evidence/probes/mobile.apk.static.probe.log",
-        "sha256": "8a7698d6fdb129c296441a91029b589665a2464e10fe6ae31b2bc10318032ff2",
-        "last_summary": "33 checks measured 2026-10-03 (was recorded as 31: the count moved because two cross-checks became a third state, SKIP, rather than a silent PASS). Includes 6 indicator controls: silence on our own clean APK, fire on a synthetic packer DEX, fire on load-bearing root/emulator paths, and weak-signal separation"
+        "sha256": "a9da7f321f549d540aaf98054f6984c6ce0fdd651c5504aead154e909400fd9f",
+        "last_summary": "33 checks measured 2026-10-03 (was recorded as 31: the count moved because two cross-checks became a third state, SKIP, rather than a silent PASS). Includes 6 indicator controls: silence on our own clean APK, fire on a synthetic packer DEX, fire on load-bearing root/emulator paths, and weak-signal separation",
+        "produces": "mobile-lab/out/last-run-mobile-lab.json",
+        "produces_note": "Added 2026-10-04 via scripts/probe_artifact.mjs, the JS mirror of the existing scripts/probe_artifact.py. Until now this entry declared no artifact, so assert-probes matched STRINGS only and printed its own weakness on every OK: 'NOT a claim that the instrument ran: a stub which prints them satisfies it.' The loop now writes its check list to disk on EVERY exit path, so the verdict checks the FILESYSTEM. mobile-lab writes on all three of its exits, because 'skipped and nothing failed' (exit 8) is a different claim from 'closed' (exit 0) and the artifact is where that distinction survives. Verified by running each loop: crypto-lab 17/17, forensics-lab 37/37, managed-lab 27/27, web-reverse 6/6, mobile-lab LOOP CLOSED."
       },
       "invoke": {
         "runner": "node",

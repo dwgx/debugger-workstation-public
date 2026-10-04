@@ -1,0 +1,198 @@
+{
+  "schema": "lab-run@1",
+  "artifact_version": 1,
+  "tool": "forensics-lab",
+  "ok": true,
+  "checks": [
+    {
+      "name": "image built and hashed",
+      "ok": true,
+      "detail": "151552 bytes"
+    },
+    {
+      "name": "regenerating the image produces identical bytes",
+      "ok": true,
+      "detail": "35a6a51d5cc607af… == 35a6a51d5cc607af…"
+    },
+    {
+      "name": "two analyses of the same image are byte-identical",
+      "ok": true,
+      "detail": "68f8a8bf03e97740…"
+    },
+    {
+      "name": "pslist reaches exactly the linked processes",
+      "ok": true,
+      "detail": "7 == 7"
+    },
+    {
+      "name": "psscan finds strictly more than the list walk",
+      "ok": true,
+      "detail": "8 > 7 (the DKOM signal)"
+    },
+    {
+      "name": "malfind keeps the executable+unbacked region",
+      "ok": true,
+      "detail": "1 suspicious"
+    },
+    {
+      "name": "findings set matches the ground truth exactly",
+      "ok": true,
+      "detail": "INJECTED_PRIVATE_RWX_REGION, OUTBOUND_CONNECTION:pid-4120, UNLINKED_PROCESS"
+    },
+    {
+      "name": "INJECTED_PRIVATE_RWX_REGION cites MEM+SRUM",
+      "ok": true,
+      "detail": "support: MEM:malfind(pid 4120 0x7ff60000)  MEM:netscan(10.0.0.42:49812 -> 203.0.113.23:8443)  SRUM:C:\\Windows\\System32\\svchost.exe"
+    },
+    {
+      "name": "OUTBOUND_CONNECTION:pid-4120 cites MEM+SRUM",
+      "ok": true,
+      "detail": "support: MEM:netscan(10.0.0.42:49812 -> 203.0.113.23:8443)  SRUM:C:\\Windows\\System32\\svchost.exe"
+    },
+    {
+      "name": "UNLINKED_PROCESS cites MEM+PF+AM",
+      "ok": true,
+      "detail": "support: AM:C:\\ProgramData\\D12Lab\\lsass-helper.exe  MEM:pslist(absent)  MEM:psscan(pid 6692)  PF:LSASS_HELPER.EXE-9C1FE432.pf  SRUM:C:\\ProgramData\\D12Lab\\lsass-helper.exe"
+    },
+    {
+      "name": "decoy C:\\Users\\Public\\D12LabStage\\stage-updater.exe",
+      "ok": true,
+      "detail": "single source: SRUM"
+    },
+    {
+      "name": "  ... is NOT in the findings set",
+      "ok": true,
+      "detail": "absent from findings"
+    },
+    {
+      "name": "  ... is reported as UNCONFIRMED",
+      "ok": true,
+      "detail": "POSSIBLE, 1 source: SRUM"
+    },
+    {
+      "name": "  ... names every source that does NOT have it",
+      "ok": true,
+      "detail": "no process in the image runs this path; no Amcache execution record; no prefetch run history"
+    },
+    {
+      "name": "  ... is still reported, not discarded",
+      "ok": true,
+      "detail": "C:\\Users\\Public\\D12LabStage\\stage-updater.exe transferred 44040192 bytes at 2026-03-14T02:14:33.000Z, and one source says so"
+    },
+    {
+      "name": "region 0x210000 in PID 744 is not reported as an injection",
+      "ok": true,
+      "detail": "REJECTED: region is not executable"
+    },
+    {
+      "name": "region 0x7ff70000 in PID 4120 is not reported as an injection",
+      "ok": true,
+      "detail": "REJECTED: region is explained by a load-list module"
+    },
+    {
+      "name": "every rejected signal is explained rather than dropped",
+      "ok": true,
+      "detail": "4120:region is explained by a load-list module  744:region is not executable"
+    },
+    {
+      "name": "carved the injected region out of the image",
+      "ok": true,
+      "detail": "pid 4120  0x7ff60000  104448 bytes  sha256 38b127a6c8108d91…"
+    },
+    {
+      "name": "diec agrees the carved bytes are the lab payload",
+      "ok": true,
+      "detail": "exit 0  PE64"
+    },
+    {
+      "name": "yr agrees the carved bytes are the lab payload",
+      "ok": true,
+      "detail": "exit 0  D12_LabPayload %USERPROFILE%\\AppData\\Local\\Temp\\d12-forensics-lab-32720\\carved\\carved-pid4120-0x7ff60000.bin"
+    },
+    {
+      "name": "real Volatility 3 was invoked on the image",
+      "ok": true,
+      "detail": "vol.exe windows.pslist"
+    },
+    {
+      "name": "real Volatility 3 REFUSES pslist on a synthetic image",
+      "ok": true,
+      "detail": "exit 1  \"plugins.PsList.kernel.layer_name:\""
+    },
+    {
+      "name": "clean image built without the injection or the decoy",
+      "ok": true,
+      "detail": "45056 bytes, sha256 differs"
+    },
+    {
+      "name": "clean image yields NO injected-region finding",
+      "ok": true,
+      "detail": "1 finding(s) total"
+    },
+    {
+      "name": "clean image yields NO decoy claim at all",
+      "ok": true,
+      "detail": "0 unconfirmed"
+    },
+    {
+      "name": "the unlinked process is STILL found on a clean image",
+      "ok": true,
+      "detail": "it does not depend on the injection, which is the point: two findings, two causes"
+    },
+    {
+      "name": "one-byte tamper changed the image",
+      "ok": true,
+      "detail": "0x2000: 4D 5A -> 41 41, sha256 now differs"
+    },
+    {
+      "name": "tampering REMOVES the injected-region finding",
+      "ok": true,
+      "detail": "was a finding; now gone"
+    },
+    {
+      "name": "tampering leaves the unlinked-process finding intact",
+      "ok": true,
+      "detail": "an independent finding is unaffected, as it should be"
+    },
+    {
+      "name": "the tampered region is no longer counted a PE candidate",
+      "ok": true,
+      "detail": "candidates 3 -> 2"
+    },
+    {
+      "name": "the tampered image hash no longer matches the built one",
+      "ok": true,
+      "detail": "35a6a51d5cc607af… -> f5201ed33b9fe96e…"
+    },
+    {
+      "name": "removing SRUM demotes the injection to UNCONFIRMED",
+      "ok": true,
+      "detail": "now POSSIBLE: only 1 independent source (MEM); 2 are required for a finding"
+    },
+    {
+      "name": "the demoted claim still cites MEM as its only source",
+      "ok": true,
+      "detail": "MEM"
+    },
+    {
+      "name": "the unlinked process is UNAFFECTED by removing SRUM (PF+AM+MEM still agree)",
+      "ok": true,
+      "detail": "AM+MEM+PF+SRUM"
+    },
+    {
+      "name": "analyze --expect <wrong set> exits non-zero",
+      "ok": true,
+      "detail": "exit 4  analyze: --expect mismatch  missing=[NOT_A_REAL_FINDING] unexpected=[INJECTED_PRIVATE_RWX_REGION,OUTBOUND_CONNECTION:pid-4120,UNLINKED_PROCESS]"
+    },
+    {
+      "name": "analyze --expect <correct set> exits zero",
+      "ok": true,
+      "detail": "exit 0"
+    }
+  ],
+  "counts": {
+    "total": 37,
+    "pass": 37,
+    "fail": 0
+  }
+}

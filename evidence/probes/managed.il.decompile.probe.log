@@ -1,9 +1,13 @@
 # assert-probes evidence: managed.il.decompile probe
 # command: node managed-lab/tools/loop.mjs
 # exit: 0
-# seconds: 27.93
+# seconds: 11.66
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
+# produces: D:\Software\Tool\WorkStation\debugger\managed-lab\out\last-run-managed-lab.json
+#   sha256: e1ae913c519d4663b764786432bb9043999db7196674eb6aca2e13f88b78e861
+#   bytes: 4314
+#   written-by-this-run: yes
 ------------------------------------------------------------------------
 managed-lab loop -- .NET / managed reverse engineering, known-answer corpus
 ====================================================================================================
@@ -71,3 +75,4 @@ managed-lab loop -- .NET / managed reverse engineering, known-answer corpus
 LOOP CLOSED: every sample was recovered from its decompilation alone, every recovery was confirmed
              against the sample's own output, and every negative control failed as it must.
 JSON-SUMMARY {"total":27,"pass":27,"fail":0}
+ARTIFACT managed-lab/out/last-run-managed-lab.json

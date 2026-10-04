@@ -1,9 +1,13 @@
 # assert-probes evidence: crypto.jose.parse probe
 # command: node crypto-lab/tools/loop.mjs
 # exit: 0
-# seconds: 5.63
+# seconds: 3.34
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
+# produces: D:\Software\Tool\WorkStation\debugger\crypto-lab\out\last-run-crypto-lab.json
+#   sha256: cd602569d404446b3c2511881b802c80fb2cf980085664c072b8bdc9734920e9
+#   bytes: 3681
+#   written-by-this-run: yes
 ------------------------------------------------------------------------
 
 crypto-lab loop — token analysis, weakness recognition, independent cross-check
@@ -98,3 +102,4 @@ LOOP CLOSED: every weakness class was classified as expected, every verifier beh
              and jsonwebtoken + PyJWT agreed with the analyzer on every case they could express.
 
 JSON-SUMMARY {"total":17,"pass":17,"fail":0}
+ARTIFACT crypto-lab/out/last-run-crypto-lab.json

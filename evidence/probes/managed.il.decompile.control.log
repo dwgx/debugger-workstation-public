@@ -1,0 +1,8 @@
+# assert-probes evidence: managed.il.decompile control
+# command: node managed-lab\tools\solve-m02.mjs --asm out\m01\m01_stringobf.dll
+# exit: 1
+# seconds: 0.68
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+solve-m02: no Step method in the decompilation

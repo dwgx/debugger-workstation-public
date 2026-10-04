@@ -1,0 +1,15 @@
+# assert-probes evidence: web.js.cdp control
+# command: node web-reverse\tools\negative-gate.mjs
+# exit: 2
+# seconds: 0.18
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+web.js.cdp negative control — forged signature, well-formed request
+  key    this-is-not-the-recovered-key
+  sig    4208344d7815b1d6520f7fe6cafdd51f1eebd9aefd1c10e15a5ef1c1dcb85c83
+  -> HTTP 401 {"ok":false,"error":"bad-signature","bit":"signature does not match"}
+
+CONTROL WORKING — the gate REFUSED a forged signature (HTTP 401). Exiting 2,
+because R5 requires a negative control's expected exit to be non-zero: an instrument
+that had stopped enforcing would exit 0, and 0 is the value the harness flags.

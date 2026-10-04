@@ -1,0 +1,44 @@
+{
+  "schema": "lab-run@1",
+  "artifact_version": 1,
+  "tool": "web-reverse",
+  "ok": true,
+  "origin": "http://127.0.0.1:57589",
+  "checks": [
+    {
+      "name": "unsigned request rejected by the gate",
+      "ok": true,
+      "detail": "HTTP 401"
+    },
+    {
+      "name": "capture /plain (1 signed request, HTTP 200)",
+      "ok": true,
+      "detail": "exit 0"
+    },
+    {
+      "name": "capture /obf (2 signed requests, HTTP 200)",
+      "ok": true,
+      "detail": "exit 0"
+    },
+    {
+      "name": "recover key from /obf and reproduce the captures",
+      "ok": true,
+      "detail": "exit 0"
+    },
+    {
+      "name": "replay: copy rejected, recomputed signature accepted",
+      "ok": true,
+      "detail": "exit 0"
+    },
+    {
+      "name": "bot-detection report",
+      "ok": true,
+      "detail": "exit 0"
+    }
+  ],
+  "counts": {
+    "total": 6,
+    "pass": 6,
+    "fail": 0
+  }
+}

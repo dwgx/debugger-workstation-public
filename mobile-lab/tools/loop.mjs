@@ -28,6 +28,10 @@ import { buildApk } from '../lab/build/build-apk.mjs';
 import { buildSo, verifySo } from '../lab/build/make-so.mjs';
 import { analyzeApk } from './analyze.mjs';
 import { runFridaSelfTest } from './frida-selftest-lib.mjs';
+// Run summary to disk, so the verdict rests on a FILE rather than a substring of stdout.
+// ALL THREE exit paths write it: "skipped and nothing failed" (exit 8) is a different
+// claim from "closed" (exit 0), and the artifact is where that survives.
+import { writeRunArtifact } from '../../scripts/probe_artifact.mjs';
 
 // ARGUMENT REFUSAL. Added 2026-10-04. Measured on this tree: passing a path that does not exist
 // produced a normal green run and exit 0 -- every check "passed" while nothing anyone asked for
@@ -134,6 +138,8 @@ try {
 
 if (!built) {
   console.log('\nBuild failed; nothing downstream can be judged.');
+  writeRunArtifact('mobile-lab', { checks: steps, outDir: 'mobile-lab/out',
+    extra: { ok: false, exit_reason: 'failed' } });
   process.exit(9);
 }
 
@@ -587,6 +593,8 @@ if (failed.length === 0 && skipped.length === 0) {
   console.log('');
   console.log('NOT PROVEN (no device on this box): attaching, live TLS interception, ART accepting');
   console.log('             these scripts, and disassembly of the sample .so.');
+  writeRunArtifact('mobile-lab', { checks: steps, outDir: 'mobile-lab/out',
+    extra: { ok: true, exit_reason: 'closed' } });
   process.exit(0);
 } else if (failed.length === 0) {
   console.log(`LOOP NOT CLOSED: ${skipped.length} step(s) SKIPPED and nothing failed. A skipped`);
@@ -595,6 +603,8 @@ if (failed.length === 0 && skipped.length === 0) {
   for (const s of skipped) console.log(`  - SKIPPED ${s.label}: ${s.detail}`);
   console.log('');
   console.log('Run without the skip flags to close the loop.');
+  writeRunArtifact('mobile-lab', { checks: steps, outDir: 'mobile-lab/out',
+    extra: { ok: false, exit_reason: 'skipped-but-nothing-failed' } });
   process.exit(8);
 } else {
   console.log(`${failed.length} step(s) FAILED:`);

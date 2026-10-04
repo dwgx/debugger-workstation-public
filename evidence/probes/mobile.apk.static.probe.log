@@ -1,25 +1,29 @@
 # assert-probes evidence: mobile.apk.static probe
 # command: node mobile-lab/tools/loop.mjs
 # exit: 0
-# seconds: 7.01
+# seconds: 5.10
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
+# produces: D:\Software\Tool\WorkStation\debugger\mobile-lab\out\last-run-mobile-lab.json
+#   sha256: 35e70f87aed1281a95b5e2e92b52b7bc660ce65ea63fb4ed709c8d829796dc9a
+#   bytes: 6069
+#   written-by-this-run: yes
 ------------------------------------------------------------------------
 
 ==============================================================================
 mobile-lab loop
 ==============================================================================
   root   D:\Software\Tool\WorkStation\debugger\mobile-lab
-  apk    %USERPROFILE%\AppData\Local\Temp\mobilelab-loop-47596-murfn30v\mobilelab.apk   (this run only)
+  apk    %USERPROFILE%\AppData\Local\Temp\mobilelab-loop-41164-muu8pa77\mobilelab.apk   (this run only)
   pub    D:\Software\Tool\WorkStation\debugger\mobile-lab\artifacts\mobilelab.apk   (written atomically when the build succeeds)
 
 ==============================================================================
 mobile-lab loop summary
 ==============================================================================
-  PASS  build a real signed APK from source (javac + d8 + aapt2 + zipalign + apksigner) 25135 bytes, sha256 8b251e86ff85d27b… -> published artifacts\mobilelab.apk  (3.1s)
+  PASS  build a real signed APK from source (javac + d8 + aapt2 + zipalign + apksigner) 25135 bytes, sha256 7c33ee62d382368b… -> published artifacts\mobilelab.apk  (2.2s)
   PASS  AndroidManifest.xml is binary AXML, not text               magic 0x00080003, 3136 bytes
   PASS  hand-built ELF .so passes its own re-parse                 1888 bytes, 5 exports
-  PASS  hand-built ELF .so written for the pyelftools oracle       %USERPROFILE%\AppData\Local\Temp\mobilelab-loop-47596-murfn30v\out\libmobilelab.so
+  PASS  hand-built ELF .so written for the pyelftools oracle       %USERPROFILE%\AppData\Local\Temp\mobilelab-loop-41164-muu8pa77\out\libmobilelab.so
   PASS  INDEPENDENT oracle: pyelftools agrees on the .so             VERDICT: AGREES with the hand-built layout
   PASS  manifest: package, sdk, debuggable parsed from binary AXML package=com.lab.mobilelab min=24 target=34 debuggable=true
   PASS  manifest: every component found, with its real exported flag 5 components, exported: com.lab.mobilelab.MainActivity, com.lab.mobilelab.BootReceiver
@@ -33,9 +37,9 @@ mobile-lab loop summary
   PASS  strings: a credential-shaped constant is flagged AND redacted sk-l<redacted 35 chars> [prefixed-api-key]
   PASS  analyzer reports disassembly as not attempted rather than inventing it DISASSEMBLY finding present
   PASS  Frida script library logic-verified offline (40 cases)     40/40 passed, no device attached
-  PASS  cross-check: JADX recovers the same classes the DEX table lists jadx exit 0, 11 java files, 10/10 class names agree  (1.5s)
+  PASS  cross-check: JADX recovers the same classes the DEX table lists jadx exit 0, 11 java files, 10/10 class names agree  (1.2s)
   PASS  cross-check: JADX shows the same JNI boundary (native decls + loadLibrary) native methods: nativeAttest, nativeDeriveKey, nativeReadFlag; System.loadLibrary present=true
-  PASS  cross-check: Apktool decodes the manifest independently    package, debuggable, components and authorities all agree; smali files=10  (0.7s)
+  PASS  cross-check: Apktool decodes the manifest independently    package, debuggable, components and authorities all agree; smali files=10  (0.6s)
   PASS  analyzer --expect refuses an unknown fact                  exit 4 (want 4)
   PASS  analyzer --expect accepts only what is true                exit 0 (want 0)
   PASS  NEGATIVE: ELF self-verifier rejects a corrupted .so        rejected: bad ELF magic
@@ -58,6 +62,7 @@ LOOP CLOSED: a real APK was built from source, its native library agreed with an
 
 NOT PROVEN (no device on this box): attaching, live TLS interception, ART accepting
              these scripts, and disassembly of the sample .so.
+ARTIFACT mobile-lab/out/last-run-mobile-lab.json
   $ javac stubs
   $ javac app
   $ aapt2.exe
@@ -69,5 +74,5 @@ NOT PROVEN (no device on this box): attaching, live TLS interception, ART accept
   $ keytool -genkeypair (throwaway debug key)
     Generating 2,048 bit RSA key pair and self-signed certificate (SHA384withRSA) with a validity of 10,000 days
     	for: CN=MobileLab Fixture, OU=Lab, O=Self, L=Lab, ST=Lab, C=ZZ
-    [Storing %USERPROFILE%\AppData\Local\Temp\mobilelab-build-47596\keys\debug.keystore]
+    [Storing %USERPROFILE%\AppData\Local\Temp\mobilelab-build-41164\keys\debug.keystore]
   $ apksigner.bat

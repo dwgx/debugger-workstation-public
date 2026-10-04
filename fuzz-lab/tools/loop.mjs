@@ -43,10 +43,30 @@ import { verifyRegressions, KNOWN_FINDINGS } from './regressions.mjs';
 // The precedent is already in the tree and this follows it rather than inventing a second
 // convention: crackme-corpus/tools/loop.py uses argparse and rejects `unrecognized arguments`
 // with exit 2. The JS loops had no argument parser at all, which is the defect.
-const ALLOWED = new Set('--json', '--only');
-const extra = process.argv.slice(2).filter((a) => !ALLOWED.has(a) && !a.startsWith('--only='));
-if (extra.length) {
-  console.error(`loop: refusing an argument it would otherwise IGNORE: ${extra.join(' ')}`);
+// ALLOWLIST DERIVED FROM WHAT THIS LOOP READS (see `const flag = (n, d)` below: `--only`,
+// `--budget`, `--iterations`, `--seed`, `--targets`). `--budget` and friends take their VALUE in
+// the NEXT argv element, so that element must not be judged as a stray argument.
+//
+// The first version allowed only the flag names and rejected `fuzz.differential.parse`'s own
+// declared probe, `node fuzz-lab/tools/loop.mjs --budget 40`, with exit 2. Caught by running
+// every registry command against its guard rather than by reading the guard -- which is the only
+// way to notice a guard that blocks the measurement it was meant to protect.
+const KNOWN_FLAGS = new Set(['--json', '--only', '--budget', '--iterations', '--seed', '--targets']);
+const VALUE_FLAGS = new Set(['--only', '--budget', '--iterations', '--seed', '--targets']);
+const strayArgs = [];
+{
+  const all = process.argv.slice(2);
+  for (let i = 0; i < all.length; i++) {
+    const a = all[i];
+    // VALUE_FLAGS FIRST: the flag is itself in KNOWN_FLAGS, so testing KNOWN_FLAGS first would
+    // `continue` past it and leave its value to be judged as a stray argument.
+    if (VALUE_FLAGS.has(a)) { i += 1; continue; }
+    if (KNOWN_FLAGS.has(a) || [...KNOWN_FLAGS].some((k) => k.endsWith('=') && a.startsWith(k))) continue;
+    strayArgs.push(a);
+  }
+}
+if (strayArgs.length) {
+  console.error(`loop: refusing an argument it would otherwise IGNORE: ${strayArgs.join(' ')}`);
   console.error('  This is a regression suite over its own built fixtures. It has no --target.');
   console.error('  Accepting an argument silently would report a pass for work nobody did.');
   process.exit(2);

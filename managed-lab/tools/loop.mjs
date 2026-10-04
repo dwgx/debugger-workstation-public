@@ -23,6 +23,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ILSPYCMD, LAB_ROOT, OUT, run } from './clrlib.mjs';
+// Run summary to disk, so the verdict rests on a FILE rather than a substring of stdout.
+// assert-probes says an entry with no `probe.produces` was "matched STRINGS only, and a
+// stub which prints them satisfies it". Added 2026-10-04; see scripts/probe_artifact.mjs.
+import { writeRunArtifact } from '../../scripts/probe_artifact.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const STATION = path.resolve(LAB_ROOT, '..');
@@ -348,6 +352,8 @@ async function main() {
     }
     say('JSON-SUMMARY ' + JSON.stringify(summary.counts));
     if (wantJson) process.stdout.write(`${JSON.stringify(summary)}\n`);
+    writeRunArtifact('managed-lab', { checks, outDir: 'managed-lab/out',
+      extra: { ok: failed.length === 0, counts: summary.counts } });
     process.exit(failed.length === 0 ? 0 : 1);
   }
 }

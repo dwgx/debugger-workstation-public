@@ -14,6 +14,10 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createServer, keyId } from '../lab/server.mjs';
+// Run summary to disk, so the verdict rests on a FILE rather than on a substring of stdout.
+// assert-probes says out loud that an entry with no `probe.produces` was "matched STRINGS only,
+// and a stub which prints them satisfies it". Added 2026-10-04; see scripts/probe_artifact.mjs.
+import { writeRunArtifact } from '../../scripts/probe_artifact.mjs';
 
 // ARGUMENT REFUSAL. Added 2026-10-04. Measured on this tree: passing a path that does not exist
 // produced a normal green run and exit 0 -- every check "passed" while nothing anyone asked for
@@ -109,4 +113,6 @@ const failed = steps.filter(s => !s.pass);
 console.log(`\n${'='.repeat(78)}\nweb-reverse loop summary\n${'='.repeat(78)}`);
 for (const s of steps) console.log(`  ${s.pass ? 'PASS' : 'FAIL'}  ${s.label.padEnd(52)} ${s.detail}${s.ms ? `  (${(s.ms / 1000).toFixed(1)}s)` : ''}`);
 console.log(`\n${failed.length === 0 ? 'LOOP CLOSED: signature captured, algorithm recovered, request minted outside the browser, gate accepted it.' : `${failed.length} step(s) failed`}`);
+writeRunArtifact('web-reverse', { checks: steps, outDir: 'web-reverse/out',
+  extra: { ok: failed.length === 0, origin } });
 process.exit(failed.length === 0 ? 0 : 9);

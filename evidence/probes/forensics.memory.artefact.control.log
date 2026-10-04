@@ -1,0 +1,28 @@
+# assert-probes evidence: forensics.memory.artefact control
+# command: node forensics-lab/tools/loop.mjs --control=srum --expect INJECTED_PRIVATE_RWX_REGION
+# exit: 4
+# seconds: 0.23
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+D12 forensics lab — CONTROL srum ONLY. This is NOT the full loop run.
+  work        %USERPROFILE%\AppData\Local\Temp\d12-forensics-lab-16544
+  sections 1-9 and 11 are NOT executed; the exit code below is this section alone.
+  PASS  removing SRUM demotes the injection to UNCONFIRMED       now POSSIBLE: only 1 independent source (MEM); 2 are required for a finding
+  PASS  the demoted claim still cites MEM as its only source     MEM
+  PASS  the unlinked process is UNAFFECTED by removing SRUM (PF+AM+MEM still agree) AM+MEM+PF+SRUM
+  PASS  analyze REFUSES INJECTED_PRIVATE_RWX_REGION specifically once SRUM is gone exit 4  analyze: --expect mismatch  missing=[INJECTED_PRIVATE_RWX_REGION] unexpected=[UNLINKED_PROCESS]
+
+==============================================================================
+D12 forensics lab — CONTROL srum summary (one section, NOT a loop run)
+==============================================================================
+  PASS  removing SRUM demotes the injection to UNCONFIRMED       now POSSIBLE: only 1 independent source (MEM); 2 are required for a finding
+  PASS  the demoted claim still cites MEM as its only source     MEM
+  PASS  the unlinked process is UNAFFECTED by removing SRUM (PF+AM+MEM still agree) AM+MEM+PF+SRUM
+  PASS  analyze REFUSES INJECTED_PRIVATE_RWX_REGION specifically once SRUM is gone exit 4  analyze: --expect mismatch  missing=[INJECTED_PRIVATE_RWX_REGION] unexpected=[UNLINKED_PROCESS]
+
+CONTROL srum: the independence gate held, and a real analyze.mjs process REFUSED the
+             demand for INJECTED_PRIVATE_RWX_REGION after the svchost.exe SRUM rows were dropped.
+THIS WAS NOT A FULL LOOP RUN: sections 1-9 and 11 were not executed.
+CONTROL srum: PASS — SUCCESS IS EXIT 4. The refusal IS the control passing; a control that
+             has to exit 0 proves nothing (registry rule R5).

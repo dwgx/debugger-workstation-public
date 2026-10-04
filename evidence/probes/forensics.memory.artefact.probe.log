@@ -1,17 +1,21 @@
 # assert-probes evidence: forensics.memory.artefact probe
 # command: node forensics-lab/tools/loop.mjs
 # exit: 0
-# seconds: 8.51
+# seconds: 5.53
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
+# produces: D:\Software\Tool\WorkStation\debugger\forensics-lab\out\last-run-forensics-lab.json
+#   sha256: 18f0466d7b41a266f30bc815c6389d9b37e18cd2009eafaa8870f08823d02f94
+#   bytes: 6276
+#   written-by-this-run: yes
 ------------------------------------------------------------------------
 D12 forensics lab loop
-  work        %USERPROFILE%\AppData\Local\Temp\d12-forensics-lab
+  work        %USERPROFILE%\AppData\Local\Temp\d12-forensics-lab-32720
   ground truth lab\spec.mjs (read only by this file)
 ------------------------------------------------------------------------------
 [1] BUILD — generate the synthetic target
 ------------------------------------------------------------------------------
-%USERPROFILE%\AppData\Local\Temp\d12-forensics-lab\target\d12-lab-image.raw
+%USERPROFILE%\AppData\Local\Temp\d12-forensics-lab-32720\target\d12-lab-image.raw
   image       151552 bytes  sha256 35a6a51d5cc607afd6fd3208d32a2fdeb460bb9bdc1e06c29b6706e163a203ea
   payload     msvc  104448 bytes  sha256 38b127a6c8108d914e6c806351b9861066335e836e47290be3b5aebc8da5c75b
   regions     HEADER@0x0  STRINGS@0x1000  CONTENT@0x2000  POOL@0x22000  VADS@0x23000  OBJECTS@0x24000
@@ -65,7 +69,7 @@ D12 forensics lab loop
 ------------------------------------------------------------------------------
   PASS  carved the injected region out of the image              pid 4120  0x7ff60000  104448 bytes  sha256 38b127a6c8108d91…
   PASS  diec agrees the carved bytes are the lab payload         exit 0  PE64
-  PASS  yr agrees the carved bytes are the lab payload           exit 0  D12_LabPayload %USERPROFILE%\AppData\Local\Temp\d12-forensics-lab\carved\carved-pid4120-0x7ff60000.bin
+  PASS  yr agrees the carved bytes are the lab payload           exit 0  D12_LabPayload %USERPROFILE%\AppData\Local\Temp\d12-forensics-lab-32720\carved\carved-pid4120-0x7ff60000.bin
   PASS  real Volatility 3 was invoked on the image               vol.exe windows.pslist
   PASS  real Volatility 3 REFUSES pslist on a synthetic image    exit 1  "plugins.PsList.kernel.layer_name:"
   Tool agreement raises confidence in an OBSERVED value. It does not add a source group: all three implementations are reading the same bytes of the same file, so no claim's independent-source count changes because of anything in this section.
@@ -119,7 +123,7 @@ D12 forensics lab — loop summary
   PASS  every rejected signal is explained rather than dropped   4120:region is explained by a load-list module  744:region is not executable
   PASS  carved the injected region out of the image              pid 4120  0x7ff60000  104448 bytes  sha256 38b127a6c8108d91…
   PASS  diec agrees the carved bytes are the lab payload         exit 0  PE64
-  PASS  yr agrees the carved bytes are the lab payload           exit 0  D12_LabPayload %USERPROFILE%\AppData\Local\Temp\d12-forensics-lab\carved\carved-pid4120-0x7ff60000.bin
+  PASS  yr agrees the carved bytes are the lab payload           exit 0  D12_LabPayload %USERPROFILE%\AppData\Local\Temp\d12-forensics-lab-32720\carved\carved-pid4120-0x7ff60000.bin
   PASS  real Volatility 3 was invoked on the image               vol.exe windows.pslist
   PASS  real Volatility 3 REFUSES pslist on a synthetic image    exit 1  "plugins.PsList.kernel.layer_name:"
   PASS  clean image built without the injection or the decoy     45056 bytes, sha256 differs
@@ -142,3 +146,4 @@ LOOP CLOSED: the fixture is deterministic, the parser found the planted injectio
              POSSIBLE, two independent implementations agreed the carved region is a PE,
              real Volatility 3 was invoked and its refusal recorded, and all four negative
              controls failed the way a detector is supposed to fail.
+ARTIFACT forensics-lab/out/last-run-forensics-lab.json

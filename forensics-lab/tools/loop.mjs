@@ -36,6 +36,10 @@ import { analyze, MIN_INDEPENDENT_SOURCES } from './analyze.mjs';
 import { correlate, findTools, stationRoot } from './correlate.mjs';
 import { RECORD } from '../lab/mkimage.mjs';
 import * as S from '../lab/spec.mjs';
+// Run summary to disk, so the verdict rests on a FILE rather than a substring of stdout.
+// assert-probes says an entry with no `probe.produces` was "matched STRINGS only, and a
+// stub which prints them satisfies it". Added 2026-10-04; see scripts/probe_artifact.mjs.
+import { writeRunArtifact } from '../../scripts/probe_artifact.mjs';
 
 // ARGUMENT REFUSAL. Added 2026-10-04. Measured on this tree: passing a path that does not exist
 // produced a normal green run and exit 0 -- every check "passed" while nothing anyone asked for
@@ -48,9 +52,30 @@ import * as S from '../lab/spec.mjs';
 // installation here landed mid-function and collided with an existing `extra` binding; a guard
 // inserted at the wrong scope is the same class of mistake as the bug it fixes, so the placement
 // is at module scope after the imports and nowhere else.
-const KNOWN_FLAGS = new Set('--json', '--quiet');
-const strayArgs = process.argv.slice(2)
-  .filter((a) => !KNOWN_FLAGS.has(a) && !a.startsWith('--only='));
+// ALLOWLIST DERIVED FROM WHAT THIS LOOP ACTUALLY READS, not from a guess. The first version
+// allowed only `--json` and `--quiet`, and that broke this entry's own declared negative control
+// in manifests/capabilities.json -- `node forensics-lab/tools/loop.mjs --control=srum --expect
+// INJECTED_PRIVATE_RWX_REGION` -- which the registry runs and which assert-probes then reported
+// as DRIFT: real exit 2 against a recorded expect_exit of 4. A guard that blocks the measurement
+// is the same failure wearing the opposite face, and the gate caught it within one run.
+// `--expect` takes its value in the NEXT argv element, so that element must not be mistaken for
+// a stray path.
+const KNOWN_FLAGS = new Set(['--json', '--quiet', '--control=', '--expect']);
+const VALUE_FLAGS = new Set(['--expect']);
+const strayArgs = [];
+{
+  const all = process.argv.slice(2);
+  for (let i = 0; i < all.length; i++) {
+    const a = all[i];
+    // VALUE_FLAGS IS CHECKED FIRST, and the order is load-bearing: `--expect` is itself in
+    // KNOWN_FLAGS, so testing KNOWN_FLAGS first would `continue` past it and leave its VALUE to
+    // be judged as a stray path. That is exactly what the first attempt did --
+    // `--expect INJECTED_PRIVATE_RWX_REGION` was rejected on the finding-id.
+    if (VALUE_FLAGS.has(a)) { i += 1; continue; }
+    if (KNOWN_FLAGS.has(a) || [...KNOWN_FLAGS].some((k) => k.endsWith('=') && a.startsWith(k))) continue;
+    strayArgs.push(a);
+  }
+}
 if (strayArgs.length) {
   console.error(`loop: refusing an argument it would otherwise IGNORE: ${strayArgs.join(' ')}`);
   console.error('  This is a regression suite over its own built fixtures. It has no --target.');
@@ -425,5 +450,7 @@ function summarize() {
     console.log(`${failed.length} step(s) failed:`);
     for (const s of failed) console.log(`  - ${s.label}: ${s.detail}`);
   }
+  writeRunArtifact('forensics-lab', { checks: steps, outDir: 'forensics-lab/out',
+    extra: { ok: failed.length === 0 } });
   process.exit(failed.length === 0 ? 0 : 9);
 }

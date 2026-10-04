@@ -22,6 +22,10 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+// Run summary to disk, so the verdict rests on a FILE rather than a substring of stdout.
+// assert-probes says an entry with no `probe.produces` was "matched STRINGS only, and a
+// stub which prints them satisfies it". Added 2026-10-04; see scripts/probe_artifact.mjs.
+import { writeRunArtifact } from '../../scripts/probe_artifact.mjs';
 import { createLab } from '../lab/server.mjs';
 import { buildCases, classifyOracle } from './cases.mjs';
 import { decode } from '../lab/jose.mjs';
@@ -313,6 +317,8 @@ async function main() {
 
   lab.server.close();
   await new Promise((r) => lab.server.once('close', r));
+  writeRunArtifact('crypto-lab', { checks, outDir: 'crypto-lab/out',
+    extra: { ok: failures.length === 0, counts: summary.counts } });
   process.exit(failures.length === 0 ? 0 : 1);
 }
 
