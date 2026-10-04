@@ -146,12 +146,44 @@ def main() -> int:
         return 0
 
     mitigations = {k: info.get(k) for k in MITIGATION_FIELDS}
+
+    # `relocs` IS ALSO A CONSTANT, and this is the same disease the managed guard above fixed.
+    # Found 2026-10-04 by a verifier reading this file's own hardened output: rabin2 reports
+    # relocs:false on EVERY population measured, while pefile counts real entries and
+    # DYNAMIC_BASE is set. Measured on this tree's own corpus binary: rabin2 says `false`,
+    # pefile counts **800** `.reloc` entries and `DYNAMIC_BASE` is True. So the one mitigation
+    # flag a reviewer is most likely to act on was reporting "no relocations" about a binary
+    # that has eight hundred of them.
+    #
+    # Fix is the same shape as the managed guard: do not pass the value through, cross-check it
+    # against an independent reader, and surface the DISAGREEMENT rather than picking a winner
+    # silently. Both readings are reported; which one to believe is the caller's, and now they
+    # can see that there is a question.
+    try:
+        import pefile as _pe
+        _p = _pe.PE(args.binary)
+        _n = sum(len(e.entries) for e in (getattr(_p, "DIRECTORY_ENTRY_BASERELOC", None) or []))
+        _dyn = bool(_p.OPTIONAL_HEADER.DllCharacteristics & 0x40)
+        _p.close()
+        _pe_relocs = {"reloc_entries": _n, "DYNAMIC_BASE": _dyn}
+        if (str(mitigations.get("relocs")).lower() == "false") != (_n == 0):
+            mitigations["relocs"] = "DISAGREES"
+            _pe_relocs["disagreement"] = (
+                f"rabin2 reported relocs={info.get('relocs')!r}; pefile counted {_n} .reloc "
+                f"entries and DYNAMIC_BASE={_dyn}. Both readings are shown. A hardened binary "
+                f"with no relocations cannot have DYNAMIC_BASE set, so at most one of these is "
+                f"right -- re-run with a third reader before acting on it."
+            )
+    except Exception as _e:                                        # noqa: BLE001
+        _pe_relocs = {"error": f"cross-check unavailable: {_e}"}
+
     result = {
         "ok": True, "exit": 0, "binary": args.binary,
         "image": {k: info.get(k) for k in
                   ("arch", "bits", "class", "bintype", "baddr", "binsz", "endian", "machine",
                    "os", "subsys", "compiler", "lang")},
         "mitigations": mitigations,
+        "relocs_crosscheck_pefile": _pe_relocs,
         "caveats": (
             "THESE ARE PRESENCE FLAGS FROM ONE IMPLEMENTATION, NOT A HARDENING ASSESSMENT. "
             "`canary true` means a stack-protection cookie symbol was found; it does not mean the "
