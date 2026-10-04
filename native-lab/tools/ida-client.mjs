@@ -79,11 +79,21 @@ export async function toolNames() {
 /** Call a tool. Returns { isError, body } — isError is kept separate on purpose,
  *  because on this server it is NOT the failure signal for an analysis. */
 export async function call(tool, args) {
+  const { isError, body } = await callVerbose(tool, args);
+  return { isError, body };
+}
+
+/** Same call, but nothing thrown away: the parsed body AND the JSON-RPC envelope AND the exact
+ * text the server sent. `negative-gate.mjs` needs all three, because the whole control is about
+ * which of `isError` / `code` / `error` the server sets on a failure — `call()` keeps only the
+ * first and the last, which is exactly the pair that hides the hazard.
+ * Added 2026-10-05; `call()` is now defined in terms of this, so its behaviour is unchanged. */
+export async function callVerbose(tool, args) {
   const res = await raw('tools/call', { name: tool, arguments: args });
   const text = (res?.result?.content || []).map((c) => c.text || '').join('');
   let body;
   try { body = JSON.parse(text); } catch { body = { _raw: text }; }
-  return { isError: res?.result?.isError === true, body };
+  return { isError: res?.result?.isError === true, body, rawText: text, envelope: res };
 }
 
 /** The honest success test for an analysis result: no error AND non-null payload.

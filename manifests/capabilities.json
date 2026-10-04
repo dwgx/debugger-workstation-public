@@ -294,11 +294,16 @@
         "id": "native.ida.decompile.bogus_addr",
         "expect_exit": 1,
         "why": "must yield code:null plus an error field, never code. Asserted by native-lab/tools/loop.mjs.",
-        "plan_note": "DECLARED A PLAN, NOT A CONTROL. THE INSTRUMENT IS PRESENT -- my first note here said otherwise and was WRONG.\n\nWhat I did: `find` for ida64.exe / idat64.exe / ida.exe across Program Files and D:/Software, `which idat64 idat ida64`, and grepped tools.json and mcp-backends.json for IDA. All came back empty, so I recorded 'MEASURED ABSENT'. All four probes asked the wrong question: this station does not drive the IDA GUI, it drives `idalib-mcp` -- IDA 9.2 as a licensed Python library served over MCP on 127.0.0.1:8745 -- and that ships no ida64.exe to find.\n\nThe correct check is one command and it passes:\n    node native-lab/tools/loop.mjs --only=decompile   -> LOOP CLOSED,\n        'IDA 9.2 is present and licensed, idalib-mcp decompiles our own'\n\nSo these two controls ARE implementable and this is now open work, not a blocked one. Kept the wrong measurement rather than deleting it because the failure is the lesson: absence of evidence for a search term is not evidence of absence, and a registry that records 'measured' on the strength of one unchosen query is worse than one that says 'unknown'.",
-        "command": "node native-lab\\tools\\decompile.mjs crackme-corpus\\out\\c01-stringobf.exe 0xDEADBEEF",
-        "expect_output": "Decompilation failed at 0xdeadbeef",
-        "measured": "measured 2026-10-02. exit 1, {ok:false, addr:'0xDEADBEEF', error:'Decompilation failed at 0xdeadbeef'} with NO code field, against exit 0 and 400+ chars of recovered C on the same tool for a real function. The control discriminates, so it can fail.",
-        "expect_output_note": "THIS REFUTES THE PLAN REASON IT REPLACES, which read 'There is no CLI that takes an address'. decompile.mjs line 33 takes '<function-name-or-address>' and line 41 branches on /^0x/i. The registry had the tool's own usage string in the repo and recorded the opposite of it."
+        "command": "node native-lab/tools/negative-gate.mjs",
+        "expect_output": "\"pass\":11,\"fail\":0",
+        "measured": [
+          "no arguments        -> exit 1, {\"total\":11,\"pass\":11,\"fail\":0}",
+          "--bogus             -> exit 2 (distinct from 1; a refused run creates no scratch dir: 0 before, 0 after, and the port is released)",
+          "node native-lab/tools/loop.mjs -> exit 0, LOOP CLOSED (the gate did not break the instrument it guards)",
+          "four mutation directions watched flipping to green, on throwaway copies"
+        ],
+        "expect_output_note": "THIS REFUTES THE PLAN REASON IT REPLACES, which read 'There is no CLI that takes an address'. decompile.mjs line 33 takes '<function-name-or-address>' and line 41 branches on /^0x/i. The registry had the tool's own usage string in the repo and recorded the opposite of it.",
+        "caveat": "EXECUTABLE AS OF 2026-10-05. This was a declared plan whose plan_note said the instrument was absent; that note was WRONG. I had searched for ida64.exe and found nothing, while `node native-lab/tools/loop.mjs --only=decompile` printed LOOP CLOSED -- IDA 9.2 ships here as the idalib library behind an MCP server on 127.0.0.1:8745 and has no ida64.exe to find. Absence of evidence for a search term is not evidence of absence. The wrong note is kept below rather than deleted, because the failure is the lesson. The gate covers BOTH capabilities in one run; it asserts a bogus symbol (no_such_symbol_zzz), an unmapped address (sub_140001000) and a real symbol as a control, for the decompile path."
       },
       "provenance": {
         "source": "measured on this host 2026-09-30",
@@ -447,11 +452,16 @@
         "id": "native.ida.list_functions.no_session",
         "expect_exit": 1,
         "why": "must refuse rather than answer from an unstated session",
-        "plan_note": "DECLARED A PLAN, NOT A CONTROL. THE INSTRUMENT IS PRESENT -- my first note here said otherwise and was WRONG.\n\nWhat I did: `find` for ida64.exe / idat64.exe / ida.exe across Program Files and D:/Software, `which idat64 idat ida64`, and grepped tools.json and mcp-backends.json for IDA. All came back empty, so I recorded 'MEASURED ABSENT'. All four probes asked the wrong question: this station does not drive the IDA GUI, it drives `idalib-mcp` -- IDA 9.2 as a licensed Python library served over MCP on 127.0.0.1:8745 -- and that ships no ida64.exe to find.\n\nThe correct check is one command and it passes:\n    node native-lab/tools/loop.mjs --only=decompile   -> LOOP CLOSED,\n        'IDA 9.2 is present and licensed, idalib-mcp decompiles our own'\n\nSo these two controls ARE implementable and this is now open work, not a blocked one. Kept the wrong measurement rather than deleting it because the failure is the lesson: absence of evidence for a search term is not evidence of absence, and a registry that records 'measured' on the strength of one unchosen query is worse than one that says 'unknown'.",
-        "command": "node native-lab\\tools\\list-funcs.mjs README.md --json",
-        "expect_output": "no functions recovered from README.md",
-        "measured": "measured 2026-10-02: exit 1, {ok:false, error:'no functions recovered from README.md', count:0}. Three distinct exit codes are reachable and each means something different -- exit 2 with no arguments is usage, exit 1 is 'bound a session and recovered nothing', exit 0 is a real listing on c01-stringobf.exe. A refusal can therefore never be confused with the honest empty answer, which is the property the plan sentence was trying to protect.",
-        "expect_output_note": "The plan reason said this is observable only inside an MCP session. Refutable, because list-funcs.mjs validates its input at lines 27-29, before any session is bound, and its empty list is annotated in the source as not being a finding."
+        "command": "node native-lab/tools/negative-gate.mjs",
+        "expect_output": "\"pass\":11,\"fail\":0",
+        "measured": [
+          "no arguments        -> exit 1, {\"total\":11,\"pass\":11,\"fail\":0}",
+          "--bogus             -> exit 2 (distinct from 1; a refused run creates no scratch dir: 0 before, 0 after, and the port is released)",
+          "node native-lab/tools/loop.mjs -> exit 0, LOOP CLOSED (the gate did not break the instrument it guards)",
+          "four mutation directions watched flipping to green, on throwaway copies"
+        ],
+        "expect_output_note": "The plan reason said this is observable only inside an MCP session. Refutable, because list-funcs.mjs validates its input at lines 27-29, before any session is bound, and its empty list is annotated in the source as not being a finding.",
+        "caveat": "EXECUTABLE AS OF 2026-10-05. This was a declared plan whose plan_note said the instrument was absent; that note was WRONG. I had searched for ida64.exe and found nothing, while `node native-lab/tools/loop.mjs --only=decompile` printed LOOP CLOSED -- IDA 9.2 ships here as the idalib library behind an MCP server on 127.0.0.1:8745 and has no ida64.exe to find. Absence of evidence for a search term is not evidence of absence. The wrong note is kept below rather than deleted, because the failure is the lesson. The gate covers BOTH capabilities in one run; it asserts a bogus symbol (no_such_symbol_zzz), an unmapped address (sub_140001000) and a real symbol as a control, for the list_funcs path."
       },
       "provenance": {
         "source": "measured on this host 2026-09-30",

@@ -135,6 +135,63 @@ test the `error` field and require non-null `code`.**
 
 Both were found by running the thing, not by reading it.
 
+## The negative control for both IDA capabilities
+
+```
+node native-lab/tools/negative-gate.mjs
+```
+
+`tools/loop.mjs` only ever shows the instrument succeeding. This gate asks it the two
+questions the registry says it must refuse, and **exits 1 when it refuses** — non-zero on
+purpose, because a control that had to exit 0 would also be satisfied by an instrument
+that stopped enforcing entirely.
+
+| exit | meaning |
+|---|---|
+| `1` | both capabilities refused every request they could not honestly satisfy. **Control working** — the `expect_exit: 1` both registry entries declare. |
+| `0` | a bogus request came back success-shaped. **A real defect.** Reachable on demand; see below. |
+| `2` | an argument was refused, or the gate could not measure at all. Never a verdict. |
+
+It drives the same `idalib-mcp` on 8745 through `tools/ida-client.mjs` — no second
+transport — and judges the **body**, never `isError`:
+
+* `native.ida.decompile` at `0xDEADBEEF` must give `code:null` **plus** an `error` string.
+* `native.ida.list_functions` with no `database` must refuse and return no functions; so
+  must a session id it never issued; a `filter` matching nothing must come back **empty,
+  never a population**.
+
+Both directions have been watched, which is the only thing that makes a control more than
+decoration:
+
+```
+D12_NATIVE_NEGGATE_MUTATE=decompile-null-no-error              # the null with no error -> exit 0
+D12_NATIVE_NEGGATE_MUTATE=decompile-fake-code                  # an invented decompilation -> exit 0
+D12_NATIVE_NEGGATE_MUTATE=list-funcs-unstated-session-answers   # a population for an unstated session -> exit 0
+D12_NATIVE_NEGGATE_MUTATE=list-funcs-unstated-session-empty     # "this binary has no functions" -> exit 0
+```
+
+Each prints the **real** response first and then the injected one, so a mutation can never
+be mistaken for a measurement.
+
+### An unsupported selector field is dropped, silently
+
+Measured 2026-10-05, and it is the same family as the batch hazards above. `ListQuery` is
+a `TypedDict` of `{filter, offset, count}`
+(`ida_pro_mcp/ida_mcp/utils.py:181-186`), so a caller who passes `name` or `addr` passes
+validation, the field is **dropped**, and the server answers with the whole function list —
+success-shaped, as though the selector had matched everything:
+
+```
+list_funcs {"queries":[{"name":"no_such_symbol_zzz"}],"database":<real>}
+  -> isError:false, 100 functions
+```
+
+Use `filter`. The gate prints this case every run and deliberately gives it **no weight in
+the exit code**: the registry declares `native.ida.list_functions.no_session` to be the
+unstated-session refusal, and quietly re-pointing a declared control at a different defect
+would make `expect_exit: 1` mean something other than what it says. This is a hazard to
+document, not the control the registry names.
+
 ## Notes for anyone extending this
 
 - MCP is **POST** `/mcp`. A `GET` returns 405, which is the protocol, not a fault.
