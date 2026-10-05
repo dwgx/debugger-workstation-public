@@ -97,6 +97,37 @@ def parse(path: str) -> dict:
     while off + 16 <= n:
         ts_sec, ts_usec, incl, orig = struct.unpack(endian + "IIII", data[off:off + 16])
         off += 16
+        # `incl_len` (captured) EXCEEDING `orig_len` (on the wire) is a header that
+        # contradicts itself, and it is checked BEFORE the truncation guard on purpose.
+        # Measured 2026-10-05 on a generated one-record capture with incl_len=100,
+        # orig_len=40 and all 100 body bytes present: the reader reported
+        #   {ok: true, bytes_on_wire: 40, captured_bytes: 100}
+        # -- captured MORE bytes than were ever on the wire, reported as a success.
+        # The neighbouring case (truncated mid-packet) already refused, so this reader
+        # did know that a record header can lie; it just checked one lie and not the other.
+        #
+        # REFUSE rather than accept-and-flag, which is the debatable half of this change:
+        #   * `orig_len` is defined by pcap-savefile(5) as the bytes that WOULD have been
+        #     present had the packet not been snaplen-truncated, so `incl > orig` cannot
+        #     happen in a file any conforming writer produced. Either field is a lie and
+        #     the reader cannot tell which.
+        #   * `bytes_on_wire` is a SUM of `orig`. If `orig` is the lie, that aggregate is
+        #     already wrong, and flagging it does not un-poison a number whose whole job is
+        #     to be compared against TShark.
+        #   * The reader advances `off += incl`. An inflated `incl` therefore moves the
+        #     record boundary and every later packet is read from the wrong offset, so
+        #     "accept but flag" is not "keep the counts" -- it is "keep publishing counts
+        #     from a framing that is no longer established".
+        #   * This reader's own docstring: "Where it cannot answer, it says it cannot answer
+        #     rather than returning a smaller number that looks like a count of everything."
+        #     A caveat attached to a poisoned aggregate is exactly that failure.
+        # Bounded by the SAME rule as the truncation guard below -- a record header that
+        # cannot be true is a refusal -- so the two defects get one policy, not two.
+        if incl > orig:
+            die(2, f"packet {packets} declares incl_len {incl} > orig_len {orig}: a record cannot capture "
+                   f"more bytes than were on the wire, so this header is malformed and no later record "
+                   f"boundary can be trusted either",
+                packets=packets, incl_len=incl, orig_len=orig)
         if incl > snaplen and snaplen:
             truncated += 1
         if off + incl > n:
