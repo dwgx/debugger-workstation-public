@@ -4183,7 +4183,10 @@
             "name": "yara-x (yr.exe)",
             "version": "1.20.0",
             "path": "Static-Reversing/YARA-X/yr.exe",
-            "invocation": "cmd.exe /c -- Git bash answers 'command not found' (exit 127) for the same path, which reads as absent"
+            "probe": "& \"Static-Reversing\\YARA-X\\yr.exe\" --version",
+            "expect": "yara-x-cli 1.20.0",
+            "invocation": "cmd.exe /c in a shell; Git bash answers 'command not found' (127) for the same path, which reads as absent. It is installed.",
+            "note": "MEASURED 2026-10-05: the probe is `yr.exe --version`, which needs neither a rule nor a target, so the tools gate can check the instrument without the capability already being proven. The full scan route and the exit-code trap are on instrument_notes."
           }
         ]
       },
