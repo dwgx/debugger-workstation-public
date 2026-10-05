@@ -61,7 +61,13 @@ Step 'reachability'           { python scripts/reachability-report.py }
 # same binary with Ghidra twice, 143 s measured. Running them inside a shared budget is how
 # --require-complete turns this script permanently red; leaving them out is how it goes green
 # without looking at them. So they are named explicitly with timeouts that fit.
-Step 'assert-probes (bounded, completeness required)' { python scripts/assert-probes.py --budget 150 --timeout 120 --require-complete --skip-slow }
+# 150 was measured wrong. On 2026-10-05 the first end-to-end run of this script reported
+# BUDGET SPENT: 22 of 25 entries ran in 170s, 3 deferred -- forensics.memory.artefact,
+# re.corpus.solve and mobile.apk.static -- and --require-complete refused, correctly. So the
+# flag works and the budget was simply too small for the 25 entries that are NOT slow. 420 s
+# is the measured margin, and if it ever defers again that is a fact about the tree rather
+# than about this number.
+Step 'assert-probes (bounded, completeness required)' { python scripts/assert-probes.py --budget 420 --timeout 300 --require-complete --skip-slow }
 Step 'assert-probes fuzz.differential.parse (slow, load-sensitive)' { python scripts/assert-probes.py fuzz.differential.parse --budget 800 --timeout 800 }
 Step 'assert-probes native.crosscompare.ghidra (slow, 2x Ghidra)' { python scripts/assert-probes.py native.crosscompare.ghidra --budget 400 --timeout 400 }
 Step 'assert-probes --list'   { python scripts/assert-probes.py --list }
