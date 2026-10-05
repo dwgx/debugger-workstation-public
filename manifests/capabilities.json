@@ -31,7 +31,7 @@
       "Q7.origin": "what changed between these two builds"
     },
     "baseline": {
-      "capability_count": 27,
+      "capability_count": 28,
       "note": "The validator pins this count. A capability may only leave capabilities[] by appearing in retired[] with a reason, because deleting an island used to make the registry validate CLEANER rather than louder.",
       "note_unused_fact_types": "MEASURED 2026-10-02, and it corrects a natural misreading. A query for declared fact types produced by no capability returns four: apk, pcap, token, evidence_source. The first three look like dead declarations, and it is tempting to conclude the three matching capabilities (mobile.apk.static, net.pcap.analyse, crypto.jose.parse) do not declare what they produce. They DO -- all three declare their facts, and all three now carry an invoke. The types are unused because the capabilities declaring them have never RUN IN A MISSION, not because their output is unspecified. evidence_source is a different thing entirely: it is a capability attribute used to count independent instruments, not an artifact any capability emits, so it must never be counted here.",
       "note_q5_unreachable": "MEASURED END TO END 2026-10-02, and it is a shape problem rather than a missing tool. Q5.vuln-shape has no reachable instrument. Its only target-scoped candidate, fuzz.differential.parse, declares two seed inputs whose producers are crypto.jose.parse and forensics.memory.artefact -- and both producers are observed and correctly wired. Verified on the real binaries rather than by reading: crypto.jose.parse invokes crypto-lab/tools/analyze.mjs --file {target} --json, and pointed at a PE it refuses with 'not a compact JWS: expected 3 dot-separated segments, got 2' and EXITS 3, which its own success_when already documents as bad input. Pointed at a real compact JWS it exits 0. forensics.memory.artefact invokes forensics-lab/tools/analyze.mjs --target {target}.\n\nSo neither producer is broken. They refuse correctly when handed the wrong KIND of thing, and that is the whole problem: mission.ps1 has one -Target, and this axis needs three different kinds of subject -- a JOSE token, a forensic memory image, and a lab target. Q5 is not dark because a tool is missing. It is dark because the mission can name exactly one artefact and Q5 needs three heterogeneous ones.\n\nTwo refutations are kept because both looked right first. First: 'these labs build their own fixtures, so no extra parameter is needed' is true of the LOOPS -- crypto-lab/tools/loop.mjs reads only --json and generates its own tokens, and forensics-lab/tools/loop.mjs:38 hardcodes const TARGET = path.join(WORK, 'target') -- but the invoke blocks point at the inner ANALYSERS, which do take an external subject. The loop and the instrument are different things and a mission calls the instrument. Second: 'fuzz.differential.parse wants two artefacts, so it needs a peer selector' is also true and also not the blocker, because its two missing inputs are not two paths; they are a token and a structure produced upstream.\n\nWhat would light the axis is now stated precisely: a mission able to name MORE THAN ONE artefact with HETEROGENEOUS types. A second path would not help -- native.function.match is the only capability that wants two of the same thing and it is not on this axis. Naming the shape exactly is what separates this from the speculative -Artefact parameter considered and correctly rejected earlier, when the premise had not been measured.\n\nThe misattribution risk was checked and does not exist: a PE substituted into the JOSE analyser exits 3, so a mission records a loud failure rather than crediting the lab's own token to the mission's target.",
@@ -4104,6 +4104,105 @@
         }
       },
       "root_reason": "A genuine root: it is handed a PE path and answers a question about mitigation posture, and NOTHING upstream produces one. It consumes no fact another capability emits and nothing consumes what it emits today, which is a decision about what to wire next rather than an oversight -- the natural next edge is a consumer that asks 'is this crash worth chasing'."
+    },
+    {
+      "id": "native.yara.triage",
+      "state": "planned",
+      "question": "Can a YARA rule decide something about a binary that string-matching cannot?",
+      "family": "native",
+      "probe": {
+        "command": "node yara-lab/tools/probe.mjs",
+        "expect": "PLACEHOLDER",
+        "expect_exit": 0,
+        "produces": "yara-lab/out/last-run-yara.json"
+      },
+      "negative_control": {
+        "id": "native.yara.undefined_value",
+        "kind": "plan",
+        "expect_exit": 1,
+        "why": "a rule whose condition references a string the target does NOT contain must not match, and yara-x's own undefined-value semantics must be shown rather than assumed",
+        "plan_reason": "not written yet; the instrument question below is the blocker",
+        "plan_ref": "missing:yara-lab/*"
+      },
+      "instrument_notes": {
+        "yara_x_present": "MEASURED 2026-10-05: Static-Reversing/YARA-X/yr.exe, yara-x-cli 1.20.0, runs. `yara` itself (yara.exe / yara-python) is NOT installed -- the first search for yara.exe missed the binary because its entry point is named yr.exe.",
+        "invocation": "MUST be `cmd.exe /c \"Static-Reversing\\YARA-X\\yr.exe ...\"`. Git bash reports `command not found` with exit 127 for the same path, which reads as 'not installed' -- the sixth wrong-question search today.",
+        "subcommand": "`scan`, not a bare rule file: `yr scan [OPTIONS] <RULES_PATH> <TARGET_PATH>`. Options must come BEFORE the positionals or clap answers 'unexpected argument'.",
+        "EXIT CODE CANNOT BE TRUSTED": "MEASURED: `yr scan` exits 0 on a MATCH and on a CLEAN SCAN. The only difference is the output -- 50 bytes vs 0 in plain mode. A probe that keys on the exit code cannot tell a detection from a clean scan, so the capability must assert on CONTENT.",
+        "discriminator": "--output-format=json gives `{\"version\":..., \"matches\":[...]}`; a match has one element, a clean scan has `\"matches\": []`. Still exits 0 either way."
+      },
+      "title": "Decide a question about a binary with a YARA rule, where a substring search cannot answer it -- yara-x 1.20.0, already shipped in the station",
+      "domains": [
+        "native",
+        "practice"
+      ],
+      "consumes": {
+        "inputs": [
+          {
+            "name": "binary",
+            "type": "path_ref",
+            "required": true,
+            "note": "a Windows PE. Measured: crackme-corpus/out/c01-stringobf.exe."
+          },
+          {
+            "name": "rules",
+            "type": "path_ref",
+            "required": true,
+            "note": "a .yar source file. Written by the probe into its own scratch, never committed."
+          }
+        ]
+      },
+      "produces": {
+        "facts": [
+          {
+            "key": "yara.matches",
+            "type": "structure",
+            "note": "the rule names that matched, per target, from --output-format=json. NOT the exit code: yr scan exits 0 on a match and on a clean scan alike, measured."
+          }
+        ]
+      },
+      "requires": {
+        "runtime": "node",
+        "net": "none",
+        "admin": false,
+        "device": false,
+        "disk_mb": 0,
+        "ram_mb": 512,
+        "wall_minutes": 0.2,
+        "tools": [
+          {
+            "name": "yara-x (yr.exe)",
+            "version": "1.20.0",
+            "path": "Static-Reversing/YARA-X/yr.exe",
+            "invocation": "cmd.exe /c -- Git bash answers 'command not found' (exit 127) for the same path, which reads as absent"
+          }
+        ]
+      },
+      "proves": [
+        "PENDING THE PROBE. Declared here so the shape is complete, deliberately empty of claims: per this project's North Star nothing is observed until a run proves it, and the probe has not been written yet."
+      ],
+      "does_not_prove": [
+        "THAT A RULE IS CORRECT. A matching rule proves the pattern is present, not that the condition means what its author intended.",
+        "THAT A NON-MATCH MEANS ABSENT. A rule with a wrong condition silently matches nothing, which is why the negative control must exercise undefined-value semantics rather than trust a clean run.",
+        "THAT THE TOOL'S EXIT CODE DISTINGUISHES ANYTHING. It does not: measured, yr scan exits 0 on a match and on a clean scan alike."
+      ],
+      "reach": {
+        "fs_read": true,
+        "fs_write": false,
+        "net": false,
+        "proc_spawn": true,
+        "exec_target": false,
+        "db_write": false,
+        "proc_spawn_note": "yr.exe is spawned through cmd.exe /c; it reads the rule and the target and writes only its own JSON on stdout",
+        "write_scope": "none"
+      },
+      "evidence_source": "static-analysis",
+      "gate": {
+        "lane": "debug",
+        "requires_verdict": true,
+        "escalation_class": "none"
+      },
+      "evidence_source_note": "static-analysis because yara-x is a static pattern matcher over a file's bytes. NOT practice and NOT a structural parser: it answers a question ABOUT the file rather than reporting the file's structure, which is what separates it from pe_probe and disasm."
     }
   ]
 }
