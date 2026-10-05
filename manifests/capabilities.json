@@ -2844,6 +2844,12 @@
           "sections": "pe.section_extent"
         },
         "note": "Added 2026-10-02 to raise the arsenal's CALLABLE RATIO, measured that day at 8 of 23 capabilities -- most of the registry could be probed by a human and could not enter a mission at all. This one is callable first because pe.aslr is the fact BOTH frida entries obey when they rebase at runtime, and until now nothing in a chain could carry the evidence for the rule. native-lab/tools/pe_probe.py writes PURE JSON to stdout and stays silent on stderr, because mission.ps1 runs a capability as `& $runner @argList 2>&1 | Out-String` and MERGES the two -- a tool that decorates stderr corrupts the JSON it declared, which is how native.disasm.capstone failed its first round while working perfectly by hand."
+      },
+      "known_incoherence": {
+        "summary": "is_64bit is derived from oh.Magic (the OptionalHeader LAYOUT magic, PE32 vs PE32+), while `machine` is FILE_HEADER.Machine (the CPU). Different fields. On a real file they agree; on a forged one they need not, and nothing in the format forces a parser to notice.",
+        "measured_case": "Machine forged to 0x014C on the 64-bit corpus binary: pe_probe reports is_64bit=true, while disasm.py -- on the SAME file -- decodes the 64-bit entry point in 32-bit mode and returns `sub esp, 0x28` / `call 0x400019a0`, a REX-prefixed prologue read as 32-bit, with exit 0. Two tools in one family, one file, opposite answers about operand width, and neither flags the disagreement. A consumer that trusts is_64bit picks the wrong width.",
+        "the_answer_i_think_is_right": "`null` for a Machine this tool does not recognise -- not `false`, which asserts the file is 32-bit and is equally a claim the tool cannot make. `machine` keeps reporting the raw field verbatim either way, because it is an OBSERVATION rather than a CONCLUSION, which is exactly why the two can sit side by side without one contaminating the other. hardening_probe already made this move on the managed-assembly guard.",
+        "why_not_fixed_here": "It changes an existing fact's value for every current consumer, it is not a truncation question, and it belongs in its own measured edit. Declared here so it is not lost. Recorded 2026-10-05."
       }
     },
     {
@@ -4107,22 +4113,25 @@
     },
     {
       "id": "native.yara.triage",
-      "state": "planned",
+      "state": "observed",
       "question": "Can a YARA rule decide something about a binary that string-matching cannot?",
       "family": "native",
       "probe": {
         "command": "node yara-lab/tools/probe.mjs",
-        "expect": "PLACEHOLDER",
+        "expect": "PROBE OK — the rule decided the question and the content assertions held",
         "expect_exit": 0,
-        "produces": "yara-lab/out/last-run-yara.json"
+        "produces": "yara-lab/out/last-run-yara.json",
+        "runtime_note": "fast: measured 2026-10-05 at under 1 s (it shells yr.exe twice on a 1 KB scratch rule and one corpus binary).",
+        "last_run": "2026-10-05",
+        "run_log": "evidence/probes/native.yara.triage.probe.log"
       },
       "negative_control": {
         "id": "native.yara.undefined_value",
-        "kind": "plan",
         "expect_exit": 1,
-        "why": "a rule whose condition references a string the target does NOT contain must not match, and yara-x's own undefined-value semantics must be shown rather than assumed",
-        "plan_reason": "not written yet; the instrument question below is the blocker",
-        "plan_ref": "missing:yara-lab/*"
+        "why": "an unsatisfiable rule must NOT match, and the gate must SHOW WHY rather than let silence stand for proof. 'absent from matches' has two causes -- unsatisfied, or never evaluated -- and they are identical from outside. So the gate first runs a WITNESS rule that IS satisfied, proving the engine really read the generated target, and only then reads the empty result as a statement about the rule.",
+        "command": "node yara-lab/tools/negative-gate.mjs",
+        "expect_output": "NEGATIVE-CONTROL OK",
+        "caveat": "A file with a SYNTAX ERROR dies at parse time and runs zero lines, so no `finally` in any language can make it write. The ledger guarantees every path OF A RUNNING PROGRAM; covering the dead-file case needs an external wrapper that stamps the artifact before exec'ing node. Stated because it is the one limit that cannot be fixed in-process."
       },
       "instrument_notes": {
         "yara_x_present": "MEASURED 2026-10-05: Static-Reversing/YARA-X/yr.exe, yara-x-cli 1.20.0, runs. `yara` itself (yara.exe / yara-python) is NOT installed -- the first search for yara.exe missed the binary because its entry point is named yr.exe.",
@@ -4179,30 +4188,53 @@
         ]
       },
       "proves": [
-        "PENDING THE PROBE. Declared here so the shape is complete, deliberately empty of claims: per this project's North Star nothing is observed until a run proves it, and the probe has not been written yet."
+        "THAT A RULE CAN DECIDE SOMETHING A SUBSTRING SEARCH CANNOT -- here, whether a credential-looking string sits in a NAMED section, which no amount of grepping establishes. Measured 2026-10-05 on crackme-corpus/out/c01-stringobf.exe: the credential FLAG{c01_strings_gave_you_this_decoy} is inside .rdata, and the probe says so in 0.4 s."
       ],
       "does_not_prove": [
         "THAT A RULE IS CORRECT. A matching rule proves the pattern is present, not that the condition means what its author intended.",
-        "THAT A NON-MATCH MEANS ABSENT. A rule with a wrong condition silently matches nothing, which is why the negative control must exercise undefined-value semantics rather than trust a clean run.",
-        "THAT THE TOOL'S EXIT CODE DISTINGUISHES ANYTHING. It does not: measured, yr scan exits 0 on a match and on a clean scan alike."
+        "THAT A NON-MATCH MEANS ABSENT. A rule with a wrong condition silently matches nothing.",
+        "THAT THE TOOL'S EXIT CODE DISTINGUISHES ANYTHING. Measured, and MEASURED TWICE: `yr scan` exits 0 under a correct rule AND under a completely broken one -- when the credential was changed to a string absent from the binary the answer became `credential-absent` and the exit became 3 from the PROBE's own assertion, not from yr. The exit code survives a rule that cannot match anything, so it carries no information at all."
       ],
       "reach": {
         "fs_read": true,
-        "fs_write": false,
+        "fs_write": true,
         "net": false,
         "proc_spawn": true,
         "exec_target": false,
         "db_write": false,
         "proc_spawn_note": "yr.exe is spawned through cmd.exe /c; it reads the rule and the target and writes only its own JSON on stdout",
-        "write_scope": "none"
+        "write_scope": "lab_out",
+        "write_scope_note": "lab_out only: the run writes yara-lab/out/last-run-yara.json and generates .yar rules under os.tmpdir(). No rule file is committed -- a committed rule goes stale against the corpus silently, which is the same failure shape as a stale artifact."
       },
       "evidence_source": "static-analysis",
       "gate": {
         "lane": "debug",
         "requires_verdict": true,
-        "escalation_class": "none"
+        "escalation_class": "owner_word",
+        "escalation_reason": "It writes outside a mission's case directory, to lab_out, and that is the whole of the extra authority. The artifact has to land where assert-probes can check that THIS run wrote it -- a file inside a per-case directory would move on every case and could not serve as the retained evidence R17 and R28 bind to. The generated .yar rules stay in os.tmpdir(), so the durable write is exactly one file with a fixed path and nothing that a case could clobber. This is the same shape as the other lab_out writers here and is deliberately NOT lowered to none: lab_out is not a case_dir, and saying otherwise would be a metric improving because a word changed."
       },
-      "evidence_source_note": "static-analysis because yara-x is a static pattern matcher over a file's bytes. NOT practice and NOT a structural parser: it answers a question ABOUT the file rather than reporting the file's structure, which is what separates it from pe_probe and disasm."
+      "evidence_source_note": "static-analysis because yara-x is a static pattern matcher over a file's bytes. NOT practice and NOT a structural parser: it answers a question ABOUT the file rather than reporting the file's structure, which is what separates it from pe_probe and disasm.",
+      "measured": [
+        "probe, no arguments -> exit 0 in <1 s, artifact on disk with run_id/completed/artifact_ok",
+        "probe, credential changed to an absent string -> exit 3, artifact_ok=false, answer=credential-absent, run_id advanced",
+        "control, no arguments -> exit 1; --bogus -> exit 2 on both files",
+        "run_id advances on EVERY exit path (success, assertion-failed, crash, rule-did-not-compile, stray-argument), so a stale artifact is detectable rather than plausible"
+      ],
+      "root_reason": "Not a root, and the omission is deliberate. It reads a PE and a generated rule; nothing it reads is produced by another capability here. It is a LEAF, and the registry records that rather than pretending otherwise.",
+      "invoke": {
+        "runner": "cmd.exe",
+        "argv": [
+          "/c",
+          "Static-Reversing\\YARA-X\\yr.exe",
+          "scan",
+          "--output-format=json",
+          "{input.rules}",
+          "{target}"
+        ],
+        "stdout": "json",
+        "success_when": "the JSON parses AND its matches array is what the question needs -- NEVER the exit code, which is 0 for a match and for a clean scan alike",
+        "note": "Git bash answers 'command not found' (127) for this path, which reads as absent. It is installed: yara-x-cli 1.20.0."
+      }
     }
   ]
 }

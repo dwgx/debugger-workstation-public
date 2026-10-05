@@ -1,0 +1,77 @@
+# assert-probes evidence: native.yara.triage control
+# command: node yara-lab/tools/negative-gate.mjs
+# exit: 1
+# seconds: 0.24
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+
+native.yara.undefined_value — NEGATIVE CONTROL: prove the engine has THREE values, not two
+================================================================================================
+  instrument  Static-Reversing\YARA-X\yr.exe  (yara-x-cli, invoked through cmd.exe /c)
+  target      generated non-PE file in %USERPROFILE%\AppData\Local\Temp\yara-lab-gate-ySi0Km  (not committed: a fixture that gains a PE
+              header would make R_UNDEFINED match for reasons nobody intended)
+  witness     yara-lab control witness 4f2b9c   (present in the target)
+  absent      ZZQQXX-NOT-IN-TARGET-9F3A71C4   (absent from the target)
+  mutation    (none)
+  guard       LIVE
+
+  The hazard being controlled:
+    "the rule found nothing" and "the rule was never capable of matching" both print
+    {"matches": []} and exit 0. From the outside they are the same output. A triage
+    report built on a non-matching rule would say "clean" either way.
+
+  The demonstration, and it is a comparison between two pairs in ONE engine:
+    R_UNDEFINED / R_NOT_UNDEFINED   pe.entry_point > 0   on a NON-PE  -> UNDEFINED
+    R_ABSENT    / R_NOT_ABSENT      $never                            -> DEFINED false
+  If undefined were merely false, `not R_UNDEFINED_term` would MATCH. MEASURED: it does
+  not, while `not R_ABSENT_term` does. One engine, one scan, two conditions, and the
+  results differ in exactly the way that separates the two cases.
+
+  PASS 1 — yr scan --output-format=json  (reports SATISFIED rules)
+    status 0   stdout 317 bytes   exit code carries no verdict: 0 on a match and on a clean scan alike
+    payload top-level keys  ["version","matches"]
+    SATISFIED   ["R_WITNESS_MATCHES","R_NOT_ABSENT"]
+
+  PASS 2 — yr scan --negate --output-format=json  (reports NON-SATISFIED rules)
+    Without this, "absent from matches" has two causes: unsatisfied, or never evaluated.
+    This pass is what makes "never evaluated" visible, so it cannot be read as silence.
+    status 0   NON-SATISFIED   ["R_UNDEFINED","R_NOT_UNDEFINED","R_ABSENT"]
+
+  ok   witness R_WITNESS_MATCHES is satisfied
+       the engine really read the generated target, so an empty result below is a
+       semantic outcome and not a failure to open the file
+
+  ok   R_UNDEFINED       pe.entry_point > 0    unsatisfied
+       the module field is undefined on a non-PE target
+  ok   R_NOT_UNDEFINED   not (pe.entry_point > 0)   ALSO unsatisfied  <-- THE POINT
+       negation did NOT flip it to true. This is only possible if the value is a third
+       thing, not false. If it were false, this rule would have matched.
+  ok   R_ABSENT          $never               unsatisfied  (defined false)
+       the ordinary two-valued case: the string simply is not in the target
+  ok   R_NOT_ABSENT      not $never              SATISFIED  <-- THE CONTRAST
+       negation DID flip here. Same engine, same scan, defined value. This is what makes
+       the pair above falsifiable rather than a claim: the engine negates fine.
+
+  ok   the two passes PARTITION the ruleset
+       in both passes (accounting broken): []
+       in neither pass (silently skipped, would read as a semantic result): []
+       every rule was evaluated by the engine exactly once and reported one way or the
+       other. A rule in neither list would mean the engine skipped it.
+
+NEGATIVE-CONTROL OK — UNDEFINED IS A THIRD VALUE, demonstrated not asserted:
+  undefined term   pe.entry_point > 0        unsatisfied
+  its negation      not pe.entry_point > 0    unsatisfied   <- would MATCH if this were false
+  absent string     $never                     unsatisfied
+  its negation      not $never                SATISFIED     <- negation works fine here
+
+  The engine has three values, not two, and `not` does not collapse the third into
+  true. That is what separates "the rule found nothing" from "the rule was never
+  capable of matching" — which is the distinction a triage report cannot make for
+  itself, since both print {"matches": []} and exit 0.
+  Both passes partitioned the ruleset, so no rule was skipped and read as a result.
+  Exiting 1, the non-zero code the registry declares: a control that must exit 0
+  proves nothing, because an engine that stopped evaluating would also exit 0.
+
+  NEGATIVE-CONTROL OK
+

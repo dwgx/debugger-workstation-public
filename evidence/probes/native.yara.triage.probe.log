@@ -1,0 +1,50 @@
+# assert-probes evidence: native.yara.triage probe
+# command: node yara-lab/tools/probe.mjs
+# exit: 0
+# seconds: 0.21
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+# produces: D:\Software\Tool\WorkStation\debugger\yara-lab\out\last-run-yara.json
+#   sha256: 850e0ad42856e2d201c05cc8d4173dcd1ca4345598612c59230b57ac21fad473
+#   bytes: 4279
+#   written-by-this-run: yes
+------------------------------------------------------------------------
+
+native.yara.triage — PROBE: decide a question about a PE that substring search cannot
+================================================================================================
+  instrument  Static-Reversing\YARA-X\yr.exe  (yara-x-cli, invoked through cmd.exe /c)
+  target      crackme-corpus/out/c01-stringobf.exe
+  credential  FLAG{c01_strings_gave_you_this_decoy}
+  question    Is the credential string located inside a PE section, and is that section executable?
+
+  The substring search answer — and the whole of what `strings` can say:
+    the credential bytes occur in this file.
+  What only a rule can add: which PE section that offset lands in, and whether that
+  section is executable. Section membership is a property of the IMAGE, not of the
+  bytes — the same literal is a string-table entry in .rdata and an embedded secret in
+  .text, and no substring search can tell those apart.
+
+  yr exit status      0   (MEASURED: 0 on a match AND on a clean scan — not the verdict)
+  stdout bytes        338
+  payload top-level keys   ["version","matches"]
+  payload version          "1.20.0"
+  matched rule names       ["DecoyPresentAtAll","DecoyInNamedSection"]
+
+  ok   credential-present                     true
+       the substring search this capability is compared against
+  ok   credential-in-named-section            true
+       offset arithmetic over the PE section table
+  ok   credential-not-in-executable-section   true
+       IMAGE_SCN_MEM_EXECUTE bit of the containing section
+  ok   named-and-exec-rules-are-independent   {"inNamed":true,"inExec":false}
+       if both fired the section is both .rdata and executable, and the two rules decide the same thing
+  ok   stdin-json-version-1.20.0              "1.20.0"
+       the key exists in the payload; read after printing top-level keys, not assumed
+
+  ANSWER credential-in-named-data-section
+  a credential in a non-executable .rdata section is an inert string-table entry; the
+  same bytes inside an executable section would be code or an encoded blob.
+
+PROBE OK — the rule decided the question and the content assertions held. Exiting 0.
+  artifact  yara-lab\out\last-run-yara.json
+
