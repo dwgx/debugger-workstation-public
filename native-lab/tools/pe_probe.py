@@ -20,6 +20,24 @@ import json
 import pathlib
 import sys
 
+# ONE COPY OF THE TRUNCATION RULE, not two. Measured 2026-10-05 on this very tool: cutting the
+# corpus binary to 50% and to 1 KB left pe_probe reporting `ok: true, sections: 6`, because a PE
+# stores its headers FIRST and both pefile and this script read only headers. `sections: 6` on a
+# 1 KB file enumerates section headers whose DATA is gone, which is the tell.
+#
+# The rule lives in the sibling because it was written and measured for this exact failure one
+# tool earlier today, and the reasoning that makes it correct -- the discriminator is
+# PointerToRawData, NOT SizeOfRawData, because an over-declaring linker never moves a
+# PointerToRawData -- is the part a second copy here would be free to get wrong.
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+try:
+    from hardening_probe import _truncation_report
+except ImportError as _e:
+    _truncation_report = None
+    _TRUNCATION_IMPORT_ERROR = f"{type(_e).__name__}: {_e}"
+else:
+    _TRUNCATION_IMPORT_ERROR = None
+
 IMAGE_SCN_MEM_EXECUTE = 0x20000000
 IMAGE_SCN_MEM_WRITE = 0x80000000
 IMAGE_DLLCHARACTERISTICS_DYNAMICBASE = 0x0040
@@ -94,6 +112,49 @@ def main() -> int:
                note="pefile raises PEFormatError for a clean non-PE; a truncated one parses far "
                     "enough to RETURN and then fails reading the section table. Both are "
                     "refusals here, not crashes.")
+
+    # IS THE FILE EVEN COMPLETE? This is the refusal hardening_probe added earlier today for the
+    # same measured failure, and the rule is imported rather than rewritten so the two probes
+    # cannot disagree about what "truncated" means.
+    #
+    # WHY REFUSE RATHER THAN "ACCEPT AND FLAG". A flag is only as good as the reader who looks at
+    # it, and the field that makes this dangerous -- `sections: 6` -- is exactly the field a
+    # caller reads. Every container fact here is true OF THE HEADER, and the header is the one
+    # part a PE stores first, so a flag would sit beside a complete, confident, wrong picture of
+    # a file that cannot execute. Exit 2 is the same class this probe already uses for "the
+    # input is not the thing you said it is" (see the MZ check above), and it matches the
+    # sibling's code for the identical condition.
+    #
+    # THE DISCRIMINATOR IS PointerToRawData, NOT SizeOfRawData. Both truncations leave a section
+    # whose start lies past EOF: that section is not partly present, it is entirely absent.
+    # Over-declaring SizeOfRawData never moves a PointerToRawData, so a linker that pads a
+    # declared size is NOT called truncated. Measured in both directions; see the report.
+    if _truncation_report is None:
+        # Fail CLOSED. A probe that cannot check whether the file is whole has no business
+        # reporting that it is a PE, and skipping the check quietly would restore the exact
+        # defect this guard exists to remove.
+        refuse(2, "cannot load the truncation rule from hardening_probe, so this probe cannot "
+                  "honestly say the file is complete; refusing rather than reporting a "
+                  "container picture it cannot stand behind",
+               import_error=_TRUNCATION_IMPORT_ERROR,
+               note="the rule is imported from the sibling deliberately, so there is one copy. "
+                    "If it cannot be imported that is an environment fault, not a licence to "
+                    "guess.")
+    _t = _truncation_report(args.binary)
+    if _t is not None:
+        _declared_end, _file_size = _t
+        refuse(2, f"the file is TRUNCATED, so its container facts would describe headers rather "
+                  f"than the binary: the last section ends at 0x{_declared_end:x} but the file "
+                  f"is only 0x{_file_size:x} bytes, and at least one section STARTS past the end "
+                  f"of the file. A PE puts its headers first, so a half-file parses cleanly and "
+                  f"pefile reads only headers -- this is not a corrupt-file signal, it is the "
+                  f"ABSENCE of a whole-file signal. Nothing downstream may treat sections, "
+                  f"aslr or entry_rva from this file as facts about a runnable image.",
+               declared_end=_declared_end, file_size=_file_size,
+               discriminator="a section's PointerToRawData lies past EOF. SizeOfRawData is NOT "
+                             "the discriminator: a linker may over-declare a section size "
+                             "without moving where that section starts, and such a file is "
+                             "complete.")
 
     chars = oh.DllCharacteristics
 
