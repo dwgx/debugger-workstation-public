@@ -99,8 +99,21 @@ const KEEP_GOING = has('keep-going');
  *
  * Measured 2026-09-30: --budget 8 leaves web-triage's twin unreachable and reports a
  * red; the default 90 (and 60) close. So refuse the small budget up front and say why,
- * rather than burning ten minutes to produce a misleading verdict. */
-const MIN_BUDGET = 40;
+ * rather than burning ten minutes to produce a misleading verdict.
+ *
+ * The floor was 40 until 2026-10-05, and 40 is a value nobody ever measured: the two
+ * measured points bracketing it are 8 (unreachable) and 60 (closes). At budget 40
+ * `40 < 40` is false, the guard admitted the run, the hang-class twin stayed
+ * unreachable, and the probe reported
+ *   "the flawed twin SURVIVED -- the harness cannot tell a robust parser from a
+ *    fragile one, so its clean runs mean nothing"
+ * with exit 9. Measured on an IDLE machine, twice: DRIFT after 18.3 s and again
+ * after 711.1 s. That is neither flakiness nor load -- it is one unmeasured
+ * constant. It reached verify-all as FLAKY, and FLAKY means "this sweep cannot
+ * decide", so a DETERMINISTIC failure passed twice under a label about
+ * uncertainty. Floor raised to the smallest value MEASURED to close.
+ */
+const MIN_BUDGET = 60;
 if (BUDGET < MIN_BUDGET) {
   console.error(
     `fuzz-lab: --budget ${BUDGET} is below the floor of ${MIN_BUDGET}.\n` +

@@ -45,6 +45,22 @@ IMAGE_DLLCHARACTERISTICS_NX_COMPAT = 0x0100
 IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA = 0x0020
 IMAGE_DIRECTORY_ENTRY_SECURITY = 4
 
+# The Machine values this tool RECOGNISES, with the bitness each one implies. Deliberately a
+# short allow-list rather than a lookup of "anything not listed is 32-bit": an unrecognised
+# value is reported as `null`, which is the honest answer. Absence from this map means
+# "this tool does not know what this is", not "this is not a 32-bit image".
+MACHINE_KINDS = {
+    0x014C: {"name": "i386",  "bits": 32},
+    0x0166: {"name": "mips",  "bits": 32},
+    0x01A2: {"name": "sh3",   "bits": 32},
+    0x01C0: {"name": "arm",   "bits": 32},
+    0x01C4: {"name": "armnt", "bits": 32},
+    0x01F0: {"name": "powerpc", "bits": 32},
+    0x0200: {"name": "ia64",  "bits": 64},
+    0x8664: {"name": "amd64", "bits": 64},
+    0xAA64: {"name": "arm64", "bits": 64},
+}
+
 
 def refuse(code: int, msg: str, **extra):
     out = {"ok": False, "exit": code, "error": msg}
@@ -181,6 +197,25 @@ def main() -> int:
         "sha256": hashlib.sha256(raw).hexdigest(),
         "size": len(raw),
         "machine": hex(pe.FILE_HEADER.Machine),
+        # `machine` above is the RAW field, reported verbatim because it is an observation and
+        # the field exists whether or not this tool understands it. What the tool can also say
+        # is whether it RECOGNISES that value -- and that answer has three states, not two.
+        # `null` for an unrecognised Machine: `false` would assert the file is a 32-bit i386
+        # image, which is a claim this tool cannot make about a value it does not know.
+        "machine_kind": MACHINE_KINDS.get(pe.FILE_HEADER.Machine),
+        # Two header fields answer two DIFFERENT questions and can disagree:
+        #   oh.Magic          -> which OptionalHeader LAYOUT (PE32 vs PE32+) -> is_64bit
+        #   FILE_HEADER.Machine -> which CPU the image targets              -> machine
+        # On a well-formed file they agree. On a forged one they need not, and when they do not,
+        # a tool that reports only one of them lets a reader assume the other. Measured
+        # 2026-10-05: Machine forged to 0x014C (i386) on the 64-bit corpus binary gives
+        # is_64bit=true HERE while disasm.py, on the SAME file, decodes the entry point in
+        # 32-bit mode and returns `sub esp, 0x28` -- a REX prefix read as a 32-bit opcode.
+        # `null` when the Machine is unrecognised: then there is nothing to compare.
+        "machine_agrees_with_magic": (
+            None if pe.FILE_HEADER.Machine not in MACHINE_KINDS
+            else (MACHINE_KINDS[pe.FILE_HEADER.Machine]["bits"] == 64) == (oh.Magic == 0x20B)
+        ),
         "is_64bit": oh.Magic == 0x20B,
         "image_base": hex(oh.ImageBase),
         "entry_rva": hex(oh.AddressOfEntryPoint),
