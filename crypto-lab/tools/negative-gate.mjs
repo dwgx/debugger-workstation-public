@@ -42,8 +42,28 @@
  * anywhere in this file. A hand-written token that happened to be refused would prove nothing
  * about the verifier.
  *
+ * THE FIXTURES ARE NOW PROVEN, NOT ASSERTED (2026-10-05). The paragraph above was true by
+ * construction and was verified only by reading it, which is the weakness this station keeps
+ * running into: `strict` refuses an RS256 token whose signature bytes are RANDOM exactly as it
+ * refuses one signed over the wrong key, so if `sign()` ever emitted a malformed signature the
+ * gate would print `bad-signature`, exit 4, and mean nothing. `fixtureProvenance()` below closes
+ * that: each case is verified under the key this process generated and must NOT verify under the
+ * lab's. A failure there routes into the EXISTING `not structurally valid` bucket (exit 5), which
+ * already means "the control is broken, not the verifier" -- no new exit code, no new meaning.
+ *
  * ARGUMENT REFUSAL, for the same reason loop.mjs has it: a control that silently ignores a flag
  * someone passed it is a control that can be made to report a green it did not measure.
+ *
+ * WHY createLab() IS INSIDE THE try AND USED TO BE OUTSIDE IT. `lab/keys.mjs rsaKeypair()` is the
+ * one call in this file's import graph that touches the filesystem at all: it generates the lab's
+ * RSA-2048 pair at run time when `crypto-lab/keys/` is absent and reuses it when present, so on a
+ * clean machine this gate needs nothing that anyone made earlier. Measured 2026-10-05 on a copy of
+ * lab/ + tools/ with no keys/ directory: exit 4, both cases refused, keys/ created by the run. But
+ * the call sat at module scope, ABOVE this try, so a machine where the pair could not be generated
+ * or written died on an uncaught throw during module evaluation -- a file-shaped failure, thrown
+ * before a single line of the control had run, and from outside indistinguishable from a control
+ * that had correctly refused something. Inside the try it lands on exit 1, which this gate already
+ * defines as "the harness could not run" and never as a verdict.
  *
  * WHY node:http AND NOT fetch(). MEASURED, not stylistic. `loop.mjs` makes dozens of `fetch`
  * calls and exits 0, so the obvious guess is that `fetch` is fine here too. It is not, on the
@@ -64,7 +84,7 @@ import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { AUDIENCE, DEFAULT_TTL_S, ISSUER, createLab } from '../lab/server.mjs';
-import { decode, sign } from '../lab/jose.mjs';
+import { decode, sign, verifySignature } from '../lab/jose.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
@@ -110,6 +130,42 @@ function claimReadiness(p) {
   ];
 }
 
+/* Did THIS process build this token, from a key THIS process generated?
+ *
+ * The vacuity this closes is specific and measured, not hypothetical. `verifyStrict` reaches
+ * `bad-signature` whenever `verifySignature` returns false, and `verifySignature` returns false
+ * for a token whose signature bytes are garbage just as readily as for one signed over the wrong
+ * key. A control that only checked "was it refused?" therefore cannot tell a verifier that ran
+ * correctly from a fixture that was never a real signature -- it reads both as a pass. The two
+ * checks below make the premise measured instead of assumed:
+ *
+ *   foreign-key  the signature MUST verify under the attacker's own public key, and MUST NOT
+ *                verify under the lab's. Together those say the token carries a genuine RS256
+ *                signature and that the ONLY reason `strict` refuses it is the key it was made
+ *                with -- which is the defect under test.
+ *   alg-none     there is no signature to check, so the premise is structural: the header must
+ *                declare `alg=none`, the signature segment must be empty, and the header must
+ *                carry the lab's real kid so no key-selection heuristic can excuse it.
+ *
+ * Failures set the same flag a bad claim sets. That is deliberate: a garbage signature and a
+ * missing `exp` are the same class of failure -- the refusal that follows would be measuring the
+ * fixture rather than the strictness of the verifier -- and the gate already has an exit code for
+ * exactly that, so this adds no new outcome. */
+function fixtureProvenance(c, d, lab) {
+  if (c.alg === 'none') {
+    return [
+      ['header declares alg=none', d.header.alg === 'none', `alg=${JSON.stringify(d.header.alg)}`],
+      ['signature segment is empty', d.signature === '', d.signature === '' ? '(empty)' : `${d.signature.length} b64u chars`],
+      ['carries the lab real kid', d.header.kid === lab.KID, `kid=${d.header.kid}`],
+    ];
+  }
+  return [
+    ['signature verifies under the key this process generated', verifySignature(c.token, c.pubKey, c.alg), `RS256 made with the ephemeral private key generated above`],
+    ['and does NOT verify under the lab key', !verifySignature(c.token, lab.rsa.publicPem, c.alg), 'so the refusal below is attributable to the key, not to a malformed signature'],
+    ['generated key is not the lab key', c.pubKey !== lab.rsa.publicPem, `lab kid=${lab.KID}`],
+  ];
+}
+
 /* One request per token, over a fresh connection. See the node:http note at the top for why
  * this is not `fetch` — the pooled keep-alive socket is what turns a correct exit 4 into 9. */
 function verifyStrict(port, token) {
@@ -134,10 +190,13 @@ function verifyStrict(port, token) {
   });
 }
 
-const lab = createLab({ log: () => {} });
 let exitCode = 1;
 
 try {
+  /* Inside the try, deliberately. See the header note: this is the only call in the import graph
+   * that reads the filesystem, and at module scope a failure to generate it threw before the
+   * control had run a line -- indistinguishable from outside from a real verdict. */
+  const lab = createLab({ log: () => {} });
   const addr = await lab.listen(lab.server, { port: 0 });
   const base = `http://127.0.0.1:${addr.port}`;
 
@@ -154,12 +213,15 @@ try {
       id: 'alg-none',
       title: 'structurally valid, unsigned: header says alg=none',
       defect: 'the token declares itself unverified; there is no signature to check',
+      alg: 'none',
       token: sign({ alg: 'none', kid: lab.KID }, attackerClaims()),
     },
     {
       id: 'foreign-key',
       title: 'structurally valid, signed over a different key than the one presented',
       defect: `RS256 signature made with an ephemeral attacker key, not ${lab.KID}; the header carries the lab's real kid so key selection cannot rescue it`,
+      alg: 'RS256',
+      pubKey: attacker.publicKey,
       token: sign({ alg: 'RS256', kid: lab.KID }, attackerClaims(), attacker.privateKey),
     },
   ];
@@ -170,6 +232,8 @@ try {
   line(`  lab      ${base}   kid=${lab.KID}   issuer=${ISSUER}   audience=${AUDIENCE}`);
   line('  fed to   POST /api/verify/strict  — the same judgement loop.mjs makes at its verifier step');
   line('  built by crypto-lab/tools/negative-gate.mjs via lab/jose.mjs sign() + node:crypto; no pasted token literal');
+  line(`  keys     lab RSA-${lab.rsa.bits} ${lab.rsa.generated ? 'GENERATED by this run' : `reused from ${lab.rsa.publicPath}`}; attacker pair GENERATED in-process by node:crypto, never written to disk`);
+  line(`           nothing this gate reads was made by an earlier run unless the line above says "reused"`);
   line('');
 
   let anyAccepted = false;
@@ -200,6 +264,13 @@ try {
       if (!ok) anyNotValid = true;
     }
     line(`    verdict  token is STRUCTURALLY VALID and semantically current — nothing below may be blamed on its shape`);
+
+    const prov = fixtureProvenance(c, d, lab);
+    line(`    provenance of the fixture itself:`);
+    for (const [name, ok, detail] of prov) {
+      line(`      ${ok ? 'ok  ' : 'FAIL'} ${name.padEnd(30)} ${detail}`);
+      if (!ok) anyNotValid = true;
+    }
 
     const v = await verifyStrict(addr.port, c.token);
 
@@ -237,6 +308,10 @@ try {
   line('');
   process.exit(exitCode);
 } catch (e) {
+  line('');
   line(`negative-gate: ${e.stack || e.message}`);
+  line('The gate did not reach a verdict. This is the "harness could not run" path, NOT a refusal and');
+  line('  NOT a pass: if the lab could not start, most often because lab/keys.mjs rsaKeypair() could');
+  line('  not generate or write its RSA pair, then nothing above was measured at all. Exiting 1.');
   process.exit(1);
 }
