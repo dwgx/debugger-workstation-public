@@ -54,17 +54,30 @@
  * uses. The mutation is applied AFTER the real call, so the genuine response is always printed
  * first and nobody can mistake the injected shape for a measurement.
  *
- * NOTHING IS LEFT BEHIND. No scratch directory is created — every response is judged in memory —
- * and withServer kills the idalib worker with `taskkill /T /F` on every exit path, including the
- * throwing ones. The run prints a %TEMP% entry count before and after and asserts they match, so
- * "leaves nothing behind" is a number rather than a promise.
+ * THE FIXTURE IS PROVISIONED BY THIS FILE, AT RUN TIME. It used to name a path in the corpus and
+ * trust it to still be there; the same file's own teardown accounting already counted %TEMP%
+ * entries for a scratch directory it never created. Both were the same latent failure: an input
+ * this gate READS but did not BUILD. A control that cannot build its own subject cannot be run
+ * on a machine that has not already been prepared for it, and the failure it produces —
+ * `No such file` — is indistinguishable, from outside, from the refusal it is hunting. So the
+ * PE is now derived here: the corpus bytes are copied into a `fs.mkdtempSync` directory under
+ * `os.tmpdir()`, patched in process, and that directory is removed in a `finally` before either
+ * exit. `withServer` still kills the idalib worker with `taskkill /T /F` on every path.
+ *
+ * NOTHING IS LEFT BEHIND, AND THE COUNT IS PRINTED. The run prints a %TEMP% entry count before
+ * and after and reports whether the fixture directory survived, so "leaves nothing behind" is a
+ * number rather than a promise. Deriving the fixture also ends a second, quieter problem: IDA
+ * writes `.id0/.id1/.id2/.nam/.til/.i64` BESIDE whatever binary it opens, so a run against the
+ * corpus wrote into the corpus, and a run interrupted between those writes leaves exactly the
+ * stale-shadow state `loop.mjs` warns about. In a fresh temp directory that cannot happen.
  *
  * RUN IT:  node native-lab/tools/negative-gate.mjs     (from the repository root; no arguments)
  */
 import os from 'node:os';
 import path from 'node:path';
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync, copyFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { setTimeout as sleep } from 'node:timers/promises';
 import {
   IDALIB, MCP, withServer, waitForSession, callVerbose, flattenFuncs, portFree,
 } from './ida-client.mjs';
@@ -89,16 +102,181 @@ if (STRAY.length) {
 
 /* ---------------------------------------------------------------- the subject, as constants */
 
-const TARGET = 'crackme-corpus/out/c01-stringobf.exe';   // same self-built fixture loop.mjs uses
+/* The SOURCE and the FIXTURE are two different files and only one of them is ours to keep.
+ * CORPUS is version-controlled and never written to: it is the bytes the fixture is derived
+ * from. FIXTURE is created below, in %TEMP%, by provisionFixture(), and is what IDA is actually
+ * handed. Nothing below this line names CORPUS except to read it. */
+const CORPUS = 'crackme-corpus/out/c01-stringobf.exe';  // source bytes; tracked in git; read-only here
+const FIXTURE_BASENAME = 'c01-stringobf.exe';            // the name IDA will report for the copy
 const BOGUS_ADDR = '0xDEADBEEF';                         // outside every mapped section of it
+const BOGUS_ADDR_N = Number(BOGUS_ADDR);                 // the same address, for the range proof below
 const BOGUS_SYMBOL = 'no_such_symbol_zzz';               // a name IDA cannot have recovered
 const BOGUS_SESSION = 'no-such-session-zzz';             // a session id this client never issued
 const BOGUS_SELECTOR = 'no_such_function_zzz_*';         // a glob no recovered name can match
-const TMP_PREFIX = 'd12-native-neg-gate-';               // what a scratch dir WOULD be called
+const TMP_PREFIX = 'd12-native-neg-gate-';               // mkdtempSync's prefix — now the real thing
 
 const CAP_FAIL = 1;         // both capabilities refused -> THE CONTROL WORKING (registry: 1)
 const CAP_DRIFT = 0;        // a bogus request came back success-shaped -> a real defect
 const CAP_UNMEASURED = 2;   // usage, or the instrument could not be reached. Never satisfies 1.
+
+/* ------------------------------------------------------------- the fixture, provisioned here
+ * Everything this gate reads, it builds first. The PE is copied out of the corpus into a
+ * uniquely named directory under os.tmpdir() and patched in process, so that:
+ *
+ *   - a run on a machine with no prepared %TEMP% is the ORDINARY case rather than a prepared
+ *     one, which is the whole point: an input that has to be made by hand can be cleaned
+ *     between two runs, and the resulting `No such file` is indistinguishable, from outside,
+ *     from the refusal this gate exists to detect;
+ *   - IDA's .id0/.id1/.id2/.nam/.til/.i64 shadows land in a directory that is then deleted,
+ *     instead of beside a tracked file in the corpus — where an interrupted run leaves
+ *     exactly the stale-shadow state loop.mjs warns about;
+ *   - the bogus address stays PROVABLY outside every mapped section, which is what makes
+ *     control [1] discriminating instead of a lookup that might legitimately succeed.
+ *
+ * THE PATCH. The PE optional header's CheckSum is zeroed: the standard repack mutation, one
+ * that Windows ignores outside drivers, and one that marks the file as derived. It is applied
+ * to the COPY and only after the signatures are verified, so bytes this code does not
+ * understand are refused rather than passed through. It changes nothing that is asserted —
+ * the checksum is not an input to any control below, and both baselines are measured against
+ * the patched copy exactly as they were measured against the corpus file.
+ *
+ * Every failure path here throws, and every throw unwinds through the teardown, so a gate that
+ * cannot build its subject exits 2 having left nothing behind. A throw is NOT a check(): it
+ * forces CAP_UNMEASURED rather than CAP_DRIFT, because "I could not provision the PE" says
+ * nothing whatever about whether the instrument refuses a bogus request. */
+
+/** Parse just enough of the PE headers to prove this is an image we understand and to locate
+ *  the CheckSum field. Throws rather than guessing. */
+function peLayout(buf) {
+  if (buf.length < 0x40 || buf.readUInt16LE(0) !== 0x5a4d) {
+    throw new Error(`corpus bytes do not begin with MZ: ${CORPUS}`);
+  }
+  const lfanew = buf.readUInt32LE(0x3c);
+  if (lfanew + 24 > buf.length || buf.readUInt32LE(lfanew) !== 0x00004550) {
+    throw new Error(`no PE signature at e_lfanew=0x${lfanew.toString(16)} in ${CORPUS}`);
+  }
+  const coff = lfanew + 4;
+  const opt = coff + 20;
+  const nSections = buf.readUInt16LE(coff + 2);
+  const sizeOptHdr = buf.readUInt16LE(coff + 16);
+  if (sizeOptHdr < 68 || opt + sizeOptHdr > buf.length) {
+    throw new Error(`optional header is ${sizeOptHdr} bytes; too short to hold a CheckSum`);
+  }
+  const magic = buf.readUInt16LE(opt);
+  if (magic !== 0x10b && magic !== 0x20b) {
+    throw new Error(`optional header magic 0x${magic.toString(16)} is neither PE32 nor PE32+`);
+  }
+  /* ImageBase sits at a different offset in the two magics. Reading it from the wrong one
+   * would not throw — it would silently produce section ranges that prove nothing, which is
+   * the precise failure mode the range check below exists to catch. */
+  const imageBase = magic === 0x20b ? Number(buf.readBigUInt64LE(opt + 24)) : buf.readUInt32LE(opt + 28);
+  return { opt, imageBase, nSections, sectionsOff: opt + sizeOptHdr, checksumOff: opt + 64 };
+}
+
+/** Throw unless BOGUS_ADDR lies outside every section's mapped range.
+ *
+ *  This is a PRECONDITION, not a check(): it is a property of the fixture, so failing it
+ *  means this gate built itself a subject it cannot learn anything from, which is
+ *  CAP_UNMEASURED. It is deliberately NOT folded into `checks` — the tally below is the
+ *  instrument's behaviour and nothing else, and a fixture property counted there would let a
+ *  `fail` mean two different things. */
+function assertBogusAddrUnmapped(buf, layout) {
+  const ranges = [];
+  for (let i = 0; i < layout.nSections; i++) {
+    const sh = layout.sectionsOff + i * 40;      // IMAGE_SECTION_HEADER is 40 bytes
+    if (sh + 40 > buf.length) throw new Error(`section header ${i} runs past the end of ${CORPUS}`);
+    const vsize = buf.readUInt32LE(sh + 8);
+    const va    = buf.readUInt32LE(sh + 12);
+    const raw   = buf.readUInt32LE(sh + 16);
+    /* The mapped span is the LARGER of VirtualSize and SizeOfRawData. Taking VirtualSize
+     * alone under-reports .text whenever the raw data is padded, and would wave through an
+     * address that is in fact mapped. */
+    const lo = layout.imageBase + va;
+    const hi = lo + Math.max(vsize, raw);
+    if (BOGUS_ADDR_N >= lo && BOGUS_ADDR_N < hi) {
+      throw new Error(`BUG IN THIS FILE: ${BOGUS_ADDR} is INSIDE section ${i} `
+        + `[0x${lo.toString(16)}, 0x${hi.toString(16)}). Control [1] would be vacuous — that `
+        + `address could decompile, so a null would be a real answer rather than a refusal.`);
+    }
+    ranges.push([lo, hi]);
+  }
+  return ranges;
+}
+
+/** Copy the corpus bytes into a fresh %TEMP% directory, verify and patch them there, and hand
+ *  back the descriptor plus the report the run prints. Nothing outside this function ever
+ *  names the corpus file. */
+function provisionFixture() {
+  if (!existsSync(CORPUS)) {
+    throw new Error(`source binary missing from the corpus: ${CORPUS}. This gate derives its own `
+      + `fixture from it rather than reading a prepared one, so there is nothing to fall back to.`);
+  }
+  const dir = mkdtempSync(path.join(os.tmpdir(), TMP_PREFIX));
+  try {
+    const file = path.join(dir, FIXTURE_BASENAME);
+    copyFileSync(CORPUS, file);
+
+    const buf = readFileSync(file);
+    const layout = peLayout(buf);
+    const ranges = assertBogusAddrUnmapped(buf, layout);
+
+    const was = buf.readUInt32LE(layout.checksumOff);
+    buf.writeUInt32LE(0, layout.checksumOff);
+    writeFileSync(file, buf);
+    /* Whether the field actually MOVED is reported rather than implied. A compiler that left
+     * the checksum at zero makes this a no-op, and a run log that called that a mutation
+     * would be asserting something the bytes do not support. */
+    const patchNote = was === 0
+      ? ', already zero — the field is unchanged'
+      : ` — ${was} bytes of the image changed`;
+
+    const lo = Math.min(...ranges.map((r) => r[0]));
+    const hi = Math.max(...ranges.map((r) => r[1]));
+    return {
+      dir,
+      file,
+      report: `${file}\n`
+        + `              derived in process from ${CORPUS}: ${buf.length} bytes copied, PE CheckSum\n`
+        + `              zeroed at file offset 0x${layout.checksumOff.toString(16)} `
+        + `(was 0x${was.toString(16).padStart(8, '0')}${patchNote}); ${layout.nSections} sections map\n`
+        + `              0x${lo.toString(16)}..0x${hi.toString(16)}, and ${BOGUS_ADDR} is outside all of\n`
+        + `              them — read out of the headers above, not assumed.`,
+    };
+  } catch (e) {
+    /* A directory this function created and then could not use is litter. */
+    try { rmSync(dir, { recursive: true, force: true }); } catch { /* best effort */ }
+    throw e;
+  }
+}
+
+/** Remove the fixture directory. Called from the teardown `finally`, awaited, and safe to call
+ *  twice.
+ *
+ *  RETRIES, because this is measurably not instant on Windows. IDA holds its .id0/.id1/.nam
+ *  open until the worker that wrote them is gone, and a delete attempted inside that window
+ *  fails with ERROR_SHARING_VIOLATION — os error 32, EBUSY. A first cut of this file swallowed
+ *  that with `catch {}`, which is how a run was observed to print "leaves nothing behind" while
+ *  leaving a directory full of locked IDA databases in %TEMP%. The inner `maxRetries` covers
+ *  the transient lock; the outer loop covers the not-yet-transient one, where the worker is a
+ *  second or two from letting go.
+ *
+ *  A FAILURE IS RECORDED, NOT SWALLOWED. The exit code is deliberately left alone — litter in
+ *  %TEMP% is not a statement about the instrument, and exit 1 must keep meaning only "both
+ *  capabilities refused everything they could not honestly satisfy" — but the leftover path and
+ *  the OS error code are printed, so the claim stays falsifiable by whoever reads the log. */
+async function removeFixture() {
+  if (!FIXTURE) return;
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    try {
+      rmSync(FIXTURE.dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+      return;
+    } catch (e) {
+      FIXTURE.removeError = e;
+      if (!existsSync(FIXTURE.dir)) return;      // gone now, whatever the error said
+      if (attempt < 5) await sleep(1000 * attempt);
+    }
+  }
+}
 
 /* --------------------------------------------------------- the mutation vocabulary
  * Each entry replaces the recorded response of one named control with the shape a broken
@@ -179,6 +357,32 @@ function showRaw(title, request, res) {
 const tmpEntries = () => { try { return readdirSync(os.tmpdir()).filter((n) => n.startsWith(TMP_PREFIX)); } catch { return []; } };
 const TMP_BEFORE = tmpEntries();
 
+/* The fixture is built HERE rather than at the top of main(), for two reasons that both matter.
+ *
+ * main() must never be able to reach an input this file did not create, and provisioning above
+ * that call makes that structural instead of a matter of discipline. TMP_BEFORE is sampled
+ * one line higher precisely so the count the teardown compares against was taken BEFORE this
+ * directory existed — otherwise the teardown would be grading its own litter.
+ *
+ * It is module scope because the `finally` that removes it is module scope too (see the
+ * teardown). A fixture whose lifetime is a local inside main() is one refactor away from
+ * outliving the process, and `process.exit()` in a `.then()`/`.catch()` chain runs a chained
+ * `.finally()` never — so the removal has to be a real `finally` around the awaited call.
+ *
+ * Both exits above this point — a refused argument, an unknown mutation name — happen above
+ * this line, so a run that is going to be refused never creates a directory in the first place. */
+let FIXTURE = null;
+try {
+  FIXTURE = provisionFixture();
+} catch (e) {
+  console.error(`negative-gate.mjs: could not provision its own fixture: ${e.message}`);
+  console.error('  This gate BUILDS the PE it analyses, in %TEMP%, at run time; it never reads a');
+  console.error('  prepared one. Failing to build it means nothing at all was measured, which is');
+  console.error('  exit 2 and not the drift exit 0: a gate that never reached its subject must not be');
+  console.error('  able to satisfy an `expect_exit: 1`.');
+  process.exit(CAP_UNMEASURED);
+}
+
 /* -------------------------------------------------------------------------------- the run */
 
 async function main() {
@@ -186,17 +390,18 @@ async function main() {
   line('native-lab — NEGATIVE GATE for native.ida.decompile and native.ida.list_functions');
   line('='.repeat(78));
   line(`  instrument  idalib-mcp over MCP on ${MCP}`);
-  line(`  fixture     ${TARGET}   (self-built; the same one tools/loop.mjs uses)`);
+  line(`  fixture     ${FIXTURE.report}`);
   line(`  bogus addr  ${BOGUS_ADDR}   bogus symbol  ${BOGUS_SYMBOL}`);
   line(`  bogus sess  ${BOGUS_SESSION}   bogus selector  ${BOGUS_SELECTOR}`);
   line(`  mutation    ${MUTATE}${MUTATE === 'none' ? '   (a real run)' : '   *** MUTATED RUN — NOT A MEASUREMENT ***'}`);
   line('');
 
   if (!existsSync(IDALIB)) { line(`GATE COULD NOT MEASURE: idalib-mcp missing: ${IDALIB}`); return CAP_UNMEASURED; }
-  if (!existsSync(TARGET)) { line(`GATE COULD NOT MEASURE: our own fixture missing: ${TARGET}`); return CAP_UNMEASURED; }
+  /* No `existsSync(fixture)` guard here: FIXTURE was built and patched above, before main() was
+   * reachable, and a file that does not exist is not a measurement this gate can make. */
   if (!await portFree()) { line(`GATE COULD NOT MEASURE: something is already serving ${MCP}.`); return CAP_UNMEASURED; }
 
-  await withServer(TARGET, async () => {
+  await withServer(FIXTURE.file, async () => {
     const sess = await waitForSession();
     const db = sess.session_id;
     line(`  session     ${db} -> ${sess.filename}`);
@@ -358,7 +563,7 @@ async function main() {
    * command. It has to be HERE, after withServer has released 8745 — see the comment at the old
    * site, which is the measured reason for that placement rather than a stylistic one. */
   rule('[1b] the same refusal through the shipped CLI (native-lab/tools/decompile.mjs)');
-  const cli = spawnSync(process.execPath, [path.join('native-lab', 'tools', 'decompile.mjs'), TARGET, BOGUS_ADDR],
+  const cli = spawnSync(process.execPath, [path.join('native-lab', 'tools', 'decompile.mjs'), FIXTURE.file, BOGUS_ADDR],
     { encoding: 'utf8', windowsHide: true });
   let cliOut = null;
   let cliParsed = true;
@@ -420,24 +625,49 @@ async function main() {
   return CAP_DRIFT;
 }
 
-/* ------------------------------------------------------------------ teardown accounting */
-main().then((code) => {
+/* ------------------------------------------------------------------ teardown accounting
+ * `process.exit()` terminates the process where it stands, so a `.finally()` chained AFTER a
+ * handler that exits is never reached and the fixture directory would outlive every run. The
+ * exits therefore live OUTSIDE the try and the removal happens in the `finally`, which runs on
+ * the resolving path and the throwing one alike, before either exit. This is the one place in
+ * the file where the shape is load-bearing rather than stylistic. */
+let exitCode = null;
+let thrown = null;
+try {
+  exitCode = await main();
+} catch (e) {
+  thrown = e;
+} finally {
+  await removeFixture();
+}
+
+/* Computed once, printed on both paths: the %TEMP% scratch count AND whether this file's own
+ * directory survived. "Leaves nothing behind" has to be a number, not a promise — and a
+ * control that grades itself on it cannot quietly start leaving things. */
+const teardownLine = () => {
   const after = tmpEntries();
+  const fixtureState = !FIXTURE ? 'n/a — never provisioned'
+    : existsSync(FIXTURE.dir)
+      ? `NO — STILL AT ${FIXTURE.dir} (${FIXTURE.removeError?.code ?? 'unknown'}); an idalib worker is most likely still holding its .id0/.id1/.nam. Not fatal to the verdict, but it IS litter, and this line is how you find it.`
+      : 'yes';
+  return `  scratch     ${TMP_PREFIX}* in %TEMP%: ${TMP_BEFORE.length} before, ${after.length} after\n`
+    + `  fixture     directory removed: ${fixtureState}`;
+};
+
+if (thrown) {
   console.log('');
-  console.log(`  scratch     ${TMP_PREFIX}* in %TEMP%: ${TMP_BEFORE.length} before, ${after.length} after`);
-  console.log('  server      idalib-mcp on 8745 killed by withServer\'s finally; port released');
-  console.log(`  ${JSON.stringify(countsOf(checks))}`);
-  process.exit(code);
-}).catch((e) => {
-  const after = tmpEntries();
-  console.log('');
-  console.log(`GATE COULD NOT MEASURE: ${e.stack || e.message}`);
+  console.log(`GATE COULD NOT MEASURE: ${thrown.stack || thrown.message}`);
   console.log('  Exit 2 is deliberately distinct from 1: a gate that could not reach the instrument must');
   console.log('  never be able to satisfy an `expect_exit: 1`, and must never read as the defect it is');
   console.log('  hunting.');
-  console.log(`  scratch     ${TMP_PREFIX}* in %TEMP%: ${TMP_BEFORE.length} before, ${after.length} after`);
+  console.log(teardownLine());
   process.exit(CAP_UNMEASURED);
-});
+}
+console.log('');
+console.log(teardownLine());
+console.log('  server      idalib-mcp on 8745 killed by withServer\'s finally; port released');
+console.log(`  ${JSON.stringify(countsOf(checks))}`);
+process.exit(exitCode);
 
 function countsOf(list) {
   return { total: list.length, pass: list.filter((c) => c.pass).length, fail: list.filter((c) => !c.pass).length };
