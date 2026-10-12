@@ -59,6 +59,9 @@
     },
     "virustotal": {
       "command": "{{DEBUGGER_ROOT}}\\MCP\\bin\\virustotal-mcp.cmd"
+    },
+    "rea": {
+      "command": "{{DEBUGGER_ROOT}}\\MCP\\bin\\rea-mcp.cmd"
     }
   }
 }

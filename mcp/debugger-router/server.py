@@ -41,6 +41,7 @@ BACKEND_META: dict[str, dict[str, str]] = {
     "cheatengine": {"category": "memory", "note": "Cheat Engine Lua bridge; needs CE and bridge loaded for live work."},
     "volatility3": {"category": "memory-forensics", "note": "Volatility3 memory-image forensics; exposes Vol3 plugins as tools."},
     "virustotal": {"category": "threat-intel", "note": "VirusTotal URL/file/IP/domain intel; needs VIRUSTOTAL_API_KEY; sends IOCs to the public VT API."},
+    "rea": {"category": "multi-target", "note": "REA (morluto/rea) — reverse-engineering across native binaries, JS/Electron, .NET, APK, websites, firmware, crashes; npm package rea-agents pinned 6.4.0; native targets need a Ghidra/IDA/Hopper provider, JS/.NET work standalone."},
 }
 
 INSTRUCTIONS = (

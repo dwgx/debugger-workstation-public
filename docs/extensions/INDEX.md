@@ -15,12 +15,13 @@
 | UPX | https://github.com/upx/upx | CLI 加壳/脱壳，适合 SmartCLI。 |
 | ilspycmd | https://www.nuget.org/packages/ilspycmd | ILSpy 控制台，适合 SmartCLI。 |
 | Npcap installer | https://npcap.com/dist/ | 只下载安装包；实时抓包需人装驱动。 |
+| REA (rea-agents) | https://github.com/morluto/rea | 逆向工程 MCP 全家桶（native/JS/Electron/.NET/APK/网站/固件/崩溃）。2026-10-12 装 6.4.0（npm 全局）并接进 MCP 目录 + 路由器（`MCP/bin/rea-mcp.cmd`）。native 目标需 Ghidra/IDA/Hopper provider。 |
 
 ---
 
 ## 1. 本工作站已集成的第三方 MCP backend
 
-详见 `manifests/mcp-backends.json`:17 个 `third_party` 仓库(ILSpy/ReClass/YaraFlux/Apktool/CheatEngine/dnSpy/Frida/ida-pro/ImHex/Wireshark/7-Zip/MobSF/Reqable/radare2/Volatility3/VirusTotal —— 其中 dnSpy 有两个仓库,接入的是 `dnspy-mcp`,`dnspy-mcp-extension` 为 `wired:false` 备用未接入)+ 4 个 `resolved_upstream`(GhidraMCP/jadx-mcp-server/x64dbg-automate/x64dbg-automate-pyclient,后两者合成 x64dbg 一个后端)+ 自研 router/bin。合计 21 个上游 clone 目标,接入 19 个后端(与 `scripts/check_backend_consistency.py` 校验一致)。
+详见 `manifests/mcp-backends.json`:17 个 `third_party` clone 仓库(ILSpy/ReClass/YaraFlux/Apktool/CheatEngine/dnSpy/Frida/ida-pro/ImHex/Wireshark/7-Zip/MobSF/Reqable/radare2/Volatility3/VirusTotal —— 其中 dnSpy 有两个仓库,接入的是 `dnspy-mcp`,`dnspy-mcp-extension` 为 `wired:false` 备用未接入)+ 1 个 npm 全局包(**REA**,`rea-agents@6.4.0`,2026-10-12 接入,不 clone)+ 4 个 `resolved_upstream`(GhidraMCP/jadx-mcp-server/x64dbg-automate/x64dbg-automate-pyclient,后两者合成 x64dbg 一个后端)+ 自研 router/bin。合计 21 个上游 clone 目标,接入 **20 个后端**(与 `scripts/check_backend_consistency.py` 校验一致,2026-10-12 实测)。
 
 ## 2. 候选 MCP server (逆向 / 安全方向,可评估替换或补充)
 

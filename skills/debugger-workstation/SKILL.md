@@ -1,17 +1,14 @@
 ---
 name: debugger-workstation
 description: >-
-  Reverse-engineering workstation (反编译, 逆向, decompile, unpack, 脱壳, Ghidra, IDA, x64dbg,
+  逆向工程工作台（反编译, 逆向, decompile, unpack, 脱壳, Ghidra, IDA, x64dbg,
   JADX, Apktool, Il2CppDumper, AssetRipper, Frida, YARA, capa, FLOSS, PE, .NET, pcap,
-  内存取证, memory forensics, crackme, CTF binary). USE THIS WHENEVER the user mentions a
-  binary, executable, DLL, APK, IPA, JAR, .NET assembly, pcap, memory dump or crash dump, or
-  asks to decompile / disassemble / unpack / deobfuscate / analyse / reverse / 逆向 / 脱壳
-  anything — EVEN IF they never say the word "reverse" and even if they only paste a path.
-  Do not wait to be named. DO NOT USE for readable source code, for a live network host
-  rather than an artifact, or when nothing on disk is being analysed. Carries the traps that
-  make an otherwise-correct agent answer wrong: the PASS-line counting error, the IDA
-  isError=false failure shape, the Start-Process stdin trap, and the per-tool-directory
-  path rule. MCP is debugger-router only; never dump 19 backends into user-global MCP.
+  内存取证, memory forensics, crackme, CTF binary）。用户提到二进制、可执行文件、DLL、APK、IPA、JAR、
+  .NET 程序集、pcap、内存转储或崩溃转储，或要求反编译 / 反汇编 / 脱壳 / 去混淆 / 分析 / 逆向
+  任何东西时——一律用本 skill，哪怕他从没说过「逆向」二字，哪怕只贴了一条路径。不用等人点名。
+  不可用于：可读的源码、活的网络主机（而不是制品）、或盘上没有任何东西在被分析时。它带着那些
+  会让本来正确的 agent 答错的坑：PASS 行计数错误、IDA 的 isError=false 失败形态、Start-Process
+  的 stdin 陷阱、以及按工具分目录的路径规则。MCP 只挂 debugger-router；绝不把 19 个后端倒进用户全局 MCP。
 ---
 
 # debugger-workstation
@@ -207,7 +204,7 @@ and DAP is entry #7, both in §2.
 | MCP tool call | `references\mcp-router.md` |
 | Agent CLI (no GUI) | `references\agent-cli.md` |
 | Deep combo | [../../docs/EXPERT_PLAYBOOK.md](../../docs/EXPERT_PLAYBOOK.md) |
-| Knowledge: techniques, tools, papers | `<private-tree>\wiki\methods\arsenal-skill-index.md` — **155 entries, 194 URLs**, each with what it solves and an adopt verdict |
+| Knowledge: techniques, tools, papers | `<private-tree>\wiki\methods\arsenal-skill-index.md` — **164 entries, 209 distinct URLs** (counted 2026-10-12), each with what it solves and an adopt verdict |
 | Knowledge: the web research behind it | `<private-tree>\wiki\methods\arsenal-research-dossier.md` |
 
 ---
@@ -223,6 +220,10 @@ and DAP is entry #7, both in §2.
 **"It was on the disk" is not authorization.** If a capability needs a target you do not have,
 the unblock is a sentence from the Owner naming one — not a technique. Same for anything on a
 HackerOne submission button, anything that installs a driver, and any untrusted sample.
+
+> **2026-10-12 Owner 常驻授权（军火库全开）**：他原话「他们就是军火武器库 什么限制都没有」——
+> 「要授权」对 omp 运维线不再构成逐事许可门。**本节保留为站自己的来源合规设计**：
+> 第三方对象仍要可查来源（il2cpp-probe.ps1 的门照跑）；技术安全线照旧。
 
 ---
 

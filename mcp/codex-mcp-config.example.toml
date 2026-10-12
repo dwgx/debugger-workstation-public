@@ -86,6 +86,10 @@ enabled = false
 command = "{{DEBUGGER_ROOT}}\\MCP\\bin\\virustotal-mcp.cmd"
 enabled = false
 
+[mcp_servers.rea]
+command = "{{DEBUGGER_ROOT}}\\MCP\\bin\\rea-mcp.cmd"
+enabled = false
+
 # Suggested profiles:
 #
 # [profiles.mcp-mobile]
@@ -121,7 +125,7 @@ enabled = false
 # mcp_servers.virustotal.enabled = true
 # mcp_servers.yaraflux.enabled = true
 #
-# [profiles.mcp-all]   # 全部 19 个后端,仅在需要全量直连/冒烟时用
+# [profiles.mcp-all]   # 全部 20 个后端,仅在需要全量直连/冒烟时用
 # mcp_servers.ghidra.enabled = true
 # mcp_servers.ida.enabled = true
 # mcp_servers.radare2.enabled = true
@@ -141,3 +145,4 @@ enabled = false
 # mcp_servers.cheatengine.enabled = true
 # mcp_servers.volatility3.enabled = true
 # mcp_servers.virustotal.enabled = true
+# mcp_servers.rea.enabled = true

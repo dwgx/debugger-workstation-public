@@ -1,9 +1,8 @@
 ---
 name: debugger-review
 description: >-
-  Dual-axis review and after-action learning for reverse-engineering jobs.
-  Auto-apply when finishing unpack/RE/bootstrap/tool-download work, or when
-  the user says debugger review / 评分 / 进化 / 收尾. Writes Reports/ and notes/.
+  逆向工程作业的双轴评审与事后学习。完成 unpack/RE/引导/工具下载类活时自动应用，
+  或用户说 debugger review / 评分 / 进化 / 收尾 时应用。写 Reports/ 与 notes/。
 ---
 
 # debugger-review

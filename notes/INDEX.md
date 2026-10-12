@@ -4,6 +4,9 @@ Newest first. Protocol: `docs/AGENT_EVOLUTION.md`. Do not commit sample hashes, 
 
 | Date | File | Status | Topic |
 |---|---|---|---|
+| 2026-10-12 | [2026-10-12-assert-probes-red-step-is-a-skill-md-parse-limit.md](2026-10-12-assert-probes-red-step-is-a-skill-md-parse-limit.md) | observed | assert-probes-red-step-is-a-skill-md-parse-limit |
+| 2026-10-12 | [2026-10-12-il2cpp-probe-no-target-parameter.md](2026-10-12-il2cpp-probe-no-target-parameter.md) | observed | il2cpp-probe-no-target-parameter |
+| 2026-10-11 | [2026-10-11-wb-signup-gate-is-server-side.md](2026-10-11-wb-signup-gate-is-server-side.md) | observed | wb-signup-gate-is-server-side |
 | 2026-09-30 | [2026-09-30-fuzz-lab.md](2026-09-30-fuzz-lab.md) | verified | D11 fuzzing lane: self-authored mutation fuzzer + differential oracle; 4 real parser defects found and fixed |
 | 2026-09-30 | [2026-09-30-crypto-lab.md](2026-09-30-crypto-lab.md) | verified | D9 JWT/token lane: analyzer + 4 buggy verifiers + jsonwebtoken/PyJWT cross-check |
 | 2026-09-30 | [2026-09-30-web-reverse-lab.md](2026-09-30-web-reverse-lab.md) | verified | Web/JS reverse loop: CDP capture -> key recovery -> out-of-browser replay |
