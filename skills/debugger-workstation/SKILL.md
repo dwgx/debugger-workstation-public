@@ -36,11 +36,18 @@ of a VM.
 powershell -File scripts\verify-all.ps1
 ```
 
-23 steps, **both** trees (the station's gates and the wiki tree's own structure), prints its
+25 steps, **both** trees (the station's gates and the wiki tree's own structure), prints its
 own wall clock. **It does not strictly mean "everything passed":** a *skipped* proof forces
 exit 0, and the script's own comment says "a skipped proof is not a passing proof". Read the
 step list, not just the exit code. `[UNVERIFIED]` the 10:28 wall clock — that figure was never
 written to `evidence/`, so it is chat, not memory (§9).
+
+**Wall-clock expectation (measured 2026-10-12):** the full chain **exceeds 15 minutes** —
+`assert-probes fuzz.differential.parse` alone measures 634–663 s (load-sensitive, its own
+`runtime_note`), plus `crosscompare` 143 s, plus the 420 s bounded sweep. A 900 s command
+timeout will kill it mid-chain. Either raise the caller's timeout or read the partial output
+knowing the slow entries come last; the fast sweep (25 entries: 22 OK / 3 SKIP) completes
+inside 900 s and is the load-bearing part.
 
 If you only want the labs exercised:
 
