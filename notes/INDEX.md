@@ -4,6 +4,8 @@ Newest first. Protocol: `docs/AGENT_EVOLUTION.md`. Do not commit sample hashes, 
 
 | Date | File | Status | Topic |
 |---|---|---|---|
+| 2026-10-12 | [2026-10-12-rea-and-ida-session-lessons.md](2026-10-12-rea-and-ida-session-lessons.md) | verified | rea-and-ida-session-lessons |
+| 2026-10-12 | [2026-10-12-il2cpp-probe-target-and-availability.md](2026-10-12-il2cpp-probe-target-and-availability.md) | verified | il2cpp-probe-target-and-availability |
 | 2026-10-12 | [2026-10-12-assert-probes-red-step-is-a-skill-md-parse-limit.md](2026-10-12-assert-probes-red-step-is-a-skill-md-parse-limit.md) | observed | assert-probes-red-step-is-a-skill-md-parse-limit |
 | 2026-10-12 | [2026-10-12-il2cpp-probe-no-target-parameter.md](2026-10-12-il2cpp-probe-no-target-parameter.md) | observed | il2cpp-probe-no-target-parameter |
 | 2026-10-11 | [2026-10-11-wb-signup-gate-is-server-side.md](2026-10-11-wb-signup-gate-is-server-side.md) | observed | wb-signup-gate-is-server-side |
@@ -18,3 +20,4 @@ Newest first. Protocol: `docs/AGENT_EVOLUTION.md`. Do not commit sample hashes, 
 | 2026-09-08 | [2026-09-08-download-dry-run-isolation.md](2026-09-08-download-dry-run-isolation.md) | verified | download-dry-run-isolation |
 | 2026-09-01 | [2026-09-01-github-api-use-gh.md](2026-09-01-github-api-use-gh.md) | verified | Prefer `gh api` when unauthenticated GitHub REST 403s |
 | 2026-09-01 | [2026-09-01-windows-inplace-bootstrap.md](2026-09-01-windows-inplace-bootstrap.md) | verified | NTFS `mcp`/`MCP` self-copy; Defender PUA on capa |
+| 2026-10-12 | [2026-10-12-verify-sweep-intermittent-flaky.md](2026-10-12-verify-sweep-intermittent-flaky.md) | observed | verify-all fast sweep: 1 FLAKY in 3 runs, entry name not captured (tail-only logging); re-run on idle machine with full output |
