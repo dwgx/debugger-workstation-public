@@ -166,32 +166,36 @@ python scripts\assert-probes.py --list
 Prints a `SKIP` with a reason for each. That reason is a claim about the world, not about the
 script — verify it before you relay it (§2.3 is what happens when you don't).
 
-**23 of 27 are `state: observed`. That is NOT the same as "falsifiable".** Only **25 of 27**
-declare `probe.produces` — a path-bound artifact whose bytes must land on disk during the run.
-The rest are verified by **string matching**, and `assert-probes.py` says so itself on every OK:
-*"this entry declares no probe.produces, so this checker matched STRINGS only, and a stub which
-prints them satisfies it."*
+**Registry state, re-measured 2026-10-12** (`python scripts/registry-verify.py`; figures derive
+via `doc-facts.py`'s own functions):
 
-**So do not tell anyone 23 capabilities are cryptographically bound.** Say: 23 observed,
-**25 artifact-bound** -- **all 23 observed capabilities**. The two without are
-`dynamic.device.frida` (no device) and `native.crosscompare.ghidra` (no runnable command). The gap is the honest measure of what a stub could still fake here.
-Closing it is mechanical — `scripts/probe_artifact.py` does it in one call per probe — and it is
-the next thing to close.
+```
+28 capabilities: 25 observed · 2 absent · 1 blocked
+23 of 28 bound to a retained artifact (probe.run_log + sha256) — 27 runnable controls + 1 declared plan
+```
 
-The four that are genuinely unavailable — saying so is the correct answer:
+**Do not say "23 of 27"** — that was true before `native.yara.triage` was registered. And the
+two observed-but-**unbound** capabilities are now `native.crosscompare.ghidra` and
+`native.yara.triage` (**not** the IDA pair; those gained bindings). The unbound two are verified
+by **string matching only**, and `assert-probes.py` says so itself on every OK: *"this entry
+declares no probe.produces, so this checker matched STRINGS only, and a stub which prints them
+satisfies it."* Closing that gap is mechanical — `scripts/probe_artifact.py` does it per probe.
 
-| capability | state | why |
+The **three** that are genuinely unavailable — saying so is the correct answer:
+
+|capability|state|why|
 |---|---|---|
-| `dynamic.device.frida` | absent | no Android device attached |
-| `native.il2cpp.symbols` | absent | **no authorized IL2CPP artifact** — see §6 |
-| `native.ghidra.emulate` | blocked | the Ghidra emulator API; successor identified, buildable |
-| `native.crosscompare.ghidra` | planned | no runnable command yet |
+|`dynamic.device.frida`|absent|no Android device attached|
+|`native.il2cpp.symbols`|absent|**no authorized IL2CPP artifact** — see §6|
+|`native.ghidra.emulate`|blocked|the Ghidra emulator API; successor identified, buildable|
+
+And the two observed-but-unbound (`native.crosscompare.ghidra`, `native.yara.triage`) are
+**runnable but not yet artifact-bound** — the gap to close with `probe_artifact.py`.
 
 **Not in the registry at all**, so do not plan around them: kernel/driver RE, symbolic
 execution, DAP (debug adapter protocol). All three are in
-`<private-tree>\wiki\methods\arsenal-skill-index.md`, but **not all in §3E–§3F** —
-kernel/driver is §3E and memory forensics §3F, while symbolic execution is entries #8 and #15
-and DAP is entry #7, both in §2.
+`<private-tree>\wiki\methods\arsenal-skill-archive.md` — kernel/driver is §3E and memory
+forensics §3F, while symbolic execution is entries #8 and #15 and DAP is entry #7, both in §2.
 
 ---
 
@@ -204,8 +208,9 @@ and DAP is entry #7, both in §2.
 | MCP tool call | `references\mcp-router.md` |
 | Agent CLI (no GUI) | `references\agent-cli.md` |
 | Deep combo | [../../docs/EXPERT_PLAYBOOK.md](../../docs/EXPERT_PLAYBOOK.md) |
-| Knowledge: techniques, tools, papers | `<private-tree>\wiki\methods\arsenal-skill-index.md` — **164 entries, 209 distinct URLs** (counted 2026-10-12), each with what it solves and an adopt verdict |
+| Knowledge: techniques, tools, papers | `<private-tree>\wiki\ROUTER.md` — **the L1 router** (situation → command → trap, single page); deep entries in `wiki\methods\arsenal-skill-archive.md` (**164 entries, 209 distinct URLs**, counted 2026-10-12) |
 | Knowledge: the web research behind it | `<private-tree>\wiki\methods\arsenal-research-dossier.md` |
+| Knowledge: prompt/workflow research (2026-10-12 round) | `<private-tree>\wiki\methods\prompt-workflow-research-2026-10-12.md` |
 
 ---
 
