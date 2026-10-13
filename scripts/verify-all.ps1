@@ -200,6 +200,24 @@ Step 'doctrine selftest'        { python scripts/arsenal-doctrine-check.py --sel
 # red gate is a gate people learn to ignore. Exemptions print by name.
 Step 'maintenance doctor (report)' { python scripts/maintenance-doctor.py }
 
+# OWNER ATTESTATION, report-only. `scripts/owner-attest.py` mints grants through a fresh
+# Owner nonce answered in his own harness transcript and appends every one to the hash chain in
+# `attest/ledger.jsonl`; a grant minted by calling `gate.ps1 -Action New` directly has no ledger
+# entry. This step re-walks the chain, resolves each evidence reference, and names every
+# `grant.json` under E:\missions that is neither ledgered nor dated before the ledger existed
+# (the 124 pre-layer grants are grandfathered as `pre-attest`; NEVER retro-attest them). The
+# enumeration is the point: skipping the layer becomes a line in this output instead of an
+# invisible string. Report-only, and it stays report-only even when the chain is broken: the
+# python exits 0 unless the chain itself fails to verify, and a non-zero exit here is printed
+# and NOT charged to the suite -- a permanently red gate is a gate people learn to ignore.
+Step 'owner attest ledger (report)' {
+    python scripts/owner-attest.py -Action Verify
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "REPORT-ONLY: owner-attest Verify exited $LASTEXITCODE (broken chain or unreadable ledger) -- not failing the suite; read the lines above." -ForegroundColor Yellow
+        $global:LASTEXITCODE = 0
+    }
+}
+
 $elapsed = (Get-Date) - $t0
 Write-Host ""
 Write-Host ("VERIFY-ALL wall clock {0:mm\:ss}. ONE command, BOTH trees: the station gate set plus" -f $elapsed)

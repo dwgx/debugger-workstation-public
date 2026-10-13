@@ -96,7 +96,7 @@ git에 있습니다. 주인이 **git에서** 편집합니다(`AGENTS.<locale>.md
 2. `-Apply` (라우터 + 로컬 MCP JSON).
 3. 선택적 `-CloneMcp`.
 4. 확인 후 `powershell -File scripts/download-tools.ps1 -Apply`.
-5. 첫 bootstrap에서 백엔드 19개의 환경을 모두 만들지 마세요. 라우터가 필요할 때만 띄웁니다.
+5. 첫 bootstrap에서 백엔드 20개의 환경을 모두 만들지 마세요. 라우터가 필요할 때만 띄웁니다.
 6. 스모크: `capa.exe --version` 등. Defender가 capa를 막으면 `notes/`에 적고 설치된 척하지 마세요.
 7. `skills/debugger-review`로 마무리.
 
@@ -110,10 +110,10 @@ Windows에서 `InstallRoot`가 이 clone이면 `mcp\`와 `MCP\`는 같은 폴더
 
 ## 3. MCP 정책
 
-- 클라이언트 기본은 **`debugger-router`만**. 19개 중 필요한 하나를 켜고 종료합니다.
+- 클라이언트 기본은 **`debugger-router`만**. 20개 중 필요한 하나를 켜고 종료합니다.
 - 전부를 기본으로 올리지 마세요. 직접 프로필: `mcp-mobile` / `mcp-re` / `mcp-net` / `mcp-ce` / `mcp-intel` / `mcp-all`.
 - 템플릿: `mcp/client-mcp.json.template`(클라이언트는 router만 → `.mcp.json` / `.cursor/mcp.json`), `mcp/.mcp.json.template`(router 목록), `mcp/codex-mcp-config.example.toml`. [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md).
-- Claude / Codex / Cursor / Grok **사용자 전역** MCP에 19개를 넣지 마세요.
+- Claude / Codex / Cursor / Grok **사용자 전역** MCP에 20개를 넣지 마세요.
 - 업스트림 목록: `manifests/mcp-backends.json`.
 - 호스트에 이미 IDA MCP(idalib)가 있으면 두 번째 IDA 서버를 추가하지 마세요.
 

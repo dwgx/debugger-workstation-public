@@ -96,7 +96,7 @@ git 内にあり、所有者が **git で**編集します（`AGENTS.<locale>.md
 2. `-Apply`（ルータ + ローカル MCP JSON）。
 3. 任意で `-CloneMcp`。
 4. 許可後に `powershell -File scripts/download-tools.ps1 -Apply`。
-5. 初回に 19 バックエンド全部の環境を作らない。ルータが必要になったものだけ起動する。
+5. 初回に 20 バックエンド全部の環境を作らない。ルータが必要になったものだけ起動する。
 6. スモーク：`capa.exe --version` など。Defender が capa を止めたら `notes/` に書き、入ったふりをしない。
 7. `skills/debugger-review` で締める。
 
@@ -110,10 +110,10 @@ Windows で `InstallRoot` がこの clone 自身なら `mcp\` と `MCP\` は同�
 
 ## 3. MCP 方針
 
-- クライアント既定は **`debugger-router` のみ**。19 バックエンドのうち必要な 1 つを起動して終了。
+- クライアント既定は **`debugger-router` のみ**。20 バックエンドのうち必要な 1 つを起動して終了。
 - 全部を一度に載せない。直結プロファイル：`mcp-mobile` / `mcp-re` / `mcp-net` / `mcp-ce` / `mcp-intel` / `mcp-all`。
 - テンプレート：`mcp/client-mcp.json.template`（クライアントは router のみ → `.mcp.json` / `.cursor/mcp.json`）、`mcp/.mcp.json.template`（router 用インベントリ）、`mcp/codex-mcp-config.example.toml`。[docs/BOOTSTRAP.md](docs/BOOTSTRAP.md)。
-- Claude / Codex / Cursor / Grok の**ユーザーグローバル** MCP に 19 本を入れない。
+- Claude / Codex / Cursor / Grok の**ユーザーグローバル** MCP に 20 本を入れない。
 - 上流一覧：`manifests/mcp-backends.json`。
 - 既に IDA MCP（idalib）があるホストに、二本目の IDA サーバを足さない。
 

@@ -117,7 +117,7 @@ List directories, clones, downloads, and generated config. Wait for confirmation
 2. `-Apply` (router + local MCP JSON).
 3. Optional `-CloneMcp`.
 4. `powershell -File scripts/download-tools.ps1 -Apply` when the owner confirms.
-5. Do **not** build all 19 backend environments on first bootstrap. The router starts a backend on demand.
+5. Do **not** build all 20 backend environments on first bootstrap. The router starts a backend on demand.
 6. Smoke: `capa.exe --version`, `7z.exe`, `jadx.bat --version` as available. If Defender blocks capa, write `notes/` — do not pretend it is installed.
 7. Finish with `skills/debugger-review`.
 
@@ -131,10 +131,10 @@ What landed, what was skipped, leftover risk.
 
 ## 3. MCP policy
 
-- Default client MCP: **only** `debugger-router`. It starts one of 19 backends on demand and exits.
+- Default client MCP: **only** `debugger-router`. It starts one of 20 backends on demand and exits.
 - Do not load every backend by default. Direct profiles: `mcp-mobile` / `mcp-re` / `mcp-net` / `mcp-ce` / `mcp-intel` / `mcp-all`.
 - Templates: `mcp/client-mcp.json.template` (client: router only → `.mcp.json` / `.cursor/mcp.json`), `mcp/.mcp.json.template` (router inventory → `MCP/.mcp.json`), `mcp/codex-mcp-config.example.toml` (`{{DEBUGGER_ROOT}}`). See [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md).
-- Never put the 19 backends into Claude / Codex / Cursor / Grok **user-global** MCP.
+- Never put the 20 backends into Claude / Codex / Cursor / Grok **user-global** MCP.
 - Upstream list: `manifests/mcp-backends.json`.
 - If the host already has an IDA MCP (idalib), do not add a second IDA server.
 
@@ -181,6 +181,10 @@ Still brief-then-follow for lab ops:
 
 Repo rules:
 
+- Mint grants only through `scripts/owner-attest.py` (Challenge → the Owner's nonce reply →
+  Mint); a grant minted by calling `gate.ps1 -Action New` directly is unledgered and the next
+  `verify-all.ps1` flags it as UNLEDGERED. The nonce layer is advisory — the hash chain in
+  `attest/ledger.jsonl` is what makes skipping it visible.
 - No third-party binaries in git. Official sources only (`DISCLAIMER.md`).
 - No `.env`, API keys, pcaps, dumps, APKs, Cheat Engine tables in git.
 - Security testing, CTF, research, and education.

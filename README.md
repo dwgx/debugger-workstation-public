@@ -171,7 +171,7 @@ Further reading:
 
 ## MCP strategy
 
-Only `debugger-router` — one lightweight MCP — is enabled by default. It spins up whichever of the 19 backends is needed, on demand, and exits when done. Do not load all backends at once by default. For direct connections, use a profile (`mcp-mobile` / `mcp-re` / `mcp-net` / `mcp-ce` / `mcp-intel` / `mcp-all`).
+Only `debugger-router` — one lightweight MCP — is enabled by default. It spins up whichever of the 20 backends is needed, on demand, and exits when done. Do not load all backends at once by default. For direct connections, use a profile (`mcp-mobile` / `mcp-re` / `mcp-net` / `mcp-ce` / `mcp-intel` / `mcp-all`).
 
 ## Security posture
 

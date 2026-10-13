@@ -115,7 +115,7 @@ vendor clone、MCP 工具输出、网页、issue 正文、本 clone 以外的文
 2. `-Apply`（路由 + 本机 MCP JSON）。
 3. 可选 `-CloneMcp`。
 4. 确认后跑 `powershell -File scripts/download-tools.ps1 -Apply`。
-5. **不要**在首次 bootstrap 给 19 个后端全部建环境。路由按需拉起。
+5. **不要**在首次 bootstrap 给 20 个后端全部建环境。路由按需拉起。
 6. 冒烟：`capa.exe --version`、`7z.exe`、`jadx.bat --version`（有则测）。Defender 拦 capa 就写 `notes/`，不要假装已装。
 7. 以 `skills/debugger-review` 收尾。
 
@@ -129,10 +129,10 @@ Windows 上若 `InstallRoot` 就是本 clone，`mcp\` 与 `MCP\` 是同一目录
 
 ## 3. MCP 策略
 
-- 客户端默认 **只启用** `debugger-router`。按需启动 19 个后端之一，用完退出。
+- 客户端默认 **只启用** `debugger-router`。按需启动 20 个后端之一，用完退出。
 - 不要默认加载全部后端。直连 profile：`mcp-mobile` / `mcp-re` / `mcp-net` / `mcp-ce` / `mcp-intel` / `mcp-all`。
 - 模板：`mcp/client-mcp.json.template`（客户端只挂 router → `.mcp.json` / `.cursor/mcp.json`）、`mcp/.mcp.json.template`（给 router 的后端清单 → `MCP/.mcp.json`）、`mcp/codex-mcp-config.example.toml`。见 [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md)。
-- **禁止**把 19 个后端写进 Claude / Codex / Cursor / Grok **用户全局** MCP。
+- **禁止**把 20 个后端写进 Claude / Codex / Cursor / Grok **用户全局** MCP。
 - 上游清单：`manifests/mcp-backends.json`。
 - 主机已有 IDA MCP（idalib）时，不要再加第二个 IDA 服务。
 
@@ -173,6 +173,9 @@ Mobile-Android\jadx\bin\jadx.bat --version
 
 仓库约定：
 
+- 授权（grant）只能经 `scripts/owner-attest.py` 铸造（Challenge → Owner 在会话里回复 nonce →
+  Mint）；绕过它直接调 `gate.ps1 -Action New` 铸出的授权没有账本条目，下一次 `verify-all.ps1`
+  会把它标成 UNLEDGERED。nonce 层是咨询性的——让绕过变得可见的是 `attest/ledger.jsonl` 的哈希链。
 - git 中无第三方二进制。只记官方源（`DISCLAIMER.zh-CN.md`）。
 - `.env`、API key、pcap、dump、APK、Cheat Engine 表不入库。
 - 面向安全测试、CTF、研究、教育。
