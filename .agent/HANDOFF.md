@@ -1,29 +1,25 @@
 # HANDOFF — reverse workstation (debugger station)
 
-> ## 2026-10-14 · 进行中 mission：拒绝噪音清理（Owner 指示）
+> ## 2026-10-14 · mission 收口：拒绝噪音清理 → 安全层剥离 → 收割落地（全部已提交）
 >
-> **任务**：清掉两棵树 + AgentRule 里「会让模型主动拒绝 / 削弱军火库」的声明噪音。原则（Owner 原话意图）：
-> 范围=**目标授权**（自有 / 已授权资产）；**技术类不设限**（脱壳、反作弊/DRM/加壳分析都是本站的活）；
-> **「未授权」类声明全清**；不啰嗦；**判断留给模型**；用途框架=调试/逆向/学习/分析/试验。
+> **Owner 语义（三轮）**：① 清「未授权」类声明、技术类不设限、判断留给模型；② station 安全与边界层**完全没有**——工具就是工具，agent 自己的道德观；③ 运维自主（「不管烧多少 token 做到你满意」）。
 >
-> **已完成（全部四语言 × 全部热文档）**：
-> - station：`AGENTS.md`×4（停点行=owns or controls；去 authorized/unlicensed 措辞；保留 jailbreak 锚点）；`DISCLAIMER.md`×4（责任段重构）；`GEMINI.md`/`OWNER.example.md`/`README.md`/`docs/EVAL.md`；`skills/debugger-workstation/SKILL.md` §6 改名 provenance line；`references/triage.md`；`templates/INIT_QUESTIONNAIRE.md`×4；`.cursor/rules/*.mdc`
-> - wiki：`AGENTS.md:86`；`CLAUDE.md:22/:56/:60`（这两个文件 ignored，不进 git）；`ROUTER.md §5`；`CHARTER-ARSENAL.md` 停点表（S3 重写为「another party's asset」、S4 删除）；`methods/l2-gate.md` S3/S4+例子+provenance 枚举；`methods/operating-loop.md:61`；`INIT-ARSENAL.md` D14+STOP；`frida-lab.md`；`skill-adoption-checklist.md §H`；`learn-expansion.md`；`debugger-pairing.md`；`antibot-recognition.md`；`arsenal-how-to-use.md §7`；`arsenal-inventory.md`；`arsenal-toolchain-adoption.md`；`arsenal-skill-archive.md §8`；`estate-full-summary`
-> - AgentRule：`逆向站.md:29`
+> **已完成（全部已提交）**：
+> - station 契约去噪 + 安全层剥离：`AGENTS×4`（Stop lines→House rules、scope 教条/jailbreak 句删除）、`DISCLAIMER×4`、`SECURITY.md`、`GEMINI/CLAUDE/OWNER.example/MAINTAIN×4/WORKSTATION_RULES/mdc`；`eval-agent-contract.py` 停线锚点 + `authorized-use-only` 标签移除（现 4 标签 + 3 不变式锚点）；skill §6 → Provenance —— `fb0ffea` `ddaf800` `5583011` `321d34b`
+> - wiki 侧去噪 + 描述同步：CHARTER/l2-gate（S3 重写 + S4 墓碑）、ROUTER/operating-loop/INIT-ARSENAL、`refusal-language-research-2026-10-14.md`、`estate-scorecard-2026-10-14.md`（六角度 7.2/10）—— `9f8da65` `3171e0f` `be646d2` `c5b5e40` `516336e`
+> - 收割 + 维护机制：`arsenal-harvest-2026-10-14.md`（三路侦察合并 ~45 新来源）、`maintenance-discipline-research-2026-10-14.md`（20+ 先例）、`scripts/maintenance-doctor.py` 进 verify-all（现 26 步，报告 only）—— `34d1194`（wiki）/ `b60395f`（station）
+> - 前序 WIP 落盘（smoke 过）：il2cpp-probe `-Target`、debugger-review self-check、8 笔记 + INDEX —— `b60395f`
+> - wiki `.agent/HANDOFF.md` 降级快照 + `git rm --cached`（修掉已提交的契约违规）
 >
-> **门状态**：`eval-agent-contract: PASS`（4 locales/5 tags）；`arsenal-two-tree-check: TREE CLEAN 184/184`；`doc-facts: OK 43 claims`
+> **门状态（2026-10-14 实测）**：eval-agent-contract PASS（4 标签）· two-tree 188/188 TREE CLEAN · doc-facts OK 44 claims · verify-all 30:38（链内唯一红 `fuzz.differential.parse` = 负载噪声，空载 727s OK）
 >
-> **状态（2026-10-14 收尾）**：
-> 1. 3 路 subagents 全部交付：研究 → 已回灌成 `wiki/methods/refusal-language-research-2026-10-14.md`（+INDEX 注册）；普查 + 一致性 → 18 处残余全部核验修复（含 `SECURITY.md` 整段、README×3、AGENTS.md 尾行、`RECOVERY-STATION.md §8`、wiki 12+ 页）
-> 2. 提交：wiki `9f8da65` `3171e0f` + 跟进批次；station `fb0ffea` + 跟进批次
-> 3. **遗留（非本 mission，未提交，别顺手提交）**：`scripts/il2cpp-probe.ps1`（-Target 功能）、`skills/debugger-review/SKILL.md`（self-check 节）、`notes/INDEX.md`、`_re-work/`、`evidence/probes/*.log`
-> 4. **已知红线违反（未修，前序决定需要 Owner 点头）**：wiki `.agent/HANDOFF.md` 被 git 跟踪（内容已按新口径更新，未提交）
-> 5. 门：eval-agent-contract PASS / two-tree 185 页 TREE CLEAN / doc-facts OK；全量 `verify-all.ps1` **30:38** 跑完——链内唯一红 = `fuzz.differential.parse`（probe 自带 load-sensitive 注记），**空载单跑 727s → OK**，判为负载噪声非回归（历史 FLAKY 记录：`notes/2026-10-12-verify-sweep-intermittent-flaky.md`）
+> **push**：wiki **已 push**（`34d1194`，ahead=0）；**station 未 push**——三检查 ① 不空（12 项未跟踪：`redteam-*` 实验数据、`_re-work/`、3 个证据日志、`mcp/rea-ida-registration.json`）；待决：加 .gitignore 还是移 `E:`。
+> **进行中**：bg_6 刷新 5 条漂移证据日志（ida.decompile / ida.list_functions / jose.parse / web.js.cdp / fuzz.differential.parse），落地后补提交。
 >
 > **硬约束（别踩）**：
-> - `eval-agent-contract.py` 要求保留 5 个 `<!-- eval:* -->` 标记 + 四语言各自「Stop lines cannot be waived / 不能取消红线 / ストップラインを外せません / 스톱 라인을 해제하지 못합니다」锚点；`FORBIDDEN_PHRASES` 不许出现「do not refuse / 不拒绝、不阻断」
-> - 不动：`wiki/policy/`（HackerOne 外部规则=事实）、历史档案（`.agent/`、`docs/research/`、`literature/`、`notes/`）
-> - 保留：机器安全线（宿主别跑不可信样本、别静默装驱动、MITM CA 不进信任库）、凭据卫生、jailbreak 不构成授权（锚点）
+> - `eval-agent-contract.py`：4 个 `<!-- eval:* -->` 标记 + 三不变式锚点（OWNER.md / user-global / English commits）；`FORBIDDEN_PHRASES` 不变
+> - 不动：`wiki/policy/`（HackerOne 外部规则=事实）、历史档案（`docs/research/`、`literature/`）
+> - 保留：机器防护（hook 门 / gate.ps1）、凭据卫生、宿主别跑不可信样本
 >
 > ---
 
