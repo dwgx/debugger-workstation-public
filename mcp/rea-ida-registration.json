@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "ida-pro-mcp": {
+      "command": "D:\\Software\\Developer\\Python314\\Scripts\\idalib-mcp.exe",
+      "args": ["--stdio"]
+    }
+  }
+}

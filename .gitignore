@@ -216,6 +216,17 @@ scripts/mission-ablate-*.ps1
 # category as the out/ rules -- regenerated every run, never an input, never evidence.
 STRAY-EXTRA/
 
+# redteam-v2/ and redteam-baseline/ are another line's ACTIVE experiment output (the
+# romantic/kiro sessions were using them 2026-10-14). Declared non-content rather than
+# moved, because moving someone else's working tree is the riskier act. If that line
+# decides to track them, delete these two lines.
+/redteam-v2/
+/redteam-baseline/
+
+# _re-work/ holds 106 MB of driver samples -- runtime data, belongs on E: per the
+# charter. Ignored so the working tree stops reporting it; not moved, it is in use.
+/_re-work/
+
 # A three-line throwaway I wrote on 2026-10-05 to run one probe by hand (a BOM-prefixed
 # ps1 holding `node fuzz-lab/tools/loop.mjs --budget 40` and `exit $LASTEXITCODE`).
 # assert-probes.py runs every command itself; the file was never referenced by anything.

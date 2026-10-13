@@ -1,0 +1,1 @@
+{"chain": [{"capability": "native.pe.packer", "ok": true, "round": 1, "facts": ["x"]}, {"capability": "net.pcap.selfparse", "ok": true, "round": 1, "facts": ["x"]}, {"capability": "native.behaviour.capa", "ok": true, "round": 1, "facts": ["x"]}, {"capability": "native.ida.decompile", "ok": true, "round": 1, "facts": ["x"]}]}
