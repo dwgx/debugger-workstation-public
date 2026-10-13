@@ -216,10 +216,11 @@ scripts/mission-ablate-*.ps1
 # category as the out/ rules -- regenerated every run, never an input, never evidence.
 STRAY-EXTRA/
 
-# redteam-v2/ and redteam-baseline/ are another line's ACTIVE experiment output (the
-# romantic/kiro sessions were using them 2026-10-14). Declared non-content rather than
-# moved, because moving someone else's working tree is the riskier act. If that line
-# decides to track them, delete these two lines.
+# redteam-v2/ and redteam-baseline/ are another line's experiment output (the launcher
+# session's OMP-LC-REDTEAM1 workers -- 32/64 refs in the launcher session, 0 refs in the
+# romantic/kiro sessions; corrected 2026-10-14 by a read-only station-users survey).
+# Declared non-content rather than moved, because moving someone else's working tree is
+# the riskier act. If that line decides to track them, delete these two lines.
 /redteam-v2/
 /redteam-baseline/
 

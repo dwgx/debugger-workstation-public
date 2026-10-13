@@ -13,8 +13,9 @@
 >
 > **门状态（2026-10-14 实测）**：eval-agent-contract PASS（4 标签）· two-tree 188/188 TREE CLEAN · doc-facts OK 44 claims · verify-all 30:38（链内唯一红 `fuzz.differential.parse` = 负载噪声，空载 727s OK）
 >
-> **push**：wiki **已 push**（`34d1194`，ahead=0）；**station 未 push**——三检查 ① 不空（12 项未跟踪：`redteam-*` 实验数据、`_re-work/`、3 个证据日志、`mcp/rea-ida-registration.json`）；待决：加 .gitignore 还是移 `E:`。
-> **进行中**：bg_6 刷新 5 条漂移证据日志（ida.decompile / ida.list_functions / jose.parse / web.js.cdp / fuzz.differential.parse），落地后补提交。
+> **push**：wiki **已 push**（`9b0c9ed` 线，ahead=0）；**station 71 提交已 push（`f49ea3a`，ahead=0）**——三检查 ① 由「记录入库 + `.gitignore` 声明非内容」处置，见下行。
+> **共用声明（2026-10-14 只读普查，`local://station-users-archaeology-2026-10-14.md`）**：本树同时被 3 个 omp 会话使用——`romantic`（<project>\Romantic，net-reverse 实验）、`kiro`（<project>\KiroStudio）、本站 mission。`redteam-v2/`+`redteam-baseline/` = launcher 线的 OMP-LC-REDTEAM1 产物；`_re-work/` = 驱动样本——三者均已 ignore，**不是我们的，别移别删**。动任何文件前先查谁在跑。
+> **2026-10-14 收尾**：`.agent/{audit,verify,tool-blinds,reports}` + `mcp/rea-ida-registration.json` 已入库；5 条漂移证据日志已重跑刷新（`ee9ada9`）；`fuzz.differential.parse` 空载复跑 OK（727s）。
 >
 > **硬约束（别踩）**：
 > - `eval-agent-contract.py`：4 个 `<!-- eval:* -->` 标记 + 三不变式锚点（OWNER.md / user-global / English commits）；`FORBIDDEN_PHRASES` 不变
