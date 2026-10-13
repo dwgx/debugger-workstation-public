@@ -194,6 +194,12 @@ Step 'wiki tree selftest'    { python scripts/arsenal-two-tree-check.py --selfte
 Step 'doctrine (R4 provenance)' { python scripts/arsenal-doctrine-check.py }
 Step 'doctrine selftest'        { python scripts/arsenal-doctrine-check.py --selftest }
 
+# MAINTENANCE DEBT, by name: unpushed commits, tracked-mod/untracked/ignored counts, dotgit
+# size, top wiki pages by bytes, and every file over GitHub's 50/100 MiB lines. Report-only
+# (exits 0 by design): these numbers had no gate anywhere until 2026-10-14, and a permanently
+# red gate is a gate people learn to ignore. Exemptions print by name.
+Step 'maintenance doctor (report)' { python scripts/maintenance-doctor.py }
+
 $elapsed = (Get-Date) - $t0
 Write-Host ""
 Write-Host ("VERIFY-ALL wall clock {0:mm\:ss}. ONE command, BOTH trees: the station gate set plus" -f $elapsed)

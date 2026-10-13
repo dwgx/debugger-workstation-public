@@ -1,8 +1,8 @@
 ---
 name: debugger-review
 description: >-
-  逆向工程作业的双轴评审与事后学习。完成 unpack/RE/引导/工具下载类活时自动应用，
-  或用户说 debugger review / 评分 / 进化 / 收尾 时应用。写 Reports/ 与 notes/。
+  逆向工程作业的双轴评审与事后学习。完成 unpack/RE/引导/工具下载类活后自动应用；
+  用户说 debugger review / 评分 / 进化 / 收尾 时应用。写 Reports/ 与 notes/。
 ---
 
 # debugger-review
@@ -18,7 +18,7 @@ Read `AGENTS.md` then `docs/AGENT_EVOLUTION.md`. This skill is **review + memory
 ## Loop
 
 1. Restate the mission in one sentence (install / unpack / triage / MCP / docs).
-2. List evidence with path + command + exit. Do not upgrade to `verified` without current reconciliation.
+2. List evidence with path + command + exit. Do not upgrade to `verified` without current reconciliation — and note that a self-check is reconciliation of what you wrote, not verification of what you missed (see *Self-check is not verification* below).
 3. Score 0–10 on each axis. Overall = min(standard, spec) if either has a **critical**; else weighted mean (spec 0.55, standard 0.45).
 4. Findings first, ranked. Critical blocks "done".
 5. **Evolve:** if the next agent would repeat a mistake, append `notes/YYYY-MM-DD-slug.md` and link `notes/INDEX.md`. If it is a standing rule, patch `docs/EXPERT_PLAYBOOK.md` or this skill — not chat.
@@ -36,6 +36,26 @@ Step 2 above can run forever. Bounded rule:
   and say so in the review ("verdict at budget, could not settle X") — do not silently drop it.
   *Source: OpenAI GPT-5 cookbook `context_gathering`; the same round measured that unbounded
   "explore thoroughly" instructions produce over-run, and bounded ones produce over-shallow.*
+
+### Self-check is not verification — who checks the checker (2026-10-13, from the dxgkrnl root-cause round)
+
+A re-check script that asserts what you already wrote is a **regression net**, not a review.
+It answers "did what I fixed stay fixed", never "what did I not think of".
+
+Measured case, same day, same material: a 23-assertion re-check passed, the note was marked
+`status: verified`, and an adversarial pass then found **4 wrong supporting claims** — including
+two the author had no reason to doubt (a field's type, and a branch target misread as a return).
+
+- **Outbound material** (issue / PR / mail / report): before it leaves the machine, run one
+  `verifier` whose task text says **falsify**, not confirm. A confirm-shaped brief gets a nod.
+- **The self-check stays** — but label the artifact by what it survived:
+  self-checked only → `observed`; adversarial-checked → `verified`.
+- **Ask the verifier for a counter-finding list**, not a score. "No findings" is only meaningful
+  when the brief named the falsification angles (alternative call sites, omitted writers,
+  misread branch targets).
+
+*Rule of thumb: the check that can prove you right and the check that can find what you missed are
+different checks. Running only the first raises error rates, because it buys false certainty.*
 
 ### Contradiction scan — one mechanical step before scoring
 
@@ -61,7 +81,7 @@ opposite — fixed 2026-10-12.*
 
 ## MCP
 
-Clients attach **debugger-router only**. Catalog `mcp/.mcp.json` is for the router. Never `mcp-all` in Claude / Codex / Cursor / Grok **user** config. If a host already has an IDA MCP (idalib), do not add a second IDA server.
+Policy lives in `skill://debugger-workstation` §7 — one place to change it. Headline: debugger-router only, never `mcp-all` in user config, no second IDA server.
 
 ## Outputs
 

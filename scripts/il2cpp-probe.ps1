@@ -22,15 +22,20 @@
        that cannot tell FAILED-TO-START from WAITING-FOR-A-TARGET will keep inventing
        blockers, and an invented blocker is worse than none because it looks measured.
 
-    1. TARGET. There is no authorized IL2CPP artifact on this host. global-metadata.dat
-       files DO exist here -- in the VIVE Hub installer -- and they are deliberately not
-       used. They are third-party commercial software, and the arsenal gate is explicit:
-       the object must be named by the Owner with checkable provenance, and "it is
-       installed on my machine" is not ownership. Finding a usable target is therefore
-       not a technical problem, it is an authorization one.
+    1. TARGET. This paragraph used to claim there was no Owner-named IL2CPP target on
+       this host. That went STALE on 2026-10-12, when the Owner named IL2CPP artifacts
+       (<project>\Romantic, AGENTS.md "Owner 2026-10-12 常驻授权"). It was also never a
+       measurement: the probe had no target parameter, so it could not look. It now
+       takes -Target <path> [-Metadata <path>] and reports what it actually did. With no
+       -Target it prints [NOT-RUN] rather than a verdict about a run that never happened.
 
 .EXAMPLE
   powershell -File scripts\il2cpp-probe.ps1
+
+.EXAMPLE
+  powershell -File scripts\il2cpp-probe.ps1 -Target D:\Steam\steamapps\common\VRChat\GameAssembly.dll
+  Runs Il2CppDumper against a named artifact and reports the tool's own exit and output,
+  so the capability is measured rather than asserted.
 
 .EXAMPLE
   powershell -File scripts\il2cpp-probe.ps1 -AsControl
@@ -50,7 +55,12 @@
 [CmdletBinding()]
 param(
     [int]$HangBudgetSec = 12,
-    [switch]$AsControl
+    [switch]$AsControl,
+    # Added 2026-10-12. Until this parameter existed the probe could not analyse
+    # anything, so its `TARGET:` block was a hardcoded sentence rather than a
+    # measurement -- and a stale one (see section 3).
+    [string]$Target = '',
+    [string]$Metadata = ''
 )
 
 
@@ -69,6 +79,15 @@ $RepoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $RepoRoot
 
 $tool = Join-Path $RepoRoot 'Unpackers-Game\Il2CppDumper-net6-win-v6.7.46\Il2CppDumper.exe'
+
+# --- 0. target argument (added 2026-10-12) ------------------------------------
+# This probe accepted no target until 2026-10-12, so it never analysed anything and its
+# TARGET block was a hardcoded authorization sentence -- which had also gone stale (an
+# authorized IL2CPP artifact does exist here; see section 3).
+$targetGiven  = -not [string]::IsNullOrWhiteSpace($Target)
+$targetExists = $targetGiven -and (Test-Path -LiteralPath $Target)
+$metaGiven    = -not [string]::IsNullOrWhiteSpace($Metadata)
+$metaExists   = $metaGiven -and (Test-Path -LiteralPath $Metadata)
 
 Write-Host 'IL2CPP capability probe'
 Write-Host ('=' * 78)
@@ -147,50 +166,127 @@ if (Test-Path -LiteralPath $tool) {
     }
 }
 
-# --- 3. authorized target -----------------------------------------------------
-# Deliberately NOT searching for a target to analyse. The point of this line is to
-# record that the question was asked and answered on authorization grounds rather than
-# scoured for on disk.
+# --- 3. target and result -----------------------------------------------------
+# CORRECTED 2026-10-12. Until today this block printed a hardcoded sentence claiming no
+# Owner-named IL2CPP target existed here, which was STALE: the Owner named IL2CPP
+# artifacts on 2026-10-12 (<project>\Romantic, AGENTS.md "Owner 2026-10-12 常驻授权").
+# It was also never a measurement -- the probe had no target parameter, so there was
+# nothing for it to measure. It now takes -Target and reports what it did.
 Write-Host ''
-Write-Host '  TARGET: no authorized IL2CPP artifact exists on this host.'
-Write-Host '  global-metadata.dat files DO exist here, in third-party commercial software'
-Write-Host '  (the VIVE Hub installer). They are deliberately NOT used: the arsenal gate'
-Write-Host '  requires an Owner-named object with checkable provenance, and an installed'
-Write-Host '  third-party binary is not that. Finding a target here is an authorization'
-Write-Host '  question, not a technical one.'
+if (-not $targetGiven) {
+    Write-Host '  TARGET: [NOT-RUN] no -Target was supplied to this invocation.'
+    Write-Host '  Nothing was analysed, so this run demonstrates nothing about the capability.'
+    Write-Host '  CORRECTED 2026-10-12: the old claim that no Owner-named IL2CPP target'
+    Write-Host '  existed here was STALE. Authorized artifacts exist:'
+    Write-Host '    D:\Steam\steamapps\common\VRChat\GameAssembly.dll                        (243,253,248 B)'
+    Write-Host '    D:\Steam\steamapps\common\VRChat\VRChat_Data\il2cpp_data\Metadata\global-metadata.dat'
+    Write-Host '    <project>\Romantic\work\l122\dumps\VRChat_49424_20261012_164330_full.dmp (3,230,363,665 B)'
+    Write-Host '  Provenance: <project>\Romantic (Owner 2026-10-12 authorization, AGENTS.md).'
+} else {
+    Write-Host ('  TARGET: ' + $Target)
+    Write-Host ('  target exists      : ' + $targetExists)
+}
 
-$available = $have6 -and ($behaviour -notmatch 'NO OUTPUT')
+# --- 3b. run the tool on the target, when one was supplied --------------------
+$ranExit   = $null
+$ranOutput = ''
+$ranNote   = ''
+if ($targetGiven -and $targetExists) {
+    $meta = if ($metaExists) { $Metadata } else { '' }
+    if (-not $meta) {
+        # Default: the metadata beside the binary, which is where Il2CppDumper expects it.
+        $cand = @(Get-ChildItem -LiteralPath (Split-Path -Parent $Target) -Recurse `
+                    -Filter 'global-metadata.dat' -ErrorAction SilentlyContinue |
+                  Select-Object -First 1)
+        if ($cand.Count) { $meta = $cand[0].FullName }
+    }
+    if (-not $meta -or -not (Test-Path -LiteralPath $meta)) {
+        $ranNote = 'global-metadata.dat not found; pass -Metadata <path>'
+        Write-Host ('  metadata           : NOT FOUND -- ' + $ranNote)
+    } elseif (-not (Test-Path -LiteralPath $tool)) {
+        $ranNote = 'Il2CppDumper.exe not present at ' + $tool
+        Write-Host ('  run note           : ' + $ranNote)
+    } else {
+        Write-Host ('  metadata           : ' + $meta)
+        $env:DOTNET_ROLL_FORWARD = 'LatestMajor'
+        $psi2 = New-Object System.Diagnostics.ProcessStartInfo
+        $psi2.FileName = $tool
+        $psi2.UseShellExecute = $false
+        $psi2.RedirectStandardInput = $true
+        $psi2.RedirectStandardOutput = $true
+        $psi2.RedirectStandardError = $true
+        # Windows PowerShell 5.1 (this station's powershell.exe) is .NET Framework, whose
+        # ProcessStartInfo has no ArgumentList -- only the Arguments string. Measured
+        # 2026-10-12: ArgumentList threw PropertyNotFoundStrict and the tool was spawned
+        # with NO arguments, so it waited for a prompt and had to be killed. Quote both
+        # paths because the station path contains no spaces but a caller's target may.
+        $psi2.Arguments = '"' + $Target + '" "' + $meta + '"'
+        $p2 = [System.Diagnostics.Process]::Start($psi2)
+        $o2 = $p2.StandardOutput.ReadToEndAsync()
+        $e2 = $p2.StandardError.ReadToEndAsync()
+        if (-not $p2.WaitForExit($HangBudgetSec * 1000)) {
+            try { $p2.Kill() } catch { }
+            $ranNote = "killed after ${HangBudgetSec}s (still running)"
+        } else {
+            $ranExit = $p2.ExitCode
+        }
+        $ranOutput = ((($o2.Result) + ($e2.Result)) -split "`n" |
+                      Where-Object { $_.Trim() } | Select-Object -First 4) -join ' | '
+        Write-Host ('  tool exit          : ' + $(if ($null -eq $ranExit) { 'killed/timeout' } else { $ranExit }))
+        if ($ranOutput) { Write-Host ('  first output       : ' + $ranOutput.Trim()) }
+        if ($ranNote)   { Write-Host ('  run note           : ' + $ranNote) }
+    }
+}
+
+# Availability now depends on a real attempt, not on the runtime inventory alone. Until
+# 2026-10-12 this read `$have6 -and ($behaviour -notmatch 'NO OUTPUT')`: the right half
+# was dead (no $behaviour value contains 'NO OUTPUT') and the left half gated on a 6.x
+# runtime the tool does not need -- with DOTNET_ROLL_FORWARD the net6 build runs on the
+# host 8.x/10.x. So $available was really just "is 6.x installed", a proxy for nothing.
+# The honest test is: was a target analysed and did the tool succeed.
+$runtimeOk = $have6 -or ($behaviour -match '^STARTED OK')
+$ranOk     = ($null -ne $ranExit) -and ($ranExit -eq 0)
+$available = $targetExists -and $ranOk
+
 Write-Host ''
 Write-Host ('=' * 78)
 if ($available) {
-    Write-Host 'IL2CPP AVAILABLE -- the runtime is present and the tool starts.'
+    Write-Host 'IL2CPP AVAILABLE -- the tool ran to completion on the supplied target.'
 } else {
-    Write-Host 'IL2CPP ABSENT -- recorded, not hidden. ONE blocker, not two:'
-    Write-Host '  1. no authorized IL2CPP artifact exists to run it against'
+    Write-Host 'IL2CPP ABSENT -- recorded, not hidden.'
+    if (-not $targetGiven) {
+        Write-Host '  Blocker: [NOT-RUN] no -Target was supplied, so nothing was analysed.'
+    } elseif (-not $targetExists) {
+        Write-Host '  Blocker: the -Target path does not exist.'
+    } elseif (-not $ranOk) {
+        Write-Host ('  Blocker: the tool did not succeed' + $(if ($ranNote) { ' (' + $ranNote + ')' } else { " (exit $ranExit)" }) + '.')
+    }
     Write-Host ''
-    Write-Host '  RETRACTED 2026-10-04: the second blocker this probe used to report --'
-    Write-Host '  "the build is net6 and this host has no 6.x runtime" -- WAS NEVER REAL.'
-    Write-Host '  It came from measuring start-up with no stdin, so a tool blocked on a'
-    Write-Host '  prompt read as a tool that would not launch. Measured directly: without'
-    Write-Host '  roll-forward the process exits 0x80008096 with "You must install or update'
-    Write-Host '  .NET"; with DOTNET_ROLL_FORWARD it starts and waits for a target. The'
-    Write-Host '  runtime was never the obstacle.'
-    Write-Host ''
-    Write-Host 'What would unblock it: the Owner names an IL2CPP binary they own.'
+    Write-Host '  RETRACTED 2026-10-04: the runtime was never the obstacle -- the net6 build'
+    Write-Host '  starts under the host runtimes with DOTNET_ROLL_FORWARD. The old TARGET'
+    Write-Host '  blocker was STALE too; see the TARGET block above.'
 }
-Write-Host ('JSON-SUMMARY {"total":2,"pass":0,"fail":2}')
+$passCount = if ($available) { 2 } else { 0 }
+Write-Host ('JSON-SUMMARY {"total":2,"pass":' + $passCount + ',"fail":' + (2 - $passCount) + '}')
 
 [ordered]@{
     ok            = $false
     state         = 'absent'
     runtime_6x    = $have6
+    runtime_ok    = $runtimeOk
     runtimes      = $runtimes
     tool_present  = (Test-Path -LiteralPath $tool)
     behaviour     = $behaviour
+    target        = $Target
+    target_exists = $targetExists
+    ran_exit      = $ranExit
     blockers      = @(
-        'no authorized IL2CPP artifact; third-party commercial binaries found on this host were deliberately not used'
+        $(if (-not $targetGiven) { '[NOT-RUN] no -Target was supplied to this invocation' }
+          elseif (-not $targetExists) { "the -Target path does not exist: $Target" }
+          elseif (-not $ranOk) { "the tool did not succeed on the target: " + $(if ($ranNote) { $ranNote } else { "exit $ranExit" }) }
+          else { 'none' })
     )
-    unblocked_by  = 'the Owner naming an IL2CPP binary they own'
+    unblocked_by  = 'pass -Target <GameAssembly.dll> [-Metadata <global-metadata.dat>]'
 } | ConvertTo-Json -Depth 5
 
 # --- 4. control polarity -------------------------------------------------------
@@ -218,7 +314,14 @@ if ($AsControl) {
     Write-Host '  instead of counting the .exe, and answers ABSENT.'
     Write-Host '  A run that exits 0 here would mean the tool started and a target existed'
     Write-Host '  -- i.e. that the probe had stopped being able to fail.'
-    Write-ProbeArtifact -Tool 'il2cpp_probe' -OutDir 'probe-artifacts' -Payload ([ordered]@{ ok = $false; verdict = 'ABSENT'; reason = $Message }) | Out-Null
+    # `$Message` was never defined; Set-StrictMode (in probe_artifact.ps1) threw
+    # VariableIsUndefined at parameter binding, so the control's artifact was never
+    # written and the default run's artifact stayed on disk -- the control's evidence was
+    # silently missing (found by lane 128). Fixed 2026-10-12: the reason is now a literal.
+    $controlReason = if (-not $targetGiven) { '[NOT-RUN] no -Target supplied; nothing analysed' }
+                     elseif (-not $targetExists) { "the -Target path does not exist: $Target" }
+                     else { "the tool did not succeed on the target (exit $ranExit)" }
+    Write-ProbeArtifact -Tool 'il2cpp_probe' -OutDir 'probe-artifacts' -Payload ([ordered]@{ ok = $false; verdict = 'ABSENT'; reason = $controlReason }) | Out-Null
     exit 1
 }
 
