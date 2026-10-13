@@ -297,6 +297,6 @@ English contract: [`AGENTS.md`](../AGENTS.md). This cheat-sheet is Chinese. Path
 | 7-Zip MCP | `7zip-mcp.cmd` | 已绑本地 `7z.exe`。 |
 | Cheat Engine MCP | `cheatengine-mcp.cmd` | 需 CE 加载 Lua bridge;默认 `CE_MCP_ALLOW_SHELL=0`(安全关闭),确需任意 shell 才手动改 1。 |
 | Volatility3 MCP | `volatility3-mcp.cmd` | 内存取证,需 Python + dump/raw 镜像。 |
-| VirusTotal MCP | `virustotal-mcp.cmd` | 需 `VIRUSTOTAL_API_KEY`;IOC 发往公网 API,仅授权调查。 |
+| VirusTotal MCP | `virustotal-mcp.cmd` | 需 `VIRUSTOTAL_API_KEY`;IOC 发往公网 API,只用于自己的调查。 |
 
 > 冒烟测试:核心 CLI `--version`,router `smoke_backend <名>`。

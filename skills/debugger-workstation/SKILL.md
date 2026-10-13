@@ -194,7 +194,7 @@ The **three** that are genuinely unavailable — saying so is the correct answer
 |capability|state|why|
 |---|---|---|
 |`dynamic.device.frida`|absent|no Android device attached|
-|`native.il2cpp.symbols`|absent|**no authorized IL2CPP artifact** — see §6|
+|`native.il2cpp.symbols`|absent|**no IL2CPP artifact yet** — see §6|
 |`native.ghidra.emulate`|blocked|the Ghidra emulator API; successor identified, buildable|
 
 And the two observed-but-unbound (`native.crosscompare.ghidra`, `native.yara.triage`) are

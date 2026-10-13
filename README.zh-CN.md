@@ -30,7 +30,7 @@
 | `mcp/debugger-router/server.py` | **自研**轻量 MCP 路由(按需启动后端,默认唯一启用)。 |
 | `mcp/bin/*.cmd` | **自研**后端 MCP 包装脚本(相对路径,可移植)。 |
 | `mcp/.mcp.json.template` | MCP 配置模板,bootstrap 替换 `{{DEBUGGER_ROOT}}`。 |
-| `scripts/download-tools.ps1` | 授权后从官方源拉便携包(`-Apply`)。Npcap 只下安装包,不静默装驱动。 |
+| `scripts/download-tools.ps1` | 确认后从官方源拉便携包(`-Apply`)。Npcap 只下安装包,不静默装驱动。 |
 | `templates/i18n/zh-CN/INIT_QUESTIONNAIRE.md` | 中文初始化问卷。 |
 
 **不包含**(由 `.gitignore` 硬排除):工具二进制、`.env`/凭据、`.venv`/`node_modules`/运行时、样本/pcap/dump、临时工作区、本机 git 历史。
@@ -72,7 +72,7 @@ pwsh scripts\bootstrap.ps1 -Apply -CloneMcp -InstallRoot "D:\Tool\debugger"
 
 ## 安全姿态
 
-工具集含调试器、注入器、Hook、Frida、抓包、内存分析工具,可能触发杀软/EDR。执行高风险操作(安装驱动/服务/Npcap、修改注册表/Defender/启动项、在宿主机运行可疑样本)前,AI 会简要说明后果与回滚方式,用户确认后按意图执行——不会无声操作,也不会拒绝。仅面向**授权的**安全测试、CTF、研究和教育用途。
+工具集含调试器、注入器、Hook、Frida、抓包、内存分析工具,可能触发杀软/EDR。执行高风险操作(安装驱动/服务/Npcap、修改注册表/Defender/启动项、在宿主机运行可疑样本)前,AI 会简要说明后果与回滚方式,用户确认后按意图执行——不会无声操作,也不会拒绝。面向安全测试、CTF、逆向工程、研究和教育用途。
 
 ## 许可
 

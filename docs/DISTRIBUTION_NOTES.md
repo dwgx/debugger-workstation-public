@@ -62,7 +62,7 @@ MCP\codex-mcp-config.example.toml
 - Ghidra/JADX/ImHex/ReClass/Cheat Engine 这类 GUI 或插件型工具，需要对应 GUI、插件、bridge 或本地端口配合。
 - Wireshark 离线 pcap 分析可便携使用；实时抓包仍需要 Npcap/权限。
 - MobSF 真实扫描需要 MobSF 服务 URL/API key。
-- Frida 真实运行时分析需要设备、进程和授权。
+- Frida 真实运行时分析需要设备与命名进程。
 
 ## 分发包应排除
 

@@ -33,6 +33,6 @@ We aim to acknowledge reports within a few days and to coordinate a fix and disc
 
 ## Responsible use / 负责任使用
 
-This workstation aggregates debuggers, injectors, hooks, packet capture, and memory-analysis tooling. It is intended for **authorized** security testing, CTFs, research, and education. Misuse — unauthorized intrusion, circumventing copyright protection or anti-cheat, attacking systems you do not own — is out of scope and unsupported. See [DISCLAIMER.md](DISCLAIMER.md).
+This workstation aggregates debuggers, injectors, hooks, packet capture, and memory-analysis tooling. It is intended for security testing, CTFs, reverse engineering, research, and education — on assets you own or control. See [DISCLAIMER.md](DISCLAIMER.md).
 
-本工作站聚合了调试器、注入器、Hook、抓包与内存分析工具,仅面向**授权的**安全测试、CTF、研究与教育。滥用(未授权入侵、绕过版权保护或反作弊、攻击非自有系统)不在支持范围内。见 [DISCLAIMER.md](DISCLAIMER.md)。
+本工作站聚合了调试器、注入器、Hook、抓包与内存分析工具,面向安全测试、CTF、逆向工程、研究与教育——在你拥有或可控的目标上使用。见 [DISCLAIMER.md](DISCLAIMER.md)。

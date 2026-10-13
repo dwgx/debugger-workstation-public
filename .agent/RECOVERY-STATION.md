@@ -209,14 +209,16 @@ which is the second reason to run validators on real registries rather than fixt
 
 ---
 
-## 8. Stop lines (unchanged)
+## 8. Stop lines (current)
 
 Never `certutil -addstore`, never Reqable's one-click CA, never the Windows system proxy —
 the lab CA lives as files on `E:` and is trusted by a per-instance Chrome SPKI pin.
 No `docker compose up` from `<project>`. No scanning github.com/HackerOne. No HackerOne
-submit. No exploit PoCs, samples, captures, keys or unpacked binaries in either repo. No
-anti-cheat or DRM circumvention. No third-party anti-bot bypass. No untrusted sample on the
+submit. No samples, captures, keys or unpacked binaries in either repo; live payloads aimed at
+third-party targets stay out (own-asset lab PoCs are fine). No bypass tooling aimed at third
+parties. No untrusted sample on the
 host instead of an isolated VM. Running an untrusted sample on the host is a STOP.
+*(2026-10-14: the anti-cheat/DRM technique-class stop was removed — scope is the target, not the technique.)*
 
 **Self-authored targets only for fuzzing.** `tshark`, `Wireshark`, `jadx`, `Volatility` and
 `DiE` are installed third-party parsers and are deliberately **not** targets — a finding

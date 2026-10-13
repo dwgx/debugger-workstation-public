@@ -187,7 +187,7 @@ Repo rules:
 
 - No third-party binaries in git. Official sources only (`DISCLAIMER.md`).
 - No `.env`, API keys, pcaps, dumps, APKs, Cheat Engine tables in git.
-- Authorized security testing, CTF, research, and education only.
+- Security testing, CTF, research, and education.
 
 ---
 
