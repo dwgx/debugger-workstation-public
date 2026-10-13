@@ -37,7 +37,7 @@ Where does the station live?
 ## Q4. Tool binaries
 
 - [ ] User downloads from `manifests/tools.json` official URLs
-- [ ] Authorized `scripts/download-tools.ps1 -Apply` (`gh` preferred)
+- [ ] `scripts/download-tools.ps1 -Apply` (`gh` preferred)
 - Recommended: confirm before any third-party download.
 
 ## Q5. Versions

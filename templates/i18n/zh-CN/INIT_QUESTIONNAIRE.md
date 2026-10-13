@@ -37,7 +37,7 @@ Agent 对话用哪种语言？
 ## Q4. 工具二进制
 
 - [ ] 用户按 `manifests/tools.json` 官方 URL 自下
-- [ ] 授权 `scripts/download-tools.ps1 -Apply`（优先 `gh`）
+- [ ] `scripts/download-tools.ps1 -Apply`（优先 `gh`）
 - 推荐：任何第三方下载前先确认。
 
 ## Q5. 版本

@@ -37,7 +37,7 @@ AI：`bootstrap.ps1 -Apply` または `download-tools.ps1 -Apply` の前に聞�
 ## Q4. ツールバイナリ
 
 - [ ] ユーザーが `manifests/tools.json` の公式 URL から取る
-- [ ] 許可した `scripts/download-tools.ps1 -Apply`（`gh` 優先）
+- [ ] `scripts/download-tools.ps1 -Apply`（`gh` 優先）
 - 推奨：サードパーティのダウンロード前に確認。
 
 ## Q5. バージョン

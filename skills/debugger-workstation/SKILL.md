@@ -1,32 +1,33 @@
 ---
 name: debugger-workstation
 description: >-
-  逆向工程工作台（反编译, 逆向, decompile, unpack, 脱壳, Ghidra, IDA, x64dbg,
-  JADX, Apktool, Il2CppDumper, AssetRipper, Frida, YARA, capa, FLOSS, PE, .NET, pcap,
-  内存取证, memory forensics, crackme, CTF binary）。用户提到二进制、可执行文件、DLL、APK、IPA、JAR、
-  .NET 程序集、pcap、内存转储或崩溃转储，或要求反编译 / 反汇编 / 脱壳 / 去混淆 / 分析 / 逆向
-  任何东西时——一律用本 skill，哪怕他从没说过「逆向」二字，哪怕只贴了一条路径。不用等人点名。
-  不可用于：可读的源码、活的网络主机（而不是制品）、或盘上没有任何东西在被分析时。它带着那些
-  会让本来正确的 agent 答错的坑：PASS 行计数错误、IDA 的 isError=false 失败形态、Start-Process
-  的 stdin 陷阱、以及按工具分目录的路径规则。MCP 只挂 debugger-router；绝不把 19 个后端倒进用户全局 MCP。
+  逆向工程工作台（反编译, 逆向, decompile, unpack, 脱壳, Ghidra, IDA, x64dbg, JADX, Apktool,
+  Il2CppDumper, AssetRipper, Frida, YARA, capa, FLOSS, PE, .NET, pcap, 内存取证, memory forensics,
+  crackme, CTF binary）。用户提到二进制、可执行文件、DLL、APK、IPA、JAR、.NET 程序集、pcap、
+  内存转储或崩溃转储，或要求反编译 / 反汇编 / 脱壳 / 去混淆 / 分析 / 逆向任何东西时——一律用本 skill，
+  哪怕他从没说过「逆向」二字，哪怕只贴了一条路径。不用等人点名。
+  不可用于：可读的源码、活的网络主机、盘上没有任何东西在被分析时。
+  它带着会让本来正确的 agent 答错的坑：PASS 行计数错误、IDA 的 isError=false 失败形态、
+  Start-Process 的 stdin 陷阱、按工具分目录的路径规则。MCP 只挂 debugger-router；绝不把 19 个后端倒进用户全局 MCP。
 ---
 
 # debugger-workstation
 
 Root: `D:\Software\Tool\WorkStation\debugger`. All commands below run from there.
 
-Read `../../../AGENTS.md` first, then the gitignored `../../../OWNER.md`. High-risk (Npcap,
+Read `../../AGENTS.md` first, then the gitignored `../../OWNER.md`. High-risk (Npcap,
 drivers, Defender, running an untrusted sample on the host): brief the Owner, then follow
 intent. Do not silent-install drivers, and do not run an untrusted sample on the host instead
 of a VM.
 
 <!-- PATH RULE. Markdown links below are written relative to THIS FILE, because that is the
      CWD a reader is in when it opens a skill. Only references/*.md resolve directly; anything
-     else needs ../../../. An independent verifier caught exactly this: SKILL.md pointed at
-     AGENTS.md and docs/EXPERT_PLAYBOOK.md station-root-relative while references/triage.md
-     correctly used ../../../, so several links were dead from the only place the document is
-     read. COMMANDS are the exception and stay station-root-relative -- they are run, not
-     clicked, and the station root is the CWD for running them. Fix, do not repeat. -->
+     else needs ../../ (station root = debugger/). An independent verifier caught exactly this:
+     SKILL.md pointed at AGENTS.md and docs/EXPERT_PLAYBOOK.md station-root-relative while
+     references/triage.md used one level too many, so several links were dead from the only
+     place the document is read. COMMANDS are the exception and stay station-root-relative --
+     they are run, not clicked, and the station root is the CWD for running them. Fix, do not
+     repeat. (Corrected 2026-10-12: ../../../ -> ../../, measured.) -->
 
 ---
 
@@ -221,7 +222,7 @@ forensics §3F, while symbolic execution is entries #8 and #15 and DAP is entry 
 
 ---
 
-## 6. The authorization line — not negotiable, and it is currently load-bearing
+## 6. The provenance line — load-bearing
 
 `il2cpp-probe.ps1` prints this every run and it is right:
 
@@ -229,7 +230,7 @@ forensics §3F, while symbolic execution is entries #8 and #15 and DAP is entry 
 > installer). They are deliberately NOT used: the arsenal gate requires an Owner-named object
 > with checkable provenance, and an installed third-party binary is not that.
 
-**"It was on the disk" is not authorization.** If a capability needs a target you do not have,
+**"It was on the disk" is not provenance.** If a capability needs a target you do not have,
 the unblock is a sentence from the Owner naming one — not a technique. Same for anything on a
 HackerOne submission button, anything that installs a driver, and any untrusted sample.
 

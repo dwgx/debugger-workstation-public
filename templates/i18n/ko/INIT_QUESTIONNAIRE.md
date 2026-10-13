@@ -37,7 +37,7 @@ AI: `bootstrap.ps1 -Apply` 또는 `download-tools.ps1 -Apply` 전에 묻는다. 
 ## Q4. 도구 바이너리
 
 - [ ] 사용자가 `manifests/tools.json` 공식 URL에서 직접 받음
-- [ ] 허가된 `scripts/download-tools.ps1 -Apply`（`gh` 우선）
+- [ ] `scripts/download-tools.ps1 -Apply`（`gh` 우선）
 - 권장: 서드파티 다운로드 전에 확인.
 
 ## Q5. 버전

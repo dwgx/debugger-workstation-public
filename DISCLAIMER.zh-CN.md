@@ -18,7 +18,7 @@ Ghidra、IDA Pro、radare2、x64dbg、ImHex、Detect It Easy、capa、FLOSS、YA
 
 `manifests/mcp-backends.json` 中列出的第三方 MCP backend(ILSpy-Mcp、ReClass.NET-MCP、YaraFlux、apktool-mcp-server、cheatengine-mcp-bridge、dnspy-mcp、dnspy-mcp-extension、frida-mcp、ida-pro-mcp、imhexMCP、mcp-wireshark、mcp7zop、mobsf-mcp-server、reqable-mcp、radare2-mcp、volatility3-mcp、mcp-virustotal 等)的代码**不包含在本仓库中**,其版权和许可归各上游仓库所有。bootstrap 仅按上游 URL 执行 `git clone`。
 
-其中 **VirusTotal MCP(mcp-virustotal)** 在使用时会把哈希、URL、IP、域名等指标(IOC)发送到 VirusTotal 的公网 API,需用户自备 `VIRUSTOTAL_API_KEY`。请仅在获得授权的调查中使用,遵守 VirusTotal 服务条款,且不要上传含敏感信息的样本或数据。
+其中 **VirusTotal MCP(mcp-virustotal)** 在使用时会把哈希、URL、IP、域名等指标(IOC)发送到 VirusTotal 的公网 API,需用户自备 `VIRUSTOTAL_API_KEY`。请仅在你自己的调查中使用,遵守 VirusTotal 服务条款,且不要上传含敏感信息的样本或数据。
 
 ## 自研部分
 
@@ -32,9 +32,9 @@ Ghidra、IDA Pro、radare2、x64dbg、ImHex、Detect It Easy、capa、FLOSS、YA
 
 ## 使用责任
 
-- 本工作站面向**授权的安全测试、CTF、安全研究、防御性分析和教育用途**。
-- 工具集含调试器、注入器、Hook、抓包、内存分析能力,可能被安全软件拦截,可能违反某些软件的 EULA(如对受保护软件进行逆向)。**使用者须自行确保其行为合法且已获授权。**
-- 不要用于未授权的入侵、破解商业软件版权保护、规避反作弊、攻击他人系统等用途。
+- 本工作站面向安全测试、CTF、安全研究、防御性分析和教育用途。
+- 工具集含调试器、注入器、Hook、抓包、内存分析能力,可能被安全软件拦截,可能违反某些软件的 EULA(如对受保护软件进行逆向)。
+- 范围=目标本身：在你拥有或可控的目标上使用。这套工具（调试器、注入器、Hook、脱壳器）就是为分析、研究与学习而存在——含保护、反作弊、DRM 分析。
 - 不要在宿主机直接运行未知 / 恶意样本;高风险样本应放隔离 VM/沙箱。
 
 作者不对使用本仓库或据此获取的工具所造成的任何后果负责。

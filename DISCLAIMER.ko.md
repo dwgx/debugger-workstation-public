@@ -14,7 +14,7 @@
 
 ## 서드파티 MCP
 
-`manifests/mcp-backends.json`의 코드는 git에 없습니다. bootstrap은 업스트림 URL을 `git clone`할 뿐입니다. **VirusTotal MCP**는 IOC를 VirusTotal 공개 API로 보내며 `VIRUSTOTAL_API_KEY`가 필요합니다. 허가된 조사에만 쓰고 민감 샘플을 올리지 마세요.
+`manifests/mcp-backends.json`의 코드는 git에 없습니다. bootstrap은 업스트림 URL을 `git clone`할 뿐입니다. **VirusTotal MCP**는 IOC를 VirusTotal 공개 API로 보내며 `VIRUSTOTAL_API_KEY`가 필요합니다. 자신의 조사에만 쓰고 민감 샘플을 올리지 마세요.
 
 ## 자체 작성
 
@@ -22,4 +22,4 @@
 
 ## 이용 책임
 
-**허가된** 보안 테스트, CTF, 연구, 방어 분석, 교육용입니다. 무단 침입, 상용 소프트웨어 보호 우회, 안티치트 우회, 타인 시스템 공격에 쓰지 마세요. 알 수 없는 샘플이나 악성 샘플은 호스트에서 돌리지 말고 격리 VM을 쓰세요. 저자는 결과에 책임지지 않습니다.
+보안 테스트, CTF, 리버스 엔지니어링, 연구, 방어 분석, 교육용입니다 — 자신이 소유하거나 통제하는 대상에서 사용하세요. 범위는 대상이 기준이며 기술 범주가 아닙니다(언팩, 보호·안티치트·DRM 분석 포함). 알 수 없는 샘플이나 악성 샘플은 호스트에서 돌리지 말고 격리 VM을 쓰세요. 저자는 결과에 책임지지 않습니다.

@@ -54,7 +54,7 @@ pwsh scripts\bootstrap.ps1 -InstallRoot "D:\Tool\debugger"
 # 2. once the plan looks right: deploy the self-developed MCP, generate local config, clone third-party MCPs
 pwsh scripts\bootstrap.ps1 -Apply -CloneMcp -InstallRoot "D:\Tool\debugger"
 
-# 3. download tool binaries (authorized; uses gh when available)
+# 3. download tool binaries (uses gh when available)
 powershell -File scripts\download-tools.ps1 -Apply
 
 # 4. rebuild each third-party MCP's .venv / dotnet / node dependencies, then smoke-test
@@ -175,7 +175,7 @@ Only `debugger-router` — one lightweight MCP — is enabled by default. It spi
 
 ## Security posture
 
-The toolset includes debuggers, injectors, hooks, Frida, packet capture, and memory-analysis tools that may trigger AV/EDR. For high-risk operations (installing drivers/services/Npcap, modifying registry/Defender/startup, running untrusted samples on the host), the AI will brief you on consequences and rollback before proceeding — it won't silently act or refuse. Intended for **authorized** security testing, CTFs, research, and education.
+The toolset includes debuggers, injectors, hooks, Frida, packet capture, and memory-analysis tools that may trigger AV/EDR. For high-risk operations (installing drivers/services/Npcap, modifying registry/Defender/startup, running untrusted samples on the host), the AI will brief you on consequences and rollback before proceeding — it won't silently act or refuse. Intended for security testing, CTFs, reverse engineering, research, and education.
 
 > `bootstrap.ps1 -CloneMcp` clones and builds third-party MCP backends from their upstream repos (a few have no declared license). This is opt-in — review the code you clone before running it.
 

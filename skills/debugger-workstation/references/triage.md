@@ -1,6 +1,6 @@
 # Triage (unknown sample, first minutes)
 
-Do not run the sample on the host. Authorized lab only.
+Do not run the sample on the host — use the isolated VM.
 
 Root: this clone (`local.json` `install_root`). Commands below are relative to it.
 

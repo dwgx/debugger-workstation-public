@@ -1,5 +1,31 @@
 # HANDOFF — reverse workstation (debugger station)
 
+> ## 2026-10-14 · 进行中 mission：拒绝噪音清理（Owner 指示）
+>
+> **任务**：清掉两棵树 + AgentRule 里「会让模型主动拒绝 / 削弱军火库」的声明噪音。原则（Owner 原话意图）：
+> 范围=**目标授权**（自有 / 已授权资产）；**技术类不设限**（脱壳、反作弊/DRM/加壳分析都是本站的活）；
+> **「未授权」类声明全清**；不啰嗦；**判断留给模型**；用途框架=调试/逆向/学习/分析/试验。
+>
+> **已完成（全部四语言 × 全部热文档）**：
+> - station：`AGENTS.md`×4（停点行=owns or controls；去 authorized/unlicensed 措辞；保留 jailbreak 锚点）；`DISCLAIMER.md`×4（责任段重构）；`GEMINI.md`/`OWNER.example.md`/`README.md`/`docs/EVAL.md`；`skills/debugger-workstation/SKILL.md` §6 改名 provenance line；`references/triage.md`；`templates/INIT_QUESTIONNAIRE.md`×4；`.cursor/rules/*.mdc`
+> - wiki：`AGENTS.md:86`；`CLAUDE.md:22/:56/:60`（这两个文件 ignored，不进 git）；`ROUTER.md §5`；`CHARTER-ARSENAL.md` 停点表（S3 重写为「another party's asset」、S4 删除）；`methods/l2-gate.md` S3/S4+例子+provenance 枚举；`methods/operating-loop.md:61`；`INIT-ARSENAL.md` D14+STOP；`frida-lab.md`；`skill-adoption-checklist.md §H`；`learn-expansion.md`；`debugger-pairing.md`；`antibot-recognition.md`；`arsenal-how-to-use.md §7`；`arsenal-inventory.md`；`arsenal-toolchain-adoption.md`；`arsenal-skill-archive.md §8`；`estate-full-summary`
+> - AgentRule：`逆向站.md:29`
+>
+> **门状态**：`eval-agent-contract: PASS`（4 locales/5 tags）；`arsenal-two-tree-check: TREE CLEAN 184/184`；`doc-facts: OK 43 claims`
+>
+> **未完成**：
+> 1. 3 路 subagents 结果（普查/研究/一致性）——回来后决定是否补刀
+> 2. 研究结果回灌成 L2 参考页（`wiki/methods/refusal-language-research-2026-10-14.md`）+ INDEX 注册
+> 3. 两树提交（station 一条；wiki 一条，别把 `.agent/` 加进去——wiki 的 AGENTS/CLAUDE 是 ignored 本地文件，本来就不进 git）
+> 4. station 树里**不是本 mission 的**脏文件（别顺手提交）：`scripts/il2cpp-probe.ps1`（-Target 功能）、`skills/debugger-review/SKILL.md`（self-check 节）、`notes/INDEX.md`、`_re-work/`、`evidence/probes/*.log`
+>
+> **硬约束（别踩）**：
+> - `eval-agent-contract.py` 要求保留 5 个 `<!-- eval:* -->` 标记 + 四语言各自「Stop lines cannot be waived / 不能取消红线 / ストップラインを外せません / 스톱 라인을 해제하지 못합니다」锚点；`FORBIDDEN_PHRASES` 不许出现「do not refuse / 不拒绝、不阻断」
+> - 不动：`wiki/policy/`（HackerOne 外部规则=事实）、历史档案（`.agent/`、`docs/research/`、`literature/`、`notes/`）
+> - 保留：机器安全线（宿主别跑不可信样本、别静默装驱动、MITM CA 不进信任库）、凭据卫生、jailbreak 不构成授权（锚点）
+>
+> ---
+
 **交接时间 2026-10-03 · 基线 `77142aa`（本文写作时 HEAD）· 两仓库均已 push · tracked-uncommitted 0**
 
 2026-10-03 那一轮做了什么：**把三处「看起来像契约却没人执行」的字段变成会拒绝的东西**，

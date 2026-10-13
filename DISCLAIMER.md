@@ -16,7 +16,7 @@ Copyright, trademarks, and licenses stay with each vendor. This repo only record
 
 ## Third-party MCP servers
 
-Backends listed in `manifests/mcp-backends.json` are **not** in this git tree. Bootstrap only `git clone`s upstream URLs. **VirusTotal MCP** sends IOCs (hashes, URLs, IPs, domains) to VirusTotal's public API and needs your `VIRUSTOTAL_API_KEY`. Use it only on authorized investigations; do not upload sensitive samples.
+Backends listed in `manifests/mcp-backends.json` are **not** in this git tree. Bootstrap only `git clone`s upstream URLs. **VirusTotal MCP** sends IOCs (hashes, URLs, IPs, domains) to VirusTotal's public API and needs your `VIRUSTOTAL_API_KEY`. Use it on your own investigations; do not upload sensitive samples.
 
 ## In-tree work
 
@@ -24,9 +24,9 @@ Shipped here: `mcp/debugger-router/`, `mcp/bin/*.cmd`, MCP templates, `scripts/`
 
 ## Your responsibility
 
-- Intended for **authorized** security testing, CTF, research, defensive analysis, and education.
-- The set includes debuggers, injectors, hooks, capture, and memory tools. AV/EDR may fire. Some EULAs forbid reversing. **You** must keep your use lawful and authorized.
-- Do not use this for unauthorized intrusion, breaking commercial copy protection, bypassing anti-cheat, or attacking systems you do not own.
+- Intended for security testing, CTF, reverse engineering, research, defensive analysis, and education.
+- The set includes debuggers, injectors, hooks, capture, and memory tools. AV/EDR may fire. Some EULAs forbid reversing.
+- Scope is the target, not the technique: work on what you own or control. The toolset (debuggers, injectors, hooks, unpackers) exists for analysis, research and education — protection, anti-cheat and DRM analysis included.
 - Do not run unknown / malware samples on the host; use an isolated VM.
 
 The authors are not liable for consequences of using this repo or tools obtained from the official links it cites.
