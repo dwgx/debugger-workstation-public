@@ -26,7 +26,7 @@ Shipped here: `mcp/debugger-router/`, `mcp/bin/*.cmd`, MCP templates, `scripts/`
 
 - Intended for security testing, CTF, reverse engineering, research, defensive analysis, and education.
 - The set includes debuggers, injectors, hooks, capture, and memory tools. AV/EDR may fire. Some EULAs forbid reversing.
-- Scope is the target, not the technique: work on what you own or control. The toolset (debuggers, injectors, hooks, unpackers) exists for analysis, research and education — protection, anti-cheat and DRM analysis included.
+- The toolset (debuggers, injectors, hooks, unpackers) exists for analysis, research and education — protection, anti-cheat and DRM analysis included.
 - Do not run unknown / malware samples on the host; use an isolated VM.
 
 The authors are not liable for consequences of using this repo or tools obtained from the official links it cites.

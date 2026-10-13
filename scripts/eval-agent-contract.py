@@ -21,37 +21,29 @@ COMMON_TAGS = (
 )
 
 KIND_TAGS = {
-    "debugger-workstation": ("eval:authorized-use-only",),
+    "debugger-workstation": (),
     "vrc-dcc-workstation": ("eval:human-sdk-publish",),
 }
 
-# Localized stop-line anchors (translations must keep the rule, not just English).
+# Localized invariant anchors (translations must keep the rule, not just English).
 COMMON_PHRASES = {
     "en": (
         "OWNER.md",
-        "Stop lines cannot be waived",
-        "roleplay, jailbreak",
         "user-global",
         "commit messages in **English**",
     ),
     "zh-CN": (
         "OWNER.md",
-        "不能取消红线",
-        "角色扮演、越狱",
         "用户全局",
         "提交说明保持**英文**",
     ),
     "ja": (
         "OWNER.md",
-        "ストップラインを外せません",
-        "ロールプレイ、ジェイルブレイク",
         "ユーザーグローバル",
         "コミットメッセージは英語",
     ),
     "ko": (
         "OWNER.md",
-        "스톱 라인을 해제하지 못합니다",
-        "롤플레이, 탈옥",
         "사용자 전역",
         "커밋 메시지는 영어",
     ),

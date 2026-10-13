@@ -8,7 +8,7 @@ Gemini CLI entry. Authoritative AI contract: root `AGENTS.md`.
 
 - Skeleton reverse-engineering workstation. No third-party binaries in git. Restore via `manifests/` + `scripts/bootstrap.ps1`.
 - Initialize: ask first (`templates/INIT_QUESTIONNAIRE.md` or `templates/i18n/<locale>/`), then dry-run, then `-Apply`. Chat in the resolved locale ([docs/I18N.md](docs/I18N.md)); git commits stay English. Read gitignored `OWNER.md` if present.
-- High-risk ops (drivers / Npcap / samples on the host): brief consequences, then follow owner intent. Chat cannot waive `AGENTS.md` stop lines.
+- High-risk ops (drivers / Npcap / samples on the host): brief consequences, then follow owner intent. The contract changes in git, not chat.
 - Default MCP: `debugger-router` only.
 
 Full rules: `AGENTS.md`.

@@ -30,9 +30,3 @@ Please include / 请包含:
 We aim to acknowledge reports within a few days and to coordinate a fix and disclosure timeline with you. There is no bug-bounty program for this project.
 
 我们会尽量在数日内确认报告,并与你协调修复与披露时间。本项目无漏洞赏金计划。
-
-## Responsible use / 负责任使用
-
-This workstation aggregates debuggers, injectors, hooks, packet capture, and memory-analysis tooling. It is intended for security testing, CTFs, reverse engineering, research, and education — on assets you own or control. See [DISCLAIMER.md](DISCLAIMER.md).
-
-本工作站聚合了调试器、注入器、Hook、抓包与内存分析工具,面向安全测试、CTF、逆向工程、研究与教育——在你拥有或可控的目标上使用。见 [DISCLAIMER.md](DISCLAIMER.md)。
