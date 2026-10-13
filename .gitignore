@@ -216,6 +216,12 @@ scripts/mission-ablate-*.ps1
 # category as the out/ rules -- regenerated every run, never an input, never evidence.
 STRAY-EXTRA/
 
+# Shared-file edits leave a *.before-<topic>-<date> backup beside the file (the
+# AgentRule protocol's step 3). They are rollback points, not content, and the
+# first one landed here on 2026-10-14 and tripped push check 1. Ignored so the
+# working tree stays honest; git history is still the primary rollback.
+*.before-*
+
 # redteam-v2/ and redteam-baseline/ are another line's experiment output (the launcher
 # session's OMP-LC-REDTEAM1 workers -- 32/64 refs in the launcher session, 0 refs in the
 # romantic/kiro sessions; corrected 2026-10-14 by a read-only station-users survey).
