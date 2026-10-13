@@ -1,0 +1,71 @@
+# assert-probes evidence: native.il2cpp.symbols control
+# command: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/il2cpp-probe.ps1 -AsControl
+# exit: 1
+# seconds: 8.38
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# NOTE: assert-probes SKIPS state=absent entries, so this log was captured by lane-128
+#       with the same header format; the capability is skipped and never self-writes one.
+# re-run the command above; this file is OUTPUT, not a claim about it.
+# produces: D:\Software\Tool\WorkStation\debugger\probe-artifacts\last-run-il2cpp_probe.json
+#   sha256: 4db3883f4b64714da5d04b6c8056ad4e5a8f1c3dc139d011cfe9f5b2b45f6520
+#   bytes: 334
+#   written-by-this-run: NO -- unchanged; the control branch threw before writing
+------------------------------------------------------------------------
+IL2CPP capability probe
+==============================================================================
+  .NET runtimes      : 8.0.31, 10.0.11
+  6.x present        : False
+  tool present       : True
+  start-up behaviour : STARTED OK and is WAITING FOR A TARGET -- it did not fail to launch. Alive for 12s+ with stdin answered; this is an interactive tool, not a hang.
+  stdout bytes       : 0
+
+  TARGET: no authorized IL2CPP artifact exists on this host.
+  global-metadata.dat files DO exist here, in third-party commercial software
+  (the VIVE Hub installer). They are deliberately NOT used: the arsenal gate
+  requires an Owner-named object with checkable provenance, and an installed
+  third-party binary is not that. Finding a target here is an authorization
+  question, not a technical one.
+
+==============================================================================
+IL2CPP ABSENT -- recorded, not hidden. ONE blocker, not two:
+  1. no authorized IL2CPP artifact exists to run it against
+
+  RETRACTED 2026-10-04: the second blocker this probe used to report --
+  "the build is net6 and this host has no 6.x runtime" -- WAS NEVER REAL.
+  It came from measuring start-up with no stdin, so a tool blocked on a
+  prompt read as a tool that would not launch. Measured directly: without
+  roll-forward the process exits 0x80008096 with "You must install or update
+  .NET"; with DOTNET_ROLL_FORWARD it starts and waits for a target. The
+  runtime was never the obstacle.
+
+What would unblock it: the Owner names an IL2CPP binary they own.
+JSON-SUMMARY {"total":2,"pass":0,"fail":2}
+{
+    "ok":  false,
+    "state":  "absent",
+    "runtime_6x":  false,
+    "runtimes":  [
+                     "8.0.31",
+                     "10.0.11"
+                 ],
+    "tool_present":  true,
+    "behaviour":  "STARTED OK and is WAITING FOR A TARGET -- it did not fail to launch. Alive for 12s+ with stdin answered; this is an interactive tool, not a hang.",
+    "blockers":  [
+                     "no authorized IL2CPP artifact; third-party commercial binaries found on this host were deliberately not used"
+                 ],
+    "unblocked_by":  "the Owner naming an IL2CPP binary they own"
+}
+
+CONTROL RESULT: FIRED -- exiting 1, and the exit 1 IS the pass.
+  What is under test: an installed Il2CppDumper.exe sitting on disk must not
+  read as a working capability. The probe asks the runtime and the target
+  instead of counting the .exe, and answers ABSENT.
+  A run that exits 0 here would mean the tool started and a target existed
+  -- i.e. that the probe had stopped being able to fail.
+The variable '$Message' cannot be retrieved because it has not been set.
+At D:\Software\Tool\WorkStation\debugger\scripts\il2cpp-probe.ps1:221 char:136
++ ... ordered]@{ ok = $false; verdict = 'ABSENT'; reason = $Message }) | Ou ...
++                                                          ~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (Message:String) [], RuntimeException
+    + FullyQualifiedErrorId : VariableIsUndefined
+ 

@@ -1,0 +1,113 @@
+# lane L127 evidence: ops.skill.security DRIFT root cause (2026-10-12T08:15-08:23Z)
+# NOT the registered run_log (evidence/probes/ops.skill.security.probe.log is untouched; its sha256 is a registered claim).
+# command: python scripts/probe_wrapper.py --tool ops_skill_security --out-dir probe-artifacts -- powershell -NoProfile -ExecutionPolicy Bypass -File scripts/probes/ops_skill_security.ps1
+# exit: 0
+# assert-probes verdict for this entry: DRIFT (expect 'Recommendation  SAFE' absent); see research/STATION-PROBE-CLOSURE.md
+#
+# ==== real output of the probe on the WORKING TREE skills/ (CAUTION / partial / 83.3%) ====
+ARTIFACT probe-artifacts/last-run-ops_skill_security.json
+Warning: Found 2 skills in this directory. Use --recursive to scan each 
+independently.
+
+┌──────────────────────────────────────────────────────────────────────────────
+┐
+│ SkillSpector Security Report                                                 
+│
+└────────────────────────────────── v2.12.0 
+───────────────────────────────────┘
+
+Skill: unknown
+Source: D:\Software\Tool\WorkStation\debugger\skills
+Scanned: 2026-10-12 08:15:57 UTC
+
+
+     Risk Assessment     
+ Score           0/100   
+ Severity        LOW     
+ Recommendation  CAUTION 
+
+
+                                 Components (6)                                
+┌──────────────────────────────────────────────┬──────────┬───────┬────────────
+┐
+│ File                                         │ Type     │ Lines │ Executable 
+│
+├──────────────────────────────────────────────┼──────────┼───────┼────────────
+┤
+│ debugger-review/SKILL.md                     │ markdown │    35 │ No         
+│
+│ debugger-workstation/SKILL.md                │ markdown │   258 │ No         
+│
+│ debugger-workstation/references/agent-cli.md │ markdown │    29 │ No         
+│
+│ debugger-workstation/references/arsenal.md   │ markdown │    34 │ No         
+│
+│ debugger-workstation/references/mcp-router.… │ markdown │    45 │ No         
+│
+│ debugger-workstation/references/triage.md    │ markdown │    34 │ No         
+│
+└──────────────────────────────────────────────┴──────────┴───────┴────────────
+┘
+
+No security issues detected.
+
+
+     Inspection Completeness      
+ Execution             successful 
+ Status                partial    
+ Coverage              83.3%      
+ Fully inspected       5          
+ Partially inspected   1          
+ Entirely uninspected  0          
+Ledger exceptions
+  - static_parse_limit debugger-workstation/SKILL.md: A security-relevant 
+expression exceeded a bounded static parser's span limit.
+Analyzer statuses
+  - completed : 
+  - no_applicable_files : No files matched this analyzer's applicability 
+contract.
+  - no_applicable_files : No files matched this analyzer's applicability 
+contract.
+  - no_applicable_files : No files matched this analyzer's applicability 
+contract.
+  - manifest_absent : No compatible manifest was present for this analyzer.
+  - completed : 
+  - manifest_absent : No compatible manifest was present for this analyzer.
+  - no_applicable_files : No files matched this analyzer's applicability 
+contract.
+  - disabled_by_configuration : Analyzer was disabled by the requested 
+configuration.
+  - disabled_by_configuration : Analyzer was disabled by the requested 
+configuration.
+  - disabled_by_configuration : Analyzer was disabled by the requested 
+configuration.
+  - completed : 
+  - completed : 
+  - completed : 
+  - completed : 
+  - completed : 
+  - completed : 
+  - completed : 
+  - completed : 
+  - completed : 
+  - completed : 
+  - completed : 
+  - completed : 
+  - completed : 
+  - completed : 
+  - degraded : 
+  - completed : 
+Limitations
+  - Analyzer static_patterns_tool_misuse status: degraded.
+Executable scripts: No
+
+
+# ==== same scanner on the HEAD version of the six files: SAFE / complete / 100.0% ====
+ Recommendation  SAFE  
+ Status                complete   
+ Coverage              100.0%     
+
+# ==== same scanner on the WORKING TREE with the backticks removed from SKILL.md line 226: exit 0 ====
+ Recommendation  SAFE  
+ Status                complete   
+ Coverage              100.0%     

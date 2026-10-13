@@ -1,12 +1,114 @@
 # assert-probes evidence: native.ida.decompile control
-# command: node native-lab\tools\decompile.mjs crackme-corpus\out\c01-stringobf.exe 0xDEADBEEF
+# command: node native-lab/tools/negative-gate.mjs
 # exit: 1
-# seconds: 2.89
+# seconds: 5.47
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
 ------------------------------------------------------------------------
-{
-  "ok": false,
-  "addr": "0xDEADBEEF",
-  "error": "Decompilation failed at 0xdeadbeef"
-}
+==============================================================================
+native-lab — NEGATIVE GATE for native.ida.decompile and native.ida.list_functions
+==============================================================================
+  instrument  idalib-mcp over MCP on http://127.0.0.1:8745/mcp
+  fixture     %USERPROFILE%\AppData\Local\Temp\d12-native-neg-gate-lwZUut\c01-stringobf.exe
+              derived in process from crackme-corpus/out/c01-stringobf.exe: 143872 bytes copied, PE CheckSum
+              zeroed at file offset 0x148 (was 0x00000000, already zero — the field is unchanged); 6 sections map
+              0x140001000..0x140027800, and 0xDEADBEEF is outside all of
+              them — read out of the headers above, not assumed.
+  bogus addr  0xDEADBEEF   bogus symbol  no_such_symbol_zzz
+  bogus sess  no-such-session-zzz   bogus selector  no_such_function_zzz_*
+  mutation    none   (a real run)
+
+  session     8309ac9d -> c01-stringobf.exe
+
+------------------------------------------------------------------------------
+[1] native.ida.decompile — registry control native.ida.decompile.bogus_addr
+------------------------------------------------------------------------------
+  registry says: "must yield code:null plus an error field, never code."
+
+  PASS  BASELINE: the instrument CAN decompile a real function   0x140001080 main -> 866 chars of recovered C, isError=false
+    (without this, a server that returns null to EVERYTHING would pass the control below)
+
+  RAW RESPONSE to the bogus address:
+    asked        {"addr":"0xDEADBEEF","include_addresses":false,"database":"8309ac9d"}
+    isError      false     <-- REPORTED, never asserted; a control that reads it is blind to the hazard
+    code         null
+    error        "Decompilation failed at 0xdeadbeef"
+    functions    0
+    raw response {"addr":"0xDEADBEEF","code":null,"error":"Decompilation failed at 0xdeadbeef"}
+
+  PASS  a bogus address yields code:null — never code            code=null
+  PASS  ...AND the failure is carried in an `error` field        Decompilation failed at 0xdeadbeef
+
+  HAZARD (measured, not asserted): that refusal came back with isError=false.
+    A client checking only isError records it as a SUCCESSFUL null. That is why every
+    test above reads the body and why no test in this file reads isError.
+
+------------------------------------------------------------------------------
+[2] native.ida.list_functions — registry control native.ida.list_functions.no_session
+------------------------------------------------------------------------------
+  registry says: "must refuse rather than answer from an unstated session."
+
+  PASS  BASELINE: the instrument CAN enumerate this binary       496 functions with a bound session — so a refusal below is discriminating, not muteness
+
+  RAW RESPONSE with no `database` — the request the registry names:
+    asked        {"queries":[{"count":5}]}
+    isError      true     <-- REPORTED, never asserted; a control that reads it is blind to the hazard
+    code         undefined
+    error        "database is required. Pass database=<session_id> with every tool call. Open a session with idb_open or enumerate with idb_list."
+    functions    0
+    raw response {"error":"database is required. Pass database=<session_id> with every tool call. Open a session with idb_open or enumerate with idb_list."}
+
+  PASS  it REFUSES — an error is present, in the body or as isError isError=true  error=database is required. Pass database=<session_i
+  PASS  ...and it answers with NO functions, so "0 functions" cannot read as a finding 0 functions returned
+  RAW RESPONSE with a session id this client never issued:
+    asked        {"queries":[{"count":5}],"database":"no-such-session-zzz"}
+    isError      true     <-- REPORTED, never asserted; a control that reads it is blind to the hazard
+    code         undefined
+    error        "Session not found: no-such-session-zzz"
+    functions    0
+    raw response {"error":"Session not found: no-such-session-zzz"}
+
+  PASS  a session it never issued is refused the same way        isError=true  error=Session not found: no-such-session-zzz  functions=0
+  RAW RESPONSE to a selector that cannot match anything:
+    asked        {"queries":[{"filter":"no_such_function_zzz_*","count":2000}],"database":"8309ac9d"}
+    isError      false     <-- REPORTED, never asserted; a control that reads it is blind to the hazard
+    code         undefined
+    error        null
+    functions    0
+    raw response [{"data":[],"next_offset":null}]
+
+  PASS  a selector that matches nothing yields an EMPTY or errored result 0 functions for glob 'no_such_function_zzz_*', against a binary the baseline just showed has 496
+  REPORTED, NOT IN THE VERDICT — an UNSUPPORTED selector field:
+    asked        {"queries":[{"name":"no_such_symbol_zzz"}],"database":"8309ac9d"}
+    isError      false
+    functions    100   <-- not a ListQuery field; it was dropped and everything came back
+    raw response [{"data":[{"addr":"0x140001000","name":"sub_140001000","size":"0x76"},{"addr":"0x140001080","name":"main","size":"0x17e"},{"addr":"0x140001200","name"…
+    This is the "a short result is a failure, not a smaller answer" family already noted
+    in native-lab/README.md. A hazard to document, not the control the registry declares,
+    so it changes no exit code here.
+
+------------------------------------------------------------------------------
+[1b] the same refusal through the shipped CLI (native-lab/tools/decompile.mjs)
+------------------------------------------------------------------------------
+  PASS  the shipped CLI refuses the bogus address with its own non-zero code exit 1
+  PASS  the shipped CLI reports ok:false carrying the server's own words "Decompilation failed at 0xdeadbeef"
+  PASS  the shipped CLI carries NO code field for it             code=undefined
+
+------------------------------------------------------------------------------
+VERDICT
+------------------------------------------------------------------------------
+NEGATIVE GATE: both capabilities REFUSED every request they could not honestly satisfy,
+  and said so in a shape a client that never reads isError can still see.
+
+  native.ida.decompile        0xDEADBEEF -> code:null plus error: "Decompilation failed at 0xdeadbeef"
+  native.ida.list_functions  no database -> refused; a session it never issued -> refused;
+                              a selector that cannot match -> EMPTY, never a population.
+
+  EXIT 1 IS SUCCESS, and it is non-zero on purpose. A control that had to exit 0 would
+  also be satisfied by an instrument that stopped enforcing entirely, which is what rule
+  R5 forbids. This is the `expect_exit: 1` both registry entries already declare.
+
+  scratch     d12-native-neg-gate-* in %TEMP%: 0 before, 0 after
+  fixture     directory removed: yes
+  server      idalib-mcp on 8745 killed by withServer's finally; port released
+  {"total":11,"pass":11,"fail":0}

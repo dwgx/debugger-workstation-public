@@ -1,15 +1,28 @@
 # assert-probes evidence: web.js.cdp control
 # command: node web-reverse\tools\negative-gate.mjs
-# exit: 2
-# seconds: 0.18
+# exit: 1
+# seconds: 0.21
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
 ------------------------------------------------------------------------
 web.js.cdp negative control — forged signature, well-formed request
-  key    this-is-not-the-recovered-key
-  sig    4208344d7815b1d6520f7fe6cafdd51f1eebd9aefd1c10e15a5ef1c1dcb85c83
-  -> HTTP 401 {"ok":false,"error":"bad-signature","bit":"signature does not match"}
+  scratch        %USERPROFILE%\AppData\Local\Temp\web-negative-gate-cFidtj   (generated this run, removed in finally)
+  browser        NOT USED, and not missing. This control asks the signing gate — a pure
+                 HTTP boundary — to refuse a forged request. Driving Chrome over CDP is
+                 loop.mjs's job; a browser here would make a signing assertion depend on
+                 an install, a debug port and a profile. There is no BLOCKED portion.
 
-CONTROL WORKING — the gate REFUSED a forged signature (HTTP 401). Exiting 2,
-because R5 requires a negative control's expected exit to be non-zero: an instrument
-that had stopped enforcing would exit 0, and 0 is the value the harness flags.
+  PASS  fixture written under %TEMP% by this run                   web-negative-gate-cFidtj\forged-request.json
+  PASS  fixture signature was computed with the WRONG key          used "this-is-not-the-recovered-key", lab key is lab-demo-sig…
+  PASS  request is otherwise well formed                           nonce b61ac95e, 37 body bytes, ts 1791919654530
+  key    this-is-not-the-recovered-key
+  sig    ed37fa311221f862546f8dc0a562e7c3e7d22da42bb79177dc661e5a50c8c855
+  -> HTTP 401 {"ok":false,"error":"bad-signature","bit":"signature does not match"}
+  PASS  gate REFUSED the forged signature                          HTTP 401
+
+CONTROL WORKING — the gate REFUSED a forged signature (HTTP 401). Exiting 1,
+because R5 requires a negative control's expected exit to be non-zero: an instrument that
+had stopped enforcing would exit 0, and 0 is the value the harness flags as DRIFT.
+
+  scratch removed: yes
+  checks: 4, failures: 0

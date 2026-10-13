@@ -1,0 +1,183 @@
+# assert-probes evidence: fuzz.differential.parse control
+# command: node fuzz-lab/tools/negative-gate.mjs
+# exit: 1
+# seconds: 0.93
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+------------------------------------------------------------------------
+fuzz.differential.parse — NEGATIVE CONTROL: one guard removed at a time
+  instrument   fuzz-lab\lab\pcap-reader.mjs :: readPcapFile
+  claim        a twin with exactly ONE guard removed MUST behave differently
+  feeds        10 hand-built pcaps, byte-identical to the reference and to every twin
+  budget       7 mutant children x <=2500 ms wall clock
+
+------------------------------------------------------------------------------
+0. the gate checks its own slicing before it trusts any result
+------------------------------------------------------------------------------
+  the parser re-assembled from pcap-reader.mjs source text, with NOTHING removed,
+  against the imported module over all 10 feeds: IDENTICAL.
+
+------------------------------------------------------------------------------
+1. what is fed, and what the reference does with it
+------------------------------------------------------------------------------
+  p1-wellformed                      136 B  d4c3b2a1020004000000000000000000…
+                               two intact Ethernet frames — the input where nothing may differ
+                               reference returned 2 packet(s), truncated=false, consumed=136
+  p2-short-file                       12 B  d4c3b2a10200040000000000…
+                               12 bytes, valid magic, valid version — shorter than the 24-byte global header
+                               reference refused — PcapFormatError: file is 12 bytes: shorter than the 24-byte global header
+  p3-not-pcap                         64 B  41414141414141414141414141414141…
+                               64 bytes of 0x41 — a file whose magic is not one of the four
+                               reference refused — PcapFormatError: not a pcap file: magic 0x41414141
+  p4-version-9                        24 B  d4c3b2a1090000000000000000000000…
+                               valid magic, versionMajor 9 — a major version this reader does not implement
+                               reference refused — PcapFormatError: unsupported pcap version 9.0 (this reader implements 2.x)
+  p6-dangling-record-header           33 B  d4c3b2a1020004000000000000000000…
+                               global header plus 9 bytes: a record header that runs off the end
+                               reference returned 0 packet(s), truncated=true, consumed=24
+  p7-oversize-capture                 40 B  d4c3b2a1020004000000000000000000…
+                               one record declaring 512 MiB of frame and supplying none of it
+                               reference refused — PcapFormatError: record 0 declares 536870912 captured bytes (cap 2097152)
+  p8-overrun-first-record            140 B  d4c3b2a1020004000000000000000000…
+                               first record declares 9000 captured bytes and carries 100
+                               reference returned 0 packet(s), truncated=true, consumed=24
+  p9-dangling-second-header           66 B  d4c3b2a1020004000000000000000000…
+                               one good record, then 6 bytes: truncation reached mid-stream
+                               reference returned 1 packet(s), truncated=true, consumed=60
+  p11-overrun-second-record          216 B  d4c3b2a1020004000000000000000000…
+                               one good record, then a record declaring 9000 captured bytes and carrying 100
+                               reference returned 1 packet(s), truncated=true, consumed=100
+  p5-record-bomb                 3200040 B  d4c3b2a1020004000000000000000000…
+                               200001 zero-length records — more than MAX_RECORDS permits
+                               reference refused — PcapFormatError: more than 200000 records: refusing to keep walking
+
+------------------------------------------------------------------------------
+2. mutants — one guard deleted from the shipped source, nothing else changed
+------------------------------------------------------------------------------
+
+  G1  file-long-enough-for-a-global-header
+      the mistake   the length of the file is assumed rather than asked
+      removed
+          if (buf.length < GLOBAL_HEADER) {
+            throw new PcapFormatError(`file is ${buf.length} bytes: shorter than the ${GLOBAL_HEADER}-byte global header`);
+          }
+      probe         p2-short-file
+      reference     refused — PcapFormatError: file is 12 bytes: shorter than the 24-byte global header
+      twin          refused — RangeError: The value of "offset" is out of range. It must be >= 0 and <= 8. Received 16
+      guard fires?  yes — the reference behaved as G1 says on this feed
+      diverged on   p2-short-file
+      verdict       CAUGHT — LOUD on p2-short-file
+
+  G2  magic-is-one-of-four
+      the mistake   an unrecognised magic is left to fall through to the version check
+      removed
+          if (!spec) {
+            throw new PcapFormatError(`not a pcap file: magic 0x${buf.subarray(0, 4).toString('hex')}`);
+          }
+      probe         p3-not-pcap
+      reference     refused — PcapFormatError: not a pcap file: magic 0x41414141
+      twin          refused — PcapFormatError: unsupported pcap version 16705.16705 (this reader implements 2.x)
+      guard fires?  yes — the reference behaved as G2 says on this feed
+      diverged on   p3-not-pcap
+      verdict       CAUGHT — SILENT on p3-not-pcap
+
+  G3  major-version-is-2
+      the mistake   the major version is read and then ignored
+      removed
+          if (versionMajor !== 2) {
+            throw new PcapFormatError(`unsupported pcap version ${versionMajor}.${versionMinor} (this reader implements 2.x)`);
+          }
+      probe         p4-version-9
+      reference     refused — PcapFormatError: unsupported pcap version 9.0 (this reader implements 2.x)
+      twin          returned 0 packet(s), truncated=false, consumed=24
+      guard fires?  yes — the reference behaved as G3 says on this feed
+      diverged on   p4-version-9
+      verdict       CAUGHT — SILENT on p4-version-9
+
+  G4  record-count-cap
+      the mistake   the record loop is bounded only by the length of the file — this cap bounds WORK, not termination, so removing it does not hang, it just accepts a file the reference refuses
+      removed
+            if (packets.length >= MAX_RECORDS) {
+              throw new PcapFormatError(`more than ${MAX_RECORDS} records: refusing to keep walking`);
+            }
+      probe         p5-record-bomb
+      reference     refused — PcapFormatError: more than 200000 records: refusing to keep walking
+      twin          returned 200001 packet(s), truncated=false, consumed=3200040
+      guard fires?  yes — the reference behaved as G4 says on this feed
+      diverged on   p5-record-bomb
+      verdict       CAUGHT — SILENT on p5-record-bomb
+
+  G5  record-header-is-inside-the-file
+      the mistake   the 16-byte record header is read without asking whether it is there
+      removed
+            if (off + RECORD_HEADER > buf.length) {
+              truncated = true;
+              break;
+            }
+      probe         p6-dangling-record-header
+      reference     returned 0 packet(s), truncated=true, consumed=24
+      twin          refused — RangeError: The value of "offset" is out of range. It must be >= 0 and <= 29. Received 32
+      guard fires?  yes — the reference behaved as G5 says on this feed
+      diverged on   p6-dangling-record-header, p9-dangling-second-header
+      verdict       CAUGHT — LOUD on p6-dangling-record-header
+
+  G6  per-record-capture-cap
+      the mistake   incl_len is trusted, so one record can claim 512 MiB of work
+      removed
+            if (captured > MAX_CAPTURED) {
+              throw new PcapFormatError(`record ${packets.length} declares ${captured} captured bytes (cap ${MAX_CAPTURED})`);
+            }
+      probe         p7-oversize-capture
+      reference     refused — PcapFormatError: record 0 declares 536870912 captured bytes (cap 2097152)
+      twin          returned 0 packet(s), truncated=true, consumed=24
+      guard fires?  yes — the reference behaved as G6 says on this feed
+      diverged on   p7-oversize-capture
+      verdict       CAUGHT — SILENT on p7-oversize-capture
+
+  G7  declared-frame-fits-in-the-file
+      the mistake   subarray is handed the declared length, and subarray clamps
+      removed
+            if (off + RECORD_HEADER + captured > buf.length) {
+              /* THE bug this whole lab was built to find. Reading `buf.subarray(off+16,
+                 off+16+captured)` here instead would not throw -- subarray clamps -- it would
+                 silently hand back a SHORT frame and report `captured` as its length. The
+                 parser would go on to parse a frame that is not there. */
+              truncated = true;
+              break;
+            }
+      probe         p11-overrun-second-record
+      reference     returned 1 packet(s), truncated=true, consumed=100
+      twin          returned 2 packet(s), truncated=false, consumed=9116
+      the lie       packet 1 reports capturedLength=9000 while carrying 100 byte(s)
+      guard fires?  yes — the reference behaved as G7 says on this feed
+      diverged on   p8-overrun-first-record, p11-overrun-second-record
+      verdict       CAUGHT — SILENT on p11-overrun-second-record
+
+------------------------------------------------------------------------------
+3. verdict
+------------------------------------------------------------------------------
+  gu  guard removed                         feed                            how the twin fails
+  G1  file-long-enough-for-a-global-header  p2-short-file                   LOUD   (uncaught RangeError)
+  G2  magic-is-one-of-four                  p3-not-pcap                     SILENT (refused — for the wrong reason)
+  G3  major-version-is-2                    p4-version-9                    SILENT (returned a plausible wrong value)
+  G4  record-count-cap                      p5-record-bomb                  SILENT (returned a plausible wrong value)
+  G5  record-header-is-inside-the-file      p6-dangling-record-header       LOUD   (uncaught RangeError)
+  G6  per-record-capture-cap                p7-oversize-capture             SILENT (returned a plausible wrong value)
+  G7  declared-frame-fits-in-the-file       p11-overrun-second-record       SILENT (returned a plausible wrong value)
+
+  caught LOUDLY   2  (an undeclared throw, or no return at all — visible without an oracle)
+  caught SILENTLY 5  (a wrong refusal or a well-typed wrong value — visible only by comparison)
+  survived        0
+  feeds whose reference never reached the guard under test: 0
+  mutants that could not be built: 0
+  slicing control: the untouched re-assembly is identical to the imported module
+  temp dirs left behind: 0
+  elapsed 0.7s
+
+CONTROL WORKING — every guard this gate removed changed the parser's behaviour on the feed
+that provably exercises it. The differential oracle can tell a hardened parser from an
+unhardened one, including where the difference is a lie rather than a crash.
+
+Exiting 1. Rule R5 requires a negative control's expected exit to be non-zero: a control
+that must exit 0 proves nothing, because an oracle that had stopped comparing would also
+exit 0 and the harness would read that as a pass.

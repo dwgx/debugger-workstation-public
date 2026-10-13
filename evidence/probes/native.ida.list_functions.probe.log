@@ -1,11 +1,11 @@
 # assert-probes evidence: native.ida.list_functions probe
 # command: node native-lab/tools/loop.mjs --only=list_funcs
 # exit: 0
-# seconds: 2.95
+# seconds: 1.65
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
 # produces: D:\Software\Tool\WorkStation\debugger\native-lab\out\last-run-list_funcs.json
-#   sha256: 8b369d21a7c4e05c735e171d3545b3601daf13338973ff6590d9323b8522e093
+#   sha256: 23983316a0e2d567d9a007e5488f86ecd908acea65c1f8a53cce2ebce5306057
 #   bytes: 1165
 #   written-by-this-run: yes
 ------------------------------------------------------------------------
@@ -16,7 +16,7 @@ native-lab loop — IDA via idalib-mcp, against our own self-built crackme
   PASS  port is free before we start                         http://127.0.0.1:8745/mcp was not answering before we spawned anything
   PASS  idalib-mcp serves MCP over POST on loopback          127.0.0.1:8745
   PASS  server exposes a decompile tool                      66 tools; serverInfo={}
-  PASS  session opened on our own target                     5b9fb24a -> c01-stringobf.exe
+  PASS  session opened on our own target                     6fb88e61 -> c01-stringobf.exe
   PASS  list_funcs enumerates functions                      300 functions
   PASS  main is located by name                              0x140001080 size 0x17e
 

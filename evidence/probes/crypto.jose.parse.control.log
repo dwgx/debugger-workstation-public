@@ -1,177 +1,61 @@
 # assert-probes evidence: crypto.jose.parse control
-# command: powershell -NoProfile -ExecutionPolicy Bypass -File headless-lab\tools\jose_expect_control.ps1
+# command: node crypto-lab/tools/negative-gate.mjs
 # exit: 4
-# seconds: 0.34
+# seconds: 0.25
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
 ------------------------------------------------------------------------
-{
-  "ok": true,
-  "schema": "crypto-lab/analysis@1",
-  "input": {
-    "source": "--token",
-    "length": 100,
-    "sha256": "3002f8ba686293e971a66850736652ecd6c7f04828b29831feb007dc8d1b1645",
-    "segments": 3
-  },
-  "algorithm": {
-    "alg": "none",
-    "family": "none (unsecured JWS)",
-    "keyType": "none",
-    "signed": false,
-    "known": false
-  },
-  "signature": {
-    "status": "unsigned",
-    "material": "none",
-    "detail": "alg=none — the token has no signature to check, by design"
-  },
-  "header": {
-    "typ": "JWT",
-    "alg": "none"
-  },
-  "claims": [
-    {
-      "name": "iss",
-      "kind": "registered",
-      "meaning": "Issuer — who minted the token. A verifier MUST pin this to a fixed value.",
-      "value": "attacker",
-      "flags": []
-    },
-    {
-      "name": "sub",
-      "kind": "registered",
-      "meaning": "Subject — who the token is about. Must be a stable identifier, not a display name.",
-      "value": "admin",
-      "flags": []
-    },
-    {
-      "name": "role",
-      "kind": "common",
-      "meaning": "Roles — authorization data inside a bearer token.",
-      "value": "admin",
-      "flags": []
-    }
-  ],
-  "expiry": {
-    "now": 1791143663,
-    "exp": null,
-    "iat": null,
-    "nbf": null,
-    "status": "absent",
-    "lifetime_seconds": null,
-    "age_seconds": null,
-    "seconds_remaining": null
-  },
-  "weaknessClasses": {
-    "unsigned-none": {
-      "present": true,
-      "findings": [
-        "ALG_NONE"
-      ],
-      "question": "Does this token ask to be trusted without a signature, and is anything set up to honour that?"
-    },
-    "algorithm-confusion": {
-      "present": false,
-      "findings": [
-        "NO_KID"
-      ],
-      "question": "Is the key family, or the key itself, being chosen by the token instead of by the verifier's configuration? The `findings` list also carries algorithm hygiene (ALG_SYMMETRIC, NO_KID) that is worth reviewing but is not confusion on its own."
-    },
-    "signature-integrity": {
-      "present": false,
-      "findings": [],
-      "question": "Given the key material supplied, does the signature actually stand up?"
-    },
-    "weak-claim-validation": {
-      "present": true,
-      "findings": [
-        "MISSING_EXP",
-        "MISSING_AUD",
-        "MISSING_JTI",
-        "MISSING_NBF"
-      ],
-      "question": "If a verifier checks only the signature, what does this token still let the bearer do, and for how long?"
-    },
-    "claim-provenance": {
-      "present": false,
-      "findings": [],
-      "question": "Does the payload carry what a signed-but-readable payload must never carry?"
-    }
-  },
-  "findings": [
-    {
-      "id": "ALG_NONE",
-      "severity": "high",
-      "class": "algorithm",
-      "title": "unsigned token: alg=none",
-      "evidence": "\"none\" (case-insensitive match on \"none\")",
-      "why": "The token asserts that there is no signature to check. Correct behaviour is to reject it unless the caller explicitly opted in; the classic bug is a verifier that reads `alg` from this header and honours what it reads."
-    },
-    {
-      "id": "MISSING_EXP",
-      "severity": "high",
-      "class": "weak-claim-validation",
-      "title": "no expiry: the token never expires",
-      "evidence": "payload has no `exp` claim",
-      "why": "Nothing bounds this token's lifetime. A leaked copy is valid forever, which turns any single disclosure into a permanent credential."
-    },
-    {
-      "id": "MISSING_AUD",
-      "severity": "medium",
-      "class": "weak-claim-validation",
-      "title": "no audience: the token is valid anywhere the signing key is trusted",
-      "evidence": "payload has no `aud` claim",
-      "why": "A token minted for one service and accepted by another is the whole of the \"token confusion\" class. Without `aud` there is no field for the verifier to pin, so every service sharing the key accepts it."
-    },
-    {
-      "id": "MISSING_JTI",
-      "severity": "low",
-      "class": "weak-claim-validation",
-      "title": "no jti: replay cannot be detected",
-      "evidence": "payload has no `jti` claim",
-      "why": "Without a unique id a verifier cannot tell a replayed token from a fresh one. Combine with a missing `exp` and the token is replayable forever."
-    },
-    {
-      "id": "NO_KID",
-      "severity": "low",
-      "class": "algorithm",
-      "title": "no kid header: key selection is ambiguous",
-      "evidence": "header has no `kid`",
-      "why": "Harmless with one key, a real problem with a rotation set or a JWKS: the verifier has to guess, and guessing is how a token ends up verified against the wrong key."
-    },
-    {
-      "id": "MISSING_NBF",
-      "severity": "info",
-      "class": "weak-claim-validation",
-      "title": "no nbf claim",
-      "evidence": "payload has no `nbf` claim",
-      "why": "Optional. Absent `nbf` is not a defect by itself; it matters only when the verifier is expected to reject not-yet-valid tokens."
-    }
-  ],
-  "summary": {
-    "counts": {
-      "high": 2,
-      "medium": 1,
-      "low": 2,
-      "info": 1
-    },
-    "highest": "high",
-    "finding_ids": [
-      "ALG_NONE",
-      "MISSING_EXP",
-      "MISSING_AUD",
-      "MISSING_JTI",
-      "NO_KID",
-      "MISSING_NBF"
-    ],
-    "finding_instances": 6,
-    "verdict": "at least one high-severity weakness class is present",
-    "catalogue_complete": false,
-    "note": "Findings come from a fixed rule catalogue. A zero-finding result means \"none of the known shapes\", never \"no weakness\". Unverified signature and unhandled formats are reported as limits above.",
-    "ttl_max_used": 3600
-  }
-}
-EXPECT MISMATCH (1 expected, 6 found)
-  missing:    (none)
-  unexpected: MISSING_EXP, MISSING_AUD, MISSING_JTI, NO_KID, MISSING_NBF
+
+crypto.jose.parse — NEGATIVE CONTROL: structurally valid tokens that must NOT verify
+================================================================================================
+  lab      http://127.0.0.1:63053   kid=lab-rsa-81389a63dd7331bd   issuer=crypto-lab   audience=crypto-lab-api
+  fed to   POST /api/verify/strict  — the same judgement loop.mjs makes at its verifier step
+  built by crypto-lab/tools/negative-gate.mjs via lab/jose.mjs sign() + node:crypto; no pasted token literal
+  keys     lab RSA-2048 reused from D:\Software\Tool\WorkStation\debugger\crypto-lab\keys\lab-rsa-2048.pub.pem; attacker pair GENERATED in-process by node:crypto, never written to disk
+           nothing this gate reads was made by an earlier run unless the line above says "reused"
+
+  case alg-none: structurally valid, unsigned: header says alg=none
+    defect   the token declares itself unverified; there is no signature to check
+    segments 3 (base64url ok), signature segment (empty)
+    header   {"typ":"JWT","alg":"none","kid":"lab-rsa-81389a63dd7331bd"}
+    claims   {"iss":"crypto-lab","aud":"crypto-lab-api","sub":"usr_1f4c9a2b7e","role":"admin","iat":1791919658,"nbf":1791919657,"exp":1791919958,"jti":"afa1fd1ddcbdc432"}
+    claims strict would demand:
+      ok   exp present and unexpired      exp=1791919958 now=1791919658
+      ok   nbf present and not future     nbf=1791919657
+      ok   iss is the lab issuer          iss="crypto-lab"
+      ok   aud includes the lab audience  aud="crypto-lab-api"
+      ok   sub non-empty string           sub=usr_1f4c9a2b7e
+      ok   jti non-empty string           jti=afa1fd1ddcbdc432
+    verdict  token is STRUCTURALLY VALID and semantically current — nothing below may be blamed on its shape
+    provenance of the fixture itself:
+      ok   header declares alg=none       alg="none"
+      ok   signature segment is empty     (empty)
+      ok   carries the lab real kid       kid=lab-rsa-81389a63dd7331bd
+    -> strict REFUSED it: alg-not-allowed — alg none not in configured ["RS256","PS256"]
+
+  case foreign-key: structurally valid, signed over a different key than the one presented
+    defect   RS256 signature made with an ephemeral attacker key, not lab-rsa-81389a63dd7331bd; the header carries the lab's real kid so key selection cannot rescue it
+    segments 3 (base64url ok), signature segment 342 b64u chars
+    header   {"typ":"JWT","alg":"RS256","kid":"lab-rsa-81389a63dd7331bd"}
+    claims   {"iss":"crypto-lab","aud":"crypto-lab-api","sub":"usr_1f4c9a2b7e","role":"admin","iat":1791919658,"nbf":1791919657,"exp":1791919958,"jti":"454db0ed0ccbb9c0"}
+    claims strict would demand:
+      ok   exp present and unexpired      exp=1791919958 now=1791919658
+      ok   nbf present and not future     nbf=1791919657
+      ok   iss is the lab issuer          iss="crypto-lab"
+      ok   aud includes the lab audience  aud="crypto-lab-api"
+      ok   sub non-empty string           sub=usr_1f4c9a2b7e
+      ok   jti non-empty string           jti=454db0ed0ccbb9c0
+    verdict  token is STRUCTURALLY VALID and semantically current — nothing below may be blamed on its shape
+    provenance of the fixture itself:
+      ok   signature verifies under the key this process generated RS256 made with the ephemeral private key generated above
+      ok   and does NOT verify under the lab key so the refusal below is attributable to the key, not to a malformed signature
+      ok   generated key is not the lab key lab kid=lab-rsa-81389a63dd7331bd
+    -> strict REFUSED it: bad-signature — signature does not verify
+
+NEGATIVE-CONTROL OK — REFUSED-BY-VERIFICATION on 2/2 structurally valid tokens:
+  alg=none refused as alg-not-allowed (the allowlist, not a parse error)
+  foreign-key RS256 refused as bad-signature (verification actually ran and failed)
+  Neither refusal is reachable by a shape-only check, which is what makes them a control.
+  Exiting 4, the non-zero code the registry declares, because a control that must exit 0
+  proves nothing.
+

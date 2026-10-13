@@ -1,7 +1,7 @@
 # assert-probes evidence: crypto.jose.parse probe
 # command: node crypto-lab/tools/loop.mjs
 # exit: 0
-# seconds: 3.34
+# seconds: 3.77
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
 # produces: D:\Software\Tool\WorkStation\debugger\crypto-lab\out\last-run-crypto-lab.json

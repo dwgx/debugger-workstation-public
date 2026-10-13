@@ -1,12 +1,16 @@
 # assert-probes evidence: fuzz.differential.parse probe
-# command: node fuzz-lab/tools/loop.mjs --budget 40
+# command: node fuzz-lab/tools/loop.mjs --budget 60
 # exit: 0
-# seconds: 702.29
+# seconds: 692.58
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
+# produces: D:\Software\Tool\WorkStation\debugger\fuzz-lab\out\last-run.json
+#   sha256: 140f4fab24e25b903b07a226ed734ca888454a4c05c528f5e129f6ee57b7303c
+#   bytes: 25334
+#   written-by-this-run: yes
 ------------------------------------------------------------------------
-fuzz-lab — run id fuzz-2026-10-02T21-00-19-908Z
-  budget 40 inputs/target · 2 mutation steps max · 4000ms/input ceiling · 192MB heap ceiling
+fuzz-lab — run id fuzz-2026-10-13T19-27-38-768Z
+  budget 60 inputs/target · 2 mutation steps max · 4000ms/input ceiling · 192MB heap ceiling
 
 ------------------------------------------------------------------------------------
 1. corpus — built from other labs, hashed, and proven stable across two builds
@@ -49,169 +53,169 @@ fuzz-lab — run id fuzz-2026-10-02T21-00-19-908Z
 
   --- pcap: pcap reader (fuzz-lab/lab/pcap-reader.mjs)
       6 seeds · input kind binary · strategies bitFlip, byteSet, intInject, truncate, chunkDelete, chunkDuplicate, byteSplice, chunkInsert, chunkZero, alphabetSplice
-      executed  80 runs (40 inputs x 2 variants)
-      reference parsed 19 · rejected 21 · uncaught 0 · hang 0 · memory 0
-      flawed    parsed 38 · rejected 0 · uncaught 2 · hang 0 · memory 0
+      executed  120 runs (60 inputs x 2 variants)
+      reference parsed 31 · rejected 29 · uncaught 0 · hang 0 · memory 0
+      flawed    parsed 58 · rejected 0 · uncaught 2 · hang 0 · memory 0
       findings  0 against the reference parser, 2 against the flawed twin
-        flaw  uncaught # 29       0 B  PcapFormatError: file is 0 bytes: shorter than the global header
-        flaw  uncaught # 37       4 B  PcapFormatError: file is 4 bytes: shorter than the global header
-  PASS  pcap: every input was executed against both variants     80/80
-  PASS  pcap: no input was silently skipped                      reference 40 · flawed 40
+        flaw  uncaught #  1       4 B  PcapFormatError: file is 4 bytes: shorter than the global header
+        flaw  uncaught # 20      12 B  PcapFormatError: file is 12 bytes: shorter than the global header
+  PASS  pcap: every input was executed against both variants     120/120
+  PASS  pcap: no input was silently skipped                      reference 60 · flawed 60
   PASS  pcap: the harness never reported its own failure         no harness-error outcomes
 
   --- jose: JOSE/JWT parser (crypto-lab/lab/jose.mjs + crypto-lab/tools/analyze.mjs)
       5 seeds · input kind text · strategies bitFlip, byteSet, intInject, truncate, chunkDelete, chunkDuplicate, byteSplice, chunkInsert, chunkZero, alphabetSplice, textRun, textRepeat
-      executed  80 runs (40 inputs x 2 variants)
-      reference parsed 7 · rejected 33 · uncaught 0 · hang 0 · memory 0
-      flawed    parsed 19 · rejected 0 · uncaught 21 · hang 0 · memory 0
-      findings  0 against the reference parser, 21 against the flawed twin
-        flaw  uncaught #  1      99 B  SyntaxError: Expected ',' or '}' after property value in JSON at position 15 (
-        flaw  uncaught #  2     173 B  SyntaxError: Unterminated string in JSON at position 68 (line 1 column 69)
-  PASS  jose: every input was executed against both variants     80/80
-  PASS  jose: no input was silently skipped                      reference 40 · flawed 40
+      executed  120 runs (60 inputs x 2 variants)
+      reference parsed 4 · rejected 56 · uncaught 0 · hang 0 · memory 0
+      flawed    parsed 36 · rejected 0 · uncaught 24 · hang 0 · memory 0
+      findings  0 against the reference parser, 24 against the flawed twin
+        flaw  uncaught #  0     218 B  SyntaxError: Expected ',' or '}' after property value in JSON at position 62 (
+        flaw  uncaught #  2     173 B  SyntaxError: Unexpected token '#', "{"sub":#u1","pass"... is not valid JSON
+  PASS  jose: every input was executed against both variants     120/120
+  PASS  jose: no input was silently skipped                      reference 60 · flawed 60
   PASS  jose: the harness never reported its own failure         no harness-error outcomes
 
   --- forensic-pf: forensic artifact parsers (forensics-lab/tools/triage.mjs: parsePrefetch)
       7 seeds · input kind binary · strategies bitFlip, byteSet, intInject, truncate, chunkDelete, chunkDuplicate, byteSplice, chunkInsert, chunkZero, alphabetSplice
-      executed  80 runs (40 inputs x 2 variants)
-      reference parsed 40 · rejected 0 · uncaught 0 · hang 0 · memory 0
-      flawed    parsed 28 · rejected 0 · uncaught 12 · hang 0 · memory 0
-      findings  0 against the reference parser, 12 against the flawed twin
-        flaw  uncaught #  2      32 B  RangeError: The value of "offset" is out of range. It must be >= 0 and <= 28. 
-        flaw  uncaught #  5      40 B  RangeError: The value of "offset" is out of range. It must be >= 0 and <= 36. 
-  PASS  forensic-pf: every input was executed against both variants 80/80
-  PASS  forensic-pf: no input was silently skipped               reference 40 · flawed 40
+      executed  120 runs (60 inputs x 2 variants)
+      reference parsed 60 · rejected 0 · uncaught 0 · hang 0 · memory 0
+      flawed    parsed 45 · rejected 0 · uncaught 15 · hang 0 · memory 0
+      findings  0 against the reference parser, 15 against the flawed twin
+        flaw  uncaught #  8     132 B  RangeError: The value of "offset" is out of range. It must be >= 0 and <= 124.
+        flaw  uncaught # 13      20 B  RangeError: The value of "offset" is out of range. It must be >= 0 and <= 16. 
+  PASS  forensic-pf: every input was executed against both variants 120/120
+  PASS  forensic-pf: no input was silently skipped               reference 60 · flawed 60
   PASS  forensic-pf: the harness never reported its own failure  no harness-error outcomes
 
   --- web-triage: obfuscation fingerprint (web-reverse/static/lib/triage.mjs: triage + residuals)
       6 seeds · input kind text · strategies bitFlip, byteSet, intInject, truncate, chunkDelete, chunkDuplicate, byteSplice, chunkInsert, chunkZero, alphabetSplice, textRun, textRepeat
-      executed  80 runs (40 inputs x 2 variants)
-      reference parsed 40 · rejected 0 · uncaught 0 · hang 0 · memory 0
-      flawed    parsed 37 · rejected 0 · uncaught 0 · hang 3 · memory 0
+      executed  120 runs (60 inputs x 2 variants)
+      reference parsed 60 · rejected 0 · uncaught 0 · hang 0 · memory 0
+      flawed    parsed 57 · rejected 0 · uncaught 0 · hang 3 · memory 0
       findings  0 against the reference parser, 3 against the flawed twin
-        flaw  hang     # 18  152143 B  exceeded the 4000ms per-input ceiling and was killed
-        flaw  hang     # 34  327135 B  exceeded the 4000ms per-input ceiling and was killed
-  PASS  web-triage: every input was executed against both variants 80/80
-  PASS  web-triage: no input was silently skipped                reference 40 · flawed 40
+        flaw  hang     # 39  265933 B  exceeded the 4000ms per-input ceiling and was killed
+        flaw  hang     # 48  540366 B  exceeded the 4000ms per-input ceiling and was killed
+  PASS  web-triage: every input was executed against both variants 120/120
+  PASS  web-triage: no input was silently skipped                reference 60 · flawed 60
   PASS  web-triage: the harness never reported its own failure   no harness-error outcomes
 
 ------------------------------------------------------------------------------------
 3. triage — reproduce from the recipe, delta-debug, verify the reduced case
 ------------------------------------------------------------------------------------
-  38 findings; triaging up to 3 per target/variant/outcome class,
-  27 not triaged (same class as one already triaged). The finding COUNT above is complete.
-  pcap-flawed-e3b0c44298fc
-    uncaught in the flawed parser — PcapFormatError: file is 0 bytes: shorter than the global header
-    reduced 0 B -> 0 B in 0 steps (0 predicate calls)
-    sha256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-    replay  node fuzz-lab/tools/replay.mjs pcap flawed e3b0c44298fc
-  pcap-flawed-9e8e8c37a53b
+  44 findings; triaging up to 3 per target/variant/outcome class,
+  33 not triaged (same class as one already triaged). The finding COUNT above is complete.
+  pcap-flawed-8a8950f76236
     uncaught in the flawed parser — PcapFormatError: file is 4 bytes: shorter than the global header
     reduced 4 B -> 1 B in 2 steps (2 predicate calls)
-    sha256 9e8e8c37a53bac77a653d590b783b2508e8ed2fed040a278bf4f4703bbd5d82d
-    replay  node fuzz-lab/tools/replay.mjs pcap flawed 9e8e8c37a53b
+    sha256 8a8950f7623663222542c9469c73be3c4c81bbdf019e2c577590a61f2ce9a157
+    replay  node fuzz-lab/tools/replay.mjs pcap flawed 8a8950f76236
+  pcap-flawed-6e340b9cffb3
+    uncaught in the flawed parser — PcapFormatError: file is 12 bytes: shorter than the global header
+    reduced 12 B -> 1 B in 4 steps (4 predicate calls)
+    sha256 6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d
+    replay  node fuzz-lab/tools/replay.mjs pcap flawed 6e340b9cffb3
   jose-flawed-5ec1f7e700f3
-    uncaught in the flawed parser — SyntaxError: Expected ',' or '}' after property value in JSON at position 15 (line 1 column 16)
-    reduced 99 B -> 2 B in 8 steps (20 predicate calls)
+    uncaught in the flawed parser — SyntaxError: Expected ',' or '}' after property value in JSON at position 62 (line 1 column 63)
+    reduced 218 B -> 2 B in 15 steps (45 predicate calls)
     sha256 5ec1f7e700f37c3d0b2981d04855fc34b94aaa15457b05ca571817442d228f81
     replay  node fuzz-lab/tools/replay.mjs jose flawed 5ec1f7e700f3
   jose-flawed-5ec1f7e700f3
-    uncaught in the flawed parser — SyntaxError: Unterminated string in JSON at position 68 (line 1 column 69)
+    uncaught in the flawed parser — SyntaxError: Unexpected token '#', "{"sub":#u1","pass"... is not valid JSON
     reduced 173 B -> 2 B in 14 steps (46 predicate calls)
     sha256 5ec1f7e700f37c3d0b2981d04855fc34b94aaa15457b05ca571817442d228f81
     replay  node fuzz-lab/tools/replay.mjs jose flawed 5ec1f7e700f3
   jose-flawed-5ec1f7e700f3
-    uncaught in the flawed parser — SyntaxError: Unterminated string in JSON at position 25 (line 1 column 26)
-    reduced 140 B -> 2 B in 13 steps (45 predicate calls)
+    uncaught in the flawed parser — SyntaxError: Unexpected token 'b', "{"typ":bJWT","alg"... is not valid JSON
+    reduced 173 B -> 2 B in 14 steps (46 predicate calls)
     sha256 5ec1f7e700f37c3d0b2981d04855fc34b94aaa15457b05ca571817442d228f81
     replay  node fuzz-lab/tools/replay.mjs jose flawed 5ec1f7e700f3
-  forensic-pf-flawed-90f203e775a8
-    uncaught in the flawed parser — RangeError: The value of "offset" is out of range. It must be >= 0 and <= 28. Received 72
-    reduced 32 B -> 16 B in 1 steps (48 predicate calls)
-    sha256 90f203e775a886fc3e5863dad5688965af8a1552b2cfe48af4aa6f0c72ca8df5
-    replay  node fuzz-lab/tools/replay.mjs forensic-pf flawed 90f203e775a8
-  forensic-pf-flawed-8ea546379189
-    uncaught in the flawed parser — RangeError: The value of "offset" is out of range. It must be >= 0 and <= 36. Received 72
-    reduced 40 B -> 16 B in 3 steps (54 predicate calls)
-    sha256 8ea5463791895f5dd095f2bfcf332dc34161312bbb3909f7f734b18e72a1b3a1
-    replay  node fuzz-lab/tools/replay.mjs forensic-pf flawed 8ea546379189
-  forensic-pf-flawed-d912671c5a7f
+  forensic-pf-flawed-45071afaeabe
+    uncaught in the flawed parser — RangeError: The value of "offset" is out of range. It must be >= 0 and <= 124. Received 132
+    reduced 132 B -> 16 B in 4 steps (58 predicate calls)
+    sha256 45071afaeabe70f25922d3bde040d37da5c23f26f7b7587bfbb5305257267347
+    replay  node fuzz-lab/tools/replay.mjs forensic-pf flawed 45071afaeabe
+  forensic-pf-flawed-db49672a5e02
+    uncaught in the flawed parser — RangeError: The value of "offset" is out of range. It must be >= 0 and <= 16. Received 72
+    reduced 20 B -> 16 B in 2 steps (52 predicate calls)
+    sha256 db49672a5e02d4c240e7ee28da4490eca0300aacc59f086b368657ed0c0a32ad
+    replay  node fuzz-lab/tools/replay.mjs forensic-pf flawed db49672a5e02
+  forensic-pf-flawed-d109756af96a
     uncaught in the flawed parser — RangeError: The value of "offset" is out of range. It must be >= 0 and <= 132. Received 140
     reduced 140 B -> 16 B in 4 steps (56 predicate calls)
-    sha256 d912671c5a7f2f06ddd90254b8f67260be2b887199d987f4e6254a3bc11a9295
-    replay  node fuzz-lab/tools/replay.mjs forensic-pf flawed d912671c5a7f
-  web-triage-flawed-1efd24ec6b3c
+    sha256 d109756af96a9da552a1e499aa549a56dc77589a218c011233e06785d752985d
+    replay  node fuzz-lab/tools/replay.mjs forensic-pf flawed d109756af96a
+  web-triage-flawed-980df51d5478
     hang in the flawed parser — exceeded the 4000ms per-input ceiling and was killed
-    MARGINAL (hang at the ceiling; recorded un-reduced) reduced 152143 B -> 152143 B in 4 steps (70 predicate calls)
-    sha256 1efd24ec6b3cdc160401f43f6fd869396bf4ff1079bad11be8dbcc27118e1c54
-    replay  node fuzz-lab/tools/replay.mjs web-triage flawed 1efd24ec6b3c
-  web-triage-flawed-886ceb93bfd7
+    MARGINAL (hang at the ceiling; recorded un-reduced) reduced 265933 B -> 265933 B in 4 steps (70 predicate calls)
+    sha256 980df51d5478a17989be72086c7f6f1e91e40f774cbcaea98cf560a09ed73bb4
+    replay  node fuzz-lab/tools/replay.mjs web-triage flawed 980df51d5478
+  web-triage-flawed-e8e77c0b959c
     hang in the flawed parser — exceeded the 4000ms per-input ceiling and was killed
-    MARGINAL (hang at the ceiling; recorded un-reduced) reduced 327135 B -> 327135 B in 6 steps (70 predicate calls)
-    sha256 886ceb93bfd73e0e9b4bcb77ab579c0991f6ac8a80cc1539ab4ed7d138b2fd38
-    replay  node fuzz-lab/tools/replay.mjs web-triage flawed 886ceb93bfd7
-  web-triage-flawed-ba2947fde5b2
+    MARGINAL (hang at the ceiling; recorded un-reduced) reduced 540366 B -> 540366 B in 4 steps (70 predicate calls)
+    sha256 e8e77c0b959c59377a79c0c0463080eb1a26ce37f50ac7002f9880babe7541ec
+    replay  node fuzz-lab/tools/replay.mjs web-triage flawed e8e77c0b959c
+  web-triage-flawed-c798202eeccb
     hang in the flawed parser — exceeded the 4000ms per-input ceiling and was killed
-    MARGINAL (hang at the ceiling; recorded un-reduced) reduced 249778 B -> 249778 B in 8 steps (70 predicate calls)
-    sha256 ba2947fde5b2a5952dee0ef284d52e4560111a7ac1615243bf07982354b3d4b2
-    replay  node fuzz-lab/tools/replay.mjs web-triage flawed ba2947fde5b2
+    MARGINAL (hang at the ceiling; recorded un-reduced) reduced 101731 B -> 101731 B in 7 steps (70 predicate calls)
+    sha256 c798202eeccb3a40d638a12a86054d2c8193d4c3ce02252eb545a5a776d7d056
+    replay  node fuzz-lab/tools/replay.mjs web-triage flawed c798202eeccb
   PASS  reference parsers are clean OR a live defect was found and is reported no live reference finding; the 6 known defect(s) are all under regression guard and holding
-  PASS  every triaged finding reproduced from its recipe, minimised, and the reduced case re-verified 11/11 sampled finding(s) triaged (38 found, 27 same-class and not sampled)
+  PASS  every triaged finding reproduced from its recipe, minimised, and the reduced case re-verified 11/11 sampled finding(s) triaged (44 found, 33 same-class and not sampled)
 
 ------------------------------------------------------------------------------------
 4. negative control — a deliberately fragile parser MUST be caught
 ------------------------------------------------------------------------------------
-  PASS  pcap: the flawed twin was caught (reads incl_len straight into a subarray with no bounds check…) 2 finding(s) — first: uncaught at #29, 0 B
-  PASS  jose: the flawed twin was caught (no ceiling on segment length, no ceiling on claim-value leng…) 21 finding(s) — first: uncaught at #1, 99 B
-  PASS  forensic-pf: the flawed twin was caught (loops `n` times where n is a u32 from the file, with no cap …) 12 finding(s) — first: uncaught at #2, 32 B
-  PASS  web-triage: the flawed twin was caught (nested quantifier: /[_$\w]+(\s*\(\s*0x[0-9a-fA-F]+\s*\))+/g …) 3 finding(s) — first: hang at #18, 152143 B
+  PASS  pcap: the flawed twin was caught (reads incl_len straight into a subarray with no bounds check…) 2 finding(s) — first: uncaught at #1, 4 B
+  PASS  jose: the flawed twin was caught (no ceiling on segment length, no ceiling on claim-value leng…) 24 finding(s) — first: uncaught at #0, 218 B
+  PASS  forensic-pf: the flawed twin was caught (loops `n` times where n is a u32 from the file, with no cap …) 15 finding(s) — first: uncaught at #8, 132 B
+  PASS  web-triage: the flawed twin was caught (nested quantifier: /[_$\w]+(\s*\(\s*0x[0-9a-fA-F]+\s*\))+/g …) 3 finding(s) — first: hang at #39, 265933 B
   PASS  the negative control is not satisfied by the reference parser crashing 11 flawed-twin finding(s) recorded
 
 ------------------------------------------------------------------------------------
 5. regressions — every known finding must now be REJECTED, not thrown
 ------------------------------------------------------------------------------------
-  ok   pf-truncated-header            parsed in 66.0ms
-  ok   pf-truncated-table             parsed in 73.0ms
-  ok   pf-half-slot                   parsed in 60.0ms
-  ok   jose-claim-redos               parsed in 67.0ms (ceiling 1500ms)
-  ok   web-accessor-redos             parsed in 90.0ms (ceiling 1500ms)
-  ok   web-nullish-lowering-redos     parsed in 80.0ms (ceiling 1500ms)
+  ok   pf-truncated-header            parsed in 52.0ms
+  ok   pf-truncated-table             parsed in 52.0ms
+  ok   pf-half-slot                   parsed in 50.0ms
+  ok   jose-claim-redos               parsed in 63.0ms (ceiling 1500ms)
+  ok   web-accessor-redos             parsed in 85.0ms (ceiling 1500ms)
+  ok   web-nullish-lowering-redos     parsed in 73.0ms (ceiling 1500ms)
   PASS  every recorded finding now rejects cleanly (each fix holds) 6/6 regressions hold
   PASS  the regression corpus is non-empty                       6 known finding(s) under guard
 
 ====================================================================================
-fuzz-lab loop summary — run fuzz-2026-10-02T21-00-19-908Z
+fuzz-lab loop summary — run fuzz-2026-10-13T19-27-38-768Z
 ====================================================================================
   seeds                27 across 4 groups, all hashes stable across two builds
-  inputs executed      320 (40/target x 2 variants x 4 targets), one process each
-  reference outcomes   parsed 106 · rejected 54 · uncaught 0 · hang 0 · memory 0
-  flawed-twin outcomes parsed 122 · rejected 0 · uncaught 35 · hang 3 · memory 0
+  inputs executed      480 (60/target x 2 variants x 4 targets), one process each
+  reference outcomes   parsed 155 · rejected 85 · uncaught 0 · hang 0 · memory 0
+  flawed-twin outcomes parsed 196 · rejected 0 · uncaught 41 · hang 3 · memory 0
   reference findings   0  (none)
   flawed-twin findings 11  (the negative control)
   regressions holding  6/6
-  elapsed              702.1s
+  elapsed              692.4s
 
   PASS  every seed is non-empty and under the 2 MiB input ceiling  27 seeds, largest 151552 B
   PASS  seed names are unique (a seed is addressable by name)      27 distinct
   PASS  two consecutive builds produce byte-identical seeds        27 seeds, all hashes match
-  PASS  pcap: every input was executed against both variants       80/80
-  PASS  pcap: no input was silently skipped                        reference 40 · flawed 40
+  PASS  pcap: every input was executed against both variants       120/120
+  PASS  pcap: no input was silently skipped                        reference 60 · flawed 60
   PASS  pcap: the harness never reported its own failure           no harness-error outcomes
-  PASS  jose: every input was executed against both variants       80/80
-  PASS  jose: no input was silently skipped                        reference 40 · flawed 40
+  PASS  jose: every input was executed against both variants       120/120
+  PASS  jose: no input was silently skipped                        reference 60 · flawed 60
   PASS  jose: the harness never reported its own failure           no harness-error outcomes
-  PASS  forensic-pf: every input was executed against both variants 80/80
-  PASS  forensic-pf: no input was silently skipped                 reference 40 · flawed 40
+  PASS  forensic-pf: every input was executed against both variants 120/120
+  PASS  forensic-pf: no input was silently skipped                 reference 60 · flawed 60
   PASS  forensic-pf: the harness never reported its own failure    no harness-error outcomes
-  PASS  web-triage: every input was executed against both variants 80/80
-  PASS  web-triage: no input was silently skipped                  reference 40 · flawed 40
+  PASS  web-triage: every input was executed against both variants 120/120
+  PASS  web-triage: no input was silently skipped                  reference 60 · flawed 60
   PASS  web-triage: the harness never reported its own failure     no harness-error outcomes
   PASS  reference parsers are clean OR a live defect was found and is reported no live reference finding; the 6 known defect(s) are all under regression guard and holdin
-  PASS  every triaged finding reproduced from its recipe, minimised, and the reduced case re-verified 11/11 sampled finding(s) triaged (38 found, 27 same-class and not sampled)
-  PASS  pcap: the flawed twin was caught (reads incl_len straight into a subarray with no bounds check…) 2 finding(s) — first: uncaught at #29, 0 B
-  PASS  jose: the flawed twin was caught (no ceiling on segment length, no ceiling on claim-value leng…) 21 finding(s) — first: uncaught at #1, 99 B
-  PASS  forensic-pf: the flawed twin was caught (loops `n` times where n is a u32 from the file, with no cap …) 12 finding(s) — first: uncaught at #2, 32 B
-  PASS  web-triage: the flawed twin was caught (nested quantifier: /[_$\w]+(\s*\(\s*0x[0-9a-fA-F]+\s*\))+/g …) 3 finding(s) — first: hang at #18, 152143 B
+  PASS  every triaged finding reproduced from its recipe, minimised, and the reduced case re-verified 11/11 sampled finding(s) triaged (44 found, 33 same-class and not sampled)
+  PASS  pcap: the flawed twin was caught (reads incl_len straight into a subarray with no bounds check…) 2 finding(s) — first: uncaught at #1, 4 B
+  PASS  jose: the flawed twin was caught (no ceiling on segment length, no ceiling on claim-value leng…) 24 finding(s) — first: uncaught at #0, 218 B
+  PASS  forensic-pf: the flawed twin was caught (loops `n` times where n is a u32 from the file, with no cap …) 15 finding(s) — first: uncaught at #8, 132 B
+  PASS  web-triage: the flawed twin was caught (nested quantifier: /[_$\w]+(\s*\(\s*0x[0-9a-fA-F]+\s*\))+/g …) 3 finding(s) — first: hang at #39, 265933 B
   PASS  the negative control is not satisfied by the reference parser crashing 11 flawed-twin finding(s) recorded
   PASS  every recorded finding now rejects cleanly (each fix holds) 6/6 regressions hold
   PASS  the regression corpus is non-empty                         6 known finding(s) under guard

@@ -1,18 +1,18 @@
 # assert-probes evidence: web.js.cdp probe
 # command: node web-reverse/tools/loop.mjs
 # exit: 0
-# seconds: 3.81
+# seconds: 3.85
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
 # produces: D:\Software\Tool\WorkStation\debugger\web-reverse\out\last-run-web-reverse.json
-#   sha256: 5cb7df173d9abcf7ec46e330cb7d7d9b9811e13c125c848a4d8a59b969818d33
+#   sha256: 3ddf9963a8cb7131424fb6c3508bcc3ddff5cf073325c692e12fdece90eec029
 #   bytes: 900
 #   written-by-this-run: yes
 ------------------------------------------------------------------------
 web-reverse lab loop
-  server        http://127.0.0.1:53902 (in-process, loopback, binds port 0)
+  server        http://127.0.0.1:64616 (in-process, loopback, binds port 0)
   keyId         e38c1367b1f06675
-  artifacts     %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-37676
+  artifacts     %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-49940
 
 ------------------------------------------------------------------------------
 [1] unsigned POST /api/submit
@@ -20,35 +20,35 @@ web-reverse lab loop
 -> HTTP 401 {"ok":false,"error":"missing-signature-headers"}
 
 ------------------------------------------------------------------------------
-$ node tools/capture.mjs --url http://127.0.0.1:53902/plain --clicks 1 --out %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-37676\plain.json
+$ node tools/capture.mjs --url http://127.0.0.1:64616/plain --clicks 1 --out %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-49940\plain.json
 ------------------------------------------------------------------------------
-capture: 1 /api request(s) from http://127.0.0.1:53902/plain
-  POST http://127.0.0.1:53902/api/submit -> HTTP 200
-    x-lab-ts   1791143656585
-    x-lab-sign 65a47fc7d6c9058df0818c13c34fca114b08d332f233ea305aa47a2026a6bd0c
-    body       {"op":"lab.submit","nonce":"uuf4wuwv","at":1791143656585}
-written %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-37676\plain.json
+capture: 1 /api request(s) from http://127.0.0.1:64616/plain
+  POST http://127.0.0.1:64616/api/submit -> HTTP 200
+    x-lab-ts   1791919651035
+    x-lab-sign ef2c14cbb62eb34e9148b78bbc3818e9f3c2ed8d4b976ac115b49904fec6f21e
+    body       {"op":"lab.submit","nonce":"m2wcfwdg","at":1791919651035}
+written %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-49940\plain.json
 CDP calls: Target.createTarget, Target.attachToTarget, Page.enable, Network.enable, Runtime.enable, Runtime.addBinding, Page.addScriptToEvaluateOnNewDocument, Page.navigate, Runtime.evaluate, Network.getResponseBody
 
 ------------------------------------------------------------------------------
-$ node tools/capture.mjs --url http://127.0.0.1:53902/obf --clicks 2 --out %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-37676\obf.json
+$ node tools/capture.mjs --url http://127.0.0.1:64616/obf --clicks 2 --out %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-49940\obf.json
 ------------------------------------------------------------------------------
-capture: 2 /api request(s) from http://127.0.0.1:53902/obf
-  POST http://127.0.0.1:53902/api/submit -> HTTP 200
-    x-lab-ts   1791143657413
-    x-lab-sign c3cb43e1f1d4561d8c8d06cc2a632259b25633604011702440057e9c4d6d8ba3
-    body       {"op":"lab.submit","nonce":"2fsv58oh","at":1791143657413}
-  POST http://127.0.0.1:53902/api/submit -> HTTP 200
-    x-lab-ts   1791143657477
-    x-lab-sign 1e644fe2d50cd49f14b29a214cf92ed03603748b131f8b86e167c02aebfe78ce
-    body       {"op":"lab.submit","nonce":"5lxh0dqz","at":1791143657477}
-written %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-37676\obf.json
+capture: 2 /api request(s) from http://127.0.0.1:64616/obf
+  POST http://127.0.0.1:64616/api/submit -> HTTP 200
+    x-lab-ts   1791919651907
+    x-lab-sign e49edd88257f3a0395b413385cb2f262e10fad0ef5baaefa680263663eabc08a
+    body       {"op":"lab.submit","nonce":"vbznb1ym","at":1791919651907}
+  POST http://127.0.0.1:64616/api/submit -> HTTP 200
+    x-lab-ts   1791919651959
+    x-lab-sign c0830ebf2d233a55ffbddcadd5657b130500251a7139efda97712f4f25e187f8
+    body       {"op":"lab.submit","nonce":"oi669cui","at":1791919651959}
+written %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-49940\obf.json
 CDP calls: Target.createTarget, Target.attachToTarget, Page.enable, Network.enable, Runtime.enable, Runtime.addBinding, Page.addScriptToEvaluateOnNewDocument, Page.navigate, Runtime.evaluate, Network.getResponseBody
 
 ------------------------------------------------------------------------------
-$ node tools/recover.mjs --capture %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-37676\obf.json --page http://127.0.0.1:53902/obf --out %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-37676\recovered.json --runtime-probe
+$ node tools/recover.mjs --capture %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-49940\obf.json --page http://127.0.0.1:64616/obf --out %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-49940\recovered.json --runtime-probe
 ------------------------------------------------------------------------------
-page            http://127.0.0.1:53902/obf
+page            http://127.0.0.1:64616/obf
 obfuscator      array=_0xa decoder=_0x2f7a() xor=0x17 entries=17
 decoded table:
   [ 0] "lab-demo-signing-key-9f2c1a7e-not-a-real-secret-v1"
@@ -74,31 +74,31 @@ recovered key   "lab-demo-signing-key-9f2c1a7e-not-a-real-secret-v1"
 signature       x-lab-sign = hex(HMAC-SHA256(key, "<x-lab-ts>.<raw body>"))
 reproduces      2/2 captured signature(s) with node:crypto
 keyId           sha256(key)[0:16] = e38c1367b1f06675 vs server e38c1367b1f06675 -> CONFIRMED
-written         %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-37676\recovered.json
+written         %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-49940\recovered.json
 
 ------------------------------------------------------------------------------
-$ node tools/replay.mjs --capture %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-37676\obf.json --key-file %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-37676\recovered.json --url http://127.0.0.1:53902 --new-body
+$ node tools/replay.mjs --capture %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-49940\obf.json --key-file %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-49940\recovered.json --url http://127.0.0.1:64616 --new-body
 ------------------------------------------------------------------------------
-capture         %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-37676\obf.json
+capture         %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-49940\obf.json
 recovered key   "lab-demo-signing-key-9f2c1a7e-not-a-real-secret-v1"  (keyId e38c1367b1f06675)
-endpoint        http://127.0.0.1:53902/api/submit
+endpoint        http://127.0.0.1:64616/api/submit
 
-[1] verbatim      resend the captured bytes (ts=1791143657477, sign=1e644fe2d50cd49f…)
+[1] verbatim      resend the captured bytes (ts=1791919651959, sign=c0830ebf2d233a55…)
     -> HTTP 409 {"ok":false,"error":"replayed-signature","bit":"that exact signature was already accepted"}
     copy-alone works: NO (as designed)
 
-[2] recompute     same body, fresh ts=1791143658586, signature minted in plain Node
-    sign b7995a378652aee96ecb6a606c05783a2e7d1feb7879696a7823d0c54fe88a03  (differs from captured — the signature tracks the timestamp)
-    -> HTTP 200 {"ok":true,"accepted":true,"keyId":"e38c1367b1f06675","ts":1791143658586,"sign":"b7995a378652aee96ecb6a606c05783a2e7d1feb7879696a7823d0c54fe88a03","bodyBytes":57,"received":{"op":"lab.submit","nonce":"5lxh0dqz","at":1791143657477}}
+[2] recompute     same body, fresh ts=1791919653091, signature minted in plain Node
+    sign a984bc76f3c0ab963f77083f68480a5b3fbc119846b216c3b63e8ec7a9218f6e  (differs from captured — the signature tracks the timestamp)
+    -> HTTP 200 {"ok":true,"accepted":true,"keyId":"e38c1367b1f06675","ts":1791919653091,"sign":"a984bc76f3c0ab963f77083f68480a5b3fbc119846b216c3b63e8ec7a9218f6e","bodyBytes":57,"received":{"op":"lab.submit","nonce":"oi669cui","at":1791919651959}}
 
 [3] forge         body never sent by any client
-    body {"op":"lab.forge","nonce":"27cd6ff7","at":1791143658587}
-    -> HTTP 200 {"ok":true,"accepted":true,"keyId":"e38c1367b1f06675","ts":1791143658587,"sign":"331e788adecd638d7fd3a8063178897b031696e3c744ce47f0306b68ada27277","bodyBytes":56,"received":{"op":"lab.forge","nonce":"27cd6ff7","at":1791143658587}}
+    body {"op":"lab.forge","nonce":"5c20fec2","at":1791919653092}
+    -> HTTP 200 {"ok":true,"accepted":true,"keyId":"e38c1367b1f06675","ts":1791919653092,"sign":"6fdb0306ec8f9367703e5237d8e68dfe79ff7132efa863c3c6038e0bfd9f759d","bodyBytes":56,"received":{"op":"lab.forge","nonce":"5c20fec2","at":1791919653092}}
 
 verdict         PASS — the signature was reproduced, not copied
 
 ------------------------------------------------------------------------------
-$ node tools/fingerprint.mjs --url http://127.0.0.1:53902/fingerprint --out %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-37676\fingerprint.json
+$ node tools/fingerprint.mjs --url http://127.0.0.1:64616/fingerprint --out %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-49940\fingerprint.json
 ------------------------------------------------------------------------------
 
 === single probe ===
@@ -115,7 +115,7 @@ observed (client-side)
   "languages": 2,
   "hasNotification": true,
   "hardwareConcurrency": 24,
-  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
   "webglVendor": "Google Inc. (NVIDIA)",
   "webglRenderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti Laptop GPU (0x00002F58) Direct3D11 vs_5_0 ps_5_0, D3D11)",
   "stackProbeInstalled": true,
@@ -123,17 +123,17 @@ observed (client-side)
   "prepareStackTraceReadOnTouch": true
 }
 
-written %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-37676\fingerprint.json
+written %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-49940\fingerprint.json
 
 ==============================================================================
 web-reverse loop summary
 ==============================================================================
   PASS  unsigned request rejected by the gate                HTTP 401
-  PASS  capture /plain (1 signed request, HTTP 200)          exit 0  (0.8s)
+  PASS  capture /plain (1 signed request, HTTP 200)          exit 0  (0.9s)
   PASS  capture /obf (2 signed requests, HTTP 200)           exit 0  (0.9s)
   PASS  recover key from /obf and reproduce the captures     exit 0  (0.5s)
   PASS  replay: copy rejected, recomputed signature accepted exit 0  (0.1s)
-  PASS  bot-detection report                                 exit 0  (1.3s)
+  PASS  bot-detection report                                 exit 0  (1.2s)
 
 LOOP CLOSED: signature captured, algorithm recovered, request minted outside the browser, gate accepted it.
 ARTIFACT web-reverse/out/last-run-web-reverse.json
