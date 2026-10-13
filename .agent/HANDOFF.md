@@ -18,7 +18,7 @@
 > 2. 提交：wiki `9f8da65` `3171e0f` + 跟进批次；station `fb0ffea` + 跟进批次
 > 3. **遗留（非本 mission，未提交，别顺手提交）**：`scripts/il2cpp-probe.ps1`（-Target 功能）、`skills/debugger-review/SKILL.md`（self-check 节）、`notes/INDEX.md`、`_re-work/`、`evidence/probes/*.log`
 > 4. **已知红线违反（未修，前序决定需要 Owner 点头）**：wiki `.agent/HANDOFF.md` 被 git 跟踪（内容已按新口径更新，未提交）
-> 5. 门：eval-agent-contract PASS / two-tree 185 页 TREE CLEAN / doc-facts OK
+> 5. 门：eval-agent-contract PASS / two-tree 185 页 TREE CLEAN / doc-facts OK；全量 `verify-all.ps1` **30:38** 跑完——链内唯一红 = `fuzz.differential.parse`（probe 自带 load-sensitive 注记），**空载单跑 727s → OK**，判为负载噪声非回归（历史 FLAKY 记录：`notes/2026-10-12-verify-sweep-intermittent-flaky.md`）
 >
 > **硬约束（别踩）**：
 > - `eval-agent-contract.py` 要求保留 5 个 `<!-- eval:* -->` 标记 + 四语言各自「Stop lines cannot be waived / 不能取消红线 / ストップラインを外せません / 스톱 라인을 해제하지 못합니다」锚点；`FORBIDDEN_PHRASES` 不许出现「do not refuse / 不拒绝、不阻断」
