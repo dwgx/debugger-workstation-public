@@ -1,7 +1,7 @@
 # assert-probes evidence: native.yara.triage control
 # command: node yara-lab/tools/negative-gate.mjs
 # exit: 1
-# seconds: 0.24
+# seconds: 0.31
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
 ------------------------------------------------------------------------
@@ -9,7 +9,7 @@
 native.yara.undefined_value — NEGATIVE CONTROL: prove the engine has THREE values, not two
 ================================================================================================
   instrument  Static-Reversing\YARA-X\yr.exe  (yara-x-cli, invoked through cmd.exe /c)
-  target      generated non-PE file in %USERPROFILE%\AppData\Local\Temp\yara-lab-gate-ySi0Km  (not committed: a fixture that gains a PE
+  target      generated non-PE file in %USERPROFILE%\AppData\Local\Temp\yara-lab-gate-SUvZ38  (not committed: a fixture that gains a PE
               header would make R_UNDEFINED match for reasons nobody intended)
   witness     yara-lab control witness 4f2b9c   (present in the target)
   absent      ZZQQXX-NOT-IN-TARGET-9F3A71C4   (absent from the target)

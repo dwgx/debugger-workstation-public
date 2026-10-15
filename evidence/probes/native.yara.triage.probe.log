@@ -1,12 +1,12 @@
 # assert-probes evidence: native.yara.triage probe
 # command: node yara-lab/tools/probe.mjs
 # exit: 0
-# seconds: 0.21
+# seconds: 0.35
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
 # produces: D:\Software\Tool\WorkStation\debugger\yara-lab\out\last-run-yara.json
-#   sha256: 850e0ad42856e2d201c05cc8d4173dcd1ca4345598612c59230b57ac21fad473
-#   bytes: 4279
+#   sha256: 7d265e95fd2252ecf7afa4f3588e5801b23aa54d41a48094e5460276468299db
+#   bytes: 4280
 #   written-by-this-run: yes
 ------------------------------------------------------------------------
 

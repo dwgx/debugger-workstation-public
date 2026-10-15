@@ -1,0 +1,86 @@
+# assert-probes evidence: native.crosscompare.ghidra probe
+# command: node headless-lab/tools/negative-gate.mjs
+# exit: 1
+# seconds: 151.59
+# captured by: python scripts/assert-probes.py --save-evidence <dir>
+# re-run the command above; this file is OUTPUT, not a claim about it.
+# produces: D:\Software\Tool\WorkStation\debugger\headless-lab\out\last-run-xcompare.json
+#   sha256: 989344972ad29271307d5186b5cf314953097d3a3698f4f1492fef3d30c31c09
+#   bytes: 691
+#   written-by-this-run: yes
+------------------------------------------------------------------------
+
+====================================================================================================
+native.crosscompare.ghidra -- NEGATIVE CONTROL: a binary compared against itself
+====================================================================================================
+  witness      native/core.c + headless-lab/tools/build.ps1 -- read, not assumed
+    seed       0x811c9dc5 ^ LAB_MASK; default LAB_MASK 0xa7
+    variant    functions reading LAB_MASK: checksum  (build-variant by construction)
+    build      core_v1.dll    mask 0xa7 -> seed 0x811c9d62
+    build      core_v2.dll    mask 0x3c -> seed 0x811c9df9
+  instrument   scripts/ghidra-headless.ps1  (the ONE sanctioned launcher; no second launch path)
+    ghidra     D:\Software\Tool\WorkStation\debugger\Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC
+    postscripts ExportDecompile.java (the decompiler's opinion) + FunctionHashes.java (a fact about bytes)
+
+----------------------------------------------------------------------------------------------------
+ARM A -- IDENTITY: core_v1.dll analysed twice, as two JVMs and two throwaway projects
+----------------------------------------------------------------------------------------------------
+  side A1  399 functions, 399 decompiled, 399 .c files
+  side A2  399 functions, 399 decompiled, 399 .c files
+  key       body = (name, size, content-address) as a MULTISET. Names are not unique in a
+            FunctionHashes manifest: 399 bodies but 387 names on A1, so
+            12 body/bodies share a symbol with another. A name-keyed map would
+            have compared 387 of 399 and hidden any difference inside a
+            collapsed duplicate. Multiset equality is exact either way.
+
+  399 bodies compared as a multiset, 0 differences. Every content-address and all
+  399 decompiled .c files reproduced exactly across two independent headless
+  analyses of the same program. Nothing was invented.
+
+  ARM A VERDICT: zero changes on identical input, as the registry requires
+
+====================================================================================================
+ARM B -- CROSS-BUILD: two builds of one source. Disagreement here is EXPECTED.
+====================================================================================================
+  side B  core_v1.dll  mask 0xa7   399 functions
+  side C  core_v2.dll  mask 0x3c   399 functions
+  neither side has seen core.c or build.ps1. The witness is a third party both sides could
+  not have consulted, which is the only reason "they differ" is separable from "one of them
+  is wrong".
+
+  seed arithmetic, each side checked against its OWN decompiled C:
+    B core_v1.dll    0x811c9dc5 ^ 0xa7 = 0x811c9d62   present: YES
+    C core_v2.dll    0x811c9dc5 ^ 0x3c = 0x811c9df9   present: YES
+  So the two sides DO differ, and the difference is fully accounted for by a compile-time
+  constant declared in a file neither decompiler read. That is bucket 3: EXPECTED.
+
+  EXPECTED DIFFERENCE -- checksum
+      produced by BOTH sides; neither is defective
+      side B content-address  351790359b7ed748
+      side C content-address  7557d34f4381e407
+      evidence this is a defect-free disagreement rather than merely a difference:
+        core.c computes this body's seed as 0x811c9dc5 ^ LAB_MASK, and the two
+        builds differ ONLY in that macro -- 0x811c9d62 vs 0x811c9df9, each confirmed present
+        in that side's own decompiled C above. The BYTES differ, so this is substance,
+        not a rendering artefact, AND the source predicted it. The cross-compare is
+        doing its job, and a gate that flagged this would be the noise failure.
+      decompiled, side by side:  B 0x811c9d62   C 0x811c9df9   (the one differing operand)
+
+  ARM B TALLY: 0 rendering-only, 1 predicted-and-explained,
+              0 variant-named function(s) correctly found still, 0 finding(s)
+  ARM B VERDICT: every difference was predicted by a witness neither side could see
+
+NEGATIVE-CONTROL OK -- the honest-refusal shape holds in both directions.
+  ARM A  399 bodies, identical input, ZERO changes. Nothing was invented.
+  ARM B  1 difference(s), every one predicted by core.c before it was read, and
+         0 rendering-only difference(s) correctly dismissed as a
+         decompiler disagreement rather than a defect. Nothing was missed either.
+  The distinction that makes this a control rather than a noise generator: a difference
+  WITH a witness is reported as agreement-with-an-explanation, and a difference WITHOUT
+  one is a finding. A gate that reported every difference would be red on every run and
+  would therefore say nothing at all.
+  Exiting 1 -- the non-zero code the registry declares, because a control that must exit 0
+  proves nothing.
+  scratch %USERPROFILE%\AppData\Local\Temp\xcompare-neg-DlMzKz removed: yes
+GATE-SUMMARY {"control":"native.crosscompare.same_binary","arms":{"A":{"bodies":399,"renderOnly":0,"findings":0},"B":{"renderOnly":0,"predicted":1,"findings":0}},"findings":0,"verdict":"OK"}
+ARTIFACT D:\Software\Tool\WorkStation\debugger\headless-lab\out\last-run-xcompare.json

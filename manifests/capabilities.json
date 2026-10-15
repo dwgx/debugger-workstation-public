@@ -2035,10 +2035,8 @@
         "expect": "NEGATIVE-CONTROL OK",
         "expect_exit": 1,
         "last_run": "2026-09-30",
-        "evidence_binding": {
-          "status": "unverified",
-          "reason": "Honest state, not a gap papered over: the probe WAS run on this host and its summary line is recorded in last_summary above, but no artifact of that run was retained -- no JSON log, no hash of the target under test, nothing on disk that re-derives the number. So the binding is to the recorded summary, not to a file. Until a probe run writes its own output to a committed path and this field points at it with a sha256, this entry's 'observed' rests on the summary line and on the lab README named in provenance.record. R17 accepts exactly this marker and no softer one, so the day a hash exists this has to be replaced rather than left."
-        },
+        "run_log": "evidence/probes/native.crosscompare.ghidra.probe.log",
+        "sha256": "da9283fffe9254cb1301371c1cd8230b39a956ca7540eadac64ae528dbff3ce5",
         "last_summary": "3 programs open in one headless process, 14 program correlators across two of them, 14-17 s, 2,889,483 B TSV",
         "produces": "headless-lab/out/last-run-xcompare.json",
         "runtime_note": "SLOW: measured 2026-10-05 at 143 s. It runs Ghidra TWICE -- the same DLL analysed as two separate JVMs in two throwaway projects (ARM A) and then two real builds (ARM B) -- so the cost is inherent to what the control asserts. assert-probes.py defaults to --timeout 180, which cuts it off mid-analysis and would make the missing 'NEGATIVE-CONTROL OK' read as a registry drift. Run this entry with --timeout 600 or more.",
@@ -4126,7 +4124,8 @@
         "produces": "yara-lab/out/last-run-yara.json",
         "runtime_note": "fast: measured 2026-10-05 at under 1 s (it shells yr.exe twice on a 1 KB scratch rule and one corpus binary).",
         "last_run": "2026-10-05",
-        "run_log": "evidence/probes/native.yara.triage.probe.log"
+        "run_log": "evidence/probes/native.yara.triage.probe.log",
+        "sha256": "7435245fc5cd9b79e9f8b086d18e9d5954bc15882bad2979eda2cceb1f80858f"
       },
       "negative_control": {
         "id": "native.yara.undefined_value",
