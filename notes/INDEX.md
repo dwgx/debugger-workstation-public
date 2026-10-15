@@ -4,6 +4,7 @@ Newest first. Protocol: `docs/AGENT_EVOLUTION.md`. Do not commit sample hashes, 
 
 | Date | File | Status | Topic |
 |---|---|---|---|
+| 2026-10-15 | [2026-10-15-re-toolkit.md](2026-10-15-re-toolkit.md) | verified | RE 工具包 v1 站内持久化（`_re-work/re-toolkit-20261015/`，零依赖 + selftest 3/3）：三态节表 + FDE 回退（损坏节表仍解起点；无 EH_FRAME 报「不可用」不报 0）；Go pclntab 函数起点（ls.bin=PE32+ 非 ELF，121,658 起点 / 121,645 名，含 468+1,895+11 个字段级修复）；描述符切片器复现 126/57；Inno LZMA 读取器（zlb/props/dict，有界）|
 | 2026-10-15 | [re-methods-20261015.md](re-methods-20261015.md) | verified | RE 现役办法 10 类 + U1–U10 升级项 + 25 条命令证据；含损坏节表/FDE 回退与描述符 blob 边界（55 blob → 62 描述符）等既有记载更正 |
 | 2026-10-15 | [2026-10-15-electron-desktop-artifacts-signatures.md](2026-10-15-electron-desktop-artifacts-signatures.md) | verified | Electron byte fingerprints: fuse wire = 32B prefix `dL7pKGdnNz796PbbjQWNKmHXBZaB9tsX` + `01 09` + ASCII states; `.jsc` V8 code cache magic `0xC0DE06CF` with `@0x08 == source size + 66` (Module.wrap), payload plaintext; asar header layout + AppxBlockMap cross-check; unpacked integrity mismatch = signature-stripped image |
 | 2026-10-15 | [2026-10-15-ghidra-go-symbols-and-space-paths.md](2026-10-15-ghidra-go-symbols-and-space-paths.md) | verified | Ghidra on Go 1.25.14: GolangSymbolAnalyzer NPE → pclntab self-parse (99.5% align); space-in-path `cmd /c` quote stripping → copy to `_input/`; >10MB needs `-TimeoutMs`; ExportDecompile 30s/fn pathological → 5s/fn fast variant |
