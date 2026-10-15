@@ -195,7 +195,9 @@ Step 'doctrine (R4 provenance)' { python scripts/arsenal-doctrine-check.py }
 Step 'doctrine selftest'        { python scripts/arsenal-doctrine-check.py --selftest }
 
 # MAINTENANCE DEBT, by name: unpushed commits, tracked-mod/untracked/ignored counts, dotgit
-# size, top wiki pages by bytes, and every file over GitHub's 50/100 MiB lines. Report-only
+# size, top wiki pages by bytes, every file over GitHub's 50/100 MiB lines, dead-weight
+# directory sizes (_download-stage/_re-work) and handoff-snapshot freshness for both trees
+# (2026-10-16, G1/G2 of DEEP-HACKERONE). Report-only
 # (exits 0 by design): these numbers had no gate anywhere until 2026-10-14, and a permanently
 # red gate is a gate people learn to ignore. Exemptions print by name.
 Step 'maintenance doctor (report)' { python scripts/maintenance-doctor.py }

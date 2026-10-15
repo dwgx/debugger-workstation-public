@@ -1,5 +1,15 @@
 # HANDOFF — reverse workstation (debugger station)
 
+> **Snapshot: 2026-10-16 · baseline `6ea0dd4`（写入时 HEAD；本波 station 改动随本轮提交入库）· 快照不是活页。**
+>
+> ## 2026-10-16 · <private-tree> 接手波（跨树考古 + 报告项）
+>
+> - **本波 station 侧改动**：`scripts/maintenance-doctor.py` 新增两节 report-only 输出——死重量目录现测（`_download-stage` 27.96 GiB / 8,867 files；`_re-work` 130.8 MiB / 84 files）+ 两树 handoff `Snapshot:` 新鲜度门（G1/G2 of DEEP-HACKERONE）；本文件顶部即配套。
+> - **考古/复核落点**：`<project>/<private-tree>/.agent/2026-10-16-takeover/`（reports/：station 脚本声称复核、notes/Reports 归属清点、grants 普查等）；深读报告 `%USERPROFILE%/.dwgx/ops/research-2026-10-16-deepread/DEEP-HACKERONE.md`；旧料归档 `F:/远古历史/<private-tree>/`。
+> - **未推**：station ahead 5（`6ea0dd4`…）——push 仍需 Owner 本轮点头（硬规则）；三检查照旧。
+>
+> ---
+
 > ## 2026-10-14 · mission 收口：拒绝噪音清理 → 安全层剥离 → 收割落地（全部已提交）
 >
 > **Owner 语义（三轮）**：① 清「未授权」类声明、技术类不设限、判断留给模型；② station 安全与边界层**完全没有**——工具就是工具，agent 自己的道德观；③ 运维自主（「不管烧多少 token 做到你满意」）。

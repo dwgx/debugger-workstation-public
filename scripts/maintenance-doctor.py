@@ -6,11 +6,18 @@ anywhere in the estate -- that was the scorecard's gap 1/3/6, measured 2026-10-1
 A gate that fails on debt nobody can clear in the same window would be noise; a
 report that prints the numbers on every verify-all run makes the debt visible
 without blocking work. Exemptions are named on purpose (bypass-actor rule).
+
+2026-10-16 (takeover): added dead-weight directory sizes (_download-stage/_re-work)
+and handoff-snapshot freshness for both trees -- G1/G2 of DEEP-HACKERONE (the
+handoff layer had no gate anywhere; the dead weight had no reader).
 """
 from __future__ import annotations
 
+import os
+import re
 import subprocess
 import sys
+from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -71,6 +78,55 @@ def show(sized_list: list[tuple[str, int]], limit: int = 8) -> None:
         print(f"    {sz / MIB:9.1f} MiB  {flag:<11s} {rel}")
 
 
+def dir_size(path: Path) -> tuple[int, int]:
+    """(bytes, file count) for a directory tree; (0, 0) if absent."""
+    total = 0
+    count = 0
+    for root, _dirs, files in os.walk(path):
+        for f in files:
+            try:
+                total += (Path(root) / f).stat().st_size
+                count += 1
+            except OSError:
+                continue
+    return total, count
+
+
+def human(nbytes: int) -> str:
+    if nbytes >= 1024 * MIB:
+        return f"{nbytes / (1024 * MIB):.2f} GiB"
+    return f"{nbytes / MIB:.1f} MiB"
+
+
+def handoff_line(label: str, path: Path, head_date: str, max_age_days: int = 7) -> None:
+    """G2: report whether `.agent/HANDOFF.md` carries a fresh `Snapshot: <date>`.
+
+    Report-only on purpose: the handoff layer had no gate anywhere (scorecard gap 2,
+    named twice; the wiki handoff once sat 11 days stale). Prints by name; fails nothing.
+    """
+    try:
+        head = path.read_text(encoding="utf-8", errors="replace").splitlines()[:5]
+    except OSError as exc:
+        print(f"  {label} {path}: MISSING ({type(exc).__name__})")
+        return
+    m = None
+    for ln in head:
+        m = re.search(r"Snapshot:\s*(\d{4}-\d{2}-\d{2})", ln)
+        if m:
+            break
+    if not m:
+        print(f"  {label} {path}: MISSING `Snapshot: <date>` in first 5 lines")
+        return
+    snap = m.group(1)
+    try:
+        delta = (date.fromisoformat(head_date) - date.fromisoformat(snap)).days
+    except ValueError:
+        print(f"  {label} {path}: Snapshot {snap}; HEAD date unparsed ({head_date})")
+        return
+    verdict = "OK" if delta <= max_age_days else f"STALE {delta}d behind HEAD"
+    print(f"  {label} {path}: Snapshot {snap} vs HEAD {head_date} -> {verdict}")
+
+
 def main() -> None:
     print("maintenance doctor (report only; exits 0 by design)")
     print("=" * 72)
@@ -95,6 +151,15 @@ def main() -> None:
             others = sized(git(path, "ls-files", "--others", "--exclude-standard").splitlines(), path)
             print("  station untracked-not-ignored, top by size:")
             show(others)
+
+    print("  dead weight (Owner-gated, named):")
+    for name in ("_download-stage", "_re-work"):
+        b, n = dir_size(ROOT / name)
+        print(f"    {name:15s} {human(b):>10s} / {n} files")
+
+    print("  handoff snapshots (G2, report-only):")
+    handoff_line("station", ROOT / ".agent" / "HANDOFF.md", git(ROOT, "log", "-1", "--format=%cs"))
+    handoff_line("wiki", WIKI / ".agent" / "HANDOFF.md", git(WIKI, "log", "-1", "--format=%cs"))
 
     print("  exemptions (named): dead-weight deletion is Owner-gated; AgentRule .before-* backups")
     print("  are that layer's only rollback; redteam-*/ decompiled output is active experiment data")
