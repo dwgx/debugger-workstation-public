@@ -216,7 +216,7 @@ forensics §3F, while symbolic execution is entries #8 and #15 and DAP is entry 
 | MCP tool call | `references\mcp-router.md` |
 | Agent CLI (no GUI) | `references\agent-cli.md` |
 | Deep combo | [../../docs/EXPERT_PLAYBOOK.md](../../docs/EXPERT_PLAYBOOK.md) |
-| Knowledge: techniques, tools, papers | `<private-tree>\wiki\ROUTER.md` — **the L1 router** (situation → command → trap, single page); deep entries in `wiki\methods\arsenal-skill-archive.md` (**180 entries, 227 distinct URLs**, counted 2026-10-14) |
+| Knowledge: techniques, tools, papers | `<private-tree>\wiki\ROUTER.md` — **the L1 router** (situation → command → trap, single page); deep entries in `wiki\methods\arsenal-skill-archive.md` (**186 entries, 229 distinct URLs**, counted 2026-10-16；复算（cd wiki/methods）：`grep -cE '^\| ?\*{0,2}[A-Z]?[0-9]+[a-z]?\*{0,2} \|'` + `grep -oE 'https?://[^ )|]+' | sort -u | wc -l`) |
 | Knowledge: the web research behind it | `<private-tree>\wiki\methods\arsenal-research-dossier.md` |
 | Knowledge: prompt/workflow research (2026-10-12 round) | `<private-tree>\wiki\methods\prompt-workflow-research-2026-10-12.md` |
 
