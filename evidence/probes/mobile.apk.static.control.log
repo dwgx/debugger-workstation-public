@@ -1,7 +1,7 @@
 # assert-probes evidence: mobile.apk.static control
 # command: powershell -NoProfile -ExecutionPolicy Bypass -File mobile-lab/tools/apktool_refusal_control.ps1
 # exit: 1
-# seconds: 0.42
+# seconds: 0.56
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
 ------------------------------------------------------------------------
