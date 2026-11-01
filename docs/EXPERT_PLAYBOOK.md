@@ -1,7 +1,7 @@
 # EXPERT_PLAYBOOK.md — 逆向 / 恶意样本 / 安全分析实战手册
 
 > 场景驱动。每节 = 遇到什么 → 怎么下手 → 具体命令参数 → 组合拳 → 老手才知道的坑。
-> 路径相对安装根（本机 `D:\Software\Tool\WorkStation\debugger`）。工具明细见 `TOOLS_INDEX.md`。Agent 第一页：`skills/debugger-workstation/references/triage.md`。
+> 路径相对安装根（本机 `<repo>`）。工具明细见 `TOOLS_INDEX.md`。Agent 第一页：`skills/debugger-workstation/references/triage.md`。
 
 ---
 
@@ -284,12 +284,15 @@ Static-Reversing\YARA-X\yr.exe fmt my_rule.yar          # 格式化
 list_backends                          # 有哪些后端
 list_backend_tools <backend>           # 某后端能干什么
 smoke_backend <backend>                # 先冒烟确认能起来
-call_backend_tool <backend> <tool> {…} # 真正调用
+call_backend_tool <backend> <tool> {…} # 真正调用(复用同一后端进程)
+open_backend_session <backend>         # 显式开一个保活会话
+list_backend_sessions                  # 看哪些后端进程还热着
+close_backend_session <session_id>     # 主动回收('*' 全关)
 workflow_help                          # 内置工作流提示
 ```
 
 **要点**:
-- router 按需临时起后端、用完退,别手动把 19 个全拉起来。
+- router 按需起后端并保活,空闲超时(默认 600s)自动回收,别手动把 19 个全拉起来。
 - 需要持续直连(如整场 Ghidra 分析)才切 profile(`mcp-re` 等)。
 - 需 key 的后端(VirusTotal / MobSF / YaraFlux)先配好 `.env`,否则 smoke 就挂。
 - 真实分析类后端(Ghidra/IDA/ReClass/CE)必须先在对应 GUI 里开项目+加载插件,MCP 只是通道,不开 GUI 就是空连接。

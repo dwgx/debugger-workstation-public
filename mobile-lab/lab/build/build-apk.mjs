@@ -73,7 +73,7 @@ function findBuildTools() {
     ? [explicit]
     : (IS_WIN
         ? ['D:\\Software\\Android\\Sdk\\build-tools\\35.0.0',
-           '%USERPROFILE%\\AppData\\Local\\Android\\Sdk\\build-tools\\35.0.0']
+           `${process.env.LOCALAPPDATA}\\Android\\Sdk\\build-tools\\35.0.0`]
         : ['$HOME/Android/Sdk/build-tools/35.0.0', '/opt/android-sdk/build-tools/35.0.0']);
   for (const c of candidates) {
     if (fs.existsSync(path.join(c, 'aapt2.exe')) || fs.existsSync(path.join(c, 'aapt2'))) return c;

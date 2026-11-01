@@ -2,7 +2,7 @@
 
 Verifier: independent worker. I did not propose these promotions; my value is in re-deriving the
 recorded evidence rather than agreeing with it. Registry `generated` field: `2026-09-30`.
-Date of verification: 2026-10-02. cwd for every command: `D:/Software/Tool/WorkStation/debugger`.
+Date of verification: 2026-10-02. cwd for every command: `<repo>`.
 
 **Method.** For each sampled capability I read the recorded entry, then RAN `probe.command` and
 `negative_control.command` myself and recorded the REAL exit code (read from `$LASTEXITCODE`
@@ -102,7 +102,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File headless-lab\tools\triage-pa
 Real exit: `0`. Real stdout, verbatim (one line, truncated here only where the tool's own `caveat`
 runs long):
 ```
-{"ok":true,"precondition":"PASS means it is safe to decompile. A packed target reports ok:false and the mission skips every downstream round rather than analysing a stub.","target":"D:\\Software\\Tool\\WorkStation\\debugger\\crackme-corpus\\out\\c01-stringobf.exe","size":143872,"die_score":6.15091,"die_verdict":"not packed","packed":false,"caveat":"DERIVED FROM DIE'S OWN VERDICT, NOT FROM A NUMERIC THRESHOLD. ...","score_is_advisory":true}
+{"ok":true,"precondition":"PASS means it is safe to decompile. A packed target reports ok:false and the mission skips every downstream round rather than analysing a stub.","target":"<repo>\\crackme-corpus\\out\\c01-stringobf.exe","size":143872,"die_score":6.15091,"die_verdict":"not packed","packed":false,"caveat":"DERIVED FROM DIE'S OWN VERDICT, NOT FROM A NUMERIC THRESHOLD. ...","score_is_advisory":true}
 ```
 Recorded `probe.expect`: `"packed": false`. Real output contains `"packed":false` — **the
 whitespace differs.** `triage-packer.ps1` emits compact JSON; the recorded expect string has a
@@ -469,7 +469,7 @@ Copy-Item '...\crackme-corpus\out\c01-stringobf.exe' (Join-Path $d 'target.exe')
 ```
 Real exit: `0`. Real output, verbatim (the `[stage]` line is stderr):
 ```
-[stage] copied to %TEMP% %USERPROFILE%\AppData\Local\Temp\fridagate-8l7ovnaq\target.exe (143872 bytes); the repository original is never executed
+[stage] copied to %TEMP% %TEMP%\fridagate-8l7ovnaq\target.exe (143872 bytes); the repository original is never executed
 [pe  ] {"magic": "0x20b", "entry_rva": 5584, "size_of_image": 163840}
 [spawn] pid=29048 suspended=True
 [js  ] {"kind": "module", "name": "target.exe", "base": "0x7ff7bd540000", "size": 163840, ...}
@@ -557,7 +557,7 @@ I also verified the safety claim rather than taking it on faith. `frida_spawn_ga
 copies the target into a fresh `tempfile.mkdtemp(prefix="fridagate-")` and spawns the copy, and
 `stage_copy` refuses anything not ending `.exe` with `sys.exit(2)`. My run shows the repository
 original was never executed — the spawned path was
-`%USERPROFILE%\AppData\Local\Temp\fridagate-8l7ovnaq\target.exe`. The corpus
+`%TEMP%\fridagate-8l7ovnaq\target.exe`. The corpus
 `c01-stringobf.exe` remains 143,872 bytes and its `.i64` was untouched.
 
 **`does_not_prove` check — CONSISTENT.** The entry forbids claiming the CLI sibling is wrong, forbids

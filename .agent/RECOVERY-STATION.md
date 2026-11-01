@@ -1,4 +1,4 @@
-# RECOVERY — reverse workstation (`D:\Software\Tool\WorkStation\debugger`)
+# RECOVERY — reverse workstation (`<repo>`)
 
 Written 2026-09-30 before a context compaction. Everything below was **measured**, not
 remembered. Where a number is quoted it carries the command that produced it, because a

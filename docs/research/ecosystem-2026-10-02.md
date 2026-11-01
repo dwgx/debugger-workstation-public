@@ -337,7 +337,7 @@ PROCESS*).
 third-party skill or MCP". Measured:
 
 ```
-read D:/Software/Tool/WorkStation/debugger/docs/research/skill-adoption-checklist.md
+read <repo>/docs/research/skill-adoption-checklist.md
   -> File not found
 glob **/*adoption*  under the whole debugger repo
   -> only docs/research/; no checklist

@@ -4,9 +4,9 @@
 
 {
   "STATUS": "DONE",
-  "report_path": "%USERPROFILE%/AppData/Local/Temp/w1-gateredteam.md",
+  "report_path": "%TEMP%/w1-gateredteam.md",
   "report_bytes": 39003,
-  "scratch_root": "%USERPROFILE%/AppData/Local/Temp/redteam/rt",
+  "scratch_root": "%TEMP%/redteam/rt",
   "baseline": {
     "gate_selftest": "PASS 10/10",
     "mission_selftest": "PASS 15/15",

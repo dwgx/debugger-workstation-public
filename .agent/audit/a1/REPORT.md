@@ -1,6 +1,6 @@
 # AUDIT a1 - capabilities.json claim verification
 
-Target: `D:/Software/Tool/WorkStation/debugger/manifests/capabilities.json` (26 entries)
+Target: `<repo>/manifests/capabilities.json` (26 entries)
 Mode: READ-ONLY on the repo. Only this report file is written.
 Note on fixtures: two probes declare a `prepare` step that GENERATES a fixture under %TEMP%
 (certverify's signed-fixture.exe, selfparse's pcap corpus). Those writes are outside both repos
@@ -78,7 +78,7 @@ Negative control (`native.pe.authenticode.certificate_table_past_eof_refused`):
     powershell -NoProfile -ExecutionPolicy Bypass -File headless-lab/tools/authenticode_control.ps1
 REAL EXIT: 2        (expect_exit: 2)  -> matches
 REAL stdout (verbatim, two JSON lines):
-    {"ok": true, "exit": 0, "fixture": "%USERPROFILE%\\AppData\\Local\\Temp\\signed-fixture.exe",
+    {"ok": true, "exit": 0, "fixture": "%TEMP%\\signed-fixture.exe",
      "cert_offset": 143872, "cert_len": 48, "payload": "ARSENAL-FIXTURE-NOT-A-REAL-SIGNATURE "}
     {"ok": false, "exit": 2, "error": "certificate table at file offset 0x23200 runs past the end of
      a 143860-byte file; the directory is pointing outside the file"}
@@ -86,7 +86,7 @@ expect_output "runs past the end of" -> PRESENT VERBATIM, and the refusal names 
 the file length, exactly as `expect_output_note` demands.
 VERDICT: **REFUSED-AS-DECLARED** (strong control: two-sided, and it refuses on the offset semantics
 rather than on a generic "invalid signature").
-Side effect noted: the control regenerates `%USERPROFILE%\AppData\Local\Temp\signed-fixture.exe`
+Side effect noted: the control regenerates `%TEMP%\signed-fixture.exe`
 (143920 bytes). This is the documented behaviour of the control, and it is what makes the
 certverify probe re-derivable.
 
@@ -108,7 +108,7 @@ THE BRIEF'S EXPLICIT QUESTION: "certverify claims it writes a temp .der and that
 '"der_parsed": false'. Does the probe actually produce that today?" -> **YES. Confirmed.**
   * `prepare` step: the fixture is generated, not committed. It already existed because the
     authenticode control above regenerates it. Verified present:
-    `%USERPROFILE%/AppData/Local/Temp/signed-fixture.exe`  143920 bytes.
+    `%TEMP%/signed-fixture.exe`  143920 bytes.
   * temp .der claim, re-derived from source not prose:
     `native-lab/tools/cert_verify.py:87` `tempfile.NamedTemporaryFile(suffix=".der", delete=False)`,
     `:91` `subprocess.run(["openssl","asn1parse","-inform","DER","-in",der])`,
@@ -119,7 +119,7 @@ Probe command (from `probe.command`):
     python native-lab/tools/cert_verify.py %TEMP%\signed-fixture.exe
 REAL EXIT: 0        (expect_exit: 0)  -> matches
 REAL stdout (verbatim, single line):
-    {"ok": true, "exit": 0, "binary": "%USERPROFILE%/AppData/Local/Temp/signed-fixture.exe",
+    {"ok": true, "exit": 0, "binary": "%TEMP%/signed-fixture.exe",
      "security_offset": 143872,
      "win_certificate": {"dwLength": 48, "wRevision": "0x200", "wCertificateType": "0x2",
        "revision_is_2_0": true, "is_pkcs_signed_data": true, "body_bytes": 40},
@@ -208,7 +208,7 @@ section 6 to size the blast radius.
 ### 4a. The 5/5 TShark agreement claim - RE-DERIVED INDEPENDENTLY: **CONFIRMED**
 Setup, all of it re-run by me, not read:
   * `node net-reverse/lab/gen-pcaps.mjs` -> exit 0, wrote 5 pcaps to
-    `%USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\` (the documented `prepare`).
+    `%TEMP%\net-reverse-lab\pcaps\` (the documented `prepare`).
     Generator's own banner: dns-basic 4p, dns-txt 4p, http-basic 10p, odd-port 26p,
     tls-clienthello 14p.
   * TShark resolved and working. IMPORTANT CORRECTION TO MY OWN FIRST READ: I initially
@@ -216,7 +216,7 @@ Setup, all of it re-run by me, not read:
     the MSYS/bash layer cannot exec it (`command not found`, exit 127). That was a FALSE ALARM
     caused by this audit's own shell layer, not by the station. Under PowerShell from the repo cwd
     it runs and reports `TShark (Wireshark) 4.6.8 (v4.6.8-0-ge677bf052328)`, realpath
-    `D:\Software\Tool\WorkStation\debugger\Network-HTTP\Wireshark\portable\App\Wireshark\tshark.exe`.
+    `<repo>\Network-HTTP\Wireshark\portable\App\Wireshark\tshark.exe`.
     Recording this because "the tool the registry depends on is missing" would have been a
     high-value false finding, and it was wrong. The registry's version claim (TShark 4.6.8) is
     CORRECT, and tools.json's `network-http` record (Wireshark 4.6.8-portable) agrees.
@@ -409,7 +409,7 @@ REAL output (verbatim, the boxed text report):
     Warning: Found 2 skills in this directory. Use --recursive to scan each independently.
     ... box: SkillSpector Security Report ... v2.12.0
     Skill: unknown
-    Source: D:\Software\Tool\WorkStation\debugger\skills
+    Source: <repo>\skills
         Risk Assessment
      Score           0/100
      Severity        LOW
@@ -447,7 +447,7 @@ Negative control:
 REAL EXIT: 1        (expect_exit: 1)  -> matches.
 REAL output (verbatim, relevant part):
     Skill: helpful-helper
-    Source: %USERPROFILE%\AppData\Local\Temp\ssp-neg\skill
+    Source: %TEMP%\ssp-neg\skill
         Risk Assessment
      Score           39/100
      Severity        MEDIUM
@@ -542,7 +542,7 @@ numbering encourages, not a literal falsehood. Worth one sentence in the entry.
       NUMBER 4,916 is unverified.
 
 ## 7. requires.tools PROBE SWEEP -- every probe I could cheaply run
-Method: each probe string was run from the documented cwd (`D:\Software\Tool\WorkStation\debugger`).
+Method: each probe string was run from the documented cwd (`<repo>`).
 PowerShell-native probes were wrapped in single quotes so the bash layer did not eat `$env:`.
 Result table:
 
@@ -578,9 +578,9 @@ Result table:
 exact key: `capabilities[net.pcap.analyse].requires.tools[name="lab pcaps"].expect`
 exact wrong string: `corpus.json written to %TEMP%\net-reverse-lab\pcaps`
 what the command actually prints today (exit 0, and I ran it twice):
-    net-reverse pcap corpus (synthetic, self-authored) -> %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps
+    net-reverse pcap corpus (synthetic, self-authored) -> %TEMP%\net-reverse-lab\pcaps
     ...
-      label -> %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\corpus.json
+      label -> %TEMP%\net-reverse-lab\pcaps\corpus.json
 `grep -c 'corpus.json written to %TEMP%'` on the real output = **0** (grep exit 1).
 Two separate defects inside that one string: (i) the literal token `%TEMP%` is an UNEXPANDED shell
 placeholder and appears nowhere in the output -- the program prints the expanded Windows path; and
@@ -689,7 +689,7 @@ bits, and explains the failure mode it prevents. No caveats.
 ### 9.1 The registry's own validator passes -- and that is itself the finding
     python scripts/registry-verify.py
 REAL EXIT: 0. REAL output, all three lines:
-    registry: D:\Software\Tool\WorkStation\debugger\manifests\capabilities.json
+    registry: <repo>\manifests\capabilities.json
     capabilities: 26
     REGISTRY CLEAN: every capability declares what it proves, what it does not prove, a probe,
     and a negative control that must fail.

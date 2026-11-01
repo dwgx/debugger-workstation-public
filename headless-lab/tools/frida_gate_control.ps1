@@ -5,9 +5,9 @@
 # sys.exit(2)"` returns 0. So every one of these controls was STRUCTURALLY INCAPABLE OF FAILING:
 # its expect_exit was written down and never observed, and the registry reported CLEAN throughout.
 # The trailing `exit $LASTEXITCODE` is the whole fix. A control that cannot fail is not a control.
-$py='D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\python.exe';
+$repo=Split-Path -Parent (Split-Path -Parent $PSScriptRoot); $py="$repo\Mobile-Android\objection\.venv\Scripts\python.exe";
 $t=Join-Path $env:TEMP 'fridagate\target.exe';
-& $py 'D:\Software\Tool\WorkStation\debugger\native-lab\tools\frida_spawn_gate.py' $t neg-badaddr;
+& $py "$repo\native-lab\tools\frida_spawn_gate.py" $t neg-badaddr;
 Write-Host "STAGE1_EXIT=$LASTEXITCODE";
-& $py 'D:\Software\Tool\WorkStation\debugger\native-lab\tools\frida_spawn_gate.py' $t neg-rebase
+& $py "$repo\native-lab\tools\frida_spawn_gate.py" $t neg-rebase
 exit $LASTEXITCODE

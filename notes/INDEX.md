@@ -4,6 +4,12 @@ Newest first. Protocol: `docs/AGENT_EVOLUTION.md`. Do not commit sample hashes, 
 
 | Date | File | Status | Topic |
 |---|---|---|---|
+| 2026-10-17 | [2026-10-17-eac206-patch-feasibility.md](2026-10-17-eac206-patch-feasibility.md) | observed | EAC 206 patch feasibility: driver 3.2.0 0x22e007 → 568 B XXTEA response; module P1/P2/P3 bytes; kernel 0x179781d 7 B; (d2′) baseline; SBX IP stale trap (use Get-VMNetworkAdapter) |
+| 2026-10-16 | [2026-10-16-devin-payload-members-and-pak-misalignment.md](2026-10-16-devin-payload-members-and-pak-misalignment.md) | verified | Devin payload 成员级切片配方（Inno 6.4 LZMA + setup header 12,128 成员表）+ Chromium DataPack 错位陷阱 + LS=Go 121,658 符号 + .jsc 缺席 |
+| 2026-10-16 | [2026-10-16-mac-sleep-wol.md](2026-10-16-mac-sleep-wol.md) | verified | Mac 夜间睡眠：ICMP 通 / 全 TCP 黑洞（勿误判链路故障）；WoL magic packet（MAC→192.168.11.255:9/:7）~1s 唤醒；夜窗先 WoL 再 ssh |
+| 2026-10-15 | [2026-10-15-lzvn-no-magic-and-deepmap2-residual.md](2026-10-15-lzvn-no-magic-and-deepmap2-residual.md) | verified | Apple deepmap2 586「未解」全解：根因=定位启发式误判（非数据损坏）；无 magic LZVN 流 `[头][u32 声明长=可用长][LZVN]`（eos `06 00…00` 536/536）；mode1=raw@o+12；LZFSE magic@o+16、endp==流长 42/42；manifest 4,335→4,921、residual 0、PNG 15,230 |
+| 2026-10-15 | [2026-10-15-dyld-symtab-via-ipsw.md](2026-10-15-dyld-symtab-via-ipsw.md) | verified | dyld 共享缓存符号名有成熟工具（ipsw/dyld-tools/dsc_fix）；ipsw v3.1.738 实测 676,379 行 symtab、IMP 交叉 50/50、全量 98.67%——推翻旧「不可得」论断；「不可得」类论断先做先例检索 |
+| 2026-10-15 | [2026-10-15-subagent-backend-refusals-retry.md](2026-10-15-subagent-backend-refusals-retry.md) | observed | 子代理后端拒绝处置：403 内容策略首拒→原样重派（通常过）；连拒两次→改写 brief+换后端；流中断→重派。同内容硬重试 ≤2 次 |
 | 2026-10-15 | [2026-10-15-delta-rule.md](2026-10-15-delta-rule.md) | verified | ls.bin pclntab Δ 规则求解（DELTA-RULE 车道）：双族编码——真值含 0xE8/0xE9 → j=首命中位+1、存值=真值+((field_end+j)<<8j)；否则 b2op 字节0+=(field_end>>16)&0xFF、真字节0≥0x80 时字节1^=0xFF；触发字节还以 b2op 改写下一字段（j=2 实测 561 例）；名字解析 121,658/121,658（0 未解析），13 边界例全分类；与工具包 468/1,895/11 计数全对齐；`delta_solve.py` 零依赖可复现 |
 | 2026-10-15 | [2026-10-15-re-toolkit.md](2026-10-15-re-toolkit.md) | verified | RE 工具包 v1 站内持久化（`_re-work/re-toolkit-20261015/`，零依赖 + selftest 3/3）：三态节表 + FDE 回退（损坏节表仍解起点；无 EH_FRAME 报「不可用」不报 0）；Go pclntab 函数起点（ls.bin=PE32+ 非 ELF，121,658 起点 / 121,645 名，含 468+1,895+11 个字段级修复）；描述符切片器复现 126/57；Inno LZMA 读取器（zlb/props/dict，有界）|
 | 2026-10-15 | [re-methods-20261015.md](re-methods-20261015.md) | verified | RE 现役办法 10 类 + U1–U10 升级项 + 25 条命令证据；含损坏节表/FDE 回退与描述符 blob 边界（55 blob → 62 描述符）等既有记载更正 |

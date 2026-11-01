@@ -2,9 +2,33 @@ MIT License
 
 Copyright (c) 2026 debugger-workstation contributors
 
-本许可仅适用于本仓库的自研部分(mcp/debugger-router、mcp/bin、scripts、
-docs、manifests 等)。第三方工具与第三方 MCP server 的版权和许可归各自上游
-所有,详见 DISCLAIMER.md。
+Every file in this repository is under one of two licenses, and the two do
+not overlap:
+
+  1. Code, configuration, and the agent contract are MIT -- this file.
+  2. Documentation prose is CC BY-SA 4.0 -- LICENSE-docs.
+
+MIT covers:
+
+  every non-Markdown file
+  mcp/                 debugger-router, bin wrappers, MCP templates
+  scripts/             bootstrap, download, verification
+  manifests/           tools.json, mcp-backends.json, capabilities.json
+  skills/              agent skills: SKILL.md and references
+  templates/           init questionnaire, after-action
+  .github/             CI, issue templates, copilot instructions
+  AGENTS*.md           the agent contract, all locales
+  CLAUDE.md, GEMINI.md, OWNER.md, OWNER.example.md
+
+Everything else -- Markdown under docs/, notes/, .agent/, evidence/, the
+READMEs and DISCLAIMERs, CONTRIBUTING / SECURITY / CODE_OF_CONDUCT /
+LOCAL-THIS-PC, and the lab guides -- is CC BY-SA 4.0, enumerated in
+LICENSE-docs. If a path could be read as both, this license wins: code,
+configuration and the agent contract stay MIT, so a fork may be closed.
+
+Third-party tools and third-party MCP servers keep the copyright and license
+of their respective upstreams; this repository redistributes none of their
+code or binaries. See DISCLAIMER.md.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

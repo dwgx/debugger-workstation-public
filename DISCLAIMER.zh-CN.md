@@ -28,7 +28,7 @@ Ghidra、IDA Pro、radare2、x64dbg、ImHex、Detect It Easy、capa、FLOSS、YA
 - `mcp/.mcp.json.template`、`mcp/codex-mcp-config.example.toml` — 配置模板。
 - `scripts/`、`docs/`、`manifests/` — 脚本、文档、清单。
 
-其许可见 [LICENSE](LICENSE)。
+代码与配置的许可见 [LICENSE](LICENSE)(MIT);文档散文见 [LICENSE-docs](LICENSE-docs)(CC BY-SA 4.0)。
 
 ## 使用责任
 

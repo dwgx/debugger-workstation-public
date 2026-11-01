@@ -249,8 +249,8 @@ def tokenize(text: str) -> set[str]:
     return {t for t in re.split(r"[^0-9A-Za-z]+", text.lower()) if t}
 
 
-# /c/Software/Tool/WorkStation/debugger and C:\Software\Tool\WorkStation\debugger are
-# the same directory, and REPO comes from __file__, which under the bash layer is the
+# The POSIX spelling of a drive path (/c/...) and its backslash form (C:\...) are the
+# same directory, and REPO comes from __file__, which under the bash layer is the
 # POSIX spelling. Folding the drive root is what lets an in-repo path be recognised as
 # in-repo instead of being reported as an undeclared external tool.
 WINROOT = re.compile(r"^/([a-z])(?=(?:/|$))")
@@ -272,6 +272,17 @@ WINROOT = re.compile(r"^/([a-z])(?=(?:/|$))")
 # It is worse than a missed tool, because `radare2` WAS declared, so a reader reasonably assumes
 # rabin2 is covered. An undeclared binary that a human attributes to a declared neighbour is
 # harder to notice than one that is missing outright.
+#
+# MEASURED 2026-11-01, and it is the same class arriving by a different road. Making
+# `headless-lab/tools/frida_gate_control.ps1` portable -- it had pinned the station root as a
+# literal, so on any other clone it launched a python.exe that was not there -- moved both of
+# its paths behind `$repo = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)`. The gate
+# then stopped seeing them: `frida_spawn_gate.py` left the inventory entirely ("13 invoked" ->
+# "12 invoked") and `python.exe` lost its in-repo site, so its verdict survived only on the
+# external sites in scripts/. Nothing went red, and nothing should have: the verdicts are
+# unchanged and the portability fix is the right one. The COVERAGE went down, silently, which is
+# the failure this section exists to name. A tree that keeps becoming portable will keep
+# shrinking this inventory, and "0 undeclared" will keep being true and keep meaning less.
 #
 # So: read "0 undeclared" as scoped to literals. Closing this properly means either resolving
 # the argv dataflow or having probes declare the tools they invoke -- the manifest is now the
@@ -515,7 +526,8 @@ def classify(name: str, rec: dict, index: dict) -> tuple[str, str]:
     """-> (verdict, reason); verdict is in-tree | os | declared | UNDECLARED.
 
     Every site is considered, not just the first. python.exe is launched from inside
-    this repo at headless-lab/tools/frida_gate_control.ps1:8 and from outside it at
+    this repo at headless-lab/tools/frida_gate_control.ps1 (a venv path, until 2026-11-01
+    written as a literal) and from outside it at
     scripts/smoke-all.ps1:44; judging it by the first site alone called a host
     interpreter an in-tree file and hid the fact that scripts also need it installed.
     """
@@ -774,8 +786,8 @@ def selftest() -> int:
     # A raw string literal. The bare token used to swallow the opening quote, so the
     # token arrived as r"C:\..." and failed the quote strip; the path vanished entirely.
     want("raw-string path is found (quote is not swallowed)",
-         candidate_paths('else r"%USERPROFILE%\\AppData\\Local\\Temp\\w13\\c01.exe"')[0],
-         ["%USERPROFILE%\\AppData\\Local\\Temp\\w13\\c01.exe"])
+         candidate_paths('else r"C:\\Users\\owner\\AppData\\Local\\Temp\\w13\\c01.exe"')[0],
+         ["C:\\Users\\owner\\AppData\\Local\\Temp\\w13\\c01.exe"])
 
     # E1: a URL is not a path, and .com / .org must not read as DOS executables.
     want("https URL is rejected", candidate_paths("Save-Url 'https://npcap.com/dist/npcap-1.88.exe' $npcap"),
@@ -800,14 +812,26 @@ def selftest() -> int:
     # E3: frida's device.spawn() is not a process spawn, so this file contributes nothing.
     src = Source("native-lab/tools/frida_spawn_gate.py")
     want("frida_spawn_gate.py is not a launcher", src.can_launch, False)
-    # The line IS a candidate -- tokenisation cannot know what frida_spawn_gate.py does
-    # with it. Only the launcher test stops it, so this asserts via scan(), not via the
-    # extractor: a rule that is not exercised is a rule that is not proven.
-    want("  ... its target .exe is a candidate the extractor cannot reject",
+    # This line USED to carry the target as a literal absolute path, and these two assertions
+    # proved the extractor saw it and that only the launcher test kept it out of the inventory.
+    # Since 2026-11-01 the file builds that default from tempfile.gettempdir() instead: the
+    # pinned path named the author's machine, so on any other clone the probe either failed or
+    # -- worse -- measured the tree the path named. There is now no literal left to find, which
+    # is a COVERAGE loss recorded in WHAT THIS GATE CANNOT SEE, not a pass.
+    want("  ... with the target built from %TEMP% there is no literal left to find",
          any("c01-stringobf" in t for line in src.code_lines for t in candidate_paths(line)[0]),
+         False)
+    # E3 is still exercised, on a source that DOES carry a literal: a rule that is not exercised
+    # is a rule that is not proven. raw_lines is set equal to code_lines so scan() does not read
+    # the synthetic line as a comment (E4) and drop it for the wrong reason.
+    probe = Source("native-lab/tools/frida_spawn_gate.py")
+    probe.code_lines = [r'DEFAULT = r"C:\Users\owner\AppData\Local\Temp\w13\c01-stringobf.exe"']
+    probe.raw_lines = probe.code_lines
+    want("  ... its target .exe is a candidate the extractor cannot reject",
+         any("c01-stringobf" in t for line in probe.code_lines for t in candidate_paths(line)[0]),
          True)
     want("  ... and E3 drops it, so it never enters the inventory",
-         "c01-stringobf.exe" in scan([src])[0], False)
+         "c01-stringobf.exe" in scan([probe])[0], False)
     want("skill_security_control.ps1 IS a launcher (call operator)",
          Source("headless-lab/tools/skill_security_control.ps1").can_launch, True)
     want("smoke-all.ps1 IS a launcher ($out = & $p.file ...)",

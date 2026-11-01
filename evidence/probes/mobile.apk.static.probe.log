@@ -1,11 +1,11 @@
 # assert-probes evidence: mobile.apk.static probe
 # command: node mobile-lab/tools/loop.mjs
 # exit: 0
-# seconds: 8.16
+# seconds: 8.12
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
 # produces: D:\Software\Tool\WorkStation\debugger\mobile-lab\out\last-run-mobile-lab.json
-#   sha256: 9d3acd6894789ac6747c6a0db04a23a7f48a2e2247c9610ba96562039ce64f05
+#   sha256: e1a7bb7a299b33804c6b3c5db39f6fe0f279ddce6222987895609850e405a131
 #   bytes: 6069
 #   written-by-this-run: yes
 ------------------------------------------------------------------------
@@ -14,16 +14,16 @@
 mobile-lab loop
 ==============================================================================
   root   D:\Software\Tool\WorkStation\debugger\mobile-lab
-  apk    %USERPROFILE%\AppData\Local\Temp\mobilelab-loop-23304-mv98oeuy\mobilelab.apk   (this run only)
+  apk    %USERPROFILE%\AppData\Local\Temp\mobilelab-loop-12860-mvw3kedu\mobilelab.apk   (this run only)
   pub    D:\Software\Tool\WorkStation\debugger\mobile-lab\artifacts\mobilelab.apk   (written atomically when the build succeeds)
 
 ==============================================================================
 mobile-lab loop summary
 ==============================================================================
-  PASS  build a real signed APK from source (javac + d8 + aapt2 + zipalign + apksigner) 25135 bytes, sha256 30a76558fb43cc1f… -> published artifacts\mobilelab.apk  (3.0s)
+  PASS  build a real signed APK from source (javac + d8 + aapt2 + zipalign + apksigner) 25135 bytes, sha256 c07a201a0cc62a5d… -> published artifacts\mobilelab.apk  (4.1s)
   PASS  AndroidManifest.xml is binary AXML, not text               magic 0x00080003, 3136 bytes
   PASS  hand-built ELF .so passes its own re-parse                 1888 bytes, 5 exports
-  PASS  hand-built ELF .so written for the pyelftools oracle       %USERPROFILE%\AppData\Local\Temp\mobilelab-loop-23304-mv98oeuy\out\libmobilelab.so
+  PASS  hand-built ELF .so written for the pyelftools oracle       %USERPROFILE%\AppData\Local\Temp\mobilelab-loop-12860-mvw3kedu\out\libmobilelab.so
   PASS  INDEPENDENT oracle: pyelftools agrees on the .so             VERDICT: AGREES with the hand-built layout
   PASS  manifest: package, sdk, debuggable parsed from binary AXML package=com.lab.mobilelab min=24 target=34 debuggable=true
   PASS  manifest: every component found, with its real exported flag 5 components, exported: com.lab.mobilelab.MainActivity, com.lab.mobilelab.BootReceiver
@@ -39,7 +39,7 @@ mobile-lab loop summary
   PASS  Frida script library logic-verified offline (40 cases)     40/40 passed, no device attached
   PASS  cross-check: JADX recovers the same classes the DEX table lists jadx exit 0, 11 java files, 10/10 class names agree  (1.5s)
   PASS  cross-check: JADX shows the same JNI boundary (native decls + loadLibrary) native methods: nativeAttest, nativeDeriveKey, nativeReadFlag; System.loadLibrary present=true
-  PASS  cross-check: Apktool decodes the manifest independently    package, debuggable, components and authorities all agree; smali files=10  (0.9s)
+  PASS  cross-check: Apktool decodes the manifest independently    package, debuggable, components and authorities all agree; smali files=10  (0.7s)
   PASS  analyzer --expect refuses an unknown fact                  exit 4 (want 4)
   PASS  analyzer --expect accepts only what is true                exit 0 (want 0)
   PASS  NEGATIVE: ELF self-verifier rejects a corrupted .so        rejected: bad ELF magic
@@ -74,5 +74,5 @@ ARTIFACT mobile-lab/out/last-run-mobile-lab.json
   $ keytool -genkeypair (throwaway debug key)
     Generating 2,048 bit RSA key pair and self-signed certificate (SHA384withRSA) with a validity of 10,000 days
     	for: CN=MobileLab Fixture, OU=Lab, O=Self, L=Lab, ST=Lab, C=ZZ
-    [Storing %USERPROFILE%\AppData\Local\Temp\mobilelab-build-23304\keys\debug.keystore]
+    [Storing %USERPROFILE%\AppData\Local\Temp\mobilelab-build-12860\keys\debug.keystore]
   $ apksigner.bat

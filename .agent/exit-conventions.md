@@ -1,7 +1,11 @@
-STATUS: BLOCKED — paused by Owner before any implementation landed. NO CODE WAS WRITTEN OR EDITED.
-The worktree contains no change of mine except this report file (untracked). Nothing to revert,
-nothing to commit. What follows is the COMPLETE MEASUREMENT, so the next window does not re-read
-a single file to start. Every file:line below was read directly from the tree, not inferred.
+STATUS: OPEN — 2026-11-01. This file read `STATUS: BLOCKED` from 2026-10-03 until today; the label
+was accurate about that session and misleading about the file. The defect it measures is STILL IN
+THE TREE and the fix in §4 is still unapplied; §8 re-measures it and resolves the one item §1 left
+[UNVERIFIED]. The session was paused by Owner 2026-10-03 before any implementation landed, so NO
+CODE WAS WRITTEN OR EDITED then and the worktree held no change of mine except this report file.
+What follows is the COMPLETE MEASUREMENT, so the next window does not re-read a single file to
+start. Every file:line in §1-§6 was read directly from the tree at commit e4da839, not inferred;
+those numbers have since drifted and §8 gives the current ones.
 
 ===============================================================================
 0. WHAT EXISTS, WHAT DOES NOT
@@ -280,7 +284,7 @@ crypto-lab/tools/loop.mjs has no entry in that table, so edits there are free.
 ===============================================================================
 7. NEXT — exact commands, in order, for the next window
 ===============================================================================
-  cd D:/Software/Tool/WorkStation/debugger
+  cd <repo>
   1. Message peer AtomicArtifactIntegrity about the line pins in §6 BEFORE editing forensics or
      mobile. (roster id `AtomicArtifactIntegrity`; idle peers wake when messaged)
   2. Read the CONSUMER of write_lines in scripts/verify-atomic-artifacts.py (grep -n "write_lines"
@@ -304,3 +308,55 @@ is allowed to keep existing next to exit 0 = success. It is bound by
 forensics.memory.artefact.negative_control.expect_exit = 4 in a read-only manifest. My
 recommendation is to keep 4 and document it; changing it requires a registry edit that this
 work is not permitted to make.
+
+===============================================================================
+8. RE-MEASURED 2026-11-01 — the block is still real, and §1's one [UNVERIFIED] is closed
+===============================================================================
+Added when this file was reviewed for publication. Nothing in §1-§7 is retracted: the three
+collisions it names are all still present, the fix is still not applied, and the two files §0
+lists as NOT WRITTEN still do not exist (`scripts/verify-exit-conventions.py`,
+`evidence/exit-conventions.md`).
+
+Exit sites now, per file (`grep -n "process\.exit(\|sys\.exit(\|return [0-9]\+"`), with the
+meaning read in context:
+
+  crypto-lab/tools/loop.mjs       47:2 | 322:0/1 | 327:1            1 STILL MEANS TWO THINGS
+  forensics-lab/tools/loop.mjs    83:2 | 144:64 | 416:4 | 421:9 |
+                                  430:0 | 435:9 | 455:0/9           9 STILL MEANS TWO THINGS
+  mobile-lab/tools/loop.mjs       50:2 | 143:9 | 598:0 | 608:8 |
+                                  616:9                            9 STILL MEANS TWO THINGS
+  web-reverse/tools/loop2.mjs    107:9 | 265:0/9                    9 STILL MEANS TWO THINGS (NEW)
+  fuzz-lab/tools/loop.mjs         72:2 | 125:2 | 348:0/9            clean — both 2s are "refused to run"
+  managed-lab/tools/loop.mjs      55:2 | 357:0/1 | 363:2            clean
+  native-lab/tools/loop.mjs       40:2 | 337:0/1 | 343:2            clean
+  net-reverse/tools/loop.mjs      37:2 | 81:0/9                     clean
+  web-reverse/tools/loop.mjs      42:2 | 124:0/9                    clean
+  crackme-corpus/tools/loop.py   143:127 | 214:0 | 219:2 |
+                                  272:0/9 | 276:sys.exit(main())    clean
+
+  TOTAL: 35 exit sites across 10 loop files, FOUR collisions. §1 measured 30 sites and 3
+  collisions at e4da839. The fourth is the file §1 explicitly left [UNVERIFIED], now read:
+  loop2.mjs:107 exits 9 when the sample factory left no known answer — NO VERDICT WAS PRODUCED —
+  and loop2.mjs:265 exits 9 when a step was refuted. Same defect as mobile-lab:143, and it needs
+  the same fix (a code that means "prerequisite failed" must not also mean "assertion refuted").
+
+  The `stray argument` refusal on 2 in crypto/forensics/mobile/fuzz-lab is new since e4da839. It
+  is not a collision anywhere it appears: 2 means only "refused to run on an argument it would
+  otherwise have ignored", and no file gives 2 a second meaning.
+
+§3's binding constraint still holds, re-read from `manifests/capabilities.json` today:
+  forensics.memory.artefact.negative_control.command =
+    `node forensics-lab/tools/loop.mjs --control=srum --expect INJECTED_PRIVATE_RWX_REGION`
+  expect_exit = 4   ->   forensics-lab/tools/loop.mjs:416 MUST NOT BE RENUMBERED. Unchanged.
+The registry around it has drifted: 28 capabilities and 60 `expect_exit` values now (27 and 66 at
+e4da839), distributed 0x28 / 1x17 / 2x8 / 3x3 / 4x3 / 4294967295x1. 9 still appears nowhere, so
+§3's consequence still holds — the collisions can be fixed with ZERO recorded expect_exit changes.
+crypto.jose.parse's control has been repointed since (now `crypto-lab/tools/negative-gate.mjs`,
+still expect_exit 4) and still does not touch the crypto loop.
+
+§6 is still live and still unread: `scripts/verify-atomic-artifacts.py` pins ABSOLUTE line numbers
+for write sites in forensics-lab and mobile-lab (`write_lines` entries in its PRODUCERS table), and
+every §4 edit shifts them. Make those edits line-count neutral, or coordinate first.
+
+§4's proposed table is unapplied and therefore still a proposal, not a convention. A reader who
+wants the station's ACTUAL exit semantics should read the loops, not this file.

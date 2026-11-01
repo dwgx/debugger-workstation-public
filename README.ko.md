@@ -42,4 +42,8 @@ clone 후 로케일을 정하고 **해당 AGENTS를 먼저 읽으세요**. 질�
 
 ## 라이선스
 
-자체 작성 부분은 [LICENSE](LICENSE)(MIT). 업스트림 도구의 권리는 업스트림에 남습니다.
+라이선스는 파일 종류에 따라 나뉩니다.
+
+- **코드와 설정 — MIT** ([LICENSE](LICENSE)). `mcp/debugger-router`, `mcp/bin`, `scripts`, `manifests`, `skills`, `templates`, 에이전트 계약(`AGENTS*.md`, `CLAUDE.md`, `GEMINI.md`), 그리고 Markdown이 아닌 모든 파일. 포크를 비공개로 유지할 수 있습니다.
+- **문서 본문 — CC BY-SA 4.0** ([LICENSE-docs](LICENSE-docs)). `docs/`(`docs/i18n/` 포함), `README*.md`, `DISCLAIMER*.md`, `notes/` 등. 출처를 표시하면 재사용할 수 있지만 파생 문서도 같은 라이선스를 따릅니다.
+- 서드파티 도구와 서드파티 MCP의 권리는 각 업스트림에 남습니다. 이 저장소는 그들의 코드나 바이너리를 재배포하지 않습니다. 자세한 내용은 [DISCLAIMER.md](DISCLAIMER.md).

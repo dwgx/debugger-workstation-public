@@ -1719,15 +1719,22 @@ function Invoke-Mission {
         }
 
         # GRANT RE-CHECK, EVERY ROUND. Not at intake. This is the invariant.
-        $gc = Invoke-Gate 'Check' @{ '-CaseDir' = $caseDir; '-Capability' = $step.id }
+        #
+        # Q-H1EXE SAMPLE PROBE (2026-10-31): the gate's `no_forbidden_argv_token`
+        # prohibition cannot be evaluated without the command line the caller is about to
+        # execute, and this loop never supplied one -- so every capability carrying that
+        # prohibition was refused with exit 6 and the mission halted at round 1. The
+        # declared runner+argv is what the gate needs (the prohibition is about literal
+        # tokens, so {target}/{input.x} substitution is not required to evaluate it).
+        $cap = $reg.capabilities | Where-Object { $_.id -eq $step.id }
+        $declaredInvocation = if ($cap.invoke) { ((@($cap.invoke.runner) + @($cap.invoke.argv)) -join ' ') } else { '' }
+        $gc = Invoke-Gate 'Check' @{ '-CaseDir' = $caseDir; '-Capability' = $step.id; '-Invocation' = $declaredInvocation }
         if ($gc.code -ne 0) {
             Say "  round $round  HALTED: $($step.id) is not inside the grant any more (exit $($gc.code))"
             $trace += [ordered]@{ round = $round; capability = $step.id; event = 'gate_halt'; gate_exit = $gc.code }
             $halt = 'grant_halt'
             break
         }
-
-        $cap = $reg.capabilities | Where-Object { $_.id -eq $step.id }
         Say ''
         Say "  round $round  $($step.id)"
 
@@ -3678,6 +3685,79 @@ function Invoke-Selftest {
             Remove-Item -LiteralPath $probe.cases -Recurse -Force -ErrorAction SilentlyContinue
         }
     } 'reason=budget_exhausted/budget_exhausted dropped=probe.two,probe.three used=MaxRounds'
+
+    # THE REAL-REGISTRY CONTROL, added 2026-10-31, because every end-to-end control above
+    # runs against a THROWAWAY registry whose runners are stubs -- and a stub registry
+    # declares no prohibitions, so the one prohibition the LIVE registry actually uses was
+    # evaluated by nothing in this suite.
+    #
+    # `no_forbidden_argv_token` cannot be decided without the command line the caller is
+    # about to run. Measured 2026-10-31: the round loop called `gate.ps1 -Action Check`
+    # WITHOUT `-Invocation`, so every capability carrying that prohibition was refused with
+    # exit 6 -- 8 of the 28 entries, native.pe.packer among them, which is the producer
+    # every Q2/Q3/Q7 route pulls in. Those routes halted at round 1 and nothing here
+    # noticed, because nothing here ran a mission against the real registry.
+    #
+    # The pair below is the control: ONE round of a real Q2 mission must run, and the same
+    # case against a copy of this file with `-Invocation` deleted from the round loop must
+    # halt at round 1 naming exit 6. Either half alone is passable by accident -- a green
+    # run proves nothing if the argument was never needed, and a red run proves nothing if
+    # the copy was broken for some unrelated reason.
+    function New-RealRegistryCase([string]$Id, [string]$ScriptPath) {
+        $cases = Join-Path $env:TEMP ('mission-realreg-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
+        New-Item -ItemType Directory -Path $cases -Force | Out-Null
+        $a = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $ScriptPath,
+               '-Action', 'Run', '-Target', $own, '-QuestionType', 'Q2.locate',
+               '-Question', 'where is the input validation',
+               '-Provenance', 'the corpus binary this suite already names as its own target',
+               '-OwnerWord', 'analyze this exe',
+               '-Containment', 'station_under_named_process_rule',
+               '-CaseRoot', $cases, '-CaseId', $Id, '-MaxSteps', '1')
+        $out = & powershell @a 2>&1 | Out-String
+        $f = Join-Path (Join-Path $cases $Id) 'artifact.json'
+        $art = if (Test-Path -LiteralPath $f) { Get-Content -LiteralPath $f -Raw | ConvertFrom-Json } else { $null }
+        return @{ out = $out; cases = $cases; artifact = $art }
+    }
+
+    C 'grant: a real Q2 mission reaches round 1, and the step carrying the argv prohibition RUNS' {
+        # The first step must itself carry the prohibition, or this control is measuring a
+        # route the bug never touched. That is asserted, not assumed: the registry is read
+        # for the capability the run actually executed.
+        $r = New-RealRegistryCase 'realreg' $PSCommandPath
+        try {
+            $first = if ($r.artifact) { @($r.artifact.chain)[0].capability } else { 'NO-ARTIFACT' }
+            $cap = (Get-Registry).capabilities | Where-Object { $_.id -eq $first }
+            $carries = [bool]($cap -and @($cap.gate_prohibitions | Where-Object { $_.code -eq 'no_forbidden_argv_token' }).Count)
+            $halt = if ($r.artifact) { $r.artifact.termination.halt } else { 'NO-ARTIFACT' }
+            $six = [bool]($r.out -match '\(exit 6\)')
+            "first=$first prohibition=$carries halt=$halt exit6=$six"
+        } finally { Remove-Item -LiteralPath $r.cases -Recurse -Force -ErrorAction SilentlyContinue }
+    } 'first=native.pe.packer prohibition=True halt=budget_cap exit6=False'
+
+    C 'grant: deleting -Invocation from the round loop HALTS the same mission at round 1 (exit 6)' {
+        # This is what makes the control above load-bearing: the same case, the same target,
+        # the same registry, one argument removed. If this run stays green, the argument is
+        # decorative and the control above is measuring nothing.
+        $src = Get-Content -LiteralPath $PSCommandPath -Raw
+        $rx = '(?m); ''-Invocation'' = \$declaredInvocation'
+        $hits = [regex]::Matches($src, $rx).Count
+        if ($hits -ne 1) { "ERROR matched $hits call site(s); expected exactly 1" }
+        else {
+            $copy = Join-Path $PSScriptRoot ('mission-realreg-ablate-{0}.ps1' -f [guid]::NewGuid().ToString('N').Substring(0, 8))
+            $r = $null
+            try {
+                Set-Content -LiteralPath $copy -Value ([regex]::Replace($src, $rx, '')) -NoNewline -Encoding UTF8
+                $r = New-RealRegistryCase 'realreg-ablate' $copy
+                $halt = if ($r.artifact) { $r.artifact.termination.halt } else { 'NO-ARTIFACT' }
+                $ran = if ($r.artifact) { @($r.artifact.chain).Count } else { -1 }
+                $first = if ($r.artifact) { @($r.artifact.chain)[0].capability } else { 'NO-ARTIFACT' }
+                "matched=$hits first=$first halt=$halt rounds=$ran names-exit-6=$([bool]($r.out -match '\(exit 6\)'))"
+            } finally {
+                Remove-Item -LiteralPath $copy -Force -ErrorAction SilentlyContinue
+                if ($r) { Remove-Item -LiteralPath $r.cases -Recurse -Force -ErrorAction SilentlyContinue }
+            }
+        }
+    } 'matched=1 first=native.pe.packer halt=grant_halt rounds=1 names-exit-6=True'
 
 
     Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue

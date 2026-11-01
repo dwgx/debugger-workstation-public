@@ -4,7 +4,7 @@
 
 {
   "status": "STATUS: DONE",
-  "report_path": "%USERPROFILE%\\AppData\\Local\\Temp\\w1-revskills.md",
+  "report_path": "%TEMP%\\w1-revskills.md",
   "report_size": "37592 bytes / 336 lines",
   "acceptance": {
     "item": [

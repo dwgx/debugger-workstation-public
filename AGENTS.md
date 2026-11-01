@@ -131,7 +131,7 @@ What landed, what was skipped, leftover risk.
 
 ## 3. MCP policy
 
-- Default client MCP: **only** `debugger-router`. It starts one of 20 backends on demand and exits.
+- Default client MCP: **only** `debugger-router`. It starts one of 20 backends on demand, keeps that backend process warm across calls (addressed by `session_id`), and reclaims it when idle (`DEBUGGER_ROUTER_IDLE_TIMEOUT`, default 600s) or on `close_backend_session`.
 - Do not load every backend by default. Direct profiles: `mcp-mobile` / `mcp-re` / `mcp-net` / `mcp-ce` / `mcp-intel` / `mcp-all`.
 - Templates: `mcp/client-mcp.json.template` (client: router only → `.mcp.json` / `.cursor/mcp.json`), `mcp/.mcp.json.template` (router inventory → `MCP/.mcp.json`), `mcp/codex-mcp-config.example.toml` (`{{DEBUGGER_ROOT}}`). See [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md).
 - Never put the 20 backends into Claude / Codex / Cursor / Grok **user-global** MCP.

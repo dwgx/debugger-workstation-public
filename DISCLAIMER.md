@@ -20,7 +20,7 @@ Backends listed in `manifests/mcp-backends.json` are **not** in this git tree. B
 
 ## In-tree work
 
-Shipped here: `mcp/debugger-router/`, `mcp/bin/*.cmd`, MCP templates, `scripts/`, `docs/`, `manifests/`. License: [LICENSE](LICENSE).
+Shipped here: `mcp/debugger-router/`, `mcp/bin/*.cmd`, MCP templates, `scripts/`, `docs/`, `manifests/`. License: code and configuration under [LICENSE](LICENSE) (MIT); documentation prose under [LICENSE-docs](LICENSE-docs) (CC BY-SA 4.0).
 
 ## Your responsibility
 

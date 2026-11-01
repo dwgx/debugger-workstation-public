@@ -33,7 +33,7 @@ import threading
 
 import frida
 
-TARGET = sys.argv[1] if len(sys.argv) > 1 else r"%USERPROFILE%\AppData\Local\Temp\w13\c01-stringobf.exe"
+TARGET = sys.argv[1] if len(sys.argv) > 1 else os.path.join(tempfile.gettempdir(), "w13", "c01-stringobf.exe")
 MODE = sys.argv[2] if len(sys.argv) > 2 else "positive"
 ARGV_PW = sys.argv[3] if len(sys.argv) > 3 else "C01-TABLE-XOR-9F2A"
 

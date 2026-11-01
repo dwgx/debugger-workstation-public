@@ -13,6 +13,7 @@ and the false figure and a naive grep cannot tell them apart.
 So the check is deliberately conservative in the only direction that is safe:
 
   * a number on a STRUCK-THROUGH line is history and is ignored;
+  * a document that declares itself a record (`<!-- doc-facts:history -->`) is not scanned;
   * a number on a live line that contradicts the registry is a FAILURE;
   * a live line that agrees is fine, and a document with no such claim is fine.
 
@@ -26,7 +27,7 @@ Exit 0 clean, 1 violations, 2 could not run -- and 2 now also covers "could not 
 value", because skipping a claim and still printing OK is this file's own failure mode wearing a
 stricter-looking coat. An error is never a zero.
 
-Run:  python scripts/doc-facts.py --repo D:/Software/Tool/WorkStation/debugger
+Run:  python scripts/doc-facts.py --repo <repo>
 """
 from __future__ import annotations
 
@@ -396,7 +397,7 @@ def main() -> int:
     _REPO = repo
 
     # Measured: the first default guessed repo.parent.parent/"Project"/"<private-tree>", which from
-    # D:\Software\Tool\WorkStation\debugger resolves to D:\Software\Project\<private-tree> -- a path
+    # <repo> resolves to D:\Software\Project\<private-tree> -- a path
     # that does not exist, so the gate refused with exit 2 rather than silently checking
     # nothing. A wrong default would have produced a gate that only ran when somebody
     # remembered an argument, which is the same always-green failure this script exists to
@@ -426,6 +427,27 @@ def main() -> int:
                      and not BACKUP_SUFFIXES.search(p.name)
                      and not p.name.startswith("."))
 
+    # HISTORY IS DECLARED BY THE DOCUMENT, NOT GUESSED BY THE GATE. A session ledger records
+    # what was true on a date and quotes old figures on purpose -- SEMANTICS.md's own contract
+    # is "编年止于 2026-10-21。更正用〔更正〕块，不改历史行", so the gate cannot be answered by
+    # rewriting those lines, and the alternative (a directory in SKIP) would also stop checking
+    # the live handoff that sits in the same directory. Measured 2026-10-31: all five violations
+    # this gate reported were such quotes under `_agent-history/` and none was a live claim.
+    # So the file opts out itself, and the summary NAMES every file that did -- an exclusion
+    # nobody can see is the always-green failure this script exists to catch.
+    # THE DECLARATION MUST BE IN THE FIRST 10 LINES, on a line of its own: a page that merely
+    # DOCUMENTS this convention must not silently opt itself out of the check.
+    HISTORY_MARKER = "<!-- doc-facts:history -->"
+    history_only: list[pathlib.Path] = []
+    live: list[pathlib.Path] = []
+    for p in targets:
+        try:
+            head = p.read_text(encoding="utf-8", errors="replace").splitlines()[:10]
+        except OSError:
+            head = []
+        (history_only if any(h.strip() == HISTORY_MARKER for h in head) else live).append(p)
+    targets = live
+
     violations: list[str] = []
     unchecked = 0
     checked = 0
@@ -438,9 +460,16 @@ def main() -> int:
         for label, rx, fn, multiline in CLAIMS:
             if multiline:
                 # Match against the whole live text with newlines collapsed to spaces, so a
-                # claim that WRAPS is still seen. The reported line number is derived from the
-                # offset, which is approximate for a wrapped claim and is stated as such.
-                blob = " ".join(l for _, l in lines)
+                # claim that WRAPS is still seen. `starts` keeps each source line's offset in
+                # the blob so the reported line is the real one: the old code counted "\n" in a
+                # blob that has none and therefore reported line 1 for EVERY wrapped claim --
+                # measured 2026-10-31, that misread `SEMANTICS.md~1` as an editor backup file
+                # rather than "line 1 of SEMANTICS.md", and sent a round of diagnosis the wrong
+                # way. A diagnostic that always says "line 1" is a diagnostic nobody can use.
+                blob, starts = "", []
+                for lineno, text_line in lines:
+                    starts.append((len(blob), lineno))
+                    blob += text_line + " "
                 for m in rx.finditer(blob):
                     got = next((g for g in m.groups() if g), None)
                     if got is None:
@@ -451,12 +480,12 @@ def main() -> int:
                         continue
                     checked += 1
                     if int(got) != want:
-                        approx = blob.count("\n", 0, m.start()) + 1
+                        lineno = next(n for off, n in reversed(starts) if off <= m.start())
                         rel = path.relative_to(wiki)
                         violations.append(
-                            f"{rel}~{approx}: claims {got} {label}; registry says {want}\n"
+                            f"{rel}:{lineno}: claims {got} {label}; registry says {want}\n"
                             f"    {blob[max(0, m.start()-40):m.end()+40].strip()[:110]}"
-                            f"\n    (~ is approximate for a claim that wraps)")
+                            f"\n    (wrapped claim; line = where the match starts)")
                 continue
             for lineno, line in lines:
                 for m in rx.finditer(line):
@@ -493,6 +522,9 @@ def main() -> int:
           f"({_n('rules_total')} in RULES), "
           f"{_n('cases')} selftest cases, both read by running it")
     print(f"doc-facts: scanned {len(targets)} wiki files, {checked} live numeric claims checked")
+    if history_only:
+        print(f"doc-facts: {len(history_only)} file(s) declared history-only, NOT scanned: "
+              + ", ".join(str(p.relative_to(wiki)) for p in history_only))
     if violations:
         print(f"doc-facts: {len(violations)} STALE CLAIM(S)\n")
         for v in violations:

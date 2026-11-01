@@ -225,7 +225,7 @@ Round one: `w1-agentworkflow.md` · `w1-composition.md` · `w1-gateredteam.md` �
 `w1-mcprev.md` · `w1-retoolchain.md` · `w1-revskills.md` · `w1-debugpairing.md` ·
 `w1-toolperf.md`. Fixes: `w2-composefix.md` · `w3-gatefix.md` · `w4-verdictlogic.md` ·
 `w7-familyaxis.md` · `w9-winfrida.md`. Synthesis: `w5-dossier.md` · `w5-wikiplan.md` ·
-`w6-chain.md`. All under `%USERPROFILE%/AppData/Local/Temp/` — **which does not survive.**
+`w6-chain.md`. All under `%TEMP%/` — **which does not survive.**
 
 **Durable copies live in `docs/research/`**: `review-2026-10-02.md`, `cost-matrix.md`,
 `composition-plan.md`, `ecosystem-2026-10-02.md`, `dynamic-pairings.md`, plus an updated

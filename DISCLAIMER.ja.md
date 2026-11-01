@@ -18,7 +18,7 @@
 
 ## 自作部分
 
-`mcp/debugger-router/`、`mcp/bin/*.cmd`、テンプレート、`scripts/`、`docs/`、`manifests/`。[LICENSE](LICENSE) を参照。
+`mcp/debugger-router/`、`mcp/bin/*.cmd`、テンプレート、`scripts/`、`docs/`、`manifests/`。コードと設定は [LICENSE](LICENSE)（MIT）、ドキュメント本文は [LICENSE-docs](LICENSE-docs)（CC BY-SA 4.0）を参照。
 
 ## 利用責任
 

@@ -4,7 +4,7 @@
 
 {
   "status": "DONE",
-  "report_path": "%USERPROFILE%/AppData/Local/Temp/w1-toolperf.md",
+  "report_path": "%TEMP%/w1-toolperf.md",
   "rows_measured": 15,
   "runs": 38,
   "instrument_bugs_found_and_fixed": 3,
@@ -183,12 +183,12 @@
     "No out/ directory deleted",
     "Measured and reported only; nothing 'fixed'"
   ],
-  "side_effect_disclosed": "psutil 7.2.2 pip-installed into D:\\Software\\Developer\\Python314 as the measurement instrument. Outside both repos. Harness and logs live in %USERPROFILE%\\AppData\\Local\\Temp\\w1perf\\.",
+  "side_effect_disclosed": "psutil 7.2.2 pip-installed into D:\\Software\\Developer\\Python314 as the measurement instrument. Outside both repos. Harness and logs live in %TEMP%\\w1perf\\.",
   "evidence_paths": [
-    "%USERPROFILE%/AppData/Local/Temp/w1-toolperf.md",
-    "%USERPROFILE%/AppData/Local/Temp/w1perf/measure2.py",
-    "%USERPROFILE%/AppData/Local/Temp/w1perf/contend.py",
-    "%USERPROFILE%/AppData/Local/Temp/w1perf/leaktest.ps1",
-    "%USERPROFILE%/AppData/Local/Temp/w1perf/logs/ (25 raw files)"
+    "%TEMP%/w1-toolperf.md",
+    "%TEMP%/w1perf/measure2.py",
+    "%TEMP%/w1perf/contend.py",
+    "%TEMP%/w1perf/leaktest.ps1",
+    "%TEMP%/w1perf/logs/ (25 raw files)"
   ]
 }

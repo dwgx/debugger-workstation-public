@@ -3,7 +3,7 @@
 **Date:** 2026-09-30 · **Author:** `BinaryMcpMap` (delegated research)
 **Scope:** public repos only. Every repo below was opened via the authenticated `gh` CLI; the
 five highest-value ones were shallow-cloned to
-`%USERPROFILE%\AppData\Local\Temp\re-research\BinaryMcpMap\` and read at file level.
+`%TEMP%\re-research\BinaryMcpMap\` and read at file level.
 Claims marked `[INFERENCE]` are not directly evidenced by a file read.
 
 ---

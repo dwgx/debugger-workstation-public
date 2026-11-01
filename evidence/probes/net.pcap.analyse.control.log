@@ -1,7 +1,7 @@
 # assert-probes evidence: net.pcap.analyse control
 # command: node net-reverse/tools/pcap-lab.mjs ask --pcap dns-txt.pcap --question dns-a-record
 # exit: 3
-# seconds: 0.58
+# seconds: 0.99
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
 ------------------------------------------------------------------------

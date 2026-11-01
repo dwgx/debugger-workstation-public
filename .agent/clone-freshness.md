@@ -2,7 +2,7 @@ STATUS: DONE
 
 # clone freshness — what a fresh clone is missing (R3 / R5 / R6)
 
-Date: 2026-10-03. Station: `D:\Software\Tool\WorkStation\debugger`, git `main`, HEAD `a894a3c`.
+Date: 2026-10-03. Station: `<repo>`, git `main`, HEAD `a894a3c`.
 Python 3.14.7. One new file plus one wiki page; nothing else was created, edited or deleted.
 
 | file | status |
@@ -108,7 +108,7 @@ Full output, verbatim:
 
 ```text
 verify-clone-freshness
-  repo : D:\Software\Tool\WorkStation\debugger
+  repo : <repo>
   python 3.14.7  static checks only -- no probe is executed
 
 ==============================================================================
@@ -156,22 +156,22 @@ verify-clone-freshness
   OK   cmd  openssl  ->  C:\Program Files\Git\mingw64\bin\openssl.EXE   [native.signature.certverify]
   OK   cmd  powershell  ->  C:\Windows\System32\WindowsPowerShell\v1.0\powershell.EXE   [native.function.match,native.ghidra.decompile,native.ghidra.emulate,native.il2cpp.symbols,native.pe.packer]
   OK   cmd  python  ->  D:\Software\Developer\Python314\python.EXE   [native.behaviour.capa,native.disasm.capstone,native.pe.authenticode,native.pe.container,native.pe.hardening,native.signature.certverify,net.pcap.selfparse,re.corpus.solve]
-  OK   path .\Mobile-Android\objection\.venv\Scripts\frida-ps.exe  ->  D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\frida-ps.exe   [dynamic.win.frida]
-  OK   path .\Mobile-Android\objection\.venv\Scripts\frida.exe  ->  D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\frida.exe   [dynamic.win.frida]
-  OK   path .\Mobile-Android\objection\.venv\Scripts\python.exe  ->  D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\python.exe   [dynamic.win.frida.intercept]
-  OK   path .\native-lab\tools\frida_spawn_gate.py  ->  D:\Software\Tool\WorkStation\debugger\native-lab\tools\frida_spawn_gate.py   [dynamic.win.frida.intercept]
+  OK   path .\Mobile-Android\objection\.venv\Scripts\frida-ps.exe  ->  <repo>\Mobile-Android\objection\.venv\Scripts\frida-ps.exe   [dynamic.win.frida]
+  OK   path .\Mobile-Android\objection\.venv\Scripts\frida.exe  ->  <repo>\Mobile-Android\objection\.venv\Scripts\frida.exe   [dynamic.win.frida]
+  OK   path .\Mobile-Android\objection\.venv\Scripts\python.exe  ->  <repo>\Mobile-Android\objection\.venv\Scripts\python.exe   [dynamic.win.frida.intercept]
+  OK   path .\native-lab\tools\frida_spawn_gate.py  ->  <repo>\native-lab\tools\frida_spawn_gate.py   [dynamic.win.frida.intercept]
   OK   path %USERPROFILE%\.local\bin\skillspector.exe  ->  %USERPROFILE%\.local\bin\skillspector.exe   [ops.skill.security]
   OK   path D:/Software/Developer/Python314/Scripts/idalib-mcp.exe  ->  D:\Software\Developer\Python314\Scripts\idalib-mcp.exe   [native.ida.decompile]
-  OK   path Ghidra/Features/VersionTracking/ghidra_scripts/AutoVersionTrackingScript.java  ->  D:\Software\Tool\WorkStation\debugger\Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\Ghidra\Features\VersionTracking\ghidra_scripts\AutoVersionTrackingScript.java   [native.crosscompare.ghidra]
-  OK   path Network-HTTP\Wireshark\portable\App\Wireshark\tshark.exe  ->  D:\Software\Tool\WorkStation\debugger\Network-HTTP\Wireshark\portable\App\Wireshark\tshark.exe   [net.pcap.analyse]
-  OK   path Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\support\analyzeHeadless.bat  ->  D:\Software\Tool\WorkStation\debugger\Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\support\analyzeHeadless.bat   [native.function.match,native.ghidra.decompile]
-  OK   path Static-Reversing\capa\capa.exe  ->  D:\Software\Tool\WorkStation\debugger\Static-Reversing\capa\capa.exe   [native.behaviour.capa]
-  OK   path Static-Reversing\die_win64_portable_3.21_x64\die\diec.exe  ->  D:\Software\Tool\WorkStation\debugger\Static-Reversing\die_win64_portable_3.21_x64\die\diec.exe   [native.pe.packer]
-  OK   path Static-Reversing\radare2\radare2-6.2.2-w64\bin\rabin2.exe  ->  D:\Software\Tool\WorkStation\debugger\Static-Reversing\radare2\radare2-6.2.2-w64\bin\rabin2.exe   [native.pe.hardening]
-  OK   path Unpackers-Game/Il2CppDumper-net6-win-v6.7.46/Il2CppDumper.exe  ->  D:\Software\Tool\WorkStation\debugger\Unpackers-Game\Il2CppDumper-net6-win-v6.7.46\Il2CppDumper.exe   [native.il2cpp.symbols]
-  OK   path Unpackers-Game\upx\upx-5.2.1-win64\upx.exe  ->  D:\Software\Tool\WorkStation\debugger\Unpackers-Game\upx\upx-5.2.1-win64\upx.exe   [native.pe.packer]
-  OK   path scripts/ghidra/EmulateDecode.java  ->  D:\Software\Tool\WorkStation\debugger\scripts\ghidra\EmulateDecode.java   [native.ghidra.emulate]
-  OK   path web-reverse/tools/chrome.mjs  ->  D:\Software\Tool\WorkStation\debugger\web-reverse\tools\chrome.mjs   [web.js.cdp]
+  OK   path Ghidra/Features/VersionTracking/ghidra_scripts/AutoVersionTrackingScript.java  ->  <repo>\Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\Ghidra\Features\VersionTracking\ghidra_scripts\AutoVersionTrackingScript.java   [native.crosscompare.ghidra]
+  OK   path Network-HTTP\Wireshark\portable\App\Wireshark\tshark.exe  ->  <repo>\Network-HTTP\Wireshark\portable\App\Wireshark\tshark.exe   [net.pcap.analyse]
+  OK   path Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\support\analyzeHeadless.bat  ->  <repo>\Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\support\analyzeHeadless.bat   [native.function.match,native.ghidra.decompile]
+  OK   path Static-Reversing\capa\capa.exe  ->  <repo>\Static-Reversing\capa\capa.exe   [native.behaviour.capa]
+  OK   path Static-Reversing\die_win64_portable_3.21_x64\die\diec.exe  ->  <repo>\Static-Reversing\die_win64_portable_3.21_x64\die\diec.exe   [native.pe.packer]
+  OK   path Static-Reversing\radare2\radare2-6.2.2-w64\bin\rabin2.exe  ->  <repo>\Static-Reversing\radare2\radare2-6.2.2-w64\bin\rabin2.exe   [native.pe.hardening]
+  OK   path Unpackers-Game/Il2CppDumper-net6-win-v6.7.46/Il2CppDumper.exe  ->  <repo>\Unpackers-Game\Il2CppDumper-net6-win-v6.7.46\Il2CppDumper.exe   [native.il2cpp.symbols]
+  OK   path Unpackers-Game\upx\upx-5.2.1-win64\upx.exe  ->  <repo>\Unpackers-Game\upx\upx-5.2.1-win64\upx.exe   [native.pe.packer]
+  OK   path scripts/ghidra/EmulateDecode.java  ->  <repo>\scripts\ghidra\EmulateDecode.java   [native.ghidra.emulate]
+  OK   path web-reverse/tools/chrome.mjs  ->  <repo>\web-reverse\tools\chrome.mjs   [web.js.cdp]
   
   23 distinct targets, 1 absent.
   
@@ -192,7 +192,7 @@ verify-clone-freshness
   roots    : <private-tree>\wiki
   scanned  : 165 markdown file(s); 24 %TEMP% line(s) shaped like a reproduction step, 28 prose mention(s)
   03-second-instrument.md:398
-      usage: %USERPROFILE%\AppData\Local\Temp\fridaprobe\target.exe <password>
+      usage: %TEMP%\fridaprobe\target.exe <password>
   03-second-instrument.md:443
       #   [stage] copied to %TEMP% ...\fridagate-XXXXXXXX\c01-stringobf.exe (143872 bytes); the
   03-second-instrument.md:523
@@ -206,7 +206,7 @@ verify-clone-freshness
   03-second-instrument.md:741
       speakeasy -t crackme-corpus\out\c01-stringobf.exe --no-mp -o $env:TEMP\spk-c01.json
   03-second-instrument.md:1217  [self-declared dead/historical]
-      # [DEAD] python "%USERPROFILE%\AppData\Local\Temp\w13-pe-probe.py"  -> no such file
+      # [DEAD] python "%TEMP%\w13-pe-probe.py"  -> no such file
   03-second-instrument.md:1226
       head -c 600 crackme-corpus\out\c01-stringobf.exe > "$env:TEMP\trunc.exe"
   03-second-instrument.md:1227
@@ -216,7 +216,7 @@ verify-clone-freshness
   03-second-instrument.md:1236
       # expect: [stage] copied to %TEMP% … ; [js] {"kind": "HIT", ...} ; [end] verdict=INTERCEPT-PROVEN
   03-second-instrument.md:1242  [self-declared dead/historical]
-      # [DEAD] python "%USERPROFILE%\AppData\Local\Temp\w13-capstone-probe.py" -> no such file
+      # [DEAD] python "%TEMP%\w13-capstone-probe.py" -> no such file
   03-second-instrument.md:1260  [self-declared dead/historical]
       # [HISTORICAL, fixture not committed] this leaned on $env:TEMP\fridaprobe\target.exe, which is not
   03-second-instrument.md:1263  [self-declared dead/historical]
@@ -288,7 +288,7 @@ Reading of that run: corpus `present`, 5285 files / 24 directories, every named 
 
 ```text
 verify-clone-freshness
-  repo : %USERPROFILE%\AppData\Local\Temp\station-clone
+  repo : %TEMP%\station-clone
   python 3.14.7  static checks only -- no probe is executed
 
 ==============================================================================
@@ -337,10 +337,10 @@ verify-clone-freshness
   OK   cmd  python  ->  D:\Software\Developer\Python314\python.EXE   [native.behaviour.capa,native.disasm.capstone,native.pe.authenticode,native.pe.container,native.pe.hardening,native.signature.certverify,net.pcap.selfparse,re.corpus.solve]
   OK   path %USERPROFILE%\.local\bin\skillspector.exe  ->  %USERPROFILE%\.local\bin\skillspector.exe   [ops.skill.security]
   OK   path D:/Software/Developer/Python314/Scripts/idalib-mcp.exe  ->  D:\Software\Developer\Python314\Scripts\idalib-mcp.exe   [native.ida.decompile]
-  OK   path D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\frida-ps.exe  ->  D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\frida-ps.exe   [dynamic.win.frida]
-  OK   path D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\frida.exe  ->  D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\frida.exe   [dynamic.win.frida]
-  OK   path D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\python.exe  ->  D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\python.exe   [dynamic.win.frida.intercept]
-  OK   path D:\Software\Tool\WorkStation\debugger\native-lab\tools\frida_spawn_gate.py  ->  D:\Software\Tool\WorkStation\debugger\native-lab\tools\frida_spawn_gate.py   [dynamic.win.frida.intercept]
+  OK   path <repo>\Mobile-Android\objection\.venv\Scripts\frida-ps.exe  ->  <repo>\Mobile-Android\objection\.venv\Scripts\frida-ps.exe   [dynamic.win.frida]
+  OK   path <repo>\Mobile-Android\objection\.venv\Scripts\frida.exe  ->  <repo>\Mobile-Android\objection\.venv\Scripts\frida.exe   [dynamic.win.frida]
+  OK   path <repo>\Mobile-Android\objection\.venv\Scripts\python.exe  ->  <repo>\Mobile-Android\objection\.venv\Scripts\python.exe   [dynamic.win.frida.intercept]
+  OK   path <repo>\native-lab\tools\frida_spawn_gate.py  ->  <repo>\native-lab\tools\frida_spawn_gate.py   [dynamic.win.frida.intercept]
   MISS path Ghidra/Features/VersionTracking/ghidra_scripts/AutoVersionTrackingScript.java   [native.crosscompare.ghidra]
   MISS path Network-HTTP\Wireshark\portable\App\Wireshark\tshark.exe   [net.pcap.analyse]
   MISS path Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\support\analyzeHeadless.bat   [native.function.match,native.ghidra.decompile]
@@ -349,8 +349,8 @@ verify-clone-freshness
   MISS path Static-Reversing\radare2\radare2-6.2.2-w64\bin\rabin2.exe   [native.pe.hardening]
   MISS path Unpackers-Game/Il2CppDumper-net6-win-v6.7.46/Il2CppDumper.exe   [native.il2cpp.symbols]
   MISS path Unpackers-Game\upx\upx-5.2.1-win64\upx.exe   [native.pe.packer]
-  OK   path scripts/ghidra/EmulateDecode.java  ->  %USERPROFILE%\AppData\Local\Temp\station-clone\scripts\ghidra\EmulateDecode.java   [native.ghidra.emulate]
-  OK   path web-reverse/tools/chrome.mjs  ->  %USERPROFILE%\AppData\Local\Temp\station-clone\web-reverse\tools\chrome.mjs   [web.js.cdp]
+  OK   path scripts/ghidra/EmulateDecode.java  ->  %TEMP%\station-clone\scripts\ghidra\EmulateDecode.java   [native.ghidra.emulate]
+  OK   path web-reverse/tools/chrome.mjs  ->  %TEMP%\station-clone\web-reverse\tools\chrome.mjs   [web.js.cdp]
   
   23 distinct targets, 9 absent.
   
@@ -358,22 +358,22 @@ verify-clone-freshness
     adb   needed by dynamic.device.frida   [absent here AND undeclared]
     openssl   needed by native.signature.certverify   [present HERE, unknown to a clone]
     %USERPROFILE%\.local\bin\skillspector.exe   needed by ops.skill.security   [present HERE, unknown to a clone]
-    D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\frida-ps.exe   needed by dynamic.win.frida   [present HERE, unknown to a clone]
-    D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\frida.exe   needed by dynamic.win.frida   [present HERE, unknown to a clone]
-    D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\python.exe   needed by dynamic.win.frida.intercept   [present HERE, unknown to a clone]
-    D:\Software\Tool\WorkStation\debugger\native-lab\tools\frida_spawn_gate.py   needed by dynamic.win.frida.intercept   [present HERE, unknown to a clone]
+    <repo>\Mobile-Android\objection\.venv\Scripts\frida-ps.exe   needed by dynamic.win.frida   [present HERE, unknown to a clone]
+    <repo>\Mobile-Android\objection\.venv\Scripts\frida.exe   needed by dynamic.win.frida   [present HERE, unknown to a clone]
+    <repo>\Mobile-Android\objection\.venv\Scripts\python.exe   needed by dynamic.win.frida.intercept   [present HERE, unknown to a clone]
+    <repo>\native-lab\tools\frida_spawn_gate.py   needed by dynamic.win.frida.intercept   [present HERE, unknown to a clone]
   
   HARDCODED PATH OUTSIDE THIS CLONE (5) -- the probe resolves and the target EXISTS, so it reports success while reading somebody else's tree:
     %USERPROFILE%\.local\bin\skillspector.exe
         -> %USERPROFILE%\.local\bin\skillspector.exe   [ops.skill.security]
-    D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\frida-ps.exe
-        -> D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\frida-ps.exe   [dynamic.win.frida]
-    D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\frida.exe
-        -> D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\frida.exe   [dynamic.win.frida]
-    D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\python.exe
-        -> D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\python.exe   [dynamic.win.frida.intercept]
-    D:\Software\Tool\WorkStation\debugger\native-lab\tools\frida_spawn_gate.py
-        -> D:\Software\Tool\WorkStation\debugger\native-lab\tools\frida_spawn_gate.py   [dynamic.win.frida.intercept]
+    <repo>\Mobile-Android\objection\.venv\Scripts\frida-ps.exe
+        -> <repo>\Mobile-Android\objection\.venv\Scripts\frida-ps.exe   [dynamic.win.frida]
+    <repo>\Mobile-Android\objection\.venv\Scripts\frida.exe
+        -> <repo>\Mobile-Android\objection\.venv\Scripts\frida.exe   [dynamic.win.frida]
+    <repo>\Mobile-Android\objection\.venv\Scripts\python.exe
+        -> <repo>\Mobile-Android\objection\.venv\Scripts\python.exe   [dynamic.win.frida.intercept]
+    <repo>\native-lab\tools\frida_spawn_gate.py
+        -> <repo>\native-lab\tools\frida_spawn_gate.py   [dynamic.win.frida.intercept]
 
 ==============================================================================
 2b. TOOLS   manifests/tools.json declared locations
@@ -407,7 +407,7 @@ verify-clone-freshness
   roots    : <private-tree>\wiki
   scanned  : 165 markdown file(s); 24 %TEMP% line(s) shaped like a reproduction step, 28 prose mention(s)
   03-second-instrument.md:398
-      usage: %USERPROFILE%\AppData\Local\Temp\fridaprobe\target.exe <password>
+      usage: %TEMP%\fridaprobe\target.exe <password>
   03-second-instrument.md:443
       #   [stage] copied to %TEMP% ...\fridagate-XXXXXXXX\c01-stringobf.exe (143872 bytes); the
   03-second-instrument.md:523
@@ -421,7 +421,7 @@ verify-clone-freshness
   03-second-instrument.md:741
       speakeasy -t crackme-corpus\out\c01-stringobf.exe --no-mp -o $env:TEMP\spk-c01.json
   03-second-instrument.md:1217  [self-declared dead/historical]
-      # [DEAD] python "%USERPROFILE%\AppData\Local\Temp\w13-pe-probe.py"  -> no such file
+      # [DEAD] python "%TEMP%\w13-pe-probe.py"  -> no such file
   03-second-instrument.md:1226
       head -c 600 crackme-corpus\out\c01-stringobf.exe > "$env:TEMP\trunc.exe"
   03-second-instrument.md:1227
@@ -431,7 +431,7 @@ verify-clone-freshness
   03-second-instrument.md:1236
       # expect: [stage] copied to %TEMP% … ; [js] {"kind": "HIT", ...} ; [end] verdict=INTERCEPT-PROVEN
   03-second-instrument.md:1242  [self-declared dead/historical]
-      # [DEAD] python "%USERPROFILE%\AppData\Local\Temp\w13-capstone-probe.py" -> no such file
+      # [DEAD] python "%TEMP%\w13-capstone-probe.py" -> no such file
   03-second-instrument.md:1260  [self-declared dead/historical]
       # [HISTORICAL, fixture not committed] this leaned on $env:TEMP\fridaprobe\target.exe, which is not
   03-second-instrument.md:1263  [self-declared dead/historical]
@@ -473,15 +473,15 @@ VERDICT
   WARN tool-undeclared: adb is invoked by a probe but is absent from manifests/tools.json (absent on this station too)
   WARN tool-undeclared: openssl is invoked by a probe but is absent from manifests/tools.json (present on this station)
   WARN tool-undeclared: %USERPROFILE%\.local\bin\skillspector.exe is invoked by a probe but is absent from manifests/tools.json (present on this station)
-  WARN tool-undeclared: D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\frida-ps.exe is invoked by a probe but is absent from manifests/tools.json (present on this station)
-  WARN tool-undeclared: D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\frida.exe is invoked by a probe but is absent from manifests/tools.json (present on this station)
-  WARN tool-undeclared: D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\python.exe is invoked by a probe but is absent from manifests/tools.json (present on this station)
-  WARN tool-undeclared: D:\Software\Tool\WorkStation\debugger\native-lab\tools\frida_spawn_gate.py is invoked by a probe but is absent from manifests/tools.json (present on this station)
+  WARN tool-undeclared: <repo>\Mobile-Android\objection\.venv\Scripts\frida-ps.exe is invoked by a probe but is absent from manifests/tools.json (present on this station)
+  WARN tool-undeclared: <repo>\Mobile-Android\objection\.venv\Scripts\frida.exe is invoked by a probe but is absent from manifests/tools.json (present on this station)
+  WARN tool-undeclared: <repo>\Mobile-Android\objection\.venv\Scripts\python.exe is invoked by a probe but is absent from manifests/tools.json (present on this station)
+  WARN tool-undeclared: <repo>\native-lab\tools\frida_spawn_gate.py is invoked by a probe but is absent from manifests/tools.json (present on this station)
   WARN tool-foreign: %USERPROFILE%\.local\bin\skillspector.exe resolves to %USERPROFILE%\.local\bin\skillspector.exe, outside this clone -- the probe reads a foreign tree
-  WARN tool-foreign: D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\frida-ps.exe resolves to D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\frida-ps.exe, outside this clone -- the probe reads a foreign tree
-  WARN tool-foreign: D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\frida.exe resolves to D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\frida.exe, outside this clone -- the probe reads a foreign tree
-  WARN tool-foreign: D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\python.exe resolves to D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\python.exe, outside this clone -- the probe reads a foreign tree
-  WARN tool-foreign: D:\Software\Tool\WorkStation\debugger\native-lab\tools\frida_spawn_gate.py resolves to D:\Software\Tool\WorkStation\debugger\native-lab\tools\frida_spawn_gate.py, outside this clone -- the probe reads a foreign tree
+  WARN tool-foreign: <repo>\Mobile-Android\objection\.venv\Scripts\frida-ps.exe resolves to <repo>\Mobile-Android\objection\.venv\Scripts\frida-ps.exe, outside this clone -- the probe reads a foreign tree
+  WARN tool-foreign: <repo>\Mobile-Android\objection\.venv\Scripts\frida.exe resolves to <repo>\Mobile-Android\objection\.venv\Scripts\frida.exe, outside this clone -- the probe reads a foreign tree
+  WARN tool-foreign: <repo>\Mobile-Android\objection\.venv\Scripts\python.exe resolves to <repo>\Mobile-Android\objection\.venv\Scripts\python.exe, outside this clone -- the probe reads a foreign tree
+  WARN tool-foreign: <repo>\native-lab\tools\frida_spawn_gate.py resolves to <repo>\native-lab\tools\frida_spawn_gate.py, outside this clone -- the probe reads a foreign tree
   WARN tool-declared: static-reversing/Ghidra declared at Static-Reversing/Ghidra/ghidra_12.1.3_PUBLIC/ghidraRun.bat but absent
   WARN tool-declared: static-reversing/IDA Pro declared at Static-Reversing/IDA/ida.exe but absent
   WARN tool-declared: static-reversing/PE-bear declared at Static-Reversing/PE-bear/PE-bear.exe but absent
@@ -546,7 +546,7 @@ The same command, the same script, and the difference is not asserted — it is 
 Two clone facts this surfaced that the brief did not list:
 
 - The clone's registry still carries **absolute station paths**. `manifests/capabilities.json` at the
-  clone's commit `f441462` has `& 'D:\Software\Tool\WorkStation\debugger\Mobile-Android\objection\.venv\Scripts\frida.exe'`
+  clone's commit `f441462` has `& '<repo>\Mobile-Android\objection\.venv\Scripts\frida.exe'`
   where today's station has `& '.\Mobile-Android\...'`. Those probes **resolve and succeed on this box**
   — they read the station's tree, not the clone's — which is worse than failing, and is what the
   `HARDCODED PATH OUTSIDE THIS CLONE` block exists to name.
@@ -577,7 +577,7 @@ Case A, verbatim head and tail:
 
 ```text
 verify-clone-freshness
-  repo : %USERPROFILE%\AppData\Local\Temp\clonefresh-neg-095314-24928
+  repo : %TEMP%\clonefresh-neg-095314-24928
   python 3.14.7  static checks only -- no probe is executed
 
 ==============================================================================
@@ -636,7 +636,7 @@ Case B, verbatim head and tail:
 
 ```text
 verify-clone-freshness
-  repo : %USERPROFILE%\AppData\Local\Temp\clonefresh-neg-095314-24928
+  repo : %TEMP%\clonefresh-neg-095314-24928
   python 3.14.7  static checks only -- no probe is executed
 
 ==============================================================================
@@ -707,7 +707,7 @@ untouched), then run against the identical tree:
 
 ```text
 verify-clone-freshness
-  repo : %USERPROFILE%\AppData\Local\Temp\clonefresh-neg-095314-24928
+  repo : %TEMP%\clonefresh-neg-095314-24928
   python 3.14.7  static checks only -- no probe is executed
 
 ==============================================================================
@@ -838,7 +838,7 @@ left the rest alone rather than restyle code nobody asked me to touch. The stati
 ## 8. Reproduce
 
 ```powershell
-cd D:\Software\Tool\WorkStation\debugger
+cd <repo>
 python scripts\verify-clone-freshness.py                      ; # exit 0 today
 python scripts\verify-clone-freshness.py --strict             ; # warnings promoted
 python scripts\verify-clone-freshness.py --repo <a clone>     ; # read-only against any clone

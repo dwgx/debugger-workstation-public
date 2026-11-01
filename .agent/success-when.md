@@ -1,6 +1,29 @@
-STATUS: BLOCKED
+STATUS: SUPERSEDED — 2026-11-01. This file read `STATUS: BLOCKED` from 2026-10-03 until today.
+Paused by Owner 2026-10-03 with no code change; the design below then landed as code that was
+never wired in. A later session owns that outcome and it is on the record at
+`docs/research/2026-10-04-two-tree-and-dead-code.md:144-215`. Nothing below is a live plan — read
+§0 first, then that document.
 
 # success_when evaluation in `scripts/mission.ps1`
+
+## 0. What is true now (2026-11-01), so nothing below is read as a live plan
+
+- `Get-SuccessWhenVerdict` **exists** at `scripts/mission.ps1:1332` and is **never called**.
+  One hit in the tree is the definition; zero call sites. Measured today, same as 2026-10-04.
+- The value that decides a round is still set by the two literals this report set out to replace:
+  `scripts/mission.ps1:1901-1902`, both reading `$cap.invoke.success_when`.
+- `Invoke-Ablate` still declares **7** gate names (`scripts/mission.ps1:3845`), so the
+  `success_when` gate this report designed was never added.
+- The change as committed also **would not load**: `-split ... -CaseSensitive` is a ParserError.
+  That was fixed to `[regex]::Split` and is not a live defect; the dead code is.
+- The decision to leave it unwired is argued in
+  `docs/research/2026-10-04-two-tree-and-dead-code.md:206-215` — wiring unverified logic into the
+  path that decides what counts as evidence was judged worse than a measured dead function.
+  **Write the controls first, watch them fail, then wire it.** That is the live instruction;
+  §NEXT below is the pre-pause version of it.
+
+Everything from here down is the 2026-10-03 session, verbatim, including its own `[UNVERIFIED]`
+marks. Its §1 count (5 unevaluated declarations, not 4) was measured and stands.
 
 Paused by Owner mid-investigation. **No code change was made.** `scripts/mission.ps1` is
 byte-identical to `e4da839` (confirmed: `git status --short` listed no `scripts/mission.ps1`

@@ -129,7 +129,7 @@ Windows 上若 `InstallRoot` 就是本 clone，`mcp\` 与 `MCP\` 是同一目录
 
 ## 3. MCP 策略
 
-- 客户端默认 **只启用** `debugger-router`。按需启动 20 个后端之一，用完退出。
+- 客户端默认 **只启用** `debugger-router`。按需启动 20 个后端之一，该后端进程跨调用保活（用 `session_id` 寻址），空闲后回收（`DEBUGGER_ROUTER_IDLE_TIMEOUT`，默认 600s）或用 `close_backend_session` 主动关闭。
 - 不要默认加载全部后端。直连 profile：`mcp-mobile` / `mcp-re` / `mcp-net` / `mcp-ce` / `mcp-intel` / `mcp-all`。
 - 模板：`mcp/client-mcp.json.template`（客户端只挂 router → `.mcp.json` / `.cursor/mcp.json`）、`mcp/.mcp.json.template`（给 router 的后端清单 → `MCP/.mcp.json`）、`mcp/codex-mcp-config.example.toml`。见 [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md)。
 - **禁止**把 20 个后端写进 Claude / Codex / Cursor / Grok **用户全局** MCP。

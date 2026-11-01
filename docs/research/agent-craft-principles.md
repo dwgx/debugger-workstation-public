@@ -2,9 +2,9 @@
 
 **Status:** research only. No commit, no `git add`, no install, no Docker, nothing vendored.
 **Author:** research window, 2026-09-30. **For:** the Owner.
-**Station root:** `D:\Software\Tool\WorkStation\debugger` (referred to below as `debugger\`).
+**Station root:** `<repo>` (referred to below as `debugger\`).
 **Governing documents (read, binding):** `debugger\AGENTS.md`, `debugger\OWNER.md`.
-**Clone root:** `%USERPROFILE%\AppData\Local\Temp\re-research\PromptDesign\` — every path below marked `clone\` is inside it.
+**Clone root:** `%TEMP%\re-research\PromptDesign\` — every path below marked `clone\` is inside it.
 
 ---
 

@@ -1,6 +1,6 @@
 # Tool index (post-bootstrap)
 
-English contract: [`AGENTS.md`](../AGENTS.md). This cheat-sheet is Chinese. Paths are relative to **this clone** (`local.json` `install_root`, this PC: `D:\Software\Tool\WorkStation\debugger`).
+English contract: [`AGENTS.md`](../AGENTS.md). This cheat-sheet is Chinese. Paths are relative to **this clone** (`local.json` `install_root`, this PC: `<repo>`).
 
 # 工具索引(实战版)
 
@@ -257,7 +257,7 @@ English contract: [`AGENTS.md`](../AGENTS.md). This cheat-sheet is Chinese. Path
 
 ## MCP / AI 辅助分析
 
-**策略**:默认只启用 `debugger-router` 一个轻量 MCP,它按需临时启动 19 个后端里需要的那个,用完退出。不要一次性全加载。需要直连用 profile。
+**策略**:默认只启用 `debugger-router` 一个轻量 MCP,它按需启动 19 个后端里需要的那个,后端进程跨调用保活(每个 `session_id` 一个进程),空闲超时(默认 600s)或 `close_backend_session` 后才回收。不要一次性全加载。需要直连用 profile。
 
 启动脚本目录:`MCP\bin\`;配置:`MCP\.mcp.json`(bootstrap 生成)。
 
@@ -278,7 +278,7 @@ English contract: [`AGENTS.md`](../AGENTS.md). This cheat-sheet is Chinese. Path
 
 | MCP | 启动器 | 用法要点 |
 | --- | --- | --- |
-| **Debugger Router**(自研,默认启用) | `debugger-router-mcp.cmd` | 工具:`list_backends` / `list_backend_tools` / `call_backend_tool` / `smoke_backend` / `workflow_help`。AI 分析入口。 |
+| **Debugger Router**(自研,默认启用) | `debugger-router-mcp.cmd` | 工具:`list_backends` / `list_backend_tools` / `call_backend_tool` / `open_backend_session` / `list_backend_sessions` / `close_backend_session` / `smoke_backend` / `workflow_help`。后端进程跨调用保活,用 `session_id` 寻址;单次调用上限 `DEBUGGER_ROUTER_TIMEOUT`(默认 900s),空闲回收 `DEBUGGER_ROUTER_IDLE_TIMEOUT`(默认 600s)。AI 分析入口。 |
 | GhidraMCP | `ghidra-mcp.cmd` | 需 Ghidra 开项目+装插件才能真实分析。 |
 | IDA Pro MCP | `ida-pro-mcp.cmd` | 需 IDA Pro 8.3+ 打开并 `--install` 插件,端口 13337。 |
 | radare2 MCP | `radare2-mcp.cmd` | 纯 C 官方 r2mcp,先 `r2pm -Uci r2mcp`。 |

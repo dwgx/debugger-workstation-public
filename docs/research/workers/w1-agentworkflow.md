@@ -4,7 +4,7 @@
 
 {
   "status": "DONE",
-  "report_path": "%USERPROFILE%/AppData/Local/Temp/w1-agentworkflow.md",
+  "report_path": "%TEMP%/w1-agentworkflow.md",
   "report_bytes": "53505",
   "report_lines": "954",
   "patterns_delivered": "22",
@@ -12,8 +12,8 @@
   "repo_writes": "none — all experiments ran on copies in %TEMP%\\ablate and %TEMP%\\rv-base",
   "baseline_docs_read": {
     "item": [
-      "D:/Software/Tool/WorkStation/debugger/docs/research/agent-craft-principles.md",
-      "D:/Software/Tool/WorkStation/debugger/docs/research/orchestration-design.md"
+      "<repo>/docs/research/agent-craft-principles.md",
+      "<repo>/docs/research/orchestration-design.md"
     ]
   },
   "measured_findings": {

@@ -131,10 +131,17 @@ def build(ch):
     return rc == 0, tail(out, 1)
 
 
-def ghidra(ch):
+def ghidra(ch, binary=None, outdir=None):
+    """Decompile one challenge's sample.
+
+    `binary` and `outdir` are optional overrides, added 2026-11-01 so that
+    crackme-corpus/tools/solve-one.py can decompile a CALLER-SUPPLIED binary with the same
+    argv this loop uses. Default behaviour is unchanged: the corpus still resolves its own
+    out-tree paths, so the loop's measurements are byte-identical to before.
+    """
     target = ch["dll"] if ch["build"] == "dotnet" else ch["exe"]
-    src = os.path.join(OUT, ch["name"], target) if ch["build"] == "dotnet" else os.path.join(OUT, target)
-    outdir = os.path.join(OUT, f"{ch['name']}-ghidra" if ch["build"] == "c" else f"{ch['name']}-ilspy")
+    src = binary or (os.path.join(OUT, ch["name"], target) if ch["build"] == "dotnet" else os.path.join(OUT, target))
+    outdir = outdir or os.path.join(OUT, f"{ch['name']}-ghidra" if ch["build"] == "c" else f"{ch['name']}-ilspy")
     if ch["build"] == "c":
         return run(ps(GHIDRA, "-Sample", src, "-OutDir", outdir), timeout=900)
     # managed path: ilspycmd is resolved separately (see ilspy() below)
@@ -144,17 +151,23 @@ def ghidra(ch):
     return run([*exe, "-o", outdir, src], timeout=600)
 
 
-def solve(ch):
+def solve(ch, binary=None, ghidra_out=None):
+    """Solve one challenge.
+
+    Same optional overrides as ghidra(): solve-one.py passes the caller's binary and the
+    directory it just decompiled into. One argv builder, not two -- a second one would be
+    the place the flags drift apart.
+    """
     solver = os.path.join(ROOT, "challenges", ch["dir"], "solve.py")
     if ch["build"] == "dotnet":
         argv = [sys.executable, solver,
-                "--dll", os.path.join(OUT, ch["name"], ch["dll"]),
-                "--ilspy-out", os.path.join(OUT, f"{ch['name']}-ilspy"),
+                "--dll", binary or os.path.join(OUT, ch["name"], ch["dll"]),
+                "--ilspy-out", ghidra_out or os.path.join(OUT, f"{ch['name']}-ilspy"),
                 "--expect-password", ch["password"], "--expect-flag", ch["flag"]]
     else:
         argv = [sys.executable, solver,
-                "--exe", os.path.join(OUT, ch["exe"]),
-                "--ghidra-out", os.path.join(OUT, f"{ch['name']}-ghidra"),
+                "--exe", binary or os.path.join(OUT, ch["exe"]),
+                "--ghidra-out", ghidra_out or os.path.join(OUT, f"{ch['name']}-ghidra"),
                 "--expect-password", ch["password"]]
         if ch["flag"]:
             argv += ["--expect-flag", ch["flag"]]

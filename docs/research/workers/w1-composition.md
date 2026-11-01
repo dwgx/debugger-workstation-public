@@ -4,7 +4,7 @@
 
 {
   "status": "DONE",
-  "report": "%USERPROFILE%/AppData/Local/Temp/w1-composition.md",
+  "report": "%TEMP%/w1-composition.md",
   "verdict": "Diagnosis CONFIRMED and worse than stated",
   "findings": [
     {
@@ -62,5 +62,5 @@
     "Whether native.ghidra.emulate would succeed if reached (state=blocked, :1400).",
     "P7's proposed argv shapes read off each tool's CLI parser but not executed."
   ],
-  "constraints_respected": "Read-only. git status --porcelain on D:\\Software\\Tool\\WorkStation\\debugger returned empty. Wrote only to the Temp report path. No registry or script was edited."
+  "constraints_respected": "Read-only. git status --porcelain on <repo> returned empty. Wrote only to the Temp report path. No registry or script was edited."
 }

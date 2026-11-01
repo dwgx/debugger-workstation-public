@@ -7,7 +7,7 @@ Scope: `.agent/HANDOFF.md`, `.agent/RECOVERY-STATION.md`,
 ## Commands actually run (verbatim tail)
 
 ```
-> $ cd D:\Software\Tool\WorkStation\debugger\docs\research
+> $ cd <repo>\docs\research
 > $ $files = Get-ChildItem -Filter *.md | Where-Object { $_.Name -ne "README.md" }
 > $ total = 0; foreach ($f in $files) { $n = (Get-Content $f.FullName).Count; $total += $n }
 > REPORTS=8 LINES=5634

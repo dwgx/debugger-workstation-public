@@ -68,7 +68,7 @@ pwsh scripts\bootstrap.ps1 -Apply -CloneMcp -InstallRoot "D:\Tool\debugger"
 
 ## MCP 策略
 
-默认只启用 `debugger-router` 一个轻量 MCP,它按需临时启动 19 个后端中需要的那个,用完退出。不要默认一次性加载全部后端。需要直连时用 profile(`mcp-mobile` / `mcp-re` / `mcp-net` / `mcp-ce` / `mcp-intel` / `mcp-all`)。
+默认只启用 `debugger-router` 一个轻量 MCP,它按需临时启动 19 个后端中需要的那个,该后端进程跨调用保活(每个 `session_id` 一个进程),空闲超时或主动关闭后才回收。不要默认一次性加载全部后端。需要直连时用 profile(`mcp-mobile` / `mcp-re` / `mcp-net` / `mcp-ce` / `mcp-intel` / `mcp-all`)。
 
 ## 安全姿态
 
@@ -76,7 +76,10 @@ pwsh scripts\bootstrap.ps1 -Apply -CloneMcp -InstallRoot "D:\Tool\debugger"
 
 ## 许可
 
-- 本仓库自研部分(`mcp/debugger-router`、`mcp/bin`、`scripts`、文档)的许可见 [LICENSE](LICENSE)(MIT)。
+许可按文件类型分成两套:
+
+- **代码与配置 — MIT**([LICENSE](LICENSE))。涵盖 `mcp/debugger-router`、`mcp/bin`、`scripts`、`manifests`、`skills`、`templates`、代理契约(`AGENTS*.md`、`CLAUDE.md`、`GEMINI.md`)以及所有非 Markdown 文件。fork 后可以闭源。
+- **文档散文 — CC BY-SA 4.0**([LICENSE-docs](LICENSE-docs))。涵盖 `docs/`(含 `docs/i18n/`)、`README*.md`、`DISCLAIMER*.md`、`notes/` 等散文。署名后可复用,但派生文档须沿用同一许可。
 - 第三方工具与第三方 MCP 的版权和许可归各上游所有,本仓库不再分发其代码或二进制。详见 [DISCLAIMER.zh-CN.md](DISCLAIMER.zh-CN.md)。
 
 ## 贡献与安全

@@ -1,20 +1,20 @@
 # assert-probes evidence: dynamic.win.frida probe
 # command: python scripts\probe_wrapper.py --tool dynamic_win_frida --out-dir probe-artifacts -- powershell -NoProfile -ExecutionPolicy Bypass -File scripts\probes\dynamic_win_frida.ps1
 # exit: 0
-# seconds: 0.73
+# seconds: 1.29
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
 # produces: D:\Software\Tool\WorkStation\debugger\probe-artifacts\last-run-dynamic_win_frida.json
-#   sha256: 07c704fe053f609eaeb93605edbceffa2900412c6cf416b224d8c2251f21a64b
+#   sha256: 920a544839b9c927d66265b90324fb84b275847d1bffc5a84ee5517050f5ce06
 #   bytes: 1211
 #   written-by-this-run: yes
 ------------------------------------------------------------------------
 Spawned `%USERPROFILE%\AppData\Local\Temp\fridaprobe\target.exe`. Resuming main thread!
 usage: %USERPROFILE%\AppData\Local\Temp\fridaprobe\target.exe <password>
-FRIDA_WIN module_base=0x7ff6e4270000
+FRIDA_WIN module_base=0x7ff7f1d80000
 FRIDA_WIN symbol_main=0
-FRIDA_WIN export_printf=0x7ff8d0b8d280
-FRIDA_WIN rebased_main=0x7ff6e4271080
+FRIDA_WIN export_printf=0x7ffc7e0dd280
+FRIDA_WIN rebased_main=0x7ff7f1d81080
 {}
 Process terminated
 ARTIFACT probe-artifacts/last-run-dynamic_win_frida.json

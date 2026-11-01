@@ -698,7 +698,7 @@ artefact'."*
 analysis target on this station, no matter how interesting, no matter that it is already
 downloaded, no matter that *"it runs on my PC"* — and the registry already encodes the reason
 (`native.il2cpp.absent_is_reported`): **"'it runs on my PC' is not ownership."**
-**This is not hypothetical here:** `D:/Software/Tool/WorkStation/debugger/_download-stage/`
+**This is not hypothetical here:** `<repo>/_download-stage/`
 contains, by directory name alone, `eac-builds/`, `eac-surface/`, `vrruntime/`, `vrchat/`,
 `gpu/`, `peripheral/`, `monitoring/`, `anticheat/`, `motherboard*`. **No pairing in this
 report may be built on them.** P2, P4, P11 and P16 are all *technically* applicable to every

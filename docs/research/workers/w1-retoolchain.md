@@ -4,7 +4,7 @@
 
 {
   "status": "STATUS: DONE",
-  "report": "%USERPROFILE%/AppData/Local/Temp/w1-retoolchain.md",
+  "report": "%TEMP%/w1-retoolchain.md",
   "report_bytes": 29964,
   "rows_written": 40,
   "acceptance": [

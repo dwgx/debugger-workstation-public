@@ -18,7 +18,7 @@
 
 ## 자체 작성
 
-`mcp/debugger-router/`, `mcp/bin/*.cmd`, 템플릿, `scripts/`, `docs/`, `manifests/`. [LICENSE](LICENSE).
+`mcp/debugger-router/`, `mcp/bin/*.cmd`, 템플릿, `scripts/`, `docs/`, `manifests/`. 코드와 설정은 [LICENSE](LICENSE)(MIT), 문서 본문은 [LICENSE-docs](LICENSE-docs)(CC BY-SA 4.0)를 참조하세요.
 
 ## 이용 책임
 

@@ -22,3 +22,11 @@
 **教训（可复用）**：链内跑的快扫输出要**全量落盘**再 tail；只留 tail 的跑法会把
 FLAKY 的条目名丢掉，导致下一次只能重跑而不能直接读证据。这与「报告先落盘」同源：
 证据在管道里被截断 = 没留证据。
+
+## 追记（2026-10-16：条目名已捕获 = `fuzz.differential.parse`）
+
+三次独立观测（含一次静机窗口）：
+- 2026-10-16 verify-all 内 by-name 跑：**TOOL-FAULT 超时 1090s**（并发 7 进程重载下）。
+- 同日直接调用（默认 681s 超时）：**TOOL-FAULT 超时**（并发 2 车道负载下）。
+- 同日静机 `--timeout 1800`：**FLAKY** —— 首跑 256s DRIFT（expect_exit=0 real=9）、复跑通过；工具判「not a pass and not a regression; cannot decide」。
+结论：该条目在本机**噪声敏感**（其 runtime_note 自述 load-sensitive）；「超时」与「drift」两形态都出现过。处理：按工具原话视作 **unproven**，不要报 green；静机 + `--timeout 1800` 是其当前最佳观察窗口。证据：`Reports/2026-10-16-review.md` §1/§6 + 本日三次运行输出。

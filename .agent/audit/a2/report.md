@@ -1,7 +1,7 @@
 # Audit A2 - false-green hunt in the four self-checking tools
 
 Auditor: a2 (independent). Read-only except this file.
-Date: 2026-10-02. cwd: D:/Software/Tool/WorkStation/debugger.
+Date: 2026-10-02. cwd: <repo>.
 Targets: scripts/assert-probes.py, reachability-report.py, doc-facts.py, registry-verify.py.
 
 Method: for every tool, construct the cheapest input that would slip PAST it and actually run

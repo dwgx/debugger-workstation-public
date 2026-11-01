@@ -1,22 +1,22 @@
 # assert-probes evidence: web.js.cdp control
 # command: node web-reverse\tools\negative-gate.mjs
 # exit: 1
-# seconds: 0.21
+# seconds: 0.31
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
 ------------------------------------------------------------------------
 web.js.cdp negative control — forged signature, well-formed request
-  scratch        %USERPROFILE%\AppData\Local\Temp\web-negative-gate-cFidtj   (generated this run, removed in finally)
+  scratch        %USERPROFILE%\AppData\Local\Temp\web-negative-gate-hlDURq   (generated this run, removed in finally)
   browser        NOT USED, and not missing. This control asks the signing gate — a pure
                  HTTP boundary — to refuse a forged request. Driving Chrome over CDP is
                  loop.mjs's job; a browser here would make a signing assertion depend on
                  an install, a debug port and a profile. There is no BLOCKED portion.
 
-  PASS  fixture written under %TEMP% by this run                   web-negative-gate-cFidtj\forged-request.json
+  PASS  fixture written under %TEMP% by this run                   web-negative-gate-hlDURq\forged-request.json
   PASS  fixture signature was computed with the WRONG key          used "this-is-not-the-recovered-key", lab key is lab-demo-sig…
-  PASS  request is otherwise well formed                           nonce b61ac95e, 37 body bytes, ts 1791919654530
+  PASS  request is otherwise well formed                           nonce a0cb9385, 37 body bytes, ts 1793432757352
   key    this-is-not-the-recovered-key
-  sig    ed37fa311221f862546f8dc0a562e7c3e7d22da42bb79177dc661e5a50c8c855
+  sig    3ad8c82e4602f1aeae4d9b163670d4a9455dfd34f6afc19c7bfa1455fc3ef6b0
   -> HTTP 401 {"ok":false,"error":"bad-signature","bit":"signature does not match"}
   PASS  gate REFUSED the forged signature                          HTTP 401
 

@@ -1,14 +1,14 @@
 # assert-probes evidence: crypto.jose.parse control
 # command: node crypto-lab/tools/negative-gate.mjs
 # exit: 4
-# seconds: 0.25
+# seconds: 0.23
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
 ------------------------------------------------------------------------
 
 crypto.jose.parse — NEGATIVE CONTROL: structurally valid tokens that must NOT verify
 ================================================================================================
-  lab      http://127.0.0.1:63053   kid=lab-rsa-81389a63dd7331bd   issuer=crypto-lab   audience=crypto-lab-api
+  lab      http://127.0.0.1:54996   kid=lab-rsa-81389a63dd7331bd   issuer=crypto-lab   audience=crypto-lab-api
   fed to   POST /api/verify/strict  — the same judgement loop.mjs makes at its verifier step
   built by crypto-lab/tools/negative-gate.mjs via lab/jose.mjs sign() + node:crypto; no pasted token literal
   keys     lab RSA-2048 reused from D:\Software\Tool\WorkStation\debugger\crypto-lab\keys\lab-rsa-2048.pub.pem; attacker pair GENERATED in-process by node:crypto, never written to disk
@@ -18,14 +18,14 @@ crypto.jose.parse — NEGATIVE CONTROL: structurally valid tokens that must NOT 
     defect   the token declares itself unverified; there is no signature to check
     segments 3 (base64url ok), signature segment (empty)
     header   {"typ":"JWT","alg":"none","kid":"lab-rsa-81389a63dd7331bd"}
-    claims   {"iss":"crypto-lab","aud":"crypto-lab-api","sub":"usr_1f4c9a2b7e","role":"admin","iat":1791919658,"nbf":1791919657,"exp":1791919958,"jti":"afa1fd1ddcbdc432"}
+    claims   {"iss":"crypto-lab","aud":"crypto-lab-api","sub":"usr_1f4c9a2b7e","role":"admin","iat":1792321845,"nbf":1792321844,"exp":1792322145,"jti":"d5118451ed3b6577"}
     claims strict would demand:
-      ok   exp present and unexpired      exp=1791919958 now=1791919658
-      ok   nbf present and not future     nbf=1791919657
+      ok   exp present and unexpired      exp=1792322145 now=1792321845
+      ok   nbf present and not future     nbf=1792321844
       ok   iss is the lab issuer          iss="crypto-lab"
       ok   aud includes the lab audience  aud="crypto-lab-api"
       ok   sub non-empty string           sub=usr_1f4c9a2b7e
-      ok   jti non-empty string           jti=afa1fd1ddcbdc432
+      ok   jti non-empty string           jti=d5118451ed3b6577
     verdict  token is STRUCTURALLY VALID and semantically current — nothing below may be blamed on its shape
     provenance of the fixture itself:
       ok   header declares alg=none       alg="none"
@@ -37,14 +37,14 @@ crypto.jose.parse — NEGATIVE CONTROL: structurally valid tokens that must NOT 
     defect   RS256 signature made with an ephemeral attacker key, not lab-rsa-81389a63dd7331bd; the header carries the lab's real kid so key selection cannot rescue it
     segments 3 (base64url ok), signature segment 342 b64u chars
     header   {"typ":"JWT","alg":"RS256","kid":"lab-rsa-81389a63dd7331bd"}
-    claims   {"iss":"crypto-lab","aud":"crypto-lab-api","sub":"usr_1f4c9a2b7e","role":"admin","iat":1791919658,"nbf":1791919657,"exp":1791919958,"jti":"454db0ed0ccbb9c0"}
+    claims   {"iss":"crypto-lab","aud":"crypto-lab-api","sub":"usr_1f4c9a2b7e","role":"admin","iat":1792321845,"nbf":1792321844,"exp":1792322145,"jti":"f976b8bec4aae5be"}
     claims strict would demand:
-      ok   exp present and unexpired      exp=1791919958 now=1791919658
-      ok   nbf present and not future     nbf=1791919657
+      ok   exp present and unexpired      exp=1792322145 now=1792321845
+      ok   nbf present and not future     nbf=1792321844
       ok   iss is the lab issuer          iss="crypto-lab"
       ok   aud includes the lab audience  aud="crypto-lab-api"
       ok   sub non-empty string           sub=usr_1f4c9a2b7e
-      ok   jti non-empty string           jti=454db0ed0ccbb9c0
+      ok   jti non-empty string           jti=f976b8bec4aae5be
     verdict  token is STRUCTURALLY VALID and semantically current — nothing below may be blamed on its shape
     provenance of the fixture itself:
       ok   signature verifies under the key this process generated RS256 made with the ephemeral private key generated above

@@ -9,7 +9,7 @@
       "path": "MCP/debugger-router",
       "entry": "server.py",
       "origin": "self",
-      "note": "轻量按需路由,默认唯一启用的 MCP。提供 list_backends / list_backend_tools / call_backend_tool / smoke_backend / workflow_help。"
+      "note": "轻量按需路由,默认唯一启用的 MCP。提供 list_backends / list_backend_tools / call_backend_tool / open_backend_session / list_backend_sessions / close_backend_session / smoke_backend / workflow_help。后端进程跨调用保活(默认空闲 600s 回收),单次调用上限默认 900s。"
     },
     "bin": {
       "path": "MCP/bin",

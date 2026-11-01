@@ -42,4 +42,8 @@ clone 後、ロケールを解決し、**対応する AGENTS を先に読む**�
 
 ## ライセンス
 
-自作部分は [LICENSE](LICENSE)（MIT）。上流ツールの権利は上流に残ります。
+ライセンスはファイルの種類で分かれます。
+
+- **コードと設定 — MIT**（[LICENSE](LICENSE)）。`mcp/debugger-router`、`mcp/bin`、`scripts`、`manifests`、`skills`、`templates`、エージェント契約（`AGENTS*.md`、`CLAUDE.md`、`GEMINI.md`）、および Markdown 以外のすべてのファイル。フォークは非公開にできます。
+- **ドキュメント本文 — CC BY-SA 4.0**（[LICENSE-docs](LICENSE-docs)）。`docs/`（`docs/i18n/` を含む）、`README*.md`、`DISCLAIMER*.md`、`notes/` などの散文。出典を表示すれば再利用できますが、派生ドキュメントも同じライセンスに従います。
+- サードパーティ製ツールとサードパーティ製 MCP の権利は各上流に残ります。本リポジトリはそれらのコードやバイナリを再配布しません。詳細は [DISCLAIMER.md](DISCLAIMER.md)。

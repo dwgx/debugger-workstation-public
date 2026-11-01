@@ -1,9 +1,9 @@
 # assert-probes evidence: native.ghidra.decompile control
 # command: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ghidra-headless.ps1 -Sample README.md
 # exit: 1
-# seconds: 5.02
+# seconds: 3.98
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
 ------------------------------------------------------------------------
-{"outdir":"%USERPROFILE%\\AppData\\Local\\Temp\\ghidra-out-5379f77dec624e1daa897f0cb2b82dd9","ok":false,"note":"deliberately gated on the artifact, not the exit code; see the comment above","exit":null,"reason":"no summary.json -- the analysis did not produce its named artifact","tool":"ghidra","log":"%USERPROFILE%\\AppData\\Local\\Temp\\ghidra-out-5379f77dec624e1daa897f0cb2b82dd9\\analyzeHeadless.log"}
-GHIDRA "D:\Software\Tool\WorkStation\debugger\Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\support\analyzeHeadless.bat" %USERPROFILE%\AppData\Local\Temp\ghidra-proj-f1c40036865848b28b4005a9b55ba35f agent -import D:\Software\Tool\WorkStation\debugger\README.md -overwrite -scriptPath D:\Software\Tool\WorkStation\debugger\scripts\ghidra -deleteProject -postScript ExportDecompile.java %USERPROFILE%\AppData\Local\Temp\ghidra-out-5379f77dec624e1daa897f0cb2b82dd9
+{"outdir":"%USERPROFILE%\\AppData\\Local\\Temp\\ghidra-out-f57e986ad601451fa6744af1a8cdb215","ok":false,"note":"deliberately gated on the artifact, not the exit code; see the comment above","exit":null,"reason":"no summary.json -- the analysis did not produce its named artifact","tool":"ghidra","log":"%USERPROFILE%\\AppData\\Local\\Temp\\ghidra-out-f57e986ad601451fa6744af1a8cdb215\\analyzeHeadless.log"}
+GHIDRA "D:\Software\Tool\WorkStation\debugger\Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\support\analyzeHeadless.bat" %USERPROFILE%\AppData\Local\Temp\ghidra-proj-36e3359107494301b9ebab6a80ea84a8 agent -import D:\Software\Tool\WorkStation\debugger\README.md -overwrite -scriptPath D:\Software\Tool\WorkStation\debugger\scripts\ghidra -deleteProject -postScript ExportDecompile.java %USERPROFILE%\AppData\Local\Temp\ghidra-out-f57e986ad601451fa6744af1a8cdb215

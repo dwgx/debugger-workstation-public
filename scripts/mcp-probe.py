@@ -261,7 +261,7 @@ async def main() -> int:
 
             # ---- 6. the OLD explicit case_dir form still works.
             await refuse("L0 legacy case_dir OUTSIDE the root is still refused",
-                         "native.pe.hardening", "case_dir_outside_root", case_dir=r"D:\Software\Tool\WorkStation\debugger",
+                         "native.pe.hardening", "case_dir_outside_root", case_dir=str(REPO.parent),
                          target=str(TARGET))
 
             # ---- 7. the OLD explicit case_dir form still works, inside the root.

@@ -45,7 +45,7 @@
 ## 0. 三十分钟上手
 
 ```bash
-cd "D:/Software/Tool/WorkStation/debugger"
+cd "<repo>"
 
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-all.ps1   # 一条命令跑完整套快检
 python scripts/reachability-report.py                                       # 什么真的产出过 fact

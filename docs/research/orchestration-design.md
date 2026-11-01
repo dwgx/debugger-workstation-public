@@ -2,7 +2,7 @@
 
 **Status:** design only. Nothing here is implemented. No commit, no `git add`, no install, no Docker.
 **Author:** research window, 2026-09-30. **For:** the Owner.
-**Station root:** `D:\Software\Tool\WorkStation\debugger` (referred to below as `debugger\`).
+**Station root:** `<repo>` (referred to below as `debugger\`).
 **Governing documents (read, binding):** `debugger\AGENTS.md`, `debugger\OWNER.md`, `<private-tree>\AGENTS.md`, `<private-tree>\wiki\CHARTER-ARSENAL.md`, `wiki/methods/pipeline.md`, `wiki/methods/l2-gate.md`, `wiki/methods/analysis-loop.md`, `wiki/methods/arsenal-inventory.md`.
 
 ---
@@ -424,7 +424,7 @@ The charter's North Star applies to the orchestrator itself: one command, on thi
 
 ```
 powershell -File scripts\mission.ps1 run `
-  --target D:\Software\Tool\WorkStation\debugger\crackme-corpus\out\c01-stringobf.exe `
+  --target <repo>\crackme-corpus\out\c01-stringobf.exe `
   --question "where is the input validation" `
   --json
 ```

@@ -536,12 +536,14 @@
       ],
       "reach": {
         "fs_read": true,
-        "fs_write": false,
+        "fs_write": true,
         "net": false,
         "proc_spawn": true,
         "exec_target": false,
         "db_write": false,
-        "note": "Declared because R8's floor is derived from what the entry does, not from this block: it consumes a `url` input (so it reads) and its probe spawns node (so it spawns). net is false at the lab level -- chrome.mjs maps every host to NOTFOUND except the lab origin (web-reverse/tools/chrome.mjs:8), so the loopback-only note on the url input is the enforcement, and this block records it as an effect rather than as a claim."
+        "note": "Declared because R8's floor is derived from what the entry does, not from this block: it consumes a `url` input (so it reads) and its probe spawns node (so it spawns). net is false at the lab level -- chrome.mjs maps every host to NOTFOUND except the lab origin (web-reverse/tools/chrome.mjs:8), so the loopback-only note on the url input is the enforcement, and this block records it as an effect rather than as a claim.",
+        "write_scope": "temp_dir_only",
+        "write_scope_note": "The invoke writes, and it is the browser's disposable profile under %TEMP% that chrome.mjs creates and then removes (web-reverse/tools/chrome.mjs:36-48 retries the removal because Windows holds handles briefly). Nothing is written to the case dir, so this is not case_dir, and escalation_class is owner_word, which is what R8 requires for any scope other than case_dir."
       },
       "gate": {
         "lane": "bounty",
@@ -555,14 +557,11 @@
         "expect_exit": 0,
         "last_run": "2026-09-30",
         "run_log": "evidence/probes/web.js.cdp.probe.log",
-        "sha256": "e1bbe2971c5fdeb4547f0a94dd408b5198b56a101b97cbda2ab74629c3da8fc9",
+        "sha256": "44d27ca488a09c8234630efda815e46ab0645a9cc59902f258ba49c21a2f6a8c",
         "last_summary": "6 checks",
         "expect_note": "CORRECTED 2026-10-02 by assert-probes.py. This read '6/6', a tally the loop does not print. Measured output ends 'LOOP CLOSED: signature captured, algorithm recovered, request minted outside the browser, gate accepted it.' A tally is also the weaker assertion: it says a count but not WHICH checks, so a run that passed four and failed two could still be described as 4/6 by eye. The loop's own closing marker names what it actually proved.",
         "produces": "web-reverse/out/last-run-web-reverse.json",
         "produces_note": "Added 2026-10-04 via scripts/probe_artifact.mjs, the JS mirror of the existing scripts/probe_artifact.py. Until now this entry declared no artifact, so assert-probes matched STRINGS only and printed its own weakness on every OK: 'NOT a claim that the instrument ran: a stub which prints them satisfies it.' The loop now writes its check list to disk on EVERY exit path, so the verdict checks the FILESYSTEM. mobile-lab writes on all three of its exits, because 'skipped and nothing failed' (exit 8) is a different claim from 'closed' (exit 0) and the artifact is where that distinction survives. Verified by running each loop: crypto-lab 17/17, forensics-lab 37/37, managed-lab 27/27, web-reverse 6/6, mobile-lab LOOP CLOSED."
-      },
-      "not_callable": {
-        "reason": "P7, stated explicitly rather than left ambiguous. The probe proves the capability runs; there is deliberately no invoke. web-reverse/tools/chrome.mjs exposes NO standalone CLI: it is a module other tools IMPORT (net-reverse/tools/intercept.mjs:24-25 imports launchChrome from it and CDP from cdp.mjs), and the only driver that speaks to it is web-reverse/tools/loop.mjs, which runs the lab's own fixed 6 checks against a lab-served page rather than a caller-supplied URL. So there is no argv shape that takes this capability's `url` input and returns a typed fact; declaring an invoke here would be inventing an entry point that does not exist. UNVERIFIED: if a URL-taking wrapper is added later, this entry gains an invoke and the fact_map key must be read off that wrapper's real stdout, not guessed."
       },
       "negative_control": {
         "id": "web.js.cdp.forged_signature_refused",
@@ -579,7 +578,21 @@
         "record": "web-reverse/README.md"
       },
       "evidence_source": "dynamic-observation",
-      "evidence_source_note": "instrumented page over CDP"
+      "evidence_source_note": "instrumented page over CDP",
+      "invoke": {
+        "runner": "node",
+        "argv": [
+          "web-reverse/tools/cdp-nodes.mjs",
+          "--url",
+          "{input.url}"
+        ],
+        "stdout": "json",
+        "success_when": "parsed JSON has ok == true AND count > 0 AND nodes is a list",
+        "fact_map": {
+          "nodes": "web.dom.nodes"
+        },
+        "note": "ADDED 2026-11-01, and it is the fix this entry's own not_callable.reason named: 'if a URL-taking wrapper is added later, this entry gains an invoke'. web-reverse/tools/cdp-nodes.mjs is a thin driver over the SAME launchChrome (disposable profile, --host-resolver-rules 'MAP * ~NOTFOUND, EXCLUDE 127.0.0.1') and the SAME hand-rolled CDP client that capture.mjs and loop.mjs use -- it re-implements neither, so containment has one place to rot instead of two. It refuses a non-loopback origin BEFORE a browser is spawned, which makes net:false an auditable refusal rather than a resolver that happens not to resolve. MEASURED 2026-11-01 against the lab server: http://127.0.0.1:8791/plain -> ok:true, count:6, selectors including 'body > button#go'; http://example.com/ -> ok:false, exit 1, 'refusing non-loopback origin'. --max bounds the returned list and `truncated` says whether it was bounded."
+      }
     },
     {
       "id": "crypto.jose.parse",
@@ -800,7 +813,7 @@
         "expect_exit": 0,
         "last_run": "2026-09-30",
         "run_log": "evidence/probes/net.pcap.analyse.probe.log",
-        "sha256": "7bdb05704d681f6fc30014f9503fe260b944cd59dba843356c26480018535322",
+        "sha256": "5ca74ad34a902b00e36d9f2b893d3ad5f97f6413f3b0473c2ae7bf316a50d3cf",
         "last_summary": "16 questions, request/response rewriting and isolation checks passed",
         "produces": "%TEMP%\\net-reverse-lab\\pcaps\\corpus.json"
       },
@@ -1062,9 +1075,6 @@
         "produces": "managed-lab/out/last-run-managed-lab.json",
         "produces_note": "Added 2026-10-04 via scripts/probe_artifact.mjs, the JS mirror of the existing scripts/probe_artifact.py. Until now this entry declared no artifact, so assert-probes matched STRINGS only and printed its own weakness on every OK: 'NOT a claim that the instrument ran: a stub which prints them satisfies it.' The loop now writes its check list to disk on EVERY exit path, so the verdict checks the FILESYSTEM. mobile-lab writes on all three of its exits, because 'skipped and nothing failed' (exit 8) is a different claim from 'closed' (exit 0) and the artifact is where that distinction survives. Verified by running each loop: crypto-lab 17/17, forensics-lab 37/37, managed-lab 27/27, web-reverse 6/6, mobile-lab LOOP CLOSED."
       },
-      "not_callable": {
-        "reason": "P7, stated explicitly rather than left ambiguous. managed-lab/tools/loop.mjs is a CORPUS driver, not a single-assembly entry point: it builds and solves the whole m01..m05 set and only honours --json for its own summary (:29). The per-sample solvers (solve-m01.mjs .. solve-m05.mjs) each hardcode their own assembly and ilspy-out path (tools/loop.py:150-152 shows the same shape: --dll and --ilspy-out are computed from the challenge record, not from argv a caller can supply). So there is no argv that takes THIS capability's `assembly` input and returns managed.method.code. Declaring an invoke would invent an entry point."
-      },
       "negative_control": {
         "id": "managed.il.wrong_entry_state",
         "expect_exit": 1,
@@ -1080,7 +1090,21 @@
         "record": "managed-lab/README.md"
       },
       "evidence_source": "decompiler",
-      "evidence_source_note": "ILSpy managed decompilation"
+      "evidence_source_note": "ILSpy managed decompilation",
+      "invoke": {
+        "runner": "node",
+        "argv": [
+          "managed-lab/tools/decompile-assembly.mjs",
+          "--asm",
+          "{input.assembly}"
+        ],
+        "stdout": "json",
+        "success_when": "parsed JSON has ok == true AND code is a non-empty string AND method is a non-empty string",
+        "fact_map": {
+          "code": "managed.method.code"
+        },
+        "note": "ADDED 2026-11-01. The entry was right that loop.mjs is a corpus driver and that solve-m01..m05 each hardcode one sample's scheme -- so the fix is neither: managed-lab/tools/decompile-assembly.mjs takes ANY assembly, decompiles it with the same ilspycmd resolution and the same spawn helper the solvers use (clrlib.mjs), and returns the body of a named method (or the longest recovered body, with `selection` saying which rule chose it). It deliberately does NOT try to recover a scheme: reading one specific obfuscation is what the per-sample solvers do, and a wrapper that guessed would be the 'confident answer' does_not_prove already warns about. MEASURED 2026-11-01: managed-lab/out/m01/m01_stringobf.dll -> ok:true, 4 methods (KeyStream, Reveal, Text, Main), longest body returned, 1.0 s."
+      }
     },
     {
       "id": "mobile.apk.static",
@@ -1172,7 +1196,7 @@
         "expect_exit": 0,
         "last_run": "2026-09-30",
         "run_log": "evidence/probes/mobile.apk.static.probe.log",
-        "sha256": "afd65e863a1ee435ead8c3dd0aedcb462db457cc1fef7b6595f010996d4bed6a",
+        "sha256": "1e3c498d6a4f000ddcb2b36b4e107fa88da2b7ccfad7bcb55119ee0a81100fd4",
         "last_summary": "33 checks measured 2026-10-03 (was recorded as 31: the count moved because two cross-checks became a third state, SKIP, rather than a silent PASS). Includes 6 indicator controls: silence on our own clean APK, fire on a synthetic packer DEX, fire on load-bearing root/emulator paths, and weak-signal separation",
         "produces": "mobile-lab/out/last-run-mobile-lab.json",
         "produces_note": "Added 2026-10-04 via scripts/probe_artifact.mjs, the JS mirror of the existing scripts/probe_artifact.py. Until now this entry declared no artifact, so assert-probes matched STRINGS only and printed its own weakness on every OK: 'NOT a claim that the instrument ran: a stub which prints them satisfies it.' The loop now writes its check list to disk on EVERY exit path, so the verdict checks the FILESYSTEM. mobile-lab writes on all three of its exits, because 'skipped and nothing failed' (exit 8) is a different claim from 'closed' (exit 0) and the artifact is where that distinction survives. Verified by running each loop: crypto-lab 17/17, forensics-lab 37/37, managed-lab 27/27, web-reverse 6/6, mobile-lab LOOP CLOSED."
@@ -1298,9 +1322,6 @@
         "produces": "crackme-corpus/out/last-run-crackme_corpus.json",
         "produces_note": "Added 2026-10-05. Until now this entry matched STRINGS only. The loop now writes its challenge/check/negative-control record to disk, which matters MORE here than elsewhere: this is the one corpus the station builds itself, so a stub that prints 'CORPUS CLOSED' is the easiest stub in the tree to imagine."
       },
-      "not_callable": {
-        "reason": "P7, stated explicitly rather than left ambiguous. crackme-corpus/tools/loop.py is a CORPUS driver: its usage (:12-14) is '--no-build | --only c03 | --list', so --only selects a CHALLENGE ID from the corpus ramp, not an arbitrary binary path. This capability's `binary` input is a path_ref, and the corpus solver builds its own binaries from labkit.py rather than accepting one, so there is no argv that consumes a caller-supplied binary and returns re.solve.answer. Declaring an invoke would invent an entry point."
-      },
       "negative_control": {
         "id": "re.corpus.wrong_sample",
         "expect_exit": 1,
@@ -1319,7 +1340,21 @@
         "record": "crackme-corpus/README.md"
       },
       "evidence_source": "practice",
-      "evidence_source_note": "self-built corpus, solved"
+      "evidence_source_note": "self-built corpus, solved",
+      "invoke": {
+        "runner": "python",
+        "argv": [
+          "crackme-corpus/tools/solve-one.py",
+          "--exe",
+          "{input.binary}"
+        ],
+        "stdout": "json",
+        "success_when": "parsed JSON has ok == true AND verdict == 'SOLVED-AND-ACCEPTED-BY-THE-BINARY' AND answer is non-empty",
+        "fact_map": {
+          "answer": "re.solve.answer"
+        },
+        "note": "ADDED 2026-11-01. The not_callable.reason was accurate -- loop.py's --only selects a CHALLENGE ID, not a path -- so this is a dispatcher, not a sixth solver: it resolves which challenge the binary belongs to (hyphen/underscore normalised, because the corpus records that both spellings exist in out/ and only one is built), decompiles it with the SAME ghidra() helper, and runs the SAME solve.py through the SAME solve() argv builder. Both of those helpers gained an optional path override rather than a second copy of their argv. Dispatch is by file name because that is the only signal a bare path carries; an unknown name is refused with the known ids listed. MEASURED 2026-11-01: crackme-corpus/out/c01-stringobf.exe -> ok:true, answer C01-TABLE-XOR-9F2A, flag FLAG{c01_string_table_xor}, solver_exit 0, 32 s. NOT changed here: gate.requires_verdict is false, so a grant does not authorise this capability and no mission can route it -- that is the decision recorded in requires_verdict_reason and it is not a callability problem."
+      }
     },
     {
       "id": "dynamic.device.frida",
@@ -1406,7 +1441,7 @@
         "blocker_evidence": "VERIFIED 2026-10-05. Measured, and this entry was honest from the start -- unlike the two before it, which were both my own wrong-question searches.\n\n  adb.exe : absent from the tree and from PATH. scripts/mobile-lab.ps1, verify-clone-freshness.py and verify-tools-manifest.py all REFERENCE it; none ships it.\n  frida   : 17.17.0, at Mobile-Android/objection/.venv/Scripts/frida.exe, and it runs.\n  the -U channel, which is the one this capability needs, prints frida's own message:\n                Waiting for USB device to appear...\n\nSo the tool is fine and the DEVICE is absent. That distinction is the entire entry, and the check that draws it is frida's -U output -- not the absence of a name in a PATH listing.\n\nTHE TRAP I FELL INTO WHILE VERIFYING THIS, recorded because it is the fifth of its kind today: `frida-ps` is not on PATH and returns exit 127, which reads as 'frida is broken'. It is not -- the project locates frida by absolute path, and dynamic.win.frida is observed because of it. After ida64.exe twice, the Java tooling, and ghidraRun.bat, a missing name in a PATH listing is now treated here as a measurement of nothing."
       },
       "not_callable": {
-        "reason": "state is absent: there is no device on this host, so no entry point could be exercised even if one existed."
+        "reason": "state is absent: there is no Android device on this host, so no entry point could be exercised even if one existed. MEASURED 2026-11-01 rather than assumed: the entry's own probe is `adb devices`, and its does_not_prove already records the sharper fact that `frida-ps -ai` HANGS for 300 s on this station instead of refusing -- a hang is not a refusal, which is why it is neither the probe nor a control. An invoke here would be a permanently dead one: every run would exit on the device lookup, and a dead invoke is worse than none because it makes the capability look wired. What would close it: a device attached and named by the Owner, plus a target the Owner has named -- which is the same gate this entry already carries (escalation_class impossible)."
       },
       "provenance": {
         "source": "measured 2026-09-30",
@@ -1496,14 +1531,16 @@
       },
       "reach": {
         "fs_read": true,
-        "fs_write": false,
+        "fs_write": true,
         "net": false,
         "proc_spawn": true,
         "exec_target": true,
         "db_write": false,
         "containment": "station_under_named_process_rule",
         "containment_note": "The honest class, and chosen for the measurement rather than for the validator. This capability spawns a process on THIS station and injects into it, so the blast radius is this host: one named, self-built PE, under the station's named-process rule. isolated_vm would be false here -- there is no VM on the path of anything measured in this entry -- and picking it to make a check pass is the exact failure mode this registry is under repair for. The class that WOULD be right for a third-party sample is isolated_vm, and running one here is a stop, not a containment choice.",
-        "note": "exec_target is true because the capability RUNS the binary, which is why containment is pinned at all. fs_write is false for the registered probe: it reads the PE and the process image and writes nothing to disk. That is a statement about the probe command below, not a general promise about every Frida script."
+        "note": "exec_target is true because the capability RUNS the binary, which is why containment is pinned at all. fs_write is true because the registered invoke stages the executed copy into the case dir (see write_scope_note); the registered PROBE writes nothing, and that is a statement about the probe command, not a general promise about every Frida script.",
+        "write_scope": "case_dir",
+        "write_scope_note": "TRUE FOR THE INVOKE, false for the probe, and the difference is the point. frida_runtime_facts.py copies the target into --stage-dir before spawning it, because the repository original must never be executed; the registry passes {scratch:frida}, which mission.ps1 creates inside the mission case dir. The probe command itself still writes nothing, which is what this note used to say and is now said about the probe only."
       },
       "proves": [
         "that Frida 17.17.0 is installed on this station and can spawn-gate and inject into a self-built Windows PE: `Spawned ... Resuming main thread!`, `Process terminated`, exit 0, against c01-stringobf.exe sha256 2d59a3c5d3281782e254ed84d14f43768251096240cb85c492f56018b56fbf09",
@@ -1589,9 +1626,9 @@
         "prepare_note": "The probe needs a target. It is the estate's own self-built crackme, copied to %TEMP% and never run from the repo directory. Run `prepare` first, or the probe fails for a reason that has nothing to do with Frida. The JavaScript uses backtick template literals on purpose: it is passed inside PowerShell single quotes, and embedded double quotes are stripped by the native argument builder, which turns this probe into a SyntaxError on the first attempt (measured).",
         "last_run": "2026-10-02",
         "flake_note": "MEASURED FLAKE, and it is recorded because a probe that passes three times out of four is how a gate gets muted. 2026-10-03: inside one bounded verify-all sweep this probe reported DRIFT twice -- exit 1 where the entry declares 0, and the recorded expect string 'FRIDA_WIN symbol_main=0' absent. Run on its own, twice, it passed; and a later full sweep with the same budget passed it again with 0 DRIFT. The probe spawns a Windows PE under Frida's own `-t 6` second timeout, so on a loaded host the timeout can expire before the script prints, and the recorded expect then never appears because the run was cut short. NOT fixed by raising `-t`: loosening a timeout because a check failed is the move this registry exists to refuse. It is recorded so the next red run on this entry is read as 're-measure it alone first', which is what distinguishes a flake from a regression.",
-        "last_summary": "target_sha256=2d59a3c5d3281782e254ed84d14f43768251096240cb85c492f56018b56fbf09 | Spawned `%USERPROFILE%\\AppData\\Local\\Temp\\fridaprobe\\target.exe`. Resuming main thread! | usage: ... <password> | FRIDA_WIN module_base=0x7ff7c3a30000 | FRIDA_WIN symbol_main=0 | FRIDA_WIN export_printf=0x7ffcf0e5d280 | FRIDA_WIN rebased_main=0x7ff7c3a31080 | Process terminated | PROBE EXIT=0 | NOTE: no `FRIDA_WIN HIT main` line was printed -- no callback fired, and does_not_prove says so.",
+        "last_summary": "target_sha256=2d59a3c5d3281782e254ed84d14f43768251096240cb85c492f56018b56fbf09 | Spawned `%TEMP%\\fridaprobe\\target.exe`. Resuming main thread! | usage: ... <password> | FRIDA_WIN module_base=0x7ff7c3a30000 | FRIDA_WIN symbol_main=0 | FRIDA_WIN export_printf=0x7ffcf0e5d280 | FRIDA_WIN rebased_main=0x7ff7c3a31080 | Process terminated | PROBE EXIT=0 | NOTE: no `FRIDA_WIN HIT main` line was printed -- no callback fired, and does_not_prove says so.",
         "run_log": "evidence/probes/dynamic.win.frida.probe.log",
-        "sha256": "b18ff82729642ff8c5f8030a89ef88d833e93f324940d3e388c65602d611b579",
+        "sha256": "383c409811a3329fb9fa124926f9fcfbd68b1099faa874b3111ccdade1d4bb35",
         "produces": "probe-artifacts/last-run-dynamic_win_frida.json",
         "produces_note": "Added 2026-10-05 via scripts/probe_wrapper.py. Until now this entry matched STRINGS only and printed its own weakness on every OK: 'NOT a claim that the instrument ran: a stub which prints them satisfies it.'\n\nTHE ONE-LINER WAS MOVED, NOT REWRITTEN. assert-probes.py writes a registry command byte-for-byte into a .ps1 and runs `powershell -File`; its docstring records that two earlier designs which sniffed for PowerShell markers and re-wrapped in `powershell -Command \"...\"` missed 8 commands and destroyed every command containing a double quote. So the original one-liner sits verbatim in scripts\\probes\\dynamic_win_frida.ps1 and the registry names that file.\n\nThe wrapper records the command, exit code, stdout, stderr and duration, and PASSES THE CHILD'S EXIT CODE THROUGH -- verified by running it on a child that exits 3 and getting 3 back -- so adding it cannot turn a red into a green. It deliberately does not judge the output: a wrapper that decided whether a run succeeded would be a second verdict beside assert-probes', and two verdicts drift."
       },
@@ -1603,15 +1640,30 @@
         "expect_output_note": "expect_exit is the contract; this line is corroboration. It is written to frida's ERROR stream, so capture it with 2>&1 -- run unpiped, the line can be interleaved away while the exit code stays 1. Measured stable over four consecutive runs: exit 1 every time, line present every time when stderr was captured.",
         "why": "It must fail, and it must fail for its OWN reason. Measured, same binary, same run, seconds after the probe: `Error: access violation accessing 0x140001080`, exit 1. The reason is the address SPACE, not a typo: 0x140001080 is the genuine image-space address of main (PE ImageBase 0x140000000 + rva 0x1080, rva 0x1080 lying inside .text whose VA is 0x1000 with virtual size 0x156d0, and IDA recovering main there with size 0x17e), so it is unmapped only because DYNAMICBASE moved the image to 0x7ff7c3a30000. The probe, one command earlier, attached cleanly at base+0x1080. Two other obvious controls were rejected rather than shipped: an obviously bogus address such as 0xDEADBEEF would fault too, but it cannot tell 'you failed to rebase' from 'any bad address faults', so it would pass for an unrelated reason; and `frida-ps -ai` does not fail at all, it hangs, so it is not a control."
       },
-      "not_callable": {
-        "reason": "NO invoke EXISTS, and this entry spent a page arguing that before writing this field. Measured 2026-10-03: the validator refuses all three honest shapes for an invoke here -- an argv carrying the instrumentation fails R16 because a JavaScript object literals braces read as a {placeholder}, a spaced JavaScript payload fails R10 as a joined command line, and a {scratch} path is not the problem at all. A permanently dead invoke is worse than none, which is the same sentence native.function.match wrote when R10 refused its own."
-      },
       "provenance": {
         "source": "measured on this station 2026-10-02, by the agent that added this entry rather than copied from another session's transcript",
         "record": "docs/research/dynamic-pairings.md"
       },
       "evidence_source": "dynamic-instrumentation",
-      "evidence_source_note": "Frida injects into and observes a live process. Same family as dynamic.device.frida on purpose: that entry is the Android lane of the SAME instrument and is correctly absent, this one is the Windows-local lane and is observed. One instrument, two lanes -- so a chain that cites both is not two independent opinions, and no verdict may count them as corroboration."
+      "evidence_source_note": "Frida injects into and observes a live process. Same family as dynamic.device.frida on purpose: that entry is the Android lane of the SAME instrument and is correctly absent, this one is the Windows-local lane and is observed. One instrument, two lanes -- so a chain that cites both is not two independent opinions, and no verdict may count them as corroboration.",
+      "invoke": {
+        "runner": ".\\Mobile-Android\\objection\\.venv\\Scripts\\python.exe",
+        "argv": [
+          "native-lab/tools/frida_runtime_facts.py",
+          "--target",
+          "{target}",
+          "--stage-dir",
+          "{scratch:frida}"
+        ],
+        "stdout": "json",
+        "success_when": "parsed JSON has ok == true AND module_base is non-null AND export_addr is non-null AND hook_attach == 'ACCEPTED'",
+        "fact_map": {
+          "module_base": "runtime.module.base",
+          "export_addr": "runtime.export.addr",
+          "hook_addr": "runtime.hook.addr"
+        },
+        "note": "ADDED 2026-11-01. The three shapes this entry tried and the validator refused all put the instrumentation in argv; this one puts it in a script and passes a path. frida_runtime_facts.py owns the ordering that IS the capability -- spawn(suspended) -> attach -> create_script -> load -> resume, copied from native-lab/tools/frida_spawn_gate.py, which measured that the `frida -f` CLI resumes before the script loads and therefore never fires a callback. It is not imported from there because that module dup2's fd 1 at import time to catch the spawned target's inherited handle. The repository original is never executed: the target is copied to --stage-dir first, which is {scratch:frida} inside the mission case dir, so this entry's write_scope is literally true. It refuses a target outside the station tree or %TEMP%, which is the gate_prohibitions operand target_must_be_self_authored/repo_or_temp made executable. MEASURED 2026-11-01: crackme-corpus/out/c01-stringobf.exe -> module_base 0x7ff6a0e50000, export printf 0x7ffc7e0dd280, hook 0x7ff6a0e515d0 (base + entry RVA 0x15d0, in image), Interceptor.attach ACCEPTED. `hit` is null and the caveat says why: an attachable address is not an interception."
+      }
     },
     {
       "id": "fuzz.differential.parse",
@@ -1756,9 +1808,6 @@
         "load_sensitivity_note": "MEASURED LOAD SENSITIVITY, 2026-10-03, and it is a property of the INSTRUMENT rather than of the data. `node fuzz-lab/tools/loop.mjs --budget 40` ALONE: exit 0 in 704.64 s, every assertion passes. The SAME command as two concurrent instances plus one `node forensics-lab/tools/loop.mjs`: exit 9 on both, failing the SAME assertion -- `pcap: the flawed twin was caught (reads incl_len straight into a subarray with no bounds check): SURVIVED`. The loop carries a 4000 ms per-input ceiling and a 192 MB heap ceiling, so under CPU contention the flawed twin is not driven into its crash within the budget and the harness honestly reports it could not tell a robust parser from a fragile one. A gate whose green depends on the machine being idle is worth knowing BEFORE someone reads a red run as a regression. Recorded rather than fixed by raising the budget: raising a budget to make a metric improve is the move this registry exists to refuse. The honest fix is a per-target time floor or an explicit load guard, and neither is written. The separate corruption bug this measurement uncovered -- two runs deleting each other's corpus -- is fixed in 1623327.",
         "produces": "fuzz-lab/out/last-run.json"
       },
-      "not_callable": {
-        "reason": "P7, stated explicitly rather than left ambiguous. This entry has a probe and deliberately NO invoke. The entry point does exist (fuzz-lab/tools/loop.mjs, usage 'node fuzz-lab/tools/loop.mjs [--budget N] [--run-id ID] [--keep-going]') but it is not addressable by the mission loop's shape for two measured reasons. First, it selects no single target: loop.mjs runs the whole TARGETS campaign (targets.mjs:216), whereas mission.ps1 resolves ONE capability per round and binds argv placeholders per input. Second, its machine-readable output is not stdout: the run summary is printed as human text and the structured record is written to fuzz-lab/out/last-run.json (:289), so there is no stdout field for fact_map to bind (mission.ps1:355-361). Declaring it not_callable says which of those two reasons applies, so a reader is not left guessing whether the omission was a decision or an oversight."
-      },
       "negative_control": {
         "id": "fuzz.differential.flawed_twin",
         "expect_exit": 1,
@@ -1780,7 +1829,21 @@
         "record": "fuzz-lab/README.md"
       },
       "evidence_source": "differential-oracle",
-      "evidence_source_note": "mutation plus a deliberately flawed twin"
+      "evidence_source_note": "mutation plus a deliberately flawed twin",
+      "invoke": {
+        "runner": "node",
+        "argv": [
+          "fuzz-lab/tools/parse-target.mjs",
+          "--target",
+          "{input.target}"
+        ],
+        "stdout": "json",
+        "success_when": "parsed JSON has ok == true (ok means executed == budget*2 and both variant tallies sum to budget) AND findings is a list",
+        "fact_map": {
+          "finding": "fuzz.finding.outcome"
+        },
+        "note": "ADDED 2026-11-01, and it answers both halves of the old not_callable.reason. Selection: parse-target.mjs takes ONE target id from TARGET_BY_ID, the same table loop.mjs drives, so the campaign is no longer necessarily all four targets. Machine-readable output: the wrapper writes ONE JSON object to stdout, where loop.mjs wrote a human summary to stdout and its structured record to fuzz-lab/out/last-run.json -- so fact_map finally has a stdout key to bind. It re-uses fuzzTarget/flatCorpus/triageFinding unchanged and re-implements neither mutation nor the per-input ceiling nor the outcome classification. It keeps loop.mjs's measured --budget floor of 60 for loop.mjs's reason: below it the web-triage twin's hang is unreachable and a red verdict would be an artefact of the budget. MEASURED 2026-11-01: --target pcap --budget 60 -> ok:true, executed 120, reference parsed 34 / rejected 26, flawed uncaught 3, 3 findings, 2.1 s. `finding` is never null: a campaign with no finding reports class 'none' with found:false, so the fact shape does not change under the caller."
+      }
     },
     {
       "id": "native.ghidra.decompile",
@@ -1896,7 +1959,7 @@
         "expect_exit": 0,
         "last_run": "2026-09-30",
         "run_log": "evidence/probes/native.ghidra.decompile.probe.log",
-        "sha256": "701560039f5a8d6b904cf3c8dc51c755e9e94e10b93ee0de5bb732926cb3be18",
+        "sha256": "73ba1fec41608176f4f9890a782c7972a5ba5f65f7a9f395a09f3daec0137a2f",
         "last_summary": "4/4; measured cost of one run on a 140.5 KB PE: 18.05 s wall, 1085.7 MB peak RAM, 673,090 B across 522 files",
         "produces": "%TEMP%\\gh-regress-good\\summary.json"
       },
@@ -1967,8 +2030,8 @@
           {
             "name": "project",
             "type": "path_ref",
-            "required": true,
-            "note": "P3: this precondition was PROSE -- it sat in side_effects as 'needs both programs imported into ONE project first' -- so nothing in the machine-readable contract said a caller had to supply it. It is now a real consumed input, required:true. Auto Version Tracking matches programs that are open in the SAME project; hand it two files and no project and it has nothing to correlate, which is exactly the kind of missing precondition that reads as a tool failure at run time."
+            "required": false,
+            "note": "NOT BOUND BY THE INVOKE, and marked optional for that reason. The capability's evidence path needed a GhidraValuesMap startup project holding both programs; the registered invoke uses match-functions.ps1, which removes that precondition by giving each binary its own throwaway project (the file's header states this as its purpose). Declaring it required would tell a planner it must supply something the run never reads."
           }
         ],
         "prior": []
@@ -2042,9 +2105,6 @@
         "runtime_note": "SLOW: measured 2026-10-05 at 143 s. It runs Ghidra TWICE -- the same DLL analysed as two separate JVMs in two throwaway projects (ARM A) and then two real builds (ARM B) -- so the cost is inherent to what the control asserts. assert-probes.py defaults to --timeout 180, which cuts it off mid-analysis and would make the missing 'NEGATIVE-CONTROL OK' read as a registry drift. Run this entry with --timeout 600 or more.",
         "load_sensitivity_note": "Measured 2026-10-05: no load sensitivity observed, unlike fuzz.differential.parse. But it spawns JVMs and Ghidra analyses, so it is heavier than it looks; treat contention as suspect rather than proven absent."
       },
-      "not_callable": {
-        "reason": "P7, stated explicitly rather than left ambiguous. This capability's probe is already a POINTER ('see scripts/ghidra-failopen.md reproduction section') rather than a command, which is itself the honest signal: the reproduction is a hand-driven Ghidra session that opens 3 programs in ONE headless process (last_summary) and runs AutoVersionTrackingScript.java against them. There is no single wrapper that takes --source/--dest/--project and returns the TSV as stdout, so there is no argv and no fact_map source field to declare. Note this entry is also the one whose probe.command is prose rather than a runnable command -- left as-is because fixing it means writing a wrapper script, which is outside this change."
-      },
       "negative_control": {
         "id": "native.crosscompare.same_binary",
         "command": "node headless-lab/tools/negative-gate.mjs",
@@ -2079,6 +2139,28 @@
         "family_still_covered": "The binary-similarity family is NOT left uncovered by this. native.function.match is observed with a runnable probe, measured at 511 of 511 functions matched across two builds differing in four timestamp bytes, and it is callable. This entry is the Ghidra-native alternative, not the only route to the family.",
         "what_would_restore_it": "A runnable command that opens both binaries in ONE Ghidra project and runs AutoVersionTrackingScript, which needs a GhidraValuesMap startup properties file carrying the project path. That is real work with a real precondition, and writing it to make a state field look better would be the same error in the other direction. Not built; recorded as planned.",
         "control_for_the_correction": "R2 now refuses a prose probe.command for any observed entry, and the selftest carries a case that plants one. The rule was written by finding this, so it is anchored to a real defect rather than a hypothetical."
+      },
+      "invoke": {
+        "runner": "powershell",
+        "argv": [
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          "headless-lab/tools/match-functions.ps1",
+          "-Source",
+          "{input.source}",
+          "-Dest",
+          "{input.dest}",
+          "-WorkDir",
+          "{scratch:fnmatch}"
+        ],
+        "stdout": "json",
+        "success_when": "parsed JSON has ok == true AND changed_total is an integer AND changed is a list",
+        "fact_map": {
+          "changed": "native.diff.changed"
+        },
+        "note": "ADDED 2026-11-01. This is the instrument headless-lab/tools/match-functions.ps1 was written for -- its own header says so: it removes the GhidraValuesMap/shared-project precondition by importing each binary into its OWN throwaway project and joining the function-hash tables. What was missing was the `changed` half of the join and an argv. Both now exist: `changed` is the same hash join read the other way round (a source function with no identical counterpart in dest, or one renamed there), and -WorkDir {scratch:fnmatch} puts the throwaway projects inside the mission case dir, which is what makes this entry's write_scope: case_dir true rather than a description of a different code path. MEASURED 2026-11-01: c01-stringobf.exe vs c03_antidebug.exe -> ok:true, matched 192 of 511, match_rate 37.6, changed_total 461 (list bounded at 200 with changed_truncated:true), 55 s. A changed entry says 'no identical counterpart', never 'different code' -- the file's own caveat field says so and this note is not a stronger claim than the field."
       }
     },
     {
@@ -2165,7 +2247,7 @@
         "falsifier": "run it against a host that HAS .NET 6 and an Owner-named IL2CPP binary: the control must then exit 0, because there would be nothing left to refuse. If it still exits 1, the control has stopped testing the claim."
       },
       "not_callable": {
-        "reason": "state is absent: the capability needs an IL2CPP metadata dump this host does not have, so no entry point has ever run here."
+        "reason": "state is absent, and the blocker is now measured at two independent layers rather than assumed. (1) THE PROBE CANNOT ANSWER 'AVAILABLE' EVEN WHEN IT IS: scripts/il2cpp-probe.ps1 hardcodes `ok = $false` in its JSON summary (:273) and reports availability only in prose, so a success_when of the form `ok == true` could never be satisfied and the invoke would be dead by construction. (2) THE ENTRY DECLARES NO FACTS AT ALL (produces.facts is empty), so there is no typed key for a fact_map to forward to -- R20 would have nothing to check against. The probe does now take -Target/-Metadata (added 2026-10-12) and an Owner-named artifact exists (D:\\Steam\\steamapps\\common\\VRChat\\GameAssembly.dll, 243 MB, with global-metadata.dat beside it), so what is missing is NOT a target: it is a wrapper that runs Il2CppDumper into a scratch dir and emits the symbol table as JSON, plus a produced fact for it. That is new capability work, not a wiring fix, and inventing a fact key here would put a claim in the registry that nothing measures."
       },
       "provenance": {
         "source": "measured on this host 2026-09-30",
@@ -2283,7 +2365,7 @@
         "still_blocked_on": "the scratch stack is not mapped, so writeStackValue does not take -- OUR bug, not a Ghidra limitation. And javac reports EmulatorHelper and DefaultEmulator as deprecated-and-marked-for-removal in 12.1.3, so the target Ghidra major is an Owner decision BEFORE the bug is fixed."
       },
       "not_callable": {
-        "reason": "state is blocked: the entry needs a runtime the registry does not have. It had no composition_note and said nothing about callability; this field is that sentence."
+        "reason": "state is blocked, and the two blockers are independent -- fixing either one alone still leaves this uncallable. (1) THE RESULT IS NOT GROUND TRUTH. scripts/emulation-probe.ps1's own header records the measurement: EmulatorHelper/DefaultEmulator were reached and 15 p-code steps ran, but the scratch stack was never mapped, so the argument and return-address writes did not land, execution returned to PC=0 and the output buffer was 48 zero bytes. An invoke that returns `value` from that harness would be returning zeros with a typed name on them. (2) THE ARGUMENT SHAPE CANNOT BE PASSED. This capability consumes `arguments` as structure[] -- an array -- and invoke.argv placeholders are scalars: mission.ps1 substitutes one value per {input.x} (mission.ps1:1757-1800). scripts/ghidra/EmulateDecode.java takes eight positional postScript args (:53-66) and three of them (table address, output-buffer address, expected string) are c01-specific constants, so there is no argv that carries a caller's argument list into it. What would close it: a GhidraScript written against ghidra.pcode.emu.PcodeEmulator with the stack mapped per the target platform's convention (the successor API the probe header names as the recommended route), taking its argument list from a JSON file rather than from argv. That is buildable work and it is not this lane's wiring fix."
       },
       "provenance": {
         "source": "measured on this host 2026-09-30",
@@ -2469,16 +2551,33 @@
         "measured": "re-measured 2026-10-02 by EXTRACTING this exact command string out of the registry and running it as a .ps1 file, not by retyping it: score 39/100, Severity MEDIUM, Recommendation CAUTION, exit 1. The identical binary and flags against the real skills/ directory give score 6/100 LOW and exit 0. A RETYPED version of this command scored only 6/100 and still exited 1 -- because PowerShell's double-quoted here-string ate the backticks around ~\\.ssh\\id_rsa and the exfiltration line lost its quoting, so the detector's Privilege Escalation patterns stopped matching. Worth recording: this control is SENSITIVE TO THE EXACT TEXT, and a plausible-looking retype silently weakened it while the exit code stayed reassuring. That is why the registry stores the command as one string and why it must be executed from the registry rather than rewritten by hand.",
         "expect_exit_note": "expect_exit=1 IS NOW OBSERVED, NOT ASPIRATIONAL. Run verbatim as a multi-statement string this control returned 0 whatever the tool did, because `powershell -File` discards the last command's exit code unless the script says `exit $LASTEXITCODE`. It is a file now for exactly that reason."
       },
-      "not_callable": {
-        "reason": "THE DANGEROUS ONE, and dangerous precisely because nothing read the sibling field. state is observed, this entry had neither invoke nor not_callable, and its probe emits a BOX-DRAWN TEXT REPORT -- Recommendation SAFE, Score 0/100 -- with zero JSON bytes, so there is no machine value for a caller to receive and nothing that could be typed as a fact. Measured 2026-10-03 by running it. A planner reading only the two callability keys could not tell this apart from a capability that is callable through a driver nobody wrote."
-      },
       "provenance": {
         "source": "measured on this station 2026-10-02 by the agent that added this entry, during a star-mining survey the Owner forced after eight keyword-only briefs all missed vxcontrol/pentagi",
         "record": "docs/research/ecosystem-2026-10-02.md"
       },
       "evidence_source": "structural-parser",
       "evidence_source_note": "CORRECTION, made by the validator and it matters. My first value was 'static-text-analysis', which is not in the schema, and R18 exists precisely to stop a label meaning whatever the author felt that day. The honest member of the closed set is structural-parser: 'decodes a self-describing container without executing it'. A SKILL.md with its YAML front matter is exactly that -- a self-describing instruction container read without execution -- and it is the same family as crypto.jose.parse and mobile.apk.static, which is the point worth recording rather than hiding. It is NOT a second family for the independence gate against decompilation: structural-parser is a real, different family from decompiler, but the Q5.vuln-shape axis still has only ONE instrument on it, because this capability is the only member of its family that reads skill text. Adding an enum value to make an independence claim appear would be the register-the-wrong-family failure R18 was written to stop, so the closed set stands unchanged.",
-      "root_reason": "Genuine root, and not a bookkeeping entry: it is handed a path holding agent-skill text and returns a verdict about that text. There is nothing upstream in this registry that PRODUCES a skill -- skills are authored, not generated by a lab step -- so this capability consumes an input no other capability here emits, and it declares no typed edge because there is none to declare. Contrast a capability that would be a fabricated root by asserting independence it does not have."
+      "root_reason": "Genuine root, and not a bookkeeping entry: it is handed a path holding agent-skill text and returns a verdict about that text. There is nothing upstream in this registry that PRODUCES a skill -- skills are authored, not generated by a lab step -- so this capability consumes an input no other capability here emits, and it declares no typed edge because there is none to declare. Contrast a capability that would be a fabricated root by asserting independence it does not have.",
+      "invoke": {
+        "runner": "cmd.exe",
+        "argv": [
+          "/c",
+          "%USERPROFILE%\\.local\\bin\\skillspector.exe",
+          "scan",
+          "{input.skill_path}",
+          "--no-llm",
+          "--format",
+          "json"
+        ],
+        "stdout": "json",
+        "success_when": "parsed JSON has execution_successful == true AND issues is a list AND analysis_completeness is present",
+        "fact_map": {
+          "risk_assessment": "skill.risk",
+          "issues": "skill.findings",
+          "analysis_completeness": "scan.completeness"
+        },
+        "note": "ADDED 2026-11-01. The old not_callable.reason was that the probe emits a box-drawn TEXT report with zero JSON bytes -- and that was measured against the probe's own flags, not against the tool. skillspector has a JSON mode: `--format json` writes one object to STDOUT and its human footer ('Wall time: ...') to STDERR. MEASURED 2026-11-01: `skillspector.exe scan skills/debugger-review --no-llm --format json` -> exit 0, 18,283 bytes of pure JSON on stdout, top-level keys skill, risk_assessment, components, structured_summaries, issues, suppressed_count, suppressed, metadata, execution_successful, analysis_completeness. --no-llm is kept because requires.net is none and the LLM providers need credentials and a network path this lane does not declare. cmd.exe /c is the runner because the launcher lives under %USERPROFILE% and cmd expands it; native.yara.triage already runs through cmd.exe for the same reason. Exit 0 is not the verdict: --fail-on-findings is deliberately absent, so success_when reads the JSON, and a scan that found issues is still a successful scan."
+      }
     },
     {
       "id": "dynamic.win.frida.intercept",
@@ -3021,10 +3120,27 @@
       "evidence_source": "binary-similarity",
       "evidence_source_note": "The SAME family as native.crosscompare.ghidra and nothing else. Deliberately a different family from every decompiler: it compares two implementations by content address rather than reconstructing either. That is what makes it the arsenal's only genuinely-different-family instrument on the native axis -- but it is honest about the limit, because it answers Q7.origin (what changed between two builds) and NOT Q2.locate (where is the code in this one). Registering it does not move the acceptance mission off unresolved, and the note exists to stop that being claimed.",
       "root_reason": "Genuine root, and structurally so: it is handed two paths and compares them. Nothing else in this registry produces a SECOND build of a program -- the labs build binaries, but building is not comparing, and a mission that has run one builder still has no second artefact to diff against. It therefore consumes an input no upstream capability emits, which is exactly why it declares no typed edge and why the omission is a decision rather than an oversight.",
-      "not_callable": {
-        "reason": "NOT CALLABLE, AND THE REGISTRY REFUSED TO LET ME PRETEND OTHERWISE. I declared an invoke whose second binary came from a fact `pe.binary_pair` that nothing produces, expecting the round to skip loudly in the open. Two rules refused it and both were right. R10: an invoke whose consumes_fact is produced by no capability is a chain that can never fire, and a permanently dead invoke is worse than none -- it looks like a wired capability. R16 caught a second real bug in the same breath: I wrote the placeholder {input.peer} when the declared input is `dest`, so that literal string would have reached the command line verbatim. **The registry will not encode a capability that cannot run, which is the correct policy and cost me the shortcut.** The honest gap it exposes is architectural: Q7.origin asks what changed between TWO builds, and mission.ps1 has exactly ONE -Target. Nothing in this registry carries a second binary, so no two-artifact capability can be made callable until a peer-selector exists to produce one.",
-        "measured_subject_matter": "The subject EXISTS and was measured, which is why this is a plumbing gap rather than a missing corpus. crackme-corpus/out/c01-stringobf.exe and c01_stringobf.exe are two builds of one program differing in exactly FOUR bytes: TimeDateStamp 0x6abc5d71 = 2026-09-30 00:53:05 UTC against 0x6abc5bc8 = 2026-09-30 00:46:00 UTC, seven minutes apart, plus the same two bytes repeated at 0x1e2f4 in the checksum. `match-functions.ps1` on that pair returns matched 511 of 511, rate 100 percent, 0 renamed, identical_inputs FALSE -- which is exactly right: the code is identical and the files are not. This is the sharpest available illustration of the entry's own caveat that a content hash is not a similarity score and a match is not file-identity.",
-        "what_would_close_it": "A capability that takes a target and emits the corpus binary sharing its function-content signature -- a peer selector. It would publish `pe.binary_pair`, which is what this entry's invoke needs. Not built. Building it to make one entry callable, rather than because several questions need it, would be inventing scope; the honest next step is to find out whether Q7.origin is asked often enough to justify a two-artifact mission shape."
+      "invoke": {
+        "runner": "powershell",
+        "argv": [
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          "headless-lab/tools/match-functions.ps1",
+          "-Source",
+          "{input.source}",
+          "-Dest",
+          "{input.dest}"
+        ],
+        "stdout": "json",
+        "success_when": "parsed JSON has ok == true AND matched is an integer >= 0 AND identical_inputs is a boolean",
+        "fact_map": {
+          "matched": "fn.matched_count",
+          "pairs": "fn.pair",
+          "identical_inputs": "fn.identical_inputs"
+        },
+        "note": "ADDED 2026-11-01. The old not_callable recorded a REAL failure and drew the wrong conclusion from it: it had declared an invoke whose second binary came from a fact nothing produces, R10 refused the dead chain, and R16 caught a placeholder bug in the same breath -- and the entry then argued that no invoke was possible. But `source` and `dest` are BOTH declared path_ref inputs, so the second binary never needed to come from a fact. This argv consumes exactly the two inputs the entry already declares, and the script it names is the one the entry's own probe already runs. MEASURED 2026-11-01: c01-stringobf.exe vs c03_antidebug.exe -> ok:true, matched 192 of 511, match_rate 37.6, identical_inputs false, 55 s. The subject matter the retired block measured is kept here because it is what the capability is for: on the two builds of ONE program (crackme-corpus/out/c01-stringobf.exe vs c01_stringobf.exe, four bytes apart) match-functions returns matched 511 of 511, rate 100 -- a miss means not-proven-identical, never different-code."
       }
     },
     {

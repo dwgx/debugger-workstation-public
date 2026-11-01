@@ -18,7 +18,7 @@ import re
 import subprocess
 import sys
 
-STATION = os.environ.get("CRACKME_STATION", r"D:\Software\Tool\WorkStation\debugger")
+STATION = os.environ.get("CRACKME_STATION") or os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 R2_EXE = os.environ.get("CRACKME_R2", os.path.join(STATION, "Static-Reversing", "radare2", "radare2-6.2.2-w64", "bin", "radare2.exe"))
 RABIN2_EXE = os.environ.get("CRACKME_RABIN2", os.path.join(STATION, "Static-Reversing", "radare2", "radare2-6.2.2-w64", "bin", "rabin2.exe"))
 

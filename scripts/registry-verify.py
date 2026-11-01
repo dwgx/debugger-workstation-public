@@ -1745,7 +1745,7 @@ def r34_no_absolute_paths_outside_the_repo(reg, doc):
     the most expensive kind of wrong, because nothing anywhere looks wrong.
 
     Eleven registry commands had the same shape: eight `probe.prepare` fields that were the
-    literal string `cd 'D:\Software\Tool\WorkStation\debugger'`, and three absolute paths inside
+    literal string `cd '<repo>'`, and three absolute paths inside
     frida probe commands. All are now relative to the script that runs them.
 
     What this refuses is the SHAPE, not the string: an absolute Windows path that does not begin

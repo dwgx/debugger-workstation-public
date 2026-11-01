@@ -1,4 +1,4 @@
-$repo = 'D:\Software\Tool\WorkStation\debugger'
+$repo = Split-Path -Parent $PSScriptRoot
 Set-Location $repo
 
 # ARGUMENT REFUSAL. This script declares NO param block, so every argument it is handed lands in

@@ -361,7 +361,7 @@ observed it.
 ## 10. Source ledger
 
 All read on **2026-09-30** via `gh api` (metadata) and shallow/sparse clones into
-`%USERPROFILE%\AppData\Local\Temp\re-research\KnowledgeBase\` (outside both repos).
+`%TEMP%\re-research\KnowledgeBase\` (outside both repos).
 
 | # | Source | License (verified file) | What I actually read |
 |---|---|---|---|

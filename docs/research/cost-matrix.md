@@ -28,7 +28,7 @@ probes — whose `java.exe` children churn constantly — and degraded to report
 i.e. **the most expensive probes looked free**. The shipped sampler records
 `rssDegraded`/`rssErrors` so a degraded number can never be mistaken for a clean one.
 
-**Harness:** `%USERPROFILE%/AppData/Local/Temp/w1perf/` (`measure2.py`, `contend.py`,
+**Harness:** `%TEMP%/w1perf/` (`measure2.py`, `contend.py`,
 `leaktest.ps1`); raw per-run JSON in `...\w1perf\logs\`.
 **Disclosed side effect** (`w1-toolperf.md~~:38-40~~`): `psutil` 7.2.2 was `pip install`ed into
 `D:\Software\Developer\Python314` as the measurement instrument. Outside both repos. No
@@ -65,12 +65,12 @@ watched `out/` dir across a run. **Source for the whole table:
 
 ```
 D:/Software/Developer/Python314/python.exe \
-  %USERPROFILE%/AppData/Local/Temp/w1perf/measure2.py \
-  --label emulation-probe --cwd D:/Software/Tool/WorkStation/debugger \
+  %TEMP%/w1perf/measure2.py \
+  --label emulation-probe --cwd <repo> \
   --file C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe \
   '--arg=-NoProfile' '--arg=-ExecutionPolicy' '--arg=Bypass' \
   '--arg=-File' --arg scripts/emulation-probe.ps1 \
-  --reps 3 --watch D:/Software/Tool/WorkStation/debugger/out --interval 0.1
+  --reps 3 --watch <repo>/out --interval 0.1
 ```
 
 **Not run, by instruction** (`w1-toolperf.md~~:76-77~~`): `scripts/smoke-all.ps1` — the parent
@@ -178,7 +178,7 @@ All three launched simultaneously by `contend.py` v3 (`w1-toolperf.md~~:238-253~
 
 ```
 D:/Software/Developer/Python314/python.exe contend.py --spec spec-ghidra3.json \
-  --cwd D:/Software/Tool/WorkStation/debugger --timeout 1800 --interval 0.2
+  --cwd <repo> --timeout 1800 --interval 0.2
 ```
 
 ```json
@@ -474,17 +474,17 @@ for `crypto-lab` (parity with `native-lab`) belongs at `crypto-lab/lab/server.mj
 ## 9. Reproduction
 
 ```bash
-# any matrix row (harness: %USERPROFILE%/AppData/Local/Temp/w1perf/)
+# any matrix row (harness: %TEMP%/w1perf/)
 D:/Software/Developer/Python314/python.exe \
-  %USERPROFILE%/AppData/Local/Temp/w1perf/measure2.py \
-  --label <probe> --cwd D:/Software/Tool/WorkStation/debugger \
+  %TEMP%/w1perf/measure2.py \
+  --label <probe> --cwd <repo> \
   --file <interpreter> --arg=<flag> ... \
-  --reps 3 --watch D:/Software/Tool/WorkStation/debugger/out --interval 0.1
+  --reps 3 --watch <repo>/out --interval 0.1
 
 # the refuted contention claim (§3.1)
 D:/Software/Developer/Python314/python.exe \
-  %USERPROFILE%/AppData/Local/Temp/w1perf/contend.py --spec spec-ghidra3.json \
-  --cwd D:/Software/Tool/WorkStation/debugger --timeout 1800 --interval 0.2
+  %TEMP%/w1perf/contend.py --spec spec-ghidra3.json \
+  --cwd <repo> --timeout 1800 --interval 0.2
 
 # the port collisions (§4) — allPassed:false is the assertion
 #   2 x crypto-lab (8791) and 2 x native-lab (8745)

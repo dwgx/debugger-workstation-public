@@ -194,7 +194,7 @@ node native-lab/tools/decompile.mjs <dxgkrnl.sys 副本> 0x14000ca10
 **本轮全部断言的一键复算**（34 项，exit 0/1）：
 
 ```bash
-python "D:\Software\Tool\WorkStation\debugger\_re-work\recheck-dxgkrnl-14033.py"
+python "<repo>\_re-work\recheck-dxgkrnl-14033.py"
 ```
 
 **注意**：该脚本只覆盖本文件**已经写下的**断言——它是回归检查，不是独立验证。

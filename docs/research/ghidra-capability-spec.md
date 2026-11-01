@@ -1,6 +1,6 @@
 # Ghidra capability spec
 
-Research date **2026-09-30**. Author: `GhidraSpec`. Machine: `D:\Software\Tool\WorkStation\debugger`
+Research date **2026-09-30**. Author: `GhidraSpec`. Machine: `<repo>`
 (the clone), Ghidra 12.1.3, Windows 10.0.26300 x64.
 
 **Scope of claims in this document.** Every number, path and line reference below was
@@ -483,7 +483,7 @@ than invent parallel names.
 ## 2. Part 2 — prior art
 
 Both repos cloned `--depth 1` into
-`%USERPROFILE%\AppData\Local\Temp\re-research\GhidraSpec\` (outside both repos), read,
+`%TEMP%\re-research\GhidraSpec\` (outside both repos), read,
 not vendored, not installed.
 
 ### 2.1 `cellebrite-labs/ghidra-rpc`
@@ -773,7 +773,7 @@ a version string in prose (`orchestration-design.md:263` — `state` is measured
 
 ```jsonc
 { "name": "ghidra",
-  "probe": "powershell -NoProfile -Command \"(Get-Content 'D:\\Software\\Tool\\WorkStation\\debugger\\Static-Reversing\\Ghidra\\ghidra_12.1.3_PUBLIC\\Ghidra\\application.properties' | Select-String '^application.version=').Line\"",
+  "probe": "powershell -NoProfile -Command \"(Get-Content '<repo>\\Static-Reversing\\Ghidra\\ghidra_12.1.3_PUBLIC\\Ghidra\\application.properties' | Select-String '^application.version=').Line\"",
   "expect": "application.version=12.1.3",
   "expect_exit": 0 }
 ```
@@ -1627,8 +1627,8 @@ Everything above, on this box, with the paths as they are.
 ### 6.1 The AutoVersionTrackingScript run (the load-bearing claim)
 
 ```bash
-G=/d/Software/Tool/WorkStation/debugger/Static-Reversing/Ghidra/ghidra_12.1.3_PUBLIC
-B=%USERPROFILE%/AppData/Local/Temp/ghcap-vt-20260930
+G=<repo>/Static-Reversing/Ghidra/ghidra_12.1.3_PUBLIC
+B=%TEMP%/ghcap-vt-20260930
 mkdir -p "$B"/{scripts,proj,out}
 cp "$G/Ghidra/Features/VersionTracking/ghidra_scripts/AutoVersionTrackingScript.java" "$B/scripts/"
 cp "$G/Ghidra/Features/VersionTracking/ghidra_scripts/SetAutoVersionTrackingOptionsScript.java" "$B/scripts/"
@@ -1654,9 +1654,9 @@ Three invocations: `/c01-stringobf.exe`+`/c02-cff-dispatch.exe`,
 ### 6.3 The cost measurement
 
 ```bash
-powershell -NoProfile -ExecutionPolicy Bypass -File 'D:/Software/Tool/WorkStation/debugger/scripts/ghidra-headless.ps1' \
-  -Sample 'D:/Software/Tool/WorkStation/debugger/crackme-corpus/out/c01-stringobf.exe' \
-  -OutDir '%USERPROFILE%/AppData/Local/Temp/ghcap-a2-20260930-1'
+powershell -NoProfile -ExecutionPolicy Bypass -File '<repo>/scripts/ghidra-headless.ps1' \
+  -Sample '<repo>/crackme-corpus/out/c01-stringobf.exe' \
+  -OutDir '%TEMP%/ghcap-a2-20260930-1'
 # 19.08 s wall, 673,220 B, 522 files
 ```
 RAM: `scripts`-external `measure.ps1` (Start-Job + `Get-Process java | Sort WorkingSet64`
@@ -1678,10 +1678,10 @@ javap -cp "D:\\…\\Emulation.jar" ghidra.app.emulator.EmulatorHelper
 
 ```bash
 # triage / decompile NC — a file with no loader
-printf 'not a container\n' > %USERPROFILE%/AppData/Local/Temp/ghcap-nc/out/plain.txt
+printf 'not a container\n' > %TEMP%/ghcap-nc/out/plain.txt
 # → 'No load spec found for import file: plain.txt' / 'Import failed' / exit 0 / NO summary.json
 # strings NC — the corpus's own decoy
-head -1 %USERPROFILE%/AppData/Local/Temp/ghcap-a-20260930-1/strings.txt
+head -1 %TEMP%/ghcap-a-20260930-1/strings.txt
 # → 140017368 FLAG{c01_strings_gave_you_this_decoy}
 # VT NC — the three-way comparison, §1.9 table
 ```
@@ -1691,7 +1691,7 @@ head -1 %USERPROFILE%/AppData/Local/Temp/ghcap-a-20260930-1/strings.txt
 ```bash
 gh repo clone cellebrite-labs/ghidra-rpc -- --depth 1
 gh repo clone bethington/ghidra-mcp     -- --depth 1
-# into %USERPROFILE%\AppData\Local\Temp\re-research\GhidraSpec\
+# into %TEMP%\re-research\GhidraSpec\
 ```
 Key files read: `ghidra_rpc/server/context.py:24-413`,
 `ghidra_rpc/server/main.py:26-34`, `ghidra_rpc/server/launcher.py:15-140`,

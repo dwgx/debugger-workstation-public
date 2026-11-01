@@ -133,8 +133,8 @@ State this plainly so a half-green sweep is not read as a broken registry:
   `native.ghidra.emulate` is `blocked` on a runtime the registry does not have. That leaves **21 checked**.
 * **11 of those 21 read a `crackme-corpus/out/` binary** — 10 name the path directly in `probe.command`
   or `probe.prepare`; `native.ghidra.decompile` reaches it through `scripts/ghidra-failopen-regress.ps1`,
-  whose first line is an **absolute** `$repo = 'D:\Software\Tool\WorkStation\debugger'` instead of a path
-  derived from the script. On a clone stored anywhere else, that probe reads a different machine's tree.
+  whose first line used to pin an **absolute** `$repo = '<repo>'` instead of a path derived
+  from the script — on a clone stored anywhere else that probe read a different machine's tree.
 * **Measured on the pristine export, a sweep of exactly those 11 entries exits 1 with 14 DRIFT, 4 PREREQ
   and 7 TOOL-FAULT** — over half the checked surface, every failure naming a missing file. After building
   the corpus in that export, 3 of 7 re-run entries went `OK` and 4 stayed DRIFT on `rabin2` / `capa` /
@@ -171,7 +171,7 @@ Further reading:
 
 ## MCP strategy
 
-Only `debugger-router` — one lightweight MCP — is enabled by default. It spins up whichever of the 20 backends is needed, on demand, and exits when done. Do not load all backends at once by default. For direct connections, use a profile (`mcp-mobile` / `mcp-re` / `mcp-net` / `mcp-ce` / `mcp-intel` / `mcp-all`).
+Only `debugger-router` — one lightweight MCP — is enabled by default. It spins up whichever of the 20 backends is needed, on demand, and keeps that backend process warm between calls (one process per `session_id`) until it idles out or is closed. Do not load all backends at once by default. For direct connections, use a profile (`mcp-mobile` / `mcp-re` / `mcp-net` / `mcp-ce` / `mcp-intel` / `mcp-all`).
 
 ## Security posture
 
@@ -181,7 +181,10 @@ The toolset includes debuggers, injectors, hooks, Frida, packet capture, and mem
 
 ## License
 
-- The self-developed parts (`mcp/debugger-router`, `mcp/bin`, `scripts`, docs) are licensed under [LICENSE](LICENSE) (MIT).
+Two licenses, split by what the file is:
+
+- **Code, configuration, and the agent contract — MIT** ([LICENSE](LICENSE)). Covers `mcp/debugger-router`, `mcp/bin`, `scripts`, `manifests`, `skills`, `templates`, `.github`, `AGENTS*.md` / `CLAUDE.md` / `GEMINI.md`, and every non-Markdown file. Fork it and close your fork — nothing here forces you to publish changes.
+- **Documentation prose — CC BY-SA 4.0** ([LICENSE-docs](LICENSE-docs)). Covers `docs/` (including `docs/i18n/`), `README*.md`, `DISCLAIMER*.md`, `notes/`, and the other prose Markdown. Reuse it with attribution; derivative docs stay under the same license.
 - Third-party tools and third-party MCPs remain under the copyright and license of their respective upstreams; this repo redistributes none of their code or binaries. See [DISCLAIMER.md](DISCLAIMER.md).
 
 ## Contributing & security

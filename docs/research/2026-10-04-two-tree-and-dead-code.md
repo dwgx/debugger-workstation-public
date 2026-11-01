@@ -12,7 +12,7 @@ Measured from history rather than from a handoff, because a handoff is a summary
 question was "what did the previous sessions build".
 
 ```
-cd D:/Software/Tool/WorkStation/debugger && git log --date=short --format="%ad" | sort | uniq -c
+cd <repo> && git log --date=short --format="%ad" | sort | uniq -c
       1 2026-09-01        5 2026-09-02        1 2026-09-08
      40 2026-09-30       55 2026-10-02       62 2026-10-03
 ```
@@ -177,7 +177,7 @@ The parse fix is the small half. The substantive finding is that **the 342 lines
 execute**:
 
 ```
-cd D:/Software/Tool/WorkStation/debugger
+cd <repo>
 grep -rn "Get-SuccessWhenVerdict" scripts/
 scripts/mission.ps1:1332:function Get-SuccessWhenVerdict {
 ```

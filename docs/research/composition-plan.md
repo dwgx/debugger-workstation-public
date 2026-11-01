@@ -3,7 +3,7 @@
 **Date:** 2026-10-02 · **Source:** `w1-composition.md` (513 lines, agent `CompositionAudit`),
 read in full. Every number carries its `w1-composition.md:line` or a command I ran against
 `manifests/capabilities.json` today. **Read-only:** nothing in
-`D:\Software\Tool\WorkStation\debugger` or `<private-tree>` was modified by the survey
+`<repo>` or `<private-tree>` was modified by the survey
 that produced this.
 
 > ## ⚠ Status, reconciled 2026-10-02 — read this before any number below
@@ -233,7 +233,7 @@ one `from` block.
 >   *is* `__file__`-anchored. Run from the repo root the validator reports `REGISTRY CLEAN`;
 >   run from anywhere else it reports violations. Measured 2026-10-02:
 >   ```
->   $ cd /tmp && python 'D:/Software/Tool/WorkStation/debugger/scripts/registry-verify.py'
+>   $ cd /tmp && python '<repo>/scripts/registry-verify.py'
 >     VIOLATION  R10 native.ida.decompile: invoke names 'native-lab/tools/decompile.mjs', which does not exist in this repo.
 >     … 6 violations
 >   EXIT=1

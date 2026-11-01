@@ -1,7 +1,12 @@
 import asyncio
+import builtins
 import json
 import os
 import time
+import weakref
+from collections import deque
+from collections.abc import Awaitable, Callable
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
@@ -46,13 +51,25 @@ BACKEND_META: dict[str, dict[str, str]] = {
 
 INSTRUCTIONS = (
     "Lightweight router for a local portable debugger/reverse-engineering MCP backend set. "
-    "Only this router is meant to start with the AI client by default; it starts heavy backends on demand for each call. "
+    "Only this router is meant to start with the AI client by default; it starts heavy backends on demand and keeps "
+    "each backend process warm between calls (one process per session_id) until it is closed or idles out. "
     "Use list_backends and list_backend_tools before calling unfamiliar tools. "
     "Before destructive writes, process injection, live capture, debugger/memory mutation, or system-level actions, "
     "explain the risk and rollback path to the user first."
 )
 
-mcp = FastMCP("debugger-router", instructions=INSTRUCTIONS, log_level="ERROR")
+@asynccontextmanager
+async def _router_lifespan(_server: FastMCP):
+    # A warm backend is a child process; the router must not leave one behind when
+    # the MCP client goes away. stdio_client also puts each child in a Windows job
+    # object (KILL_ON_JOB_CLOSE), so an abrupt router death still reaps the tree.
+    try:
+        yield {}
+    finally:
+        await _close_sessions("*")
+
+
+mcp = FastMCP("debugger-router", instructions=INSTRUCTIONS, log_level="ERROR", lifespan=_router_lifespan)
 
 
 def _resolve_command(command: str) -> str:
@@ -111,12 +128,41 @@ def _stdio_params(command: str) -> StdioServerParameters:
     return StdioServerParameters(command=command, args=[], env=_backend_env())
 
 
-def _clamp_timeout(value: float) -> float:
+def _env_float(name: str, default: float) -> float:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        return default
+
+
+def _timeout_cap() -> float:
+    """Ceiling for one backend call: DEBUGGER_ROUTER_TIMEOUT seconds, default 900.
+
+    The old ceiling was a hardcoded 300s, which could not cover this station's own
+    fuzz runs (634s measured), so the value is now read per call from the environment.
+    """
+    return max(5.0, _env_float("DEBUGGER_ROUTER_TIMEOUT", 900.0))
+
+
+def _idle_timeout() -> float:
+    """Seconds an unused backend process may stay warm: DEBUGGER_ROUTER_IDLE_TIMEOUT, default 600.
+
+    A value <= 0 keeps warm processes alive until the client closes them.
+    """
+    return _env_float("DEBUGGER_ROUTER_IDLE_TIMEOUT", 600.0)
+
+
+def _clamp_timeout(value: float | None) -> float:
+    if value is None:
+        return _timeout_cap()
     try:
         timeout = float(value)
     except Exception:
-        timeout = 60.0
-    return max(5.0, min(timeout, 300.0))
+        timeout = _timeout_cap()
+    return max(5.0, min(timeout, _timeout_cap()))
 
 
 def _parse_args(arguments_json: str | None) -> dict[str, Any]:
@@ -126,6 +172,14 @@ def _parse_args(arguments_json: str | None) -> dict[str, Any]:
     if not isinstance(parsed, dict):
         raise ValueError("arguments_json must decode to a JSON object")
     return parsed
+
+
+def _describe_exc(exc: BaseException) -> str:
+    """Name the real failure: anyio wraps a stdio startup error in an ExceptionGroup."""
+    group_type = getattr(builtins, "BaseExceptionGroup", None)
+    while group_type is not None and isinstance(exc, group_type) and exc.exceptions:
+        exc = exc.exceptions[0]
+    return f"{type(exc).__name__}: {exc}"
 
 
 def _jsonable(value: Any) -> Any:
@@ -142,19 +196,251 @@ def _jsonable(value: Any) -> Any:
     return repr(value)
 
 
-async def _with_backend(backend: str, timeout_seconds: float, operation):
+class _BackendSession:
+    """One backend MCP process kept warm across router calls, addressed by session_id.
+
+    anyio requires a context manager to be exited in the task that entered it, so
+    `stdio_client` and `ClientSession` are owned by a single supervisor task; callers
+    hand their operation to that task over a queue instead of driving the session
+    themselves. Calls to one session are therefore serialized (the backends here are
+    single-context bridges anyway), and a session that times out or raises is killed
+    rather than reused: a wedged backend must not silently swallow the next call.
+    """
+
+    def __init__(self, session_id: str, backend: str, command: str, idle_timeout: float):
+        self.session_id = session_id
+        self.backend = backend
+        self.command = command
+        self.idle_timeout = idle_timeout
+        self.loop = asyncio.get_running_loop()
+        self.started_at = time.monotonic()
+        self.last_used = self.started_at
+        self.calls = 0
+        self.close_reason: str | None = None
+        self.start_error: str | None = None
+        self._initialized = False
+        self._ready = asyncio.Event()
+        self._queue: asyncio.Queue = asyncio.Queue()
+        self._task = self.loop.create_task(self._serve())
+
+    @property
+    def alive(self) -> bool:
+        return not self._task.done() and self.close_reason is None
+
+    def info(self) -> dict[str, Any]:
+        now = time.monotonic()
+        return {
+            "session_id": self.session_id,
+            "backend": self.backend,
+            "alive": self.alive,
+            "calls": self.calls,
+            "uptime_seconds": round(now - self.started_at, 1),
+            "idle_seconds": round(now - self.last_used, 1),
+            "idle_timeout_seconds": self.idle_timeout,
+            "close_reason": self.close_reason,
+        }
+
+    async def start(self) -> None:
+        await self._ready.wait()
+        if self.start_error:
+            raise RuntimeError(f"backend '{self.backend}' failed to start: {self.start_error}")
+
+    async def request(self, operation, timeout: float):
+        if not self.alive:
+            raise RuntimeError(f"session '{self.session_id}' is closed ({self.close_reason or 'not ready'})")
+        future = self.loop.create_future()
+        self._queue.put_nowait((operation, timeout, future))
+        if self._task.done():
+            # The supervisor died between the check above and the enqueue; nothing
+            # will ever pop this request, so fail it here instead of hanging.
+            raise RuntimeError(f"session '{self.session_id}' is closed ({self.close_reason or 'died'})")
+        try:
+            return await future
+        finally:
+            if not future.done():
+                future.cancel()
+
+    async def close(self, reason: str = "closed by client") -> None:
+        if self.close_reason is None:
+            self.close_reason = reason
+        self._queue.put_nowait(None)  # sentinel: leave the supervisor loop
+        try:
+            await asyncio.wait_for(self._task, 15.0)
+        except asyncio.TimeoutError:
+            pass  # wait_for already cancelled the task; its cleanup is time-boxed by the SDK
+        except asyncio.CancelledError:
+            raise
+        except Exception:  # noqa: BLE001,S110 - teardown already reported via close_reason
+            pass
+
+    async def _serve(self) -> None:
+        try:
+            async with stdio_client(_stdio_params(self.command)) as (read, write):
+                async with ClientSession(read, write) as session:
+                    await session.initialize()
+                    self._initialized = True
+                    self._ready.set()
+                    await self._pump(session)
+        except asyncio.CancelledError:
+            if self.close_reason is None:
+                self.close_reason = "cancelled"
+            raise
+        except Exception as exc:  # noqa: BLE001 - a dead backend must not kill the router
+            if self.close_reason is None:
+                self.close_reason = _describe_exc(exc)
+        finally:
+            if self.close_reason is None:
+                self.close_reason = "closed"
+            if not self._initialized:
+                self.start_error = self.close_reason
+            self._ready.set()
+            self._fail_pending(self.close_reason)
+            _RECENT.append(self.info())
+            _forget(self)
+
+    async def _pump(self, session: ClientSession) -> None:
+        while True:
+            request = await self._next_request()
+            if request is None:
+                return
+            operation, timeout, future = request
+            try:
+                result = await asyncio.wait_for(operation(session), timeout)
+            except asyncio.TimeoutError:
+                self.close_reason = f"call exceeded {timeout:g}s; session killed"
+                if not future.done():
+                    future.set_exception(RuntimeError(self.close_reason))
+                return
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:  # noqa: BLE001 - transport failure poisons this session only
+                self.close_reason = f"backend call failed: {_describe_exc(exc)}"
+                if not future.done():
+                    future.set_exception(RuntimeError(self.close_reason))
+                return
+            self.calls += 1
+            self.last_used = time.monotonic()
+            if not future.done():
+                future.set_result(result)
+
+    async def _next_request(self):
+        while True:
+            if self.close_reason is not None:
+                return None
+            if self.idle_timeout <= 0:
+                return await self._queue.get()
+            remaining = self.idle_timeout - (time.monotonic() - self.last_used)
+            if remaining <= 0:
+                self.close_reason = f"idle for {self.idle_timeout:g}s; reclaimed"
+                return None
+            try:
+                return await asyncio.wait_for(self._queue.get(), remaining)
+            except asyncio.TimeoutError:
+                continue
+
+    def _fail_pending(self, reason: str) -> None:
+        while True:
+            try:
+                item = self._queue.get_nowait()
+            except asyncio.QueueEmpty:
+                return
+            if item is None:
+                continue
+            _, _, future = item
+            if not future.done():
+                future.set_exception(RuntimeError(f"session '{self.session_id}' closed: {reason}"))
+
+
+_SESSIONS: dict[str, _BackendSession] = {}
+# Why a backend died is the first question after a failed call, and the session is gone
+# from _SESSIONS by then; keep the last few exits as data instead of as a log line.
+_RECENT: "deque[dict[str, Any]]" = deque(maxlen=8)
+# asyncio.Lock binds to the loop that first awaits it; smoke scripts run one
+# asyncio.run per backend, so the lock is keyed by loop and dropped with it.
+_SESSION_LOCKS: "weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, asyncio.Lock]" = weakref.WeakKeyDictionary()
+
+
+def _session_lock() -> asyncio.Lock:
+    loop = asyncio.get_running_loop()
+    lock = _SESSION_LOCKS.get(loop)
+    if lock is None:
+        lock = asyncio.Lock()
+        _SESSION_LOCKS[loop] = lock
+    return lock
+
+
+def _forget(session: _BackendSession) -> None:
+    if _SESSIONS.get(session.session_id) is session:
+        _SESSIONS.pop(session.session_id, None)
+
+
+async def _get_session(
+    backend: str,
+    session_id: str | None = None,
+    idle_timeout_seconds: float | None = None,
+) -> tuple[_BackendSession, bool]:
+    """Return (session, created). The default session id is the backend name."""
     backends = _load_backends()
     if backend not in backends:
         raise ValueError(f"Unknown backend '{backend}'. Use list_backends first.")
-    params = _stdio_params(backends[backend])
+    sid = (session_id or "").strip() or backend
+    async with _session_lock():
+        session = _SESSIONS.get(sid)
+        if session is not None and (session.loop is not asyncio.get_running_loop() or not session.alive):
+            _SESSIONS.pop(sid, None)
+            session = None
+        if session is not None and session.backend != backend:
+            raise ValueError(f"session '{sid}' belongs to backend '{session.backend}', not '{backend}'")
+        if session is not None and idle_timeout_seconds is not None:
+            session.idle_timeout = float(idle_timeout_seconds)
+        created = session is None
+        if created:
+            idle = _idle_timeout() if idle_timeout_seconds is None else float(idle_timeout_seconds)
+            session = _BackendSession(sid, backend, backends[backend], idle)
+            _SESSIONS[sid] = session
+    await session.start()
+    return session, created
 
-    async def run():
-        async with stdio_client(params) as (read, write):
-            async with ClientSession(read, write) as session:
-                await session.initialize()
-                return await operation(session)
 
-    return await asyncio.wait_for(run(), timeout=_clamp_timeout(timeout_seconds))
+async def _close_sessions(session_id: str = "*") -> dict[str, Any]:
+    loop = asyncio.get_running_loop()
+    targets = [
+        session
+        for sid, session in list(_SESSIONS.items())
+        if session.loop is loop and (session_id in ("", "*") or sid == session_id)
+    ]
+    for session in targets:
+        _SESSIONS.pop(session.session_id, None)
+        await session.close("closed by client")
+    return {
+        "closed": [session.session_id for session in targets],
+        "closed_count": len(targets),
+        "remaining": sorted(sid for sid, session in _SESSIONS.items() if session.loop is loop and session.alive),
+    }
+
+
+async def _with_backend(
+    backend: str,
+    timeout_seconds: float | None,
+    operation: Callable[[ClientSession], Awaitable[Any]],
+    session_id: str | None = None,
+    close_after: bool = False,
+    idle_timeout_seconds: float | None = None,
+) -> tuple[Any, dict[str, Any]]:
+    session, created = await _get_session(backend, session_id, idle_timeout_seconds)
+    timeout = _clamp_timeout(timeout_seconds)
+    try:
+        result = await session.request(operation, timeout)
+    finally:
+        if close_after:
+            await session.close("close_after requested")
+    meta = {
+        "session_id": session.session_id,
+        "session_reused": not created,
+        "session_calls": session.calls,
+        "timeout_seconds": timeout,
+    }
+    return result, meta
 
 
 @mcp.tool()
@@ -163,7 +449,12 @@ def list_backends() -> dict[str, Any]:
     backends = _load_backends()
     return {
         "count": len(backends),
-        "default_startup": "Only debugger-router should be enabled by default; these backends start per router call.",
+        "default_startup": "Only debugger-router should be enabled by default; these backends start on the first router call that needs them and then stay warm.",
+        "session_policy": {
+            "warm_processes": "A backend process stays alive between calls; the default session id is the backend name.",
+            "idle_timeout_seconds": _idle_timeout(),
+            "call_timeout_seconds": _timeout_cap(),
+        },
         "backends": [
             {
                 "name": name,
@@ -181,8 +472,14 @@ async def list_backend_tools(
     backend: str,
     include_schemas: bool = False,
     timeout_seconds: float = 40.0,
+    session_id: str | None = None,
+    close_after: bool = False,
 ) -> dict[str, Any]:
-    """Start one backend temporarily and list its tools, then close it."""
+    """List one backend's tools on its warm session (session_id defaults to the backend name).
+
+    The process stays warm for the call_backend_tool that usually follows; pass close_after=true
+    when sweeping many backends and you do not intend to use them.
+    """
 
     async def operation(session: ClientSession):
         tools_result = await session.list_tools()
@@ -202,7 +499,10 @@ async def list_backend_tools(
         }
 
     started = time.monotonic()
-    result = await _with_backend(backend, timeout_seconds, operation)
+    result, meta = await _with_backend(
+        backend, timeout_seconds, operation, session_id=session_id, close_after=close_after
+    )
+    result.update(meta)
     result["elapsed_seconds"] = round(time.monotonic() - started, 2)
     return result
 
@@ -212,9 +512,17 @@ async def call_backend_tool(
     backend: str,
     tool_name: str,
     arguments_json: str = "{}",
-    timeout_seconds: float = 90.0,
+    timeout_seconds: float | None = None,
+    session_id: str | None = None,
+    close_after: bool = False,
 ) -> dict[str, Any]:
-    """Start one backend temporarily, call one backend tool, return the result, then close it."""
+    """Call one backend tool on its warm session, keeping the backend process alive for the next call.
+
+    session_id addresses the backend process: omit it to reuse the backend's default session,
+    or pass a new id to run a second, independent process of the same backend. timeout_seconds
+    is clamped to DEBUGGER_ROUTER_TIMEOUT (default 900); a call that exceeds it kills the session
+    instead of leaving a wedged process behind.
+    """
     arguments = _parse_args(arguments_json)
 
     async def operation(session: ClientSession):
@@ -228,22 +536,85 @@ async def call_backend_tool(
         }
 
     started = time.monotonic()
-    result = await _with_backend(backend, timeout_seconds, operation)
+    result, meta = await _with_backend(
+        backend,
+        timeout_seconds,
+        operation,
+        session_id=session_id,
+        close_after=close_after,
+    )
+    result.update(meta)
     result["elapsed_seconds"] = round(time.monotonic() - started, 2)
     return result
 
 
 @mcp.tool()
 async def smoke_backend(backend: str, timeout_seconds: float = 40.0) -> dict[str, Any]:
-    """Start one backend temporarily and verify MCP initialize plus tools/list."""
+    """Start one backend once and verify MCP initialize plus tools/list, then reclaim it."""
     started = time.monotonic()
-    result = await list_backend_tools(backend=backend, include_schemas=False, timeout_seconds=timeout_seconds)
+    result = await list_backend_tools(
+        backend=backend,
+        include_schemas=False,
+        timeout_seconds=timeout_seconds,
+        close_after=True,
+    )
     return {
         "backend": backend,
         "status": "PASS" if result.get("tool_count", 0) > 0 else "FAIL_NO_TOOLS",
         "tool_count": result.get("tool_count", 0),
         "elapsed_seconds": round(time.monotonic() - started, 2),
     }
+
+
+@mcp.tool()
+async def open_backend_session(
+    backend: str,
+    session_id: str | None = None,
+    idle_timeout_seconds: float | None = None,
+) -> dict[str, Any]:
+    """Start (or reuse) a backend process and keep it warm for later call_backend_tool calls."""
+    started = time.monotonic()
+
+    async def operation(session: ClientSession):
+        tools_result = await session.list_tools()
+        return {"tool_count": len(tools_result.tools)}
+
+    session, created = await _get_session(backend, session_id, idle_timeout_seconds)
+    detail = await session.request(operation, _clamp_timeout(120.0))
+    return {
+        "backend": backend,
+        "session_id": session.session_id,
+        "created": created,
+        "tool_count": detail["tool_count"],
+        "idle_timeout_seconds": session.idle_timeout,
+        "elapsed_seconds": round(time.monotonic() - started, 2),
+    }
+
+
+@mcp.tool()
+async def list_backend_sessions() -> dict[str, Any]:
+    """List backend processes kept warm between calls, plus the last few that were reclaimed."""
+    loop = asyncio.get_running_loop()
+    sessions = [session.info() for session in _SESSIONS.values() if session.loop is loop and session.alive]
+    return {
+        "count": len(sessions),
+        "sessions": sorted(sessions, key=lambda item: item["session_id"]),
+        "recently_closed": list(_RECENT),
+        "policy": {
+            "default_session_id": "the backend name",
+            "idle_timeout_seconds": _idle_timeout(),
+            "call_timeout_seconds": _timeout_cap(),
+        },
+    }
+
+
+@mcp.tool()
+async def close_backend_session(session_id: str = "*") -> dict[str, Any]:
+    """Close one warm backend session by id, or every session when session_id is '*'."""
+    result = await _close_sessions(session_id)
+    if session_id not in ("", "*") and not result["closed"]:
+        raise ValueError(f"No live session '{session_id}'. Use list_backend_sessions first.")
+    return result
 
 
 @mcp.tool()
@@ -254,7 +625,16 @@ def workflow_help() -> dict[str, Any]:
             "Use list_backends to choose a backend.",
             "Use list_backend_tools with include_schemas=true when arguments are unclear.",
             "Use call_backend_tool to run the specific backend tool.",
-            "The backend process exits after each router call.",
+            "The backend process stays warm between calls; reuse the same session_id instead of paying startup again.",
+        ],
+        "sessions": [
+            "A backend process outlives a single call: the default session id is the backend name.",
+            "Pass session_id to address a specific process, or open_backend_session to start one explicitly.",
+            "list_backend_sessions shows warm processes, their idle age, and why a closed one died.",
+            "close_backend_session('*') reclaims every warm process; the router also does this on shutdown.",
+            "An unused session is reclaimed after DEBUGGER_ROUTER_IDLE_TIMEOUT seconds (default 600, <=0 disables).",
+            "One call may run for up to DEBUGGER_ROUTER_TIMEOUT seconds (default 900); exceeding it kills that session.",
+            "close_after=true on a call keeps the old one-shot behavior: start, call, reclaim.",
         ],
         "direct_profile_examples": [
             "codex --profile mcp-mobile",

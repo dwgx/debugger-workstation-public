@@ -12,7 +12,7 @@ It cites eight worker reports -- `w1-mcprev.md`, `w1-retoolchain.md`, `w1-revski
 eight files exists**, in this tree, in the wiki tree, or anywhere under `~/.dwgx`. Verified:
 
     for f in w1-mcprev.md w1-debugpairing.md; do
-      find <project> D:/Software/Tool/WorkStation/debugger %USERPROFILE%/.dwgx -name "$f"
+      find <project> <repo> %USERPROFILE%/.dwgx -name "$f"
     done      -> MISSING for all eight
 
 => Every one of those 222 evidence citations is **un-re-runnable**. The conclusions may be
@@ -58,7 +58,7 @@ WORKER_CITATION = re.compile(r"\bw(\d+)-([a-z0-9][a-z0-9_-]*)\.md\b", re.IGNOREC
 ANY_FILENAME = re.compile(r"\b([A-Za-z0-9_.-]+\.(?:md|py|ps1|json|mjs|c|cpp|js))\b")
 
 DEFAULT_ESTATE = (
-    pathlib.Path(r"D:\Software\Tool\WorkStation\debugger"),
+    pathlib.Path(__file__).resolve().parents[1],
     pathlib.Path(r"<private-tree>"),
     pathlib.Path.home() / ".dwgx",
 )

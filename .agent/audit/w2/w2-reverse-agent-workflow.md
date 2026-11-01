@@ -14,7 +14,7 @@ looking successful. Every chunk below was read back with the `read` tool after w
 ## 0. Path correction, before any judgement
 
 The brief and the Change section both say to read
-`D:/Software/Tool/WorkStation/debugger/wiki/CHARTER-ARSENAL.md`. **That file does not exist.**
+`<repo>/wiki/CHARTER-ARSENAL.md`. **That file does not exist.**
 Measured, not guessed:
 
 - `glob debugger/**/CHARTER*` -> **No files found**.

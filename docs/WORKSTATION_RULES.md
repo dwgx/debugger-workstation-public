@@ -66,7 +66,7 @@
 
 ## MCP 规则
 
-Codex 默认只启用 `debugger-router`。19 个后端 MCP 默认 disabled，由 router 按需临时启动。
+Codex 默认只启用 `debugger-router`。19 个后端 MCP 默认 disabled，由 router 按需启动，进程跨调用保活（空闲超时回收，默认 600s；单次调用上限 `DEBUGGER_ROUTER_TIMEOUT`，默认 900s）。
 
 常用检查：
 

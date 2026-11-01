@@ -595,7 +595,7 @@ The tool is installed, pinned at `manifests/tools.json:46`, and does not start. 
 blocker:
 
 ```bash
-'D:/Software/Tool/WorkStation/debugger/Unpackers-Game/Il2CppDumper-net6-win-v6.7.46/Il2CppDumper.exe'
+'<repo>/Unpackers-Game/Il2CppDumper-net6-win-v6.7.46/Il2CppDumper.exe'
 # -> Framework: 'Microsoft.NETCore.App', version '6.0.0' (x64)
 # -> found: 8.0.31, 10.0.11
 ```
