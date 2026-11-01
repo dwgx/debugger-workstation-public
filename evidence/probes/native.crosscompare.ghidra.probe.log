@@ -81,6 +81,6 @@ NEGATIVE-CONTROL OK -- the honest-refusal shape holds in both directions.
   would therefore say nothing at all.
   Exiting 1 -- the non-zero code the registry declares, because a control that must exit 0
   proves nothing.
-  scratch %USERPROFILE%\AppData\Local\Temp\xcompare-neg-DlMzKz removed: yes
+  scratch C:\Users\dwgx1\AppData\Local\Temp\xcompare-neg-DlMzKz removed: yes
 GATE-SUMMARY {"control":"native.crosscompare.same_binary","arms":{"A":{"bodies":399,"renderOnly":0,"findings":0},"B":{"renderOnly":0,"predicted":1,"findings":0}},"findings":0,"verdict":"OK"}
 ARTIFACT D:\Software\Tool\WorkStation\debugger\headless-lab\out\last-run-xcompare.json

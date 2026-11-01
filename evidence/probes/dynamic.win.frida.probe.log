@@ -9,8 +9,8 @@
 #   bytes: 1211
 #   written-by-this-run: yes
 ------------------------------------------------------------------------
-Spawned `%USERPROFILE%\AppData\Local\Temp\fridaprobe\target.exe`. Resuming main thread!
-usage: %USERPROFILE%\AppData\Local\Temp\fridaprobe\target.exe <password>
+Spawned `C:\Users\dwgx1\AppData\Local\Temp\fridaprobe\target.exe`. Resuming main thread!
+usage: C:\Users\dwgx1\AppData\Local\Temp\fridaprobe\target.exe <password>
 FRIDA_WIN module_base=0x7ff7f1d80000
 FRIDA_WIN symbol_main=0
 FRIDA_WIN export_printf=0x7ffc7e0dd280

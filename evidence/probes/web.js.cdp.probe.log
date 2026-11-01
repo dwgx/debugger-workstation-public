@@ -12,7 +12,7 @@
 web-reverse lab loop
   server        http://127.0.0.1:64956 (in-process, loopback, binds port 0)
   keyId         e38c1367b1f06675
-  artifacts     %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-24732
+  artifacts     C:\Users\dwgx1\AppData\Local\Temp\web-reverse-captures\loop-24732
 
 ------------------------------------------------------------------------------
 [1] unsigned POST /api/submit
@@ -20,18 +20,18 @@ web-reverse lab loop
 -> HTTP 401 {"ok":false,"error":"missing-signature-headers"}
 
 ------------------------------------------------------------------------------
-$ node tools/capture.mjs --url http://127.0.0.1:64956/plain --clicks 1 --out %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-24732\plain.json
+$ node tools/capture.mjs --url http://127.0.0.1:64956/plain --clicks 1 --out C:\Users\dwgx1\AppData\Local\Temp\web-reverse-captures\loop-24732\plain.json
 ------------------------------------------------------------------------------
 capture: 1 /api request(s) from http://127.0.0.1:64956/plain
   POST http://127.0.0.1:64956/api/submit -> HTTP 200
     x-lab-ts   1793432752791
     x-lab-sign ceece90a3072859ebd138365aeeba5604b703adb740c7b635a35d9d07d5d5bf3
     body       {"op":"lab.submit","nonce":"svv80gol","at":1793432752791}
-written %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-24732\plain.json
+written C:\Users\dwgx1\AppData\Local\Temp\web-reverse-captures\loop-24732\plain.json
 CDP calls: Target.createTarget, Target.attachToTarget, Page.enable, Network.enable, Runtime.enable, Runtime.addBinding, Page.addScriptToEvaluateOnNewDocument, Page.navigate, Runtime.evaluate, Network.getResponseBody
 
 ------------------------------------------------------------------------------
-$ node tools/capture.mjs --url http://127.0.0.1:64956/obf --clicks 2 --out %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-24732\obf.json
+$ node tools/capture.mjs --url http://127.0.0.1:64956/obf --clicks 2 --out C:\Users\dwgx1\AppData\Local\Temp\web-reverse-captures\loop-24732\obf.json
 ------------------------------------------------------------------------------
 capture: 2 /api request(s) from http://127.0.0.1:64956/obf
   POST http://127.0.0.1:64956/api/submit -> HTTP 200
@@ -42,11 +42,11 @@ capture: 2 /api request(s) from http://127.0.0.1:64956/obf
     x-lab-ts   1793432754022
     x-lab-sign 620fb924c44b54cbbdca616dd4d94efcbe63e79329d50e8b9ee5c97183b9fcfa
     body       {"op":"lab.submit","nonce":"4a19ioav","at":1793432754022}
-written %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-24732\obf.json
+written C:\Users\dwgx1\AppData\Local\Temp\web-reverse-captures\loop-24732\obf.json
 CDP calls: Target.createTarget, Target.attachToTarget, Page.enable, Network.enable, Runtime.enable, Runtime.addBinding, Page.addScriptToEvaluateOnNewDocument, Page.navigate, Runtime.evaluate, Network.getResponseBody
 
 ------------------------------------------------------------------------------
-$ node tools/recover.mjs --capture %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-24732\obf.json --page http://127.0.0.1:64956/obf --out %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-24732\recovered.json --runtime-probe
+$ node tools/recover.mjs --capture C:\Users\dwgx1\AppData\Local\Temp\web-reverse-captures\loop-24732\obf.json --page http://127.0.0.1:64956/obf --out C:\Users\dwgx1\AppData\Local\Temp\web-reverse-captures\loop-24732\recovered.json --runtime-probe
 ------------------------------------------------------------------------------
 page            http://127.0.0.1:64956/obf
 obfuscator      array=_0xa decoder=_0x2f7a() xor=0x17 entries=17
@@ -74,12 +74,12 @@ recovered key   "lab-demo-signing-key-9f2c1a7e-not-a-real-secret-v1"
 signature       x-lab-sign = hex(HMAC-SHA256(key, "<x-lab-ts>.<raw body>"))
 reproduces      2/2 captured signature(s) with node:crypto
 keyId           sha256(key)[0:16] = e38c1367b1f06675 vs server e38c1367b1f06675 -> CONFIRMED
-written         %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-24732\recovered.json
+written         C:\Users\dwgx1\AppData\Local\Temp\web-reverse-captures\loop-24732\recovered.json
 
 ------------------------------------------------------------------------------
-$ node tools/replay.mjs --capture %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-24732\obf.json --key-file %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-24732\recovered.json --url http://127.0.0.1:64956 --new-body
+$ node tools/replay.mjs --capture C:\Users\dwgx1\AppData\Local\Temp\web-reverse-captures\loop-24732\obf.json --key-file C:\Users\dwgx1\AppData\Local\Temp\web-reverse-captures\loop-24732\recovered.json --url http://127.0.0.1:64956 --new-body
 ------------------------------------------------------------------------------
-capture         %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-24732\obf.json
+capture         C:\Users\dwgx1\AppData\Local\Temp\web-reverse-captures\loop-24732\obf.json
 recovered key   "lab-demo-signing-key-9f2c1a7e-not-a-real-secret-v1"  (keyId e38c1367b1f06675)
 endpoint        http://127.0.0.1:64956/api/submit
 
@@ -98,7 +98,7 @@ endpoint        http://127.0.0.1:64956/api/submit
 verdict         PASS — the signature was reproduced, not copied
 
 ------------------------------------------------------------------------------
-$ node tools/fingerprint.mjs --url http://127.0.0.1:64956/fingerprint --out %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-24732\fingerprint.json
+$ node tools/fingerprint.mjs --url http://127.0.0.1:64956/fingerprint --out C:\Users\dwgx1\AppData\Local\Temp\web-reverse-captures\loop-24732\fingerprint.json
 ------------------------------------------------------------------------------
 
 === single probe ===
@@ -123,7 +123,7 @@ observed (client-side)
   "prepareStackTraceReadOnTouch": true
 }
 
-written %USERPROFILE%\AppData\Local\Temp\web-reverse-captures\loop-24732\fingerprint.json
+written C:\Users\dwgx1\AppData\Local\Temp\web-reverse-captures\loop-24732\fingerprint.json
 
 ==============================================================================
 web-reverse loop summary

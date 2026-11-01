@@ -9,12 +9,12 @@
 #   bytes: 2470
 #   written-by-this-run: yes
 ------------------------------------------------------------------------
-{"ok": true, "exit": 0, "mode": "positive", "target": "%USERPROFILE%\\AppData\\Local\\Temp\\fridagate-2ufec39r\\target.exe", "verdict": "INTERCEPT-PROVEN", "runtime_hook_hit": {"at": "0x7ff63b4b15d0", "count": 1, "tid": 44356}, "instrument_ordering": "spawn(suspended) -> create_script -> load -> resume. The CLI does the opposite and therefore cannot intercept; this ordering is the whole entry.", "caveat": "SELF-BUILT CORPUS TARGETS ONLY, run from a %TEMP% copy -- the repository original is staged and never executed. Instrumenting your own program on your own machine is not running a sample; running an UNTRUSTED one here is a STOP."}
+{"ok": true, "exit": 0, "mode": "positive", "target": "C:\\Users\\dwgx1\\AppData\\Local\\Temp\\fridagate-2ufec39r\\target.exe", "verdict": "INTERCEPT-PROVEN", "runtime_hook_hit": {"at": "0x7ff63b4b15d0", "count": 1, "tid": 44356}, "instrument_ordering": "spawn(suspended) -> create_script -> load -> resume. The CLI does the opposite and therefore cannot intercept; this ordering is the whole entry.", "caveat": "SELF-BUILT CORPUS TARGETS ONLY, run from a %TEMP% copy -- the repository original is staged and never executed. Instrumenting your own program on your own machine is not running a sample; running an UNTRUSTED one here is a STOP."}
 ARTIFACT probe-artifacts/last-run-dynamic_win_frida_intercept.json
-[stage] copied to %TEMP% %USERPROFILE%\AppData\Local\Temp\fridagate-2ufec39r\target.exe (143872 bytes); the repository original is never executed
+[stage] copied to %TEMP% C:\Users\dwgx1\AppData\Local\Temp\fridagate-2ufec39r\target.exe (143872 bytes); the repository original is never executed
 [pe  ] {"magic": "0x20b", "entry_rva": 5584, "size_of_image": 163840}
 [spawn] pid=34132 suspended=True
-[js  ] {"kind": "module", "name": "target.exe", "base": "0x7ff63b4b0000", "size": 163840, "path": "%USERPROFILE%\\AppData\\Local\\Temp\\fridagate-2ufec39r\\target.exe"}
+[js  ] {"kind": "module", "name": "target.exe", "base": "0x7ff63b4b0000", "size": 163840, "path": "C:\\Users\\dwgx1\\AppData\\Local\\Temp\\fridagate-2ufec39r\\target.exe"}
 [js  ] {"kind": "rebase", "ok": true, "target": "0x7ff63b4b15d0", "inImage": true}
 [js  ] {"kind": "attached", "target": "0x7ff63b4b15d0"}
 [load] script loaded while main thread suspended

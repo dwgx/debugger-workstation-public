@@ -14,7 +14,7 @@
 mobile-lab loop
 ==============================================================================
   root   D:\Software\Tool\WorkStation\debugger\mobile-lab
-  apk    %USERPROFILE%\AppData\Local\Temp\mobilelab-loop-12860-mvw3kedu\mobilelab.apk   (this run only)
+  apk    C:\Users\dwgx1\AppData\Local\Temp\mobilelab-loop-12860-mvw3kedu\mobilelab.apk   (this run only)
   pub    D:\Software\Tool\WorkStation\debugger\mobile-lab\artifacts\mobilelab.apk   (written atomically when the build succeeds)
 
 ==============================================================================
@@ -23,7 +23,7 @@ mobile-lab loop summary
   PASS  build a real signed APK from source (javac + d8 + aapt2 + zipalign + apksigner) 25135 bytes, sha256 c07a201a0cc62a5d… -> published artifacts\mobilelab.apk  (4.1s)
   PASS  AndroidManifest.xml is binary AXML, not text               magic 0x00080003, 3136 bytes
   PASS  hand-built ELF .so passes its own re-parse                 1888 bytes, 5 exports
-  PASS  hand-built ELF .so written for the pyelftools oracle       %USERPROFILE%\AppData\Local\Temp\mobilelab-loop-12860-mvw3kedu\out\libmobilelab.so
+  PASS  hand-built ELF .so written for the pyelftools oracle       C:\Users\dwgx1\AppData\Local\Temp\mobilelab-loop-12860-mvw3kedu\out\libmobilelab.so
   PASS  INDEPENDENT oracle: pyelftools agrees on the .so             VERDICT: AGREES with the hand-built layout
   PASS  manifest: package, sdk, debuggable parsed from binary AXML package=com.lab.mobilelab min=24 target=34 debuggable=true
   PASS  manifest: every component found, with its real exported flag 5 components, exported: com.lab.mobilelab.MainActivity, com.lab.mobilelab.BootReceiver
@@ -74,5 +74,5 @@ ARTIFACT mobile-lab/out/last-run-mobile-lab.json
   $ keytool -genkeypair (throwaway debug key)
     Generating 2,048 bit RSA key pair and self-signed certificate (SHA384withRSA) with a validity of 10,000 days
     	for: CN=MobileLab Fixture, OU=Lab, O=Self, L=Lab, ST=Lab, C=ZZ
-    [Storing %USERPROFILE%\AppData\Local\Temp\mobilelab-build-12860\keys\debug.keystore]
+    [Storing C:\Users\dwgx1\AppData\Local\Temp\mobilelab-build-12860\keys\debug.keystore]
   $ apksigner.bat

@@ -4,7 +4,7 @@
 # seconds: 11.16
 # captured by: python scripts/assert-probes.py --save-evidence <dir>
 # re-run the command above; this file is OUTPUT, not a claim about it.
-# produces: %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\corpus.json
+# produces: C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps\corpus.json
 #   sha256: 07e1e54407690e5b266c1d8a0c4d6fac6cda09f21821d1019735daec8ba2e6e1
 #   bytes: 4951
 #   written-by-this-run: yes
@@ -13,7 +13,7 @@
 ------------------------------------------------------------------------------
 $ node lab/gen-pcaps.mjs 
 ------------------------------------------------------------------------------
-net-reverse pcap corpus (synthetic, self-authored) -> %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps
+net-reverse pcap corpus (synthetic, self-authored) -> C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps
   dns-basic.pcap             4 packets     436 B  sha256:9bae23b350aaf821
       teaches: DNS query/response shape for A and AAAA over UDP/53.
   http-basic.pcap           10 packets    1783 B  sha256:8bfe86dacc753588
@@ -24,62 +24,62 @@ net-reverse pcap corpus (synthetic, self-authored) -> %USERPROFILE%\AppData\Loca
       teaches: Which protocols need Decode As and which do not: NTP on 12345 and WHOIS on 4343 are invisible to the stock dissectors, HTTP on 4444 is not (4.6 ships an HTTP heuristic). Plus a binary stream whose payload only appears if you follow it.
   dns-txt.pcap               4 packets     517 B  sha256:87cd733158befe3b
       teaches: The value you want is often in a record type you did not filter for: an alias chain plus a multi-chunk TXT answer that Wireshark splits across dns.txt occurrences.
-  label -> %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\corpus.json
+  label -> C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps\corpus.json
 
 ------------------------------------------------------------------------------
 $ node tools/pcap-lab.mjs verify
 ------------------------------------------------------------------------------
-pcap-lab verify — 16 question(s) against %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps
+pcap-lab verify — 16 question(s) against C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps
 tshark: TShark (Wireshark) 4.6.8 (v4.6.8-0-ge677bf052328).
 
   idx  question                                     capture               verdict  observed
     1  dns-a-record                       dns-basic.pcap        PASS     203.0.113.7
-       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\dns-basic.pcap -Y dns.a -T fields -e dns.a
+       $ tshark -r C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps\dns-basic.pcap -Y dns.a -T fields -e dns.a
        negative control on dns-txt.pcap: held (did not answer) — 203.0.113.99
     2  dns-aaaa-record                    dns-basic.pcap        PASS     2001:db8::7
-       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\dns-basic.pcap -Y dns.aaaa -T fields -e dns.aaaa
+       $ tshark -r C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps\dns-basic.pcap -Y dns.aaaa -T fields -e dns.aaaa
        negative control on dns-txt.pcap: held (did not answer) — (no dns.aaaa)
     3  dns-query-count                    dns-basic.pcap        PASS     2 query id(s)
-       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\dns-basic.pcap -Y dns.flags.response == 0 -T fields -e dns.id
+       $ tshark -r C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps\dns-basic.pcap -Y dns.flags.response == 0 -T fields -e dns.id
        negative control on http-basic.pcap: held (did not answer) — 0 query id(s)
     4  http-plaintext-credential          http-basic.pcap       PASS     POST body decodes to username=lab-user&password=lab-only-password-9f2c
-       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\http-basic.pcap -Y http.request.method == POST -T fields -e http.request.uri -e http.file_data
+       $ tshark -r C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps\http-basic.pcap -Y http.request.method == POST -T fields -e http.request.uri -e http.file_data
        negative control on dns-basic.pcap: held (did not answer) — body did not contain the credential (0 bytes decoded)
     5  http-credential-is-not-in-headers  http-basic.pcap       PASS     no credential in URI/cookie/authorization
-       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\http-basic.pcap -Y http.request -T fields -e http.request.uri -e http.cookie -e http.authorization
+       $ tshark -r C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps\http-basic.pcap -Y http.request -T fields -e http.request.uri -e http.cookie -e http.authorization
        negative control on http-basic.pcap: held (did not answer) — credential leaked into a header or URI
     6  http-server-banner                 http-basic.pcap       PASS     200	lab-httpd/1.0 | 302	lab-httpd/1.0
-       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\http-basic.pcap -Y http.response -T fields -e http.response.code -e http.server
+       $ tshark -r C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps\http-basic.pcap -Y http.response -T fields -e http.response.code -e http.server
        negative control on tls-clienthello.pcap: held (did not answer) — (no responses)
     7  tls-sni                            tls-clienthello.pcap  PASS     shop.lab.test,api.lab.test
-       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\tls-clienthello.pcap -Y tls.handshake.type == 1 -T fields -e tls.handshake.extensions_server_name
+       $ tshark -r C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps\tls-clienthello.pcap -Y tls.handshake.type == 1 -T fields -e tls.handshake.extensions_server_name
        negative control on http-basic.pcap: held (did not answer) — (no SNI)
     8  tls-distinct-client-fingerprints   tls-clienthello.pcap  PASS     2 ClientHello(s) -> 2 distinct fingerprint(s): 751a0c3104b0, 0956a831b4c9
-       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\tls-clienthello.pcap -Y tls.handshake.type == 1 -T fields -e tls.record.version -e tls.handshake.ciphersuite -e tls.handshake.extension.type -e tls.handshake.extensions_supported_group -e tls.handshake.extensions_ec_point_format
+       $ tshark -r C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps\tls-clienthello.pcap -Y tls.handshake.type == 1 -T fields -e tls.record.version -e tls.handshake.ciphersuite -e tls.handshake.extension.type -e tls.handshake.extensions_supported_group -e tls.handshake.extensions_ec_point_format
        negative control on dns-basic.pcap: held (did not answer) — 0 ClientHello(s) -> 0 distinct fingerprint(s): 
     9  tls-no-server-secrets              tls-clienthello.pcap  PASS     absent as guaranteed (no ServerHello/certificate)
-       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\tls-clienthello.pcap -Y tls.handshake.type == 2 or tls.handshake.type == 11 -T fields -e tls.handshake.type
+       $ tshark -r C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps\tls-clienthello.pcap -Y tls.handshake.type == 2 or tls.handshake.type == 11 -T fields -e tls.handshake.type
        negative control on tls-clienthello.pcap: held (did not answer) — unexpected: 1,1
    10  odd-ntp-decode-as                  odd-port.pcap         PASS     2	4c414200
-       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\odd-port.pcap -d udp.port==12345,ntp -Y ntp.flags.mode == 4 -T fields -e ntp.stratum -e ntp.refid
+       $ tshark -r C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps\odd-port.pcap -d udp.port==12345,ntp -Y ntp.flags.mode == 4 -T fields -e ntp.stratum -e ntp.refid
        negative control on odd-port.pcap: held (did not answer) — (no NTP server packet)
    11  odd-whois-decode-as                odd-port.pcap         PASS     query LAB-WHOIS-42 -> netname 203.0.113.0/24
-       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\odd-port.pcap -d tcp.port==4343,whois -Y whois.answer -T fields -e whois.query -e whois.answer
+       $ tshark -r C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps\odd-port.pcap -d tcp.port==4343,whois -Y whois.answer -T fields -e whois.query -e whois.answer
        negative control on odd-port.pcap: held (did not answer) — answer text not found
    12  odd-follow-stream-marker           odd-port.pcap         PASS     stream 1 payload decoded: LAPP frame with LAB-MARKER-7f3a
-       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\odd-port.pcap -q -z follow,tcp,ascii,1
+       $ tshark -r C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps\odd-port.pcap -q -z follow,tcp,ascii,1
        negative control on odd-port.pcap: held (did not answer) — marker not present in the followed stream
    13  odd-http-needs-no-decode-as        odd-port.pcap         PASS     /admin/status
-       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\odd-port.pcap -Y http.request and tcp.port == 4444 -T fields -e http.request.uri
+       $ tshark -r C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps\odd-port.pcap -Y http.request and tcp.port == 4444 -T fields -e http.request.uri
        negative control on odd-port.pcap: held (did not answer) — (not dissected)
    14  odd-tcp-conversations              odd-port.pcap         PASS     3 conversation(s): 192.0.2.10:40010 <-> 203.0.113.10:4343 ; 192.0.2.10:40011 <-> 203.0.113.10:1337 ; 192.0.2.10:45678 <-> 203.0.113.10:4444
-       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\odd-port.pcap -q -z conv,tcp
+       $ tshark -r C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps\odd-port.pcap -q -z conv,tcp
        negative control on http-basic.pcap: held (did not answer) — 1 conversation(s): 192.0.2.10:49812 <-> 203.0.113.10:80
    15  dns-txt-record                     dns-txt.pcap          PASS     TXT answer set: decoy + LAB{tx-ball-42e1b8c9}
-       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\dns-txt.pcap -Y dns.resp.type == 16 -T fields -e dns.qry.name -e dns.txt
+       $ tshark -r C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps\dns-txt.pcap -Y dns.resp.type == 16 -T fields -e dns.qry.name -e dns.txt
        negative control on dns-basic.pcap: held (did not answer) — challenge value not in the TXT answer
    16  dns-cname-chain                    dns-txt.pcap          PASS     www.lab.test -> edge.lab.test -> 203.0.113.99
-       $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\dns-txt.pcap -Y dns.cname or dns.a -T fields -e dns.qry.name -e dns.cname -e dns.a
+       $ tshark -r C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps\dns-txt.pcap -Y dns.cname or dns.a -T fields -e dns.qry.name -e dns.cname -e dns.a
        negative control on dns-basic.pcap: held (did not answer) — alias chain incomplete
 
   16 question(s), 0 failed, 0 negative control(s) leaked
@@ -88,8 +88,8 @@ tshark: TShark (Wireshark) 4.6.8 (v4.6.8-0-ge677bf052328).
 $ node tools/replay.mjs --pcap http-basic.pcap --message 2
 ------------------------------------------------------------------------------
 replay — captured request re-injected into a loopback listener
-  capture    %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\http-basic.pcap
-  extract    $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\http-basic.pcap -Y tcp.stream == 0 and tcp.len > 0 -T fields -e ip.src -e tcp.srcport -e tcp.dstport -e tcp.payload -e frame.number
+  capture    C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps\http-basic.pcap
+  extract    $ tshark -r C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps\http-basic.pcap -Y tcp.stream == 0 and tcp.len > 0 -T fields -e ip.src -e tcp.srcport -e tcp.dstport -e tcp.payload -e frame.number
   captured   TCP stream 0, frames 4,6 (192.0.2.10:49812 -> 80), 492 bytes, 2 complete message(s)
   selection  message 2 of 2
 
@@ -106,8 +106,8 @@ replay — captured request re-injected into a loopback listener
 $ node tools/replay.mjs --pcap odd-port.pcap --stream 1 --raw
 ------------------------------------------------------------------------------
 replay — captured request re-injected into a loopback listener
-  capture    %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\odd-port.pcap
-  extract    $ tshark -r %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\odd-port.pcap -Y tcp.stream == 1 and tcp.len > 0 -T fields -e ip.src -e tcp.srcport -e tcp.dstport -e tcp.payload -e frame.number
+  capture    C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps\odd-port.pcap
+  extract    $ tshark -r C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps\odd-port.pcap -Y tcp.stream == 1 and tcp.len > 0 -T fields -e ip.src -e tcp.srcport -e tcp.dstport -e tcp.payload -e frame.number
   captured   TCP stream 1, frames 14 (192.0.2.10:40011 -> 1337), 38 bytes, 0 complete message(s)
   selection  message 1 of 0
 
@@ -123,7 +123,7 @@ $ node tools/intercept.mjs
 net-reverse interception — CDP Fetch domain against a loopback origin
   target     http://127.0.0.1:54558 (in-process recorder, loopback only)
   browser    C:/Program Files/Google/Chrome/Application/chrome.exe
-             disposable profile %USERPROFILE%\AppData\Local\Temp\web-reverse-net-interceptor-32692-lmwn8o
+             disposable profile C:\Users\dwgx1\AppData\Local\Temp\web-reverse-net-interceptor-32692-lmwn8o
   server log:
     [echo-server] 2026-10-31T07:46:07.593Z GET /lab-page bytes=690 sha256=39b47bd853b2695b x-lab-marker=null body=""
     [echo-server] 2026-10-31T07:46:07.609Z GET /favicon.ico bytes=617 sha256=37c7d6e51ecf2122 x-lab-marker=null body=""
@@ -173,7 +173,7 @@ isolation check — trust stores and proxy configuration (read-only)
   host            dwgx
   machine Root    16 certificate(s)
   user Root       0 certificate(s)
-  lab CA          E:/<private-tree>-sandbox/tls/lab-ca.crt sha1:b94d97e115be06fc… -> present in a root store: false
+  lab CA          E:/hackerone-sandbox/tls/lab-ca.crt sha1:b94d97e115be06fc… -> present in a root store: false
   proxy           WinINET ProxyEnable=0/absent; WinHTTP:     Direct access (no proxy server).
 
   PASS  lab CA absent from the machine root store        lab CA sha1 b94d97e115be06fc… not found in 16 machine-root cert(s)
@@ -181,14 +181,14 @@ isolation check — trust stores and proxy configuration (read-only)
   PASS  no MITM-proxy-shaped CA in either root store     no mitmproxy/Reqable/Fiddler/Charles/Burp-shaped subject
   PASS  Windows system proxy is off (WinINET)            HKCU ProxyEnable = 0 (or unset)
   PASS  WinHTTP proxy is not configured                  Direct access (no proxy server).
-  PASS  no certificate landed since the baseline run     baseline recorded now (%USERPROFILE%\AppData\Local\Temp\net-reverse-lab\trust-baseline.json): machine 16, user 0
+  PASS  no certificate landed since the baseline run     baseline recorded now (C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\trust-baseline.json): machine 16, user 0
 
 ISOLATION HELD: zero lab certificates in the machine/user root stores, no system proxy.
 
 ==============================================================================
 net-reverse loop summary
 ==============================================================================
-  PASS  corpus generated (5 synthetic captures, hash-labelled)   label -> %USERPROFILE%\AppData\Local\Temp\net-reverse-lab\pcaps\corpus.json
+  PASS  corpus generated (5 synthetic captures, hash-labelled)   label -> C:\Users\dwgx1\AppData\Local\Temp\net-reverse-lab\pcaps\corpus.json
   PASS  16 questions answered, negative controls held          16 question(s), 0 failed, 0 negative control(s) leaked  (8.1s)
   PASS  captured POST re-injected byte-identically                 response HTTP/1.1 200 OK | Server: net-reverse-recorder/1.0 | Content-Type: application/js
   PASS  captured binary stream re-injected byte-identically        response

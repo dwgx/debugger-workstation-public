@@ -20,6 +20,25 @@
 # the thing being compared.
 evidence/probes/*.log -text
 
+# 2026-11-01: THE SAME ARGUMENT APPLIES TO CONTENT REWRITES, NOT ONLY TO CHECKOUT FILTERS.
+#
+# The history rewrite that took the machine's identity strings out of this repository applied its
+# substitution to EVERY blob, these files included, and replaced the real paths inside eleven
+# captured runs with `%USERPROFILE%` / `<private-tree>`. Eleven of the twenty-five `probe.sha256`
+# values stopped matching and R17 fired on all eleven.
+#
+# The bytes were restored from the pre-filter bundle and the registry was NOT edited. Recording a
+# new hash over a rewritten transcript would make the registry attest a run that never happened --
+# the log would say the probe printed `%USERPROFILE%` where it printed a real path -- which is the
+# same defect as the checkout filter above, one layer up. Evidence is what the run emitted; a
+# sanitised transcript is evidence of the sanitiser.
+#
+# So: ANY future content-rewrite pass -- `git filter-repo --replace-text`, a redaction script --
+# MUST exclude `evidence/probes/`. Those files are frozen on purpose. The publish trade is stated
+# rather than hidden: the evidence names the author's machine, and the alternatives are to ship it
+# as-is or to drop/regenerate it. There is no third option that keeps it evidence. R17 is the
+# detector if this is ever ignored again; it fired on all eleven, which is how this was found.
+
 # Same reasoning, narrower: the two control scripts are compared by sha256 in review and are
 # run by exact path. Leaving them to autocrlf is harmless today (a PS1 runs either way) but the
 # rule is one line and the class of bug is not worth reopening.
