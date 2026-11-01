@@ -27,6 +27,14 @@ Exit 0 clean, 1 violations, 2 could not run -- and 2 now also covers "could not 
 value", because skipping a claim and still printing OK is this file's own failure mode wearing a
 stricter-looking coat. An error is never a zero.
 
+ONE NAMED EXCEPTION, and it exists because the wiki is a PRIVATE SIBLING TREE that a public
+checkout does not have. When the wiki directory is absent, the run prints
+`SKIP: no wiki at <path> (this is expected in a public checkout)`, still prints the figures it can
+derive from the registry alone, and exits 0 -- it does NOT print the OK line, because nothing was
+compared to prose. The skip cannot be widened into "the wiki is empty": a wiki that EXISTS but
+carries no scannable page is still exit 2, so the only thing that can degrade to a skip is an
+ABSENT tree.
+
 Run:  python scripts/doc-facts.py --repo <repo>
 """
 from __future__ import annotations
@@ -381,7 +389,9 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo", default=str(pathlib.Path(__file__).resolve().parents[1]))
     ap.add_argument("--wiki", default=None,
-                    help="wiki repo root; defaults to the sibling <project>/<private-tree>")
+                    help="wiki repo root; defaults to <private-tree>, a private sibling tree "
+                         "that is absent in a public checkout (an absent wiki is a SKIP, an "
+                         "empty one is a failure)")
     args = ap.parse_args()
 
     repo = pathlib.Path(args.repo)
@@ -396,16 +406,30 @@ def main() -> int:
     # nothing -- see _validator_number.
     _REPO = repo
 
-    # Measured: the first default guessed repo.parent.parent/"Project"/"<private-tree>", which from
-    # <repo> resolves to D:\Software\Project\<private-tree> -- a path
-    # that does not exist, so the gate refused with exit 2 rather than silently checking
-    # nothing. A wrong default would have produced a gate that only ran when somebody
-    # remembered an argument, which is the same always-green failure this script exists to
-    # catch. An explicit --wiki overrides.
+    # THE WIKI MAY SIMPLY NOT BE HERE, and until 2026-11-01 that made this script unrunnable.
+    # The default is a PLACEHOLDER: history was rewritten so that no path into the private tree
+    # survives, and `<`/`>` cannot name a directory on Windows, so `is_dir()` is False by
+    # construction in a public checkout. The previous line here exited 2, which meant every
+    # clone of this repository carried a gate that could only refuse -- the same always-green
+    # failure this file exists to catch, wearing a "strict" coat, because a check that never
+    # runs never goes red.
+    #
+    # So an ABSENT wiki is a named SKIP: the line is printed, the registry-derived figures below
+    # still print, and the exit is 0. What stops that from being a hole is the page-count branch
+    # right after `targets`: a wiki that EXISTS and carries nothing to scan is exit 2. Absent and
+    # empty are different facts and the skip is only allowed to mean the first one.
+    # Measured 2026-11-01: `pathlib.Path("<private-tree>").is_dir()` returns False on this host
+    # rather than raising on the illegal characters, so no exception guard is needed here.
     wiki = pathlib.Path(args.wiki or r"<private-tree>")
-    if not wiki.exists():
-        print(f"doc-facts: cannot run, no wiki at {wiki}", file=sys.stderr)
-        return 2
+    wiki_present = wiki.is_dir()
+    if not wiki_present:
+        print(f"SKIP: no wiki at {wiki} (this is expected in a public checkout)")
+        if args.wiki:
+            # --wiki was NAMED and still is not a directory. The line above is true but this
+            # reader more likely has a typo than a public checkout, and the exit code can no
+            # longer say so. Say it here, the one place the two cases are distinguishable.
+            print(f"doc-facts: note -- --wiki was given as {wiki} and is not a directory; "
+                  f"nothing was checked against prose.", file=sys.stderr)
 
     # SCOPE, deliberately narrow. Two classes are excluded because they are RECORDS OF WHAT WAS
     # TRUE WHEN WRITTEN, not live prose: `.agent/research/` (dated survey reports -- the
@@ -414,7 +438,7 @@ def main() -> int:
     # reasoning governs struck-through lines, which live_lines() already skips. A gate that
     # cries wolf on archived truth is the failure this script exists to prevent, and it was
     # measured: the first run reported 16 violations of which 2 were exactly that.
-    SKIP = {".git", ".agent", "literature"}
+    SKIP_DIRS = {".git", ".agent", "literature"}
     BACKUP_SUFFIXES = re.compile(r"(~\d*|\.bak|\.orig|\.swp|\.rej)$")
     # EDITOR BACKUPS ARE NOT PAGES. Measured 2026-10-04: a transient `INDEX.md~1` left by
     # whatever last wrote the file was scanned as a wiki page and reported a stale numeric
@@ -423,14 +447,25 @@ def main() -> int:
     # belongs here rather than in a cleanup someone has to remember. `~`, `.bak`, `.orig`,
     # `.swp` and a leading dot are all excluded; none of them is content anyone cites.
     targets = sorted(p for p in wiki.rglob("*.md")
-                     if not SKIP.intersection(p.relative_to(wiki).parts)
+                     if not SKIP_DIRS.intersection(p.relative_to(wiki).parts)
                      and not BACKUP_SUFFIXES.search(p.name)
                      and not p.name.startswith("."))
+
+    # ABSENT IS A SKIP; EMPTY IS A FAILURE, and this branch is what keeps the skip from becoming
+    # an off switch. Without it the two cases would produce the same run -- zero files, zero
+    # claims, exit 0 -- so "somebody pointed --wiki at the wrong directory" and "the wiki lost
+    # every page" would both read as a pass. The directory exists, so the caller's intent was to
+    # check a wiki; finding nothing in it is the one outcome that must not be silent.
+    if wiki_present and not targets:
+        print(f"doc-facts: cannot run, no wiki pages under {wiki} -- the directory exists but "
+              f"carries nothing scannable (no .md outside .git/.agent/literature and editor "
+              f"backups). An empty wiki is a broken wiki, not an absent one.", file=sys.stderr)
+        return 2
 
     # HISTORY IS DECLARED BY THE DOCUMENT, NOT GUESSED BY THE GATE. A session ledger records
     # what was true on a date and quotes old figures on purpose -- SEMANTICS.md's own contract
     # is "编年止于 2026-10-21。更正用〔更正〕块，不改历史行", so the gate cannot be answered by
-    # rewriting those lines, and the alternative (a directory in SKIP) would also stop checking
+    # rewriting those lines, and the alternative (a directory in SKIP_DIRS) would also stop checking
     # the live handoff that sits in the same directory. Measured 2026-10-31: all five violations
     # this gate reported were such quotes under `_agent-history/` and none was a live claim.
     # So the file opts out itself, and the summary NAMES every file that did -- an exclusion
@@ -514,17 +549,22 @@ def main() -> int:
           f"{_unverified_evidence(reg)} unverified, "
           f"{_runnable_controls(reg)} runnable controls, {_plan_controls(reg)} declared plans")
 
-    def _n(key):
-        v = _validator_number(key)
-        return "UNREADABLE" if v is None else v
+    if wiki_present:
+        def _n(key):
+            v = _validator_number(key)
+            return "UNREADABLE" if v is None else v
 
-    print(f"doc-facts: validator -- {_n('rules')} numbered rules "
-          f"({_n('rules_total')} in RULES), "
-          f"{_n('cases')} selftest cases, both read by running it")
-    print(f"doc-facts: scanned {len(targets)} wiki files, {checked} live numeric claims checked")
-    if history_only:
-        print(f"doc-facts: {len(history_only)} file(s) declared history-only, NOT scanned: "
-              + ", ".join(str(p.relative_to(wiki)) for p in history_only))
+        # The validator's own counts are NOT read on the skip path: nothing would compare them to
+        # prose, and reading them costs a subprocess that runs the validator's own selftest (~20 s
+        # on this tree). A figure nobody checks does not belong in a run that checked nothing.
+        print(f"doc-facts: validator -- {_n('rules')} numbered rules "
+              f"({_n('rules_total')} in RULES), "
+              f"{_n('cases')} selftest cases, both read by running it")
+        print(f"doc-facts: scanned {len(targets)} wiki files, "
+              f"{checked} live numeric claims checked")
+        if history_only:
+            print(f"doc-facts: {len(history_only)} file(s) declared history-only, NOT scanned: "
+                  + ", ".join(str(p.relative_to(wiki)) for p in history_only))
     if violations:
         print(f"doc-facts: {len(violations)} STALE CLAIM(S)\n")
         for v in violations:
@@ -544,6 +584,15 @@ def main() -> int:
               + (f"  validator: {_VALIDATOR.get('error', 'unavailable')}" if _VALIDATOR
                  else ""))
         return 2
+    if not wiki_present:
+        # NOT the OK line. Nothing above was compared to prose, and a run that says "every live
+        # numeric claim matches the registry" after scanning no file is exactly the overstatement
+        # the header of this file complains about in other gates. Exit 0 because the caller asked
+        # for a check this checkout cannot provide, and the SKIP line said so before any figure
+        # printed -- a skip that announced itself is not the same thing as a green.
+        print("doc-facts: SKIP -- no wiki was scanned, so no claim was compared to prose; "
+              "the registry figures above are the whole result.")
+        return 0
     print("doc-facts: OK, every live numeric claim matches the registry.")
     return 0
 
