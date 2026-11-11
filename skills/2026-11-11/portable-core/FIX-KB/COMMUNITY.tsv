@@ -1,0 +1,7 @@
+# OWNER: parent (took over stalled PackageDesign slice) | package/FIX-KB/COMMUNITY.tsv
+id	symptom	cause	fix	verify_command	source	date	trust	status
+CM1	hy4worker subagent stalls 13min with zero files	model lane slow-writer/stall under mechanical write jobs	parent cancels + takes over, or same-name resume; never spawn a twin	grep -c 'took over stalled' package/SKILL.md	prior waves 2026-11-11	2026-11-11	community-unverified	open
+CM2	IncompleteRead(0 bytes read) upstream abort	transport failure, zero files landed	same-name RESUME with incremental landing, no re-dispatch	grep -c 'IncompleteRead' F:/GENESIS-ARCHIVE/10-STORE/12-RESEARCH-RUNS/debuggerstation-skill-revival-ai-selfdeploy-20261111/LEDGER.md	PackageDesign abort 2026-11-11	2026-11-11	community-unverified	open
+CM3	svn-like 'W/... path not found'	brief paths resolved relative to cwd	always use absolute W / R / ROOT roots	grep -c 'F:/GENESIS-ARCHIVE' package/SELF-DEPLOY.md	prior waves 2026-11-11	2026-11-11	community-unverified	open
+CM4	core.autocrlf=true makes manifest sha mismatch	worktree CRLF vs git blob LF	verify with LF-normalized bytes, never push a CRLF 'fix'	git -C D:/Software/Tool/WorkStation/debugger config --get core.autocrlf	prior retry 2026-11-11	2026-11-11	community-unverified	open
+CM5	negation-regex false positive 'push_executed=YES'	'no git push was executed' matched	use 4 authoritative state surfaces + fake-push negative control	grep -c 'negation' package/SELF-REPAIR.md	prior wave P09/C-001 2026-11-11	2026-11-11	community-unverified	open
