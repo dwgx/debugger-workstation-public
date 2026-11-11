@@ -1,0 +1,6 @@
+# OWNER: parent (main line) | setukou-20261111/v5/results.tsv
+# autoresearch measurable contract — git mechanism DISABLED (hard floor: product trees read-only, no branch, no reset, no push)
+# header: iteration	commit_or_candidate	metric	claims_total	status	description	as_of
+0	baseline	9	295	baseline	initial state from v4/real-verify/REAL-VERIFY.tsv: real_verified=9, blockers=286, RELEASE_GATE=RED	2026-11-11
+1	round2-Q5-12promotions	21	295	keep	Q5 converted 12 SM:* DECLARED_UNVERIFIED -> RUNNABLE_REAL_VERIFIED with 12 REAL bounded receipts + tamper RED controls; Q3/Q4 promotions=0 honest; claims_total frozen 295	2026-11-11
+2	round2-Q2-6promotions	27	295	keep	Q2 converted 6 TR:S-* DECLARED_UNVERIFIED -> RUNNABLE_REAL_VERIFIED with 6 REAL bounded receipts + 6 negative controls + 47 probe receipts; 6 honest non-zero exits recorded; claims_total frozen 295	2026-11-11

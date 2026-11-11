@@ -1,0 +1,16 @@
+OWNER: researcher-q5 | setukou-20261111/v5/slices/q5-absorption/receipts/
+Q5 NEW_BEHAVIOUR_GATE REAL receipt (SYNTHETIC fixture, local stdlib only)
+receipt_for_lesson_id : RR-GATE-1
+command          : "C:/Program Files/Git/usr/bin/timeout.exe" 45 python -X utf8 -B setukou-20261111/v5/slices/q5-absorption/absorb_check.py
+cwd              : F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+started_utc      : 2026-11-10T23:15:12Z
+finished_utc     : 2026-11-10T23:15:12Z
+exit             : 0
+expected_exit   : 0
+fixture          : gate1-envelope.json (SYNTHETIC, sha256 sidecar verified)
+network          : none | downloads: none | third_party_execution: none | product_tree_writes: 0
+----- STDOUT -----
+[RR-GATE-1] verdict=GREEN marker=GATE1_ENVELOPE_VALID negative_control_red_capable=True real_call=True error_field_present=True subject_hash_nonempty=True
+----- STDERR -----
+(empty)
+----- END -----

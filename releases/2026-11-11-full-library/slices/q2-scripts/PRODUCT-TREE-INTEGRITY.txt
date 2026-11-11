@@ -1,0 +1,14 @@
+# OWNER: researcher-q2 | product-tree write guard (6 REAL promotion positives re-run)
+as_of: 2026-11-10T23:24:32+00:00
+before_sha256: dcdb74af0ea989ddbeeac605fc4a10f16d89bc4e9d003fd415780f40ba08e181
+after_sha256: dcdb74af0ea989ddbeeac605fc4a10f16d89bc4e9d003fd415780f40ba08e181
+equal: True
+product_tree_writes: 0
+cwd: F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+commands_run:
+  C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\Software\Tool\WorkStation\debugger\scripts\check-requires-tools.py --registry F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110\setukou-20261111\v5\slices\q2-scripts\fixtures\syn-positive.json --only syn.positive
+  C:/Program Files/Git/usr/bin/timeout.exe 45 C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NoProfile -ExecutionPolicy Bypass -File D:\Software\Tool\WorkStation\debugger\scripts\gate.ps1 -Action Selftest
+  C:/Program Files/Git/usr/bin/timeout.exe 45 C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NoProfile -ExecutionPolicy Bypass -File D:\Software\Tool\WorkStation\debugger\scripts\mission.ps1 -Action Selftest
+  C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\Software\Tool\WorkStation\debugger\scripts\owner-attest.py --selftest
+  C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\Software\Tool\WorkStation\debugger\scripts\reachability-report.py --selftest
+  C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\Software\Tool\WorkStation\debugger\scripts\verify-tools-manifest.py --selftest

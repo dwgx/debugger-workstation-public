@@ -1,0 +1,20 @@
+claim_id: TR:S-owner-attest.py
+command: C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\Software\Tool\WorkStation\debugger\scripts\owner-attest.py --selftest
+cwd: F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+started_utc: 2026-11-10T23:24:24+00:00
+finished_utc: 2026-11-10T23:24:24+00:00
+exit: 0
+expected_marker: SELFTEST 9/9 PASSED
+--- stdout (10 lines) ---
+  PASS  valid flow passes (challenge -> Owner reply -> mint -> sidecar + ledger)  nonce=fd32d0ff5f, sidecar + grant.json + ledger seq 1 written
+  PASS  replay: a used nonce refuses                                              exit 8 (want 8): REFUSED (exit 8): nonce fd32d0ff5f is already used (single-use); run Challenge again for a fresh one
+  PASS  stale nonce refuses                                                       exit 9 (want 9): REFUSED (exit 9): nonce aac4dea502 expired: challenged 2026-11-10T22:53:24Z with TTL 30 min; run Challenge again and ask the Owner to answer the fresh line
+  PASS  nonce only in an assistant message refuses                                exit 11 (want 11): REFUSED (exit 11): nonce 5ebf20f999 does not appear in any user-attribution message newer than the challenge in C:\Users\dwgx1\AppData\Local\Temp\owner-attest-selftest-p4aji8rb\e3\sessions\test-channel/*.jsonl (a record needs message.role=='user' AND message.attribution=='user' AND message.timestamp > the challenge); an assistant message does not count
+  PASS  reply older than the challenge refuses                                    exit 11 (want 11): REFUSED (exit 11): nonce a7ed5ecb77 does not appear in any user-attribution message newer than the challenge in C:\Users\dwgx1\AppData\Local\Temp\owner-attest-selftest-p4aji8rb\e8\sessions\test-channel/*.jsonl (a record needs message.role=='user' AND message.attribution=='user' AND message.timestamp > the challenge); an assistant message does not count
+  PASS  sentence missing the target name refuses                                  exit 12 (want 12): REFUSED (exit 12): the sentence names neither the target basename (c01-stringobf.exe) nor the case_id (case-valid); a pronoun does not authorise an object
+  PASS  unknown channel refuses                                                   exit 10 (want 10): REFUSED (exit 10): unknown channel 'no-such-channel-xyz': no session directory under C:\Users\dwgx1\AppData\Local\Temp\owner-attest-selftest-p4aji8rb\e6\sessions matches it
+  PASS  tampered ledger detected by Verify                                        exit 14 (want 14):   CHAIN: BROKEN -- entry 1 (seq 1) sha mismatch: stored 9e9816b656eb5d90... recomputed 8b1702a2d163a894... (a field was edited after the chain was written)
+  PASS  Verify classifies ledgered / pre-attest / UNLEDGERED                      exit 0: GRANTS: 3 grant.json under C:\Users\dwgx1\AppData\Local\Temp\owner-attest-selftest-p4aji8rb\e1\missions -- 1 ledgered, 1 pre-attest (mtime before 2026-11-10T23:24:24Z), 1 UNLEDGERED
+SELFTEST 9/9 PASSED
+--- stderr (0 lines) ---
+

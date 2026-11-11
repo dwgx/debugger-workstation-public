@@ -1,0 +1,70 @@
+claim_id: TR:S-gate.ps1
+command: C:/Program Files/Git/usr/bin/timeout.exe 45 C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NoProfile -ExecutionPolicy Bypass -File D:\Software\Tool\WorkStation\debugger\scripts\gate.ps1 -Action Selftest
+cwd: F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+started_utc: 2026-11-10T23:24:00+00:00
+finished_utc: 2026-11-10T23:24:05+00:00
+exit: 0
+expected_marker: GATE SELFTEST OK
+--- stdout (60 lines) ---
+  (conforming registry: 0 of the ten boundary entries needed a synthesised gate_prohibitions block; the rest carry the registry's own)
+  (registry carries 38 prohibitions: 25 enforceable, 13 unenforceable -- measured, not asserted)
+  PASS  mint a grant with an Owner word and a checkable provenance                         exit=0
+  PASS  refuse with NO Owner word                                                          exit=3
+  PASS  refuse self-asserted provenance                                                    exit=4
+  PASS  refuse an empty provenance                                                         exit=4
+  PASS  refuse a target that does not exist                                                exit=3
+  PASS  a capability inside the grant is allowed                                           exit=0
+  PASS  a capability OUTSIDE the grant is refused                                          exit=3
+  PASS  refuse a grant whose allowed-set was edited in place                               exit=5
+  PASS  CRITICAL: a forged capability with a RECOMPUTED hash is still refused              exit=3
+  PASS  CRITICAL: a grant over REPLACED target bytes is refused                            exit=5
+  PASS  G4b: a fresh grant contains no absent or blocked capability                        exit=0
+  PASS  G4b: a BLOCKED capability is refused at Check, by state                            exit=3
+  PASS  G4b: an ABSENT capability is refused at Check, by state                            exit=3
+  PASS  G-FS: identity BLANKED and the hash recomputed is refused                          exit=6
+  PASS  G-FS: identity REPLACED with new words and the hash recomputed is refused          exit=6
+  PASS  G4: a grant whose target is no longer on disk is refused                           exit=5
+  PASS  G5: a grant replayed onto a DIFFERENT object is refused                            exit=6
+  PASS  G7: Check against a caller-substituted registry is refused                         exit=6
+  PASS  G10: a mint that names another registry is refused                                 exit=6
+  PASS  G10: a Check that names another registry is refused                                exit=6
+  PASS  G10: nothing was written by the refused mint                                       exit=0
+  PASS  G10: the selftest-only override still redirects the gate                           exit=0
+  PASS  G10: a grant minted under the override does not survive a plain -File Check        exit=0
+  PASS  G8: escalating on a BLANK Owner word is refused and writes nothing                 exit=3
+  PASS  G8: a real Owner word still escalates and the grant still checks                   exit=0
+  PASS  G9: escalating into a class this gate never defined is refused and writes nothing  exit=3
+  PASS  G9: a BLANK escalation class is refused, not recorded as an empty escalation       exit=3
+  PASS  G9: a grant whose escalation class was restated AND re-sealed is still refused     exit=6
+  PASS  G9: an escalation that RECORDS no escalation is refused                            exit=3
+  PASS  a grant carrying unknown fields (attach_pid / attach_to) is refused                exit=5
+  PASS  a grant with its containment class blanked is refused                              exit=6
+  PASS  a grant minted under one containment class, restated as another, is refused        exit=6
+  PASS  refuse a mint with NO containment class                                            exit=3
+  PASS  G11: DELETING gate_must_not_delegate's mechanism is refused and NAMES the gap      exit=6
+  PASS  G11: deleting the PROSE while the mechanism survives is refused                    exit=6
+  PASS  G11: a prohibition claiming a sentence the entry no longer states is refused       exit=6
+  PASS  G11: a prose sentence NO prohibition claims is refused                             exit=6
+  PASS  G11: a prohibition code outside the vocabulary is refused                          exit=6
+  PASS  G11: a prohibition that covers no sentence is refused                              exit=6
+  PASS  G11: an operand value the gate cannot evaluate is refused, not ignored             exit=6
+  PASS  G11: --unsafe is refused and the refusal NAMES the token it matched                exit=6
+  PASS  G11: a flag that merely CONTAINS a forbidden token is allowed                      exit=0
+  PASS  G11: a clean declared invocation still checks ok                                   exit=0
+  PASS  G11: a vocabulary prohibition with NO stated command line is refused               exit=6
+  PASS  G11: --no-llm is ALLOWED where --llm is forbidden                                  exit=0
+  PASS  G11: --llm is refused where --no-llm is allowed                                    exit=6
+  PASS  G11: Interceptor.replace in a declared invocation is refused                       exit=6
+  PASS  G11: a forbidden token hidden in the registry's own probe.command is refused       exit=6
+  PASS  G11: a ZIP container is refused for a capability that parses PE                    exit=6
+  PASS  G11: a PE target is allowed for the same capability                                exit=0
+  PASS  G11: a target under NEITHER the repo root NOR %TEMP% is refused                    exit=6
+  PASS  G11: -KeepProjects against a NON-%TEMP% target is refused                          exit=6
+  PASS  G11: the SAME target WITHOUT -KeepProjects is allowed                              exit=0
+  PASS  G11: the boundary counts are REPORTED, unenforceable ones included                 exit=0
+  PASS  G11: every capability's recorded probe satisfies its OWN prohibitions              exit=0
+  PASS  G11: the selftest synthesises a block ONLY for an entry that has none              exit=0
+
+GATE SELFTEST OK: 56 refusals and grants all behaved.
+--- stderr (0 lines) ---
+

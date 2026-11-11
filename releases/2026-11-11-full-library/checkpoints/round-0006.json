@@ -1,0 +1,23 @@
+{
+  "$comment": "FINAL checkpoint — STOP-EVIDENCE, synthesis written, no dispatchable question remains",
+  "owner": "parent (main line)",
+  "round": 6,
+  "type": "SYNTHESIS-STOP",
+  "as_of": "2026-11-11",
+  "stop_code": "STOP-EVIDENCE",
+  "stop_reason": "All 8 falsifiable questions answered+ACCEPTED; 295/295 unreachable by construction (OWNER_GATED 151 + G-004 126 + MISSING 15 + DECLARED 102 upper bound); synthesis budget reserved and used; no new evidence obtainable without Owner decisions or new scope",
+  "workers": {"Q1": "ACCEPTED", "Q2": "ACCEPTED", "Q3": "ACCEPTED", "Q4": "ACCEPTED", "Q5": "ACCEPTED", "Q6": "ACCEPTED", "Q7": "ACCEPTED", "Q8": "ACCEPTED"},
+  "waves": {"v2": "5/5", "v3": "5/5", "v4": "6/6", "final_verify": "FINAL ALL_GREEN exit 0", "waves_accepted": 16},
+  "model_lane": "hy4worker (hy4free only), NO twin, NO mixed lanes",
+  "metric": {"claims_total": 295, "frozen": true, "real_verified": 27, "declared_unverified": 102, "owner_gated": 151, "missing": 15, "blockers": 268, "RELEASE_GATE": "RED", "COMPLETENESS_VERDICT": "NOT_COMPLETE", "push_executed": "NO", "results.tsv": "baseline 9 -> keep 21 (Q5 +12 SM) -> keep 27 (Q2 +6 TR:S), 2 separate keeps"},
+  "research_totals": {"sources": 122, "claims": 102, "all_claims_have_source_ids": true, "questions_answered": "8/8"},
+  "independent_audit": {"actor": "Q6 (different)", "false_passes": 0, "denominator_drift": 0, "duplicate_claims": 0, "found": ["X-001", "Q2 GAP (later resolved by Q2 delivery)"], "post_fix_status": "RESOLVED by parent decision, Q6 accepted bytes NOT rewritten"},
+  "contradictions_closed": ["C-001", "X-001", "G-Q3-1"],
+  "final_verifies_parent_rerun": {"Q1": "exit 0 COMPLETENESS_VERDICT=NOT_COMPLETE", "Q2": "exit 0 VERDICT=PASS", "Q3": "exit 0 VERDICT=OK (twice, post X-001 + G-Q3-1)", "Q4": "exit 0 VERDICT=GREEN", "Q5": "exit 0 VERDICT=GREEN", "Q6": "exit 0 VERDICT=GREEN", "Q7": "exit 0 VERDICT=BOUNDED_RUN_OK", "Q8": "exit 0 VERDICT=NOT_COMPLETE_RELEASE_GATE_RED_BOUNDED_STOP_OK", "final_verify.py": "exit 0 FINAL ALL_GREEN"},
+  "red_line_scan": {"v5_files": 125, "pyc": 0, "token_like": 0, "literal_push_cmds": 0, "credential_value_files": 0, "product_tree_writes": 0, "external_actions_executed": "0/36", "product_workstation": "7dfabdb/11", "product_debugger": "2c25f26/2"},
+  "deliverables": ["SYNTHESIS.md", "OPEN-QUESTIONS.md", "LEDGER.md (FINAL block)", "MASTER-INDEX.md", "QUESTION-TREE.md", "checkpoints/round-0000..0006.json", "research/Q1..Q8/*", "v5/slices/q1..q8-*/*"],
+  "open_gaps": ["G-001 OWNER_GATED 151", "G-002 DECLARED 102", "G-003 MISSING 15", "G-004 126 unassigned", "G-Q5-1..4", "G-PUB-1 publication fork (ONE Owner sentence)", "G-PUB-2 36 external actions", "G-PUB-3 condition (e) not remotely executed"],
+  "publication": {"topology_A_decided": true, "push_executed": "NO", "gh_write": "NO", "visibility_change": "NO", "owner_sentence_needed": "发全量 / 只发 learning-kit / 都不发", "no_decision": "legal default, keep local staged, do NOT publish, do NOT lose data"},
+  "root_answer": "NOT all done; real_verified 27/295; RELEASE_GATE=RED; COMPLETENESS_VERDICT=NOT_COMPLETE; push_executed=NO; research loop STOP-EVIDENCE bounded-complete, weapon library NOT 295/295 REAL",
+  "budget_used": {"rounds": 6, "minutes_estimate": 80, "tokens_estimate_method": "ceil(chars/4)", "synthesis_reserved": true, "synthesis_used": true}
+}

@@ -1,0 +1,104 @@
+command: C:/Program Files/Git/usr/bin/timeout.exe 45 C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NoProfile -ExecutionPolicy Bypass -File D:\Software\Tool\WorkStation\debugger\scripts\mission.ps1 -Action Selftest
+cwd: F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+started_utc: 2026-11-10T23:19:36+00:00
+finished_utc: 2026-11-10T23:19:55+00:00
+exit: 0
+--- stdout (94 lines) ---
+[mission] REFUSED (2): no object named
+[mission]   The mission must name an object. -Target is required; nothing runs.
+[mission] REFUSED (2): unknown question type 'Q99.nope'
+[mission]   the registry declares: Q1.identify, Q2.locate, Q3.behaviour, Q4.data, Q5.vuln-shape, Q6.crypto, Q7.origin
+[mission] REFUSED (2): containment unstated or unnameable
+[mission]   l2-gate.md S13. Refuse to guess.
+==============================================================================
+mission c01-stringobf-20261110-231937
+  object        D:\Software\Tool\WorkStation\debugger\crackme-corpus\out\c01-stringobf.exe
+  question      [Q2.locate] where is the input validation
+  containment   station_under_named_process_rule
+  case dir      C:\Users\dwgx1\AppData\Local\Temp\mission-selftest-faca2f01\c01-stringobf-20261110-231937
+==============================================================================
+[mission] REFUSED (4): provenance not declared by the Owner
+[mission]   No subprocess was spawned. The control held.
+[mission] REFUSED (6): caller-supplied registry refused
+[mission]   Refusing -Registry 'C:\Users\dwgx1\AppData\Local\Temp\not-the-real-registry.json'. The capability registry is the instrument's own calibration; a caller that may substitute it can also declare a blocked capability observed, and every gate that reads `state` then reads the caller instead of the host.
+[mission] REFUSED (2): both -MaxSteps and -MaxRounds were supplied
+[mission]   -MaxSteps 6 and -MaxRounds 3 are two spellings of one cap, and resolving them by a preference order would silently discard one of two numbers the caller typed. Pass one of them. No mission ran and no case directory was created.
+  PASS  N1a intake halts with NO object, and spawns nothing                                                 got=2
+  PASS  N1b intake halts on an unknown question type                                                        got=2
+  PASS  N1c intake halts when containment is unstated (l2-gate S13)                                         got=2
+  PASS  N1d refuse an object whose provenance the Owner did not declare                                     got=4
+  PASS  N4 overclaim must NOT reach confirmed from a single instrument                                      got=unresolved
+  PASS  verdict tier is computed, never authored by the caller                                              got=confirmed
+  PASS  bounded_claim: "completely safe, no vulnerabilities of any kind" is refused                         got=unresolved
+  PASS  discharged: naming an ABSENT guard does not discharge anything                                      got=unresolved
+  PASS  discharged: an empty finding with no named guard is NOT an answer                                   got=unresolved
+  PASS  discharged: naming a guard that is not in the registry does not count                               got=unresolved
+  PASS  independence: two decompilers from different tools are NOT independent                              got=unresolved failed=reachability+independence
+  PASS  termination: nothing ran and budget is gone is EXHAUSTED, not a clean result                        got=EXHAUSTED
+  PASS  termination: an EXHAUSTED verdict names the guards it did not run                                   got=named
+  PASS  termination: real facts with rounds remaining is CONTINUE, not DONE                                 got=CONTINUE
+  PASS  a failed round contributes no facts to the verdict                                                  got=unresolved
+  PASS  C1 the complete, confident, wrong answer is REFUSED (all facts invented, no tool ran, all IDA)      got=unresolved failed=process+reachability+independence+bounded_claim+discharged
+  PASS  gate independence: two labels from ONE tool (IDA) are one instrument                                got=unresolved failed=independence
+  PASS  gate independence: IDA, IDA, then Ghidra is ONE opinion held twice, not three hops                  got=unresolved failed=independence
+  PASS  gate independence: relabelling ONE capability cannot manufacture a family                           got=live=confirmed failed= relabelled=unresolved failed=independence
+  PASS  gate independence: two instruments in DIFFERENT families DO reach confirmed                         got=confirmed families=2 instruments=2
+  PASS  gate discharged: naming an OBSERVED guard that NEVER RAN fails discharged alone                     got=unresolved failed=discharged
+  PASS  gate bounded_claim: "however" with no grounding is not a bound                                      got=unresolved failed=bounded_claim
+  PASS  gate bounded_claim: an absence claim ("no X at all") is refused however it is phrased               got=unresolved failed=bounded_claim
+  PASS  gate reachability: two unrelated capabilities with nothing consumed fail reachability alone         got=unresolved failed=reachability
+  PASS  gate bounded_claim: a located Q2.locate claim is bounded by scope and needs no limitation word      got=confirmed failed=
+  PASS  gate bounded_claim: a claim whose question type NO evidence capability declares is out of scope     got=unresolved failed=bounded_claim
+  PASS  gate discharged: with a FINDING, naming no guards is accepted (the conditional holds)               got=confirmed failed=
+  PASS  gate discharged: with NO finding, naming no guards is refused (the conditional holds)               got=unresolved failed=process+reachability+independence+bounded_claim+discharged
+  PASS  gate reachability: a capability that consumed a fact NOBODY produced fails reachability alone       got=unresolved failed=reachability
+  PASS  gate termination: a FAILED round forbids DONE even with usable facts and budget left                got=EXHAUSTED
+  PASS  gate termination: DONE is unreachable once the budget is gone with an OBSERVED capability unrun     got=EXHAUSTED
+  PASS  gate process: a FABRICATED evidence id that resolves to no round fails process alone                got=unresolved failed=process
+  PASS  gate process: an EMPTY evidence id fails process alone                                              got=unresolved failed=process
+  PASS  a caller-supplied -Registry is REFUSED, not honoured                                                got=6
+  PASS  gate reachability: two rounds that produced NO typed facts fail reachability alone                  got=unresolved failed=reachability
+  PASS  gate observation: a fact from an ABSENT capability fails observation alone                          got=unresolved failed=observation
+  PASS  gate observation: a capability that is NOT IN THE REGISTRY fails observation alone                  got=unresolved failed=observation
+  PASS  gate bounded_claim: an unbounded safety claim fails bounded_claim alone                             got=unresolved failed=bounded_claim
+  PASS  gate uncertainty: an unstated question type fails uncertainty alone                                 got=unresolved failed=uncertainty
+  PASS  gate discharged: naming a guard that could not have run fails discharged alone                      got=unresolved failed=discharged
+  PASS  gate process: nothing succeeded, and `process` is named the failed gate                             got=unresolved process=False
+  PASS  route: every question type the registry declares either routes, or refuses by NAME                  got=silent=0 
+  PASS  route: Q6.crypto routes the capability the registry assigns it, by name                             got=routed
+  PASS  route: an absent or blocked capability is NEVER routed, on any question type                        got=routed-while-unavailable=0 
+  PASS  route: the question type comes from the registry, and undeclaring one empties its route             got=live=routed undeclared=empty
+  PASS  route: a question type whose only capability is absent refuses and names it                         got=steps=0 names=True exit-would-be=2
+  PASS  route: a hard edge puts its producer ahead of the consumer, and says which fact                     got=producer-first=True via-edge=True
+  PASS  route: a capability whose runner binds a fact nothing produces is DROPPED, not planned              got=routed=False reason=unmet_hard_edge
+  PASS  route: an input the registry marks unproduced blocks the capability that needs it                   got=routed=False reason=unproduced_required_input
+  PASS  route: an argv slot nothing produces is VISIBLE in the plan, not run and not hidden                 got=state=skipped_unmet_input reason-stated=True
+  PASS  route: a runner-provided scratch dir is PLANNED, not skipped for want of a producer                 got=state=planned
+  PASS  route: a capability is in the mission for a STATED reason, and the order is stable                  got=unsound=0 
+  PASS  host: the station is MEASURED here, not assumed -- both axes answered with real numbers             got=ram-positive=True free-is-subset-of-total=True volume=True disk-positive=True errors=0
+  PASS  host: the boundary is `>` and not `>=` -- an EXACT fit is allowed, one MB short is REFUSED BY NAME  got=exact-fit-routed=True ram-reason=host_ram_short disk-reason=host_disk_short shortfall-is-named=True
+  PASS  host: an axis the station could not MEASURE refuses EVERY capability that declares on it            got=has-candidates=True all-refused=True reason=host_measurement_unavailable names-the-error=True healthy-axis-unaffected=True
+  PASS  host: a capability declaring NO requirement is never blocked, even on an unmeasurable axis          got=blocked=no
+  PASS  host: on THIS station every declared requirement fits, so the check refuses nothing real            got=nothing-blocked=True max-declared-ram-fits=True max-declared-disk-fits=True 
+  PASS  host: the PLAN ARTIFACT carries the machine the decision was made on                                got=plan-written=True ram=True disk=True volume=True names-its-source=True names-what-it-did-not-gate=True
+  PASS  budget: a cap that truncates the plan NAMES the steps it dropped                                    got=dropped=two,four
+  PASS  budget: a cap that is not reached drops nothing                                                     got=dropped=0
+  PASS  termination_reason: a truncated mission and a finished one are DIFFERENT values                     got=distinct=budget_exhausted/steps_completed
+  PASS  termination_reason: the cap is exhaustion only when it actually DROPPED a step                      got=reason=steps_completed truncated=False
+  PASS  termination_reason: every other loop exit is named, and none of them reads as finished              got=named=budget_exhausted,grant_halt,registry_changed,precondition_failed finished=0
+  PASS  termination_reason: an exit this file does not name is visible, not reported as finished            got=reason=unrecognised_halt halt=some_new_branch_a_sibling_adds
+  PASS  budget: -MaxRounds is still ACCEPTED, sets the same cap, and names itself in the record             got=steps=3 used=MaxRounds alias=True
+  PASS  budget: -MaxSteps is not deprecated and warns nobody                                                got=steps=4 used=MaxSteps alias=False warned=False
+  PASS  budget: BOTH spellings are REFUSED rather than resolved by a preference order                       got=2
+  PASS  budget: the deprecation warning is emitted ONCE per process, however many missions resolve          got=emitted=1 cap=2
+  PASS  termination_reason: a REAL mission truncated by the cap and one that ran out are DIFFERENT          got=distinct=budget_exhausted/steps_completed dropped=2
+  PASS  termination_reason: the artifact states BOTH reasons as the same field a reader greps               got=grepped=True top-level=True nested=True
+  PASS  budget: the deprecated alias produces the SAME artifact as -MaxSteps, not a different one           got=reason=budget_exhausted/budget_exhausted dropped=probe.two,probe.three used=MaxRounds
+  PASS  grant: a real Q2 mission reaches round 1, and the step carrying the argv prohibition RUNS           got=first=native.pe.packer prohibition=True halt=budget_cap exit6=False
+  PASS  grant: deleting -Invocation from the round loop HALTS the same mission at round 1 (exit 6)          got=matched=1 first=native.pe.packer halt=grant_halt rounds=1 names-exit-6=True
+
+MISSION SELFTEST OK: 73 controls behaved. N4 -- our own known failure mode, aimed here -- returned unresolved as it must.
+--- stderr (2 lines) ---
+[mission] DEPRECATION: -MaxRounds is a deprecated alias for -MaxSteps and still works; it sets the same cap of 3 STEP(S). The route is planned once and never re-planned, so this number has always counted steps. Callers still using -MaxRounds will be removed; switch to -MaxSteps.
+[mission] DEPRECATION: -MaxRounds is a deprecated alias for -MaxSteps and still works; it sets the same cap of 2 STEP(S). The route is planned once and never re-planned, so this number has always counted steps. Callers still using -MaxRounds will be removed; switch to -MaxSteps.
+

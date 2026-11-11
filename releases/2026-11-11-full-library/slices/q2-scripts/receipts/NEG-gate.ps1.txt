@@ -1,0 +1,13 @@
+command: C:/Program Files/Git/usr/bin/timeout.exe 45 C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NoProfile -ExecutionPolicy Bypass -File D:\Software\Tool\WorkStation\debugger\scripts\gate.ps1 -Action Check
+cwd: F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+started_utc: 2026-11-10T23:19:36+00:00
+finished_utc: 2026-11-10T23:19:36+00:00
+exit: 1
+--- stdout (0 lines) ---
+--- stderr (5 lines) ---
+D:\Software\Tool\WorkStation\debugger\scripts\gate.ps1 : Cannot bind argument to parameter 'Path' because it is an 
+empty string.
+    + CategoryInfo          : InvalidData: (:) [gate.ps1], ParameterBindingValidationException
+    + FullyQualifiedErrorId : ParameterArgumentValidationErrorEmptyStringNotAllowed,gate.ps1
+ 
+

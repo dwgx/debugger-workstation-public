@@ -1,0 +1,218 @@
+{
+ "arsenal-doctrine-check.py": {
+  "exit": 0,
+  "marker": "SELFTEST OK",
+  "marker_hit": true,
+  "stdout_lines": 1,
+  "stderr_lines": 0,
+  "neg_exit": 0,
+  "cmd": "C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\\Software\\Tool\\WorkStation\\debugger\\scripts\\arsenal-doctrine-check.py --selftest"
+ },
+ "arsenal-two-tree-check.py": {
+  "exit": 0,
+  "marker": "SELFTEST OK",
+  "marker_hit": true,
+  "stdout_lines": 1,
+  "stderr_lines": 0,
+  "neg_exit": 0,
+  "cmd": "C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\\Software\\Tool\\WorkStation\\debugger\\scripts\\arsenal-two-tree-check.py --selftest"
+ },
+ "assert-probes-selftest.py": {
+  "exit": 2,
+  "marker": "selftest:",
+  "marker_hit": true,
+  "stdout_lines": 70,
+  "stderr_lines": 0,
+  "neg_exit": 2,
+  "cmd": "C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\\Software\\Tool\\WorkStation\\debugger\\scripts\\assert-probes-selftest.py"
+ },
+ "check-requires-tools.py": {
+  "exit": 0,
+  "marker": "1 ok",
+  "marker_hit": true,
+  "stdout_lines": 3,
+  "stderr_lines": 0,
+  "neg_exit": 1,
+  "cmd": "C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\\Software\\Tool\\WorkStation\\debugger\\scripts\\check-requires-tools.py --registry F:\\GENESIS-ARCHIVE\\10-STORE\\12-RESEARCH-RUNS\\build-weapon-library-20261110\\setukou-20261111\\v5\\slices\\q2-scripts\\fixtures\\syn-positive.json --only syn.positive"
+ },
+ "doc-facts.py": {
+  "exit": 0,
+  "marker": "doc-facts:",
+  "marker_hit": true,
+  "stdout_lines": 4,
+  "stderr_lines": 0,
+  "neg_exit": null,
+  "cmd": "C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\\Software\\Tool\\WorkStation\\debugger\\scripts\\doc-facts.py"
+ },
+ "gate.ps1": {
+  "exit": 0,
+  "marker": "GATE SELFTEST OK",
+  "marker_hit": true,
+  "stdout_lines": 60,
+  "stderr_lines": 0,
+  "neg_exit": 1,
+  "cmd": "C:/Program Files/Git/usr/bin/timeout.exe 45 C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NoProfile -ExecutionPolicy Bypass -File D:\\Software\\Tool\\WorkStation\\debugger\\scripts\\gate.ps1 -Action Selftest"
+ },
+ "mission.ps1": {
+  "exit": 0,
+  "marker": "MISSION SELFTEST OK",
+  "marker_hit": true,
+  "stdout_lines": 94,
+  "stderr_lines": 2,
+  "neg_exit": 2,
+  "cmd": "C:/Program Files/Git/usr/bin/timeout.exe 45 C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NoProfile -ExecutionPolicy Bypass -File D:\\Software\\Tool\\WorkStation\\debugger\\scripts\\mission.ps1 -Action Selftest"
+ },
+ "owner-attest.py": {
+  "exit": 0,
+  "marker": "SELFTEST 9/9 PASSED",
+  "marker_hit": true,
+  "stdout_lines": 10,
+  "stderr_lines": 0,
+  "neg_exit": 2,
+  "cmd": "C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\\Software\\Tool\\WorkStation\\debugger\\scripts\\owner-attest.py --selftest"
+ },
+ "reachability-report.py": {
+  "exit": 0,
+  "marker": "REACHABILITY SELFTEST OK",
+  "marker_hit": true,
+  "stdout_lines": 1,
+  "stderr_lines": 0,
+  "neg_exit": 2,
+  "cmd": "C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\\Software\\Tool\\WorkStation\\debugger\\scripts\\reachability-report.py --selftest"
+ },
+ "registry-verify.py": {
+  "exit": 0,
+  "marker": "SELFTEST OK",
+  "marker_hit": true,
+  "stdout_lines": 107,
+  "stderr_lines": 0,
+  "neg_exit": 0,
+  "cmd": "C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\\Software\\Tool\\WorkStation\\debugger\\scripts\\registry-verify.py --selftest"
+ },
+ "scan-unread-keys.py": {
+  "exit": 0,
+  "marker": "registry leaf keys",
+  "marker_hit": true,
+  "stdout_lines": 70,
+  "stderr_lines": 0,
+  "neg_exit": 1,
+  "cmd": "C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\\Software\\Tool\\WorkStation\\debugger\\scripts\\scan-unread-keys.py"
+ },
+ "sync-wiki-figures.py": {
+  "exit": 1,
+  "marker": "file(s) carry a stale figure",
+  "marker_hit": true,
+  "stdout_lines": 6,
+  "stderr_lines": 0,
+  "neg_exit": 1,
+  "cmd": "C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\\Software\\Tool\\WorkStation\\debugger\\scripts\\sync-wiki-figures.py --check --repo D:\\Software\\Tool\\WorkStation\\debugger --wiki F:\\GENESIS-ARCHIVE\\10-STORE\\12-RESEARCH-RUNS\\build-weapon-library-20261110\\setukou-20261111\\v5\\slices\\q2-scripts\\fixtures\\syn-wiki"
+ },
+ "sync-wiki-figures-selftest.py": {
+  "exit": 2,
+  "marker": "ALL PROPERTIES HELD",
+  "marker_hit": false,
+  "stdout_lines": 0,
+  "stderr_lines": 1,
+  "neg_exit": 2,
+  "cmd": "C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\\Software\\Tool\\WorkStation\\debugger\\scripts\\sync-wiki-figures-selftest.py"
+ },
+ "verify-atomic-artifacts.py": {
+  "exit": 0,
+  "marker": "WHAT THIS DOES NOT CLAIM",
+  "marker_hit": true,
+  "stdout_lines": 320,
+  "stderr_lines": 0,
+  "neg_exit": 0,
+  "cmd": "C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\\Software\\Tool\\WorkStation\\debugger\\scripts\\verify-atomic-artifacts.py"
+ },
+ "verify-clone-freshness.py": {
+  "exit": 1,
+  "marker": "findings:",
+  "marker_hit": true,
+  "stdout_lines": 104,
+  "stderr_lines": 0,
+  "neg_exit": 1,
+  "cmd": "C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\\Software\\Tool\\WorkStation\\debugger\\scripts\\verify-clone-freshness.py --strict"
+ },
+ "verify-doc-facts-selftest.py": {
+  "exit": 2,
+  "marker": "ALL CONTROLS HELD",
+  "marker_hit": false,
+  "stdout_lines": 0,
+  "stderr_lines": 1,
+  "neg_exit": 2,
+  "cmd": "C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\\Software\\Tool\\WorkStation\\debugger\\scripts\\verify-doc-facts-selftest.py"
+ },
+ "verify-probe-coverage.py": {
+  "exit": 0,
+  "marker": "coverage",
+  "marker_hit": false,
+  "stdout_lines": 192,
+  "stderr_lines": 0,
+  "neg_exit": null,
+  "cmd": "C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\\Software\\Tool\\WorkStation\\debugger\\scripts\\verify-probe-coverage.py"
+ },
+ "verify-tools-manifest.py": {
+  "exit": 0,
+  "marker": "passed",
+  "marker_hit": true,
+  "stdout_lines": 29,
+  "stderr_lines": 0,
+  "neg_exit": 1,
+  "cmd": "C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\\Software\\Tool\\WorkStation\\debugger\\scripts\\verify-tools-manifest.py --selftest"
+ },
+ "verify-all.ps1": {
+  "exit": 2,
+  "marker": "SELFTEST",
+  "marker_hit": false,
+  "stdout_lines": 0,
+  "stderr_lines": 3,
+  "neg_exit": 2,
+  "cmd": "C:/Program Files/Git/usr/bin/timeout.exe 45 C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NoProfile -ExecutionPolicy Bypass -File D:\\Software\\Tool\\WorkStation\\debugger\\scripts\\verify-all.ps1 -Action Selftest"
+ },
+ "eval-agent-contract.py": {
+  "exit": 0,
+  "marker": "PASS",
+  "marker_hit": true,
+  "stdout_lines": 6,
+  "stderr_lines": 0,
+  "neg_exit": null,
+  "cmd": "C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\\Software\\Tool\\WorkStation\\debugger\\scripts\\eval-agent-contract.py"
+ },
+ "verify-loop-arg-guards.py": {
+  "exit": 0,
+  "marker": "OK",
+  "marker_hit": false,
+  "stdout_lines": 1,
+  "stderr_lines": 0,
+  "neg_exit": null,
+  "cmd": "C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\\Software\\Tool\\WorkStation\\debugger\\scripts\\verify-loop-arg-guards.py"
+ },
+ "check_backend_consistency.py": {
+  "exit": 0,
+  "marker": "OK",
+  "marker_hit": true,
+  "stdout_lines": 2,
+  "stderr_lines": 0,
+  "neg_exit": null,
+  "cmd": "C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\\Software\\Tool\\WorkStation\\debugger\\scripts\\check_backend_consistency.py"
+ },
+ "maintenance-doctor.py": {
+  "exit": 0,
+  "marker": "report only",
+  "marker_hit": true,
+  "stdout_lines": 25,
+  "stderr_lines": 0,
+  "neg_exit": null,
+  "cmd": "C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\\Software\\Tool\\WorkStation\\debugger\\scripts\\maintenance-doctor.py"
+ },
+ "registry-verify.py-count": {
+  "exit": 0,
+  "marker": "RULES",
+  "marker_hit": true,
+  "stdout_lines": 1,
+  "stderr_lines": 0,
+  "neg_exit": null,
+  "cmd": "C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\\Software\\Tool\\WorkStation\\debugger\\scripts\\registry-verify.py --count"
+ }
+}

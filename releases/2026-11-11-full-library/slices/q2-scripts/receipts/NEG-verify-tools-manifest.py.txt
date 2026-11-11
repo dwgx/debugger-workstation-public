@@ -1,0 +1,88 @@
+command: C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\Software\Tool\WorkStation\debugger\scripts\verify-tools-manifest.py
+cwd: F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+started_utc: 2026-11-10T23:20:21+00:00
+finished_utc: 2026-11-10T23:20:21+00:00
+exit: 1
+--- stdout (80 lines) ---
+verify-tools-manifest: scanned 168 files under scripts/, */tools/, */lab/ -> 12 distinct absolute executable names
+
+INVOKED AND DECLARED
+  declared 7z.exe               scripts/restore-from-cache.ps1:31
+           declared as '7-Zip full' (manifest field: entry); 1 spawn / 0 reference
+  declared chrome.exe           scripts/web-reverse-lab.ps1:49, scripts/web-reverse-lab.ps1:50, web-reverse/tools/chrome.mjs:18, web-reverse/tools/chrome.mjs:19
+           declared as 'web-reverse capture' (manifest field: needs; also matched: needs, note); 4 spawn / 0 reference
+  declared idalib-mcp.exe       native-lab/tools/ida-client.mjs:21, native-lab/tools/loop.mjs:47, scripts/native-lab.ps1:61
+           declared as 'ida-pro-mcp (idalib)' (manifest field: dir); 3 spawn / 0 reference
+  declared idat.exe             scripts/ida-cli.ps1:20
+           declared as 'IDA Pro' (manifest field: note) -- WEAKEST FIELD: prose, not a declared name; confirm this counts; 1 spawn / 0 reference
+  declared msedge.exe           web-reverse/tools/chrome.mjs:21, web-reverse/tools/chrome.mjs:22
+           declared as 'web-reverse capture' (manifest field: needs; also matched: needs, note); 2 spawn / 0 reference
+  declared node.exe             scripts/smoke-all.ps1:44
+           declared as 'crypto-lab oracle (node)' (manifest field: name; also matched: name, needs, note); 1 spawn / 0 reference
+  declared python.exe           scripts/crackme-corpus.ps1:36, scripts/crackme-corpus.ps1:37, scripts/smoke-all.ps1:45
+           declared as 'crypto-lab oracle (python)' (manifest field: name; also matched: name, needs, note); 3 spawn / 0 reference
+  declared skillspector.exe     headless-lab/tools/skill_security_control.ps1:24, scripts/probes/ops_skill_security.ps1:14
+           declared as 'SkillSpector' (manifest field: dir); 2 spawn / 0 reference
+  declared target.exe           scripts/probes/dynamic_win_frida.ps1:14
+           declared as 'crypto-lab target' (manifest field: name; also matched: name, note); 1 spawn / 0 reference
+  declared tshark.exe           net-reverse/lab/tshark.mjs:19, net-reverse/lab/tshark.mjs:20
+           declared as 'Wireshark' (manifest field: entry); 2 spawn / 0 reference
+  declared vcvars64.bat         crackme-corpus/tools/build-c.ps1:26, crackme-corpus/tools/build-c.ps1:27, crackme-corpus/tools/build-c.ps1:28, crackme-corpus/tools/build-c.ps1:29, crackme-corpus/tools/build-c.ps1:30, +9 more
+           declared as 'MSVC vcvars64' (manifest field: dir); 14 spawn / 0 reference
+
+INVOKED, INSIDE THE REPO (a repo file, not a tool)
+  none
+
+INVOKED, PROVIDED BY THE OS (not a manifest concern)
+  os       powershell.exe       scripts/smoke-all.ps1:46
+           every absolute path to it is under the Windows system directory; 1 spawn / 0 reference
+
+INVOKED BUT UNDECLARED  (this is what fails the run)
+  none
+
+DECLARED PINS THAT DO NOT RESOLVE ON DISK  (dir + entry, relative to the repo root)
+  note    crypto-lab oracle (node)     [crypto-lab]
+           D:\Software\Tool\WorkStation\debugger\crypto-lab\node_modules\jsonwebtoken\tools\oracle-node.mjs
+           inside an installed-dependency directory: a checkout without a bootstrap has no copy. Not a broken pin, so this does not fail the run.
+  note    crypto-lab oracle (python)   [crypto-lab]
+           D:\Software\Tool\WorkStation\debugger\crypto-lab\.venv\tools\oracle.py
+           inside an installed-dependency directory: a checkout without a bootstrap has no copy. Not a broken pin, so this does not fail the run.
+  BROKEN  AssetRipper                  [unpackers-game]
+           D:\Software\Tool\WorkStation\debugger\Unpackers-Game\AssetRipper\AssetRipper.GUI.Free.exe
+           its dir exists but 'AssetRipper.GUI.Free.exe' is not in it -- the tool was moved, renamed or removed and the manifest still pins the old name
+
+DECLARED BUT NEVER INVOKED  (reported, does not fail -- see docstring)
+  dead      ScyllaHide                   [debuggers]
+           no single-file entry: it is a directory of tools, a framework or a venv, reached by a human or a capability probe rather than by a scanned script
+  dead      PE-bear                      [static-reversing]
+           lab entry point reached by a human or through capabilities.json probes, so no scanned script names it
+
+DECLARED ENTRY FILENAME NAMED NOWHERE (referenced only by its directory)
+  entry?    GH Injector                  declares entry 'gh injector sm - x64.exe', never named; its dir is
+           referenced instead. The manifest and the scripts disagree about which FILE starts this tool.
+  entry?    forensics-lab payload        declares entry 'd12payload.c', never named; its dir is
+           referenced instead. The manifest and the scripts disagree about which FILE starts this tool.
+  entry?    Reqable                      declares entry 'reqable.exe', never named; its dir is
+           referenced instead. The manifest and the scripts disagree about which FILE starts this tool.
+  entry?    Detect It Easy               declares entry 'die.exe', never named; its dir is
+           referenced instead. The manifest and the scripts disagree about which FILE starts this tool.
+  entry?    ImHex                        declares entry 'imhex-gui.exe', never named; its dir is
+           referenced instead. The manifest and the scripts disagree about which FILE starts this tool.
+  entry?    ReClass.NET                  declares entry 'reclass.net.exe', never named; its dir is
+           referenced instead. The manifest and the scripts disagree about which FILE starts this tool.
+  entry?    System Informer              declares entry 'systeminformer.exe', never named; its dir is
+           referenced instead. The manifest and the scripts disagree about which FILE starts this tool.
+  entry?    Universal Extractor          declares entry 'uniextract.exe', never named; its dir is
+           referenced instead. The manifest and the scripts disagree about which FILE starts this tool.
+  entry?    pyinstxtractor-ng            declares entry 'pyinstxtractor-ng.exe', never named; its dir is
+           referenced instead. The manifest and the scripts disagree about which FILE starts this tool.
+
+EXCLUSION RULES APPLIED (audit the inventory, do not trust it)
+  E1-url                   dropped 18 candidate(s)
+  E2-escaped-spelling      dropped 17 candidate(s)
+  E4-comment               dropped 0 candidate(s)
+  E3-no-launch-in-file     dropped 0 candidate(s)
+
+tools: 63 declared, 12 invoked, 0 undeclared, 2 dead, 1 broken pin(s)
+--- stderr (0 lines) ---
+

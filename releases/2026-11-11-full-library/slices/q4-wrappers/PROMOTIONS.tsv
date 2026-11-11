@@ -1,0 +1,3 @@
+# OWNER: researcher-q4 | setukou-20261111/v5/slices/q4-wrappers/PROMOTIONS.tsv
+# EXPECTED EMPTY: a .cmd text parse / path existence / config-consistency is NOT a backend-usable verification; all TR:B-* stay OWNER_GATED. No claim is promoted.
+claim_id	from_verdict	to_verdict	receipt_path	exit	negative_control

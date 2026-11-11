@@ -1,0 +1,24 @@
+OWNER: researcher-q6 | setukou-20261111/v5/slices/q6-audit/receipts/
+Q6 independent re-run of Q4 ONE ## Verify (DIFFERENT actor)
+started_utc      : 2026-11-10T23:15:12Z
+finished_utc     : 2026-11-10T23:15:12Z
+cwd              : F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+command          : "C:/Program Files/Git/usr/bin/timeout.exe" 30 python -X utf8 -B setukou-20261111/v5/slices/q4-wrappers/verify.py
+executed_argv    : ['D:\\Software\\Developer\\Python314\\python.exe', '-X', 'utf8', '-B', 'setukou-20261111/v5/slices/q4-wrappers/verify.py']
+q6_envelope      : subprocess timeout=90s (bounded); no cmd /c wrapper
+exit             : 0
+----- STDOUT -----
+as_of=2026-11-10T23:15:12Z
+denominator: claims_total=295 (FROZEN 295), tr_b_denominator=23, wrappers_denominator=23
+tr_b_rows=23  tr_b_status={'OWNER_GATED': 23}
+wrappers_scanned=23
+static_only=0 launches_real_binary=22 security_gated=1 unknown=0
+local_real_commands=4 receipts_real=4
+promotions=0  still_owner_gated=23
+claims_total_frozen_ok=YES  product_tree_writes=0
+negative_control: fake backend_usable=True accepted=False (must be False) -> OK
+positive_control: synthetic session receipt accepted=True (must be True) -> OK
+VERDICT=GREEN  ALL_OWNER_GATED_NO_PROMOTIONS  (a .cmd parse / path exists / config-consistency is NOT a backend-usable verification)
+----- STDERR -----
+(empty)
+----- END -----

@@ -1,0 +1,200 @@
+command: C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\Software\Tool\WorkStation\debugger\scripts\verify-probe-coverage.py
+cwd: F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+started_utc: 2026-11-10T23:20:21+00:00
+finished_utc: 2026-11-10T23:20:21+00:00
+exit: 0
+--- stdout (192 lines) ---
+====================================================================================================
+PROBE COVERAGE -- what each capability's recorded probe actually ASSERTS about a run
+====================================================================================================
+registry : D:\Software\Tool\WorkStation\debugger\manifests\capabilities.json
+entries  : 28
+THIS IS A REPORT, NOT A GATE. It exits 0 whatever the counts are. A grade is a fact about
+what the registry DECLARES, not a build failure -- read it, do not gate on it.
+
+harness  : assert-probes.py SKIP set imported from D:\Software\Tool\WorkStation\debugger\scripts\assert-probes.py (3 ids the checker never executes)
+
+RANKING CRITERION -- weakest first. A weakness score, higher = worse, summed from named parts:
+
+    base      D 400 | E 350 | C 300 | B 200 | A 100    (worst first)
+              (E sits between C and D: it declares no output substring, which is the property
+               this whole audit is about, but it does declare an exit code and/or an artifact,
+               so it is closer to C than to D. Change the 350 if you disagree.)
+    + 100     the harness NEVER EXECUTES this probe: it is in assert-probes.py's SKIP set, or
+              its probe.command is empty or prose, so none of its recorded strings are compared
+              by anything, ever
+    +  50     no EXECUTABLE negative_control.command -- the control is a declared PLAN
+    +  20     not evidence-bound (no run_log + sha256 pair, so `observed` rests on a summary line)
+    +  10     state is not `observed`
+
+Ties break on id, so the order is deterministic. Every part is printed in the ranked list, so any
+single line of this rule can be checked against one capability.
+
+GRADE DEFINITIONS
+  A  expects an exit code AND an output substring AND a produced artifact
+  B  expects an exit code AND an output substring
+  C  expects an output substring only
+  D  expects neither -- the probe exists but asserts nothing about the run
+  E  OUTSIDE the four-grade ladder: declares no output substring, but declares an exit code and/or an artifact. Reached by the brief's own negative test (delete `expect` from an A-grade entry). Counted and ranked separately rather than mislabelled C or D.
+
+id                                 state     expect  exit   produces  prepare  negctrl  evidence-bound  grade
+-------------------------------------------------------------------------------------------------------------
+dynamic.device.frida               absent    yes     yes     -         -       plan     no              B
+native.ghidra.emulate              blocked   yes     yes    yes        -       yes      no              A
+native.il2cpp.symbols              absent    yes     yes    yes        -       yes      no              A
+crypto.jose.parse                  observed  yes     yes    yes        -       yes      yes (log+sha)   A
+dynamic.win.frida                  observed  yes     yes    yes       yes      yes      yes (log+sha)   A
+dynamic.win.frida.intercept        observed  yes     yes    yes        -       yes      yes (log+sha)   A
+forensics.memory.artefact          observed  yes     yes    yes        -       yes      yes (log+sha)   A
+fuzz.differential.parse            observed  yes     yes    yes        -       yes      yes (log+sha)   A
+managed.il.decompile               observed  yes     yes    yes        -       yes      yes (log+sha)   A
+mobile.apk.static                  observed  yes     yes    yes        -       yes      yes (log+sha)   A
+native.behaviour.capa              observed  yes     yes    yes        -       yes      yes (log+sha)   A
+native.crosscompare.ghidra         observed  yes     yes    yes        -       yes      yes (log+sha)   A
+native.disasm.capstone             observed  yes     yes    yes        -       yes      yes (log+sha)   A
+native.function.match              observed  yes     yes    yes        -       yes      yes (log+sha)   A
+native.ghidra.decompile            observed  yes     yes    yes        -       yes      yes (log+sha)   A
+native.ida.decompile               observed  yes     yes    yes        -       yes      yes (log+sha)   A
+native.ida.list_functions          observed  yes     yes    yes        -       yes      yes (log+sha)   A
+native.pe.authenticode             observed  yes     yes    yes        -       yes      yes (log+sha)   A
+native.pe.container                observed  yes     yes    yes        -       yes      yes (log+sha)   A
+native.pe.hardening                observed  yes     yes    yes        -       yes      yes (log+sha)   A
+native.pe.packer                   observed  yes     yes    yes        -       yes      yes (log+sha)   A
+native.signature.certverify        observed  yes     yes    yes       yes      yes      yes (log+sha)   A
+native.yara.triage                 observed  yes     yes    yes        -       yes      yes (log+sha)   A
+net.pcap.analyse                   observed  yes     yes    yes        -       yes      yes (log+sha)   A
+net.pcap.selfparse                 observed  yes     yes    yes       yes      yes      yes (log+sha)   A
+ops.skill.security                 observed  yes     yes    yes        -       yes      yes (log+sha)   A
+re.corpus.solve                    observed  yes     yes    yes        -       yes      yes (log+sha)   A
+web.js.cdp                         observed  yes     yes    yes        -       yes      yes (log+sha)   A
+
+COUNTS PER GRADE
+  A  27   expects an exit code AND an output substring AND a produced artifact
+  B   1   expects an exit code AND an output substring
+  C   0   expects an output substring only
+  D   0   expects neither -- the probe exists but asserts nothing about the run
+  E   0   OUTSIDE the four-grade ladder: declares no output substring, but declares an exit code and/or an artifact. Reached by the brief's own negative test (delete `expect` from an A-grade entry). Counted and ranked separately rather than mislabelled C or D.
+  --  28   total
+
+HOLLOW VERDICTS: 1 of 28 entries declare no probe.produces, so assert-probes.py's OK text for them
+  is the STRINGS-ONLY one -- satisfied by any process that prints the recorded string and exits
+  27. A further 3 of those are never executed by the harness at all, so for those the strings are not even compared; their verdict rests on a hand-written summary line alone.
+  0 entries are grade D (the probe asserts nothing at all).
+
+RANKED, WEAKEST FIRST (see the criterion printed above; every term is shown per row)
+   1. [380] dynamic.device.frida
+        grade B; harness never executes it (state=absent; needs an attached device. VERIFIED 2026-10-05: frida 17.17.0 is present and runs; its -U channel prints 'Waiting for USB device to appear...'. The tool is fine, the hardware is absent -- genuinely blocked, not unexamined.), so none of its recorded strings are compared by anything; its negative control declares no runnable command (a plan); not evidence-bound (no run_log + sha256 pair), so `observed` rests on a summary line rather than a retained artifact; state is 'absent', not 'observed'
+        probe.expect    = 'no devices attached'
+   2. [230] native.ghidra.emulate
+        grade A; harness never executes it (state=blocked; needs a runtime the registry does not have. MEASURED 2026-10-05: its probe DOES run and pass -- scripts/emulation-probe.ps1 exits 0 and prints the recorded 'PCODE EMULATION BLOCKED'. Skipped, so if the emulator API is ever fixed nothing will report it.), so none of its recorded strings are compared by anything; its negative control is a runnable command; not evidence-bound (no run_log + sha256 pair), so `observed` rests on a summary line rather than a retained artifact; state is 'blocked', not 'observed'
+        probe.produces = 'probe-artifacts/last-run-emulation_probe.json'
+        probe.expect    = 'PCODE EMULATION BLOCKED'
+   3. [230] native.il2cpp.symbols
+        grade A; harness never executes it (state=absent; needs an extracted IL2CPP metadata dump. MEASURED 2026-10-05: its probe DOES run and pass -- scripts/il2cpp-probe.ps1 exits 0 and prints the recorded 'IL2CPP ABSENT'. Skipped, so supplying an authorized artifact later would change the output silently.), so none of its recorded strings are compared by anything; its negative control is a runnable command; not evidence-bound (no run_log + sha256 pair), so `observed` rests on a summary line rather than a retained artifact; state is 'absent', not 'observed'
+        probe.produces = 'probe-artifacts/last-run-il2cpp_probe.json'
+        probe.expect    = 'IL2CPP ABSENT'
+   4. [100] crypto.jose.parse
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = 'crypto-lab/out/last-run-crypto-lab.json'
+        probe.expect    = 'JSON-SUMMARY {"total":17,"pass":17,"fail":0}'
+   5. [100] dynamic.win.frida
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = 'probe-artifacts/last-run-dynamic_win_frida.json'
+        probe.expect    = 'FRIDA_WIN symbol_main=0'
+   6. [100] dynamic.win.frida.intercept
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = 'probe-artifacts/last-run-dynamic_win_frida_intercept.json'
+        probe.expect    = 'verdict=INTERCEPT-PROVEN'
+   7. [100] forensics.memory.artefact
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = 'forensics-lab/out/last-run-forensics-lab.json'
+        probe.expect    = 'LOOP CLOSED'
+   8. [100] fuzz.differential.parse
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = 'fuzz-lab/out/last-run.json'
+        probe.expect    = 'LOOP CLOSED'
+   9. [100] managed.il.decompile
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = 'managed-lab/out/last-run-managed-lab.json'
+        probe.expect    = 'JSON-SUMMARY {"total":27,"pass":27,"fail":0}'
+  10. [100] mobile.apk.static
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = 'mobile-lab/out/last-run-mobile-lab.json'
+        probe.expect    = 'LOOP CLOSED'
+  11. [100] native.behaviour.capa
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = 'native-lab/out/last-run-capa_probe.json'
+        probe.expect    = '"rules_matched": 14'
+  12. [100] native.crosscompare.ghidra
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = 'headless-lab/out/last-run-xcompare.json'
+        probe.expect    = 'NEGATIVE-CONTROL OK'
+  13. [100] native.disasm.capstone
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = 'native-lab/out/last-run-disasm.json'
+        probe.expect    = '"addr": "0x140001080"'
+  14. [100] native.function.match
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = 'probe-artifacts/last-run-match_functions.json'
+        probe.expect    = '"match_rate":37.6'
+  15. [100] native.ghidra.decompile
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = '%TEMP%\\gh-regress-good\\summary.json'
+        probe.expect    = 'LOOP CLOSED'
+  16. [100] native.ida.decompile
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = 'native-lab/out/last-run-decompile.json'
+        probe.expect    = 'LOOP CLOSED'
+  17. [100] native.ida.list_functions
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = 'native-lab/out/last-run-list_funcs.json'
+        probe.expect    = 'list_funcs enumerates functions'
+  18. [100] native.pe.authenticode
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = 'native-lab/out/last-run-authenticode.json'
+        probe.expect    = '"signed": false'
+  19. [100] native.pe.container
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = 'native-lab/out/last-run-pe_probe.json'
+        probe.expect    = '"image_base": "0x140000000"'
+  20. [100] native.pe.hardening
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = 'native-lab/out/last-run-hardening_probe.json'
+        probe.expect    = '"canary": "true"'
+  21. [100] native.pe.packer
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = 'probe-artifacts/last-run-triage_packer.json'
+        probe.expect    = '"packed":false'
+  22. [100] native.signature.certverify
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = 'native-lab/out/last-run-cert_verify.json'
+        probe.expect    = '"der_parsed": false'
+  23. [100] native.yara.triage
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = 'yara-lab/out/last-run-yara.json'
+        probe.expect    = 'PROBE OK — the rule decided the question and the content assertions held'
+  24. [100] net.pcap.analyse
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = '%TEMP%\\net-reverse-lab\\pcaps\\corpus.json'
+        probe.expect    = 'LANE CLOSED'
+  25. [100] net.pcap.selfparse
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = 'net-reverse/out/last-run-pcap_reader.json'
+        probe.expect    = '"dns_queries": 2'
+  26. [100] ops.skill.security
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = 'probe-artifacts/last-run-ops_skill_security.json'
+        probe.expect    = 'Recommendation  SAFE'
+  27. [100] re.corpus.solve
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = 'crackme-corpus/out/last-run-crackme_corpus.json'
+        probe.expect    = 'CORPUS CLOSED'
+  28. [100] web.js.cdp
+        grade A; the harness does execute it; its negative control is a runnable command; evidence-bound (run_log + sha256); state is 'observed'
+        probe.produces = 'web-reverse/out/last-run-web-reverse.json'
+        probe.expect    = 'LOOP CLOSED'
+
+This is a measurement. Exit 0 is reported whatever the counts are; a D is a fact about what the
+registry declares, not a build failure.
+--- stderr (0 lines) ---
+

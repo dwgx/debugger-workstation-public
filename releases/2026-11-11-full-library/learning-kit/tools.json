@@ -1,0 +1,35 @@
+{
+  "$comment": "OWNER: V4ReleaseGate | setukou-20261111/v4/release-gate/RELEASE-CANDIDATE/tools.json",
+  "owner": "V4ReleaseGate",
+  "protocol_version": "2025-11-25",
+  "surface": "SYNTHETIC",
+  "description": "MCP tool surface this learning kit exposes. All names and params are fabricated for teaching; no live server, no credentials, no real private paths.",
+  "tools": [
+    {
+      "name": "hash_lock_check",
+      "description": "Recompute sha256 of every example fixture from bytes and compare to its .sha256 sidecar. Returns checked, matched, ok.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "fixture_dir": {"type": "string", "description": "path to examples/", "default": "examples"},
+          "overrides": {"type": "object", "description": "in-memory byte substitutions for the negative control; never written to disk"}
+        },
+        "required": []
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "checked": {"type": "integer", "description": "denominator = fixture count"},
+          "matched": {"type": "integer"},
+          "ok": {"type": "boolean"}
+        }
+      }
+    },
+    {
+      "name": "tamper_falsifier",
+      "description": "Flip one byte of the first fixture IN MEMORY and confirm hash_lock_check returns ok=false. Proves the gate can go red.",
+      "inputSchema": {"type": "object", "properties": {"fixture": {"type": "string"}}, "required": ["fixture"]},
+      "outputSchema": {"type": "object", "properties": {"tamper_caught": {"type": "integer"}}}
+    }
+  ]
+}

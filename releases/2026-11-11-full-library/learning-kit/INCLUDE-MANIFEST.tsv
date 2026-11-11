@@ -1,0 +1,22 @@
+# OWNER: V4ReleaseGate | setukou-20261111/v4/release-gate/RELEASE-CANDIDATE/INCLUDE-MANIFEST.tsv
+# as_of 2026-11-11 | denominator = candidate file count = 17 (16 hashed data rows below + this manifest itself)
+# sha256/bytes recomputed from file bytes by verify.py; NEVER hardcoded in prose.
+# SELF-EXCLUSION: INCLUDE-MANIFEST.tsv is the 17th file. A file cannot contain its own sha256 (fixed-point paradox), so it has NO data row; verify.py counts it separately and asserts manifest_self_excluded_rows=0.
+# include_exclude=INCLUDE means sanitized + proposed to land under learning-kit/ on public main. NO root overwrite.
+path	sha256	bytes	include_exclude	reason
+BRIDGE.md	94ddd25382cfc619e768cbec386a636b0423533e9de977fa92d30bde0da079b7	2016	INCLUDE	gated test-optimise-iterate loop; synthetic, no external action
+CHANGELOG.md	555167754946e1386eb93b461e7730be0418b83a0b505a6a6e0a19782057498d	1511	INCLUDE	append-only continuous-update ledger; as_of + sha snapshot
+check.py	e1c78122aa11938ac84957ded20064bd2a5b3600f7247fee8aa334b014becea4	2251	INCLUDE	runnable ONE-command hash-lock gate; stdlib only, read-only
+examples/fixture-alpha.txt	ef385e24b0d1e35fbf272b742976c2bb16509bd0039813aa3828163ad3990f71	70	INCLUDE	SYNTHETIC teaching fixture; example.invalid host
+examples/fixture-alpha.txt.sha256	c9b53b8bdd3349446eab409b15414440a6c45b4b2354dbf9d686494f22c0d03e	65	INCLUDE	sha256 sidecar for fixture-alpha; recomputed from bytes
+examples/fixture-beta.txt	80a7f4277c600727cea7976316b4b337e335df4cd78dfc17e8454da05c8c6359	69	INCLUDE	SYNTHETIC teaching fixture; example.invalid host
+examples/fixture-beta.txt.sha256	ef31aca4bdf3a29f9b8601fac9207af41f5fa465ac0cc3db54581125afbbdacf	65	INCLUDE	sha256 sidecar for fixture-beta; recomputed from bytes
+EXCLUDE-LOG.tsv	929cc1a0effe2a2847c77c4cf8ff6a582aea5d919f6bbd877f723f9315624b1d	3117	INCLUDE	private/credential-shaped/hallucination-prone/root-overwrite/noise EXCLUDE list WITH reasons; VALUES withheld
+KB-TO-BEHAVIOUR.md	9e1910f0c804a9fb24547d1fb00245a5a86ca4f7a1e32f3e4e2a529e4063b9b9	3184	INCLUDE	knowledge-to-behaviour 8-stage teaching model; [INFERENCE] tagged
+LICENSE-NOTE.md	e6145295c8ca99eb9430d4961f1e40983bb3b302d53f3fc74f42af049a1a18c0	1478	INCLUDE	MIT(code)/CC BY-SA 4.0(docs) note; does NOT replace root LICENSE/LICENSE-docs
+PUBLIC-FACTS.md	767a8d6d8f4c20ccd5dcbfe0175fed4d4ae49e42f455b08fd42e1829281302cb	2567	INCLUDE	sanitized read-only staging facts; NO credentials; push_executed=NO
+QA-GATES.md	5fd9989f95bee82e96b990c57a62db595c791c36a4849ca8873de15e98cb9419	3713	INCLUDE	26-gate / 4-group QA teaching model; NOT-EXECUTED never passed
+README.md	b05ca00e9f465ff7896969d45b197a4135d2efe3ed6bc2dd7cc09f12fa1ec6b1	2787	INCLUDE	kit overview; lives INSIDE learning-kit/, NOT at public root
+RECEIPT-SCHEMA.md	79c8aec7e4485ea70e921be4d6990ab5d6e6bf4d465675dba862eee562146b3d	1684	INCLUDE	receipt field schema; evidence is bytes not prose
+SKILL.md	90b045a81ea2b38645e3ccd2b0f3b534220c11e4c2b45bae54340dcfe387a65a	1825	INCLUDE	ONE command / ONE denominator / ONE falsifier
+tools.json	fc9e240e4d2fac7f79bbfa54582c1464b7adde83cb14d24fa2095293c216cbc2	1583	INCLUDE	SYNTHETIC MCP tool surface; no live server, no credentials

@@ -1,0 +1,13 @@
+# OWNER: researcher-q4 | receipt for LOCAL static check (NOT a backend-usable proof)
+claim_id=LOCAL-BACKEND-CONSISTENCY
+command="C:/Program Files/Git/usr/bin/timeout.exe" 30 "D:/Software/Developer/Python314/python.exe" -X utf8 -B "D:/Software/Tool/WorkStation/debugger/scripts/check_backend_consistency.py"
+cwd=F:/GENESIS-ARCHIVE/10-STORE/12-RESEARCH-RUNS/build-weapon-library-20261110
+started_utc=2026-11-10T22:56:43Z
+finished_utc=2026-11-10T22:56:43Z
+exit=0
+--- stdout ---
+MCP backend consistency OK: 20 backends wired (template == codex toml == bin/*.cmd == BACKEND_META).
+  backends: apktool, cheatengine, dnspy, frida, ghidra, ida, ilspy, imhex, jadx, mobsf, radare2, rea, reclass, reqable, sevenzip, virustotal, volatility3, wireshark, x64dbg, yaraflux
+--- stderr ---
+--- NOTE ---
+Static/read-only check only; NEVER starts a backend, NEVER runs java/exe/npx/node/r2pm. A backend_usable=True claim would need a real MCP session receipt (HMC/credential/third-party) = OWNER_GATED.

@@ -1,0 +1,14 @@
+command: C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\Software\Tool\WorkStation\debugger\scripts\sync-wiki-figures.py --check --repo D:\Software\Tool\WorkStation\debugger --wiki F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110\setukou-20261111\v5\slices\q2-scripts\fixtures\syn-wiki
+cwd: F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+started_utc: 2026-11-10T23:20:04+00:00
+finished_utc: 2026-11-10T23:20:04+00:00
+exit: 1
+--- stdout (6 lines) ---
+  !! missing: F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110\setukou-20261111\v5\slices\q2-scripts\fixtures\syn-wiki\INDEX.md
+  !! missing: F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110\setukou-20261111\v5\slices\q2-scripts\fixtures\syn-wiki\CHARTER-ARSENAL.md
+  !! missing: F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110\setukou-20261111\v5\slices\q2-scripts\fixtures\syn-wiki\methods\arsenal-inventory.md
+  !! missing: F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110\setukou-20261111\v5\slices\q2-scripts\fixtures\syn-wiki\methods\arsenal-upgrade-plan.md
+
+4 file(s) carry a stale figure. Run without --check to rewrite.
+--- stderr (0 lines) ---
+

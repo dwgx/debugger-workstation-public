@@ -1,0 +1,21 @@
+{
+  "label": "SYNTHETIC",
+  "owner": "researcher-q5 | setukou-20261111/v5/slices/q5-absorption/fixtures/",
+  "corpus_lesson_id": "RR-GATE-3",
+  "corpus_locator": "REPO-REUSE-2026-11-10.md:258",
+  "lesson": "选一个可控样例，同时包含正确版本和刻意改变 UI/行为的负例；正确版本不过度报错、负例不能因 screenshot 相似而通过；没有测试时状态必须是未执行，不能生成 passed",
+  "fixture_kind": "positive_negative_notrun_triplet",
+  "cases": [
+    {"id": "correct", "role": "positive", "content_hash": "SYNTH_CORRECT_HASH", "verdict": "passed", "receipt_present": true},
+    {"id": "mutated_ui", "role": "negative", "content_hash": "SYNTH_MUTATED_HASH", "verdict": "failed", "receipt_present": true, "screenshot_similarity": 0.99},
+    {"id": "not_executed", "role": "control", "status": "NOT_EXECUTED", "verdict_must_not_be": "passed", "receipt_present": false}
+  ],
+  "checks": [
+    {"id": "P1", "description": "correct positive must not over-report fail", "expect_verdict": "passed"},
+    {"id": "N1", "description": "deliberate negative must be RED even when screenshot_similarity is high", "expect_verdict": "failed", "trap": "screenshot_similarity"},
+    {"id": "T1", "description": "untested case status must stay NOT_EXECUTED, never promoted to passed", "expect_status": "NOT_EXECUTED"}
+  ],
+  "no_private_data": true,
+  "no_credential": true,
+  "no_network": true
+}

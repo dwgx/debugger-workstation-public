@@ -1,0 +1,38 @@
+# OWNER: researcher-q4 | receipt for LOCAL static check (NOT a backend-usable proof)
+claim_id=LOCAL-WRAPPER-CHECKSUM-SCAN
+command="C:/Program Files/Git/usr/bin/timeout.exe" 30 "D:/Software/Developer/Python314/python.exe" -X utf8 -B "F:/GENESIS-ARCHIVE/10-STORE/12-RESEARCH-RUNS/build-weapon-library-20261110/setukou-20261111/v5/slices/q4-wrappers/receipt_tools/scan_wrappers.py"
+cwd=F:/GENESIS-ARCHIVE/10-STORE/12-RESEARCH-RUNS/build-weapon-library-20261110
+started_utc=2026-11-10T22:56:44Z
+finished_utc=2026-11-10T22:56:44Z
+exit=0
+--- stdout ---
+bin_dir=D:\Software\Tool\WorkStation\debugger\mcp\bin
+wrappers_scanned=23
+wrapper|7zip-mcp.cmd|bytes=181|sha256=964635aed3f9a85a10ec28e65899f3aca31eb7804d2a10f800efa4a83699025b
+wrapper|apktool-mcp.cmd|bytes=419|sha256=1a7cc6a76d090d6463491cd89f5e53538b85142438dce5796d045c4d49f86182
+wrapper|apktool.cmd|bytes=73|sha256=e682e1d3ced6d5dfb64c2be47eb45eeddb3a43eed14df6f079c627668041e9a4
+wrapper|cheatengine-mcp.cmd|bytes=305|sha256=4831f8a21ab82a8b0762869066bec096d1f24058a4d39fd4a6df935675258589
+wrapper|debugger-router-mcp.cmd|bytes=627|sha256=fac161bdfe7e0d8492f43494ff6d110379fcce3480a3b5304d76c60fad93040d
+wrapper|dnspy-mcp.cmd|bytes=124|sha256=420c8e107c4d08eaec01db45575ad30c254207e8a3219251c5e34e11eb1efbab
+wrapper|frida-mcp.cmd|bytes=76|sha256=1c0cb68cb5041b467349af1234d1b885d2b6394e35cdcd9d0ed9782400495fd5
+wrapper|ghidra-mcp.cmd|bytes=144|sha256=fc86f6310ee5f76564cc170eb0242ce84af1da7bc1212020d5bd31c69cefad50
+wrapper|ida-pro-mcp.cmd|bytes=354|sha256=0d3569b6eafcb24ae8759b8049b062054b88c84f09d1b240da61a8c8dcfd2e9d
+wrapper|ilspy-mcp.cmd|bytes=523|sha256=4f22b5aef4126852fc58d6fd65a22663c64b9c89d750046a58bca0a17e181508
+wrapper|imhex-mcp.cmd|bytes=147|sha256=ca9bef089a466a908281eab1c41d81c12e14ffc68be404c3cac28ff12e60bdb3
+wrapper|jadx-mcp.cmd|bytes=268|sha256=cfbcc5bf79ec2c93343f42aabefedfd187daa4869f1cbf81e57c9c7b26031432
+wrapper|mobsf-mcp.cmd|bytes=180|sha256=3549375b388aa84178f730f08274847f8b5d90ec9eb66e13833e2d4e24f98201
+wrapper|radare2-mcp.cmd|bytes=215|sha256=c08c9b0ea80dfa20314d037463d82d99a084d828f8eb29fb28ba920bee10885d
+wrapper|rea-mcp.cmd|bytes=494|sha256=757c05b0211352957abfd5fdab30192d40b175c95f4f44dcad4498c87ccdf3a2
+wrapper|reclass-mcp.cmd|bytes=151|sha256=623997fe4ac4bcb30306ac6ef2460d7f0516de0f397c0921e1ac52fa232f5665
+wrapper|reqable-mcp-local.cmd|bytes=178|sha256=e0a87251a2221a97b9e63b4422fd3c28b42cba5aff6ac070ca2bc7c4de5afcad
+wrapper|virustotal-mcp.cmd|bytes=449|sha256=5b40bc90277f9ef9ae0588e7f35a3c610bb7d43692e5a8830a03889f6f187957
+wrapper|volatility3-mcp.cmd|bytes=136|sha256=2744246f763394d23979ffd6a86016e5d685d7b46d3b54998e542027a9925431
+wrapper|wireshark-mcp.cmd|bytes=224|sha256=f146e5cbc97a41f6fed1693c12d0f643c17e6a1ac59a2dbd4349b2daf7201c44
+wrapper|x64dbg-mcp.cmd|bytes=171|sha256=481ac826a43c13008cc004c93caabdd7048c22f3ff9159736f4d23c41763b66c
+wrapper|yaraflux-http.cmd|bytes=239|sha256=c4ba60422c789a63738218b539f541d66aea66e343380813c0abfffef8d6c490
+wrapper|yaraflux-mcp.cmd|bytes=249|sha256=5a1924f1a22dfe2e0a0020f4a72a696f1c2f04e2e2896e2aaacae8b77faad5c3
+by_ext=.cmd:23
+NOTE: file presence + sha256 = static evidence only; backend_usable UNVERIFIED
+--- stderr ---
+--- NOTE ---
+Static/read-only check only; NEVER starts a backend, NEVER runs java/exe/npx/node/r2pm. A backend_usable=True claim would need a real MCP session receipt (HMC/credential/third-party) = OWNER_GATED.

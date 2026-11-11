@@ -1,0 +1,24 @@
+{
+  "label": "SYNTHETIC",
+  "owner": "researcher-q5 | setukou-20261111/v5/slices/q5-absorption/fixtures/",
+  "corpus_lesson_id": "BU-ROOT-C08",
+  "corpus_locator": "review/CORRECTIONS.md#C08",
+  "lesson": "计数分母现盘复算；D/F 副本逐对 hash 不以 mtime 判正确",
+  "fixture_kind": "copy_pair_timestamps",
+  "pairs": [
+    {"id": "D", "content": "SYNTHETIC-PAYLOAD-ALPHA", "mtime_utc": "2026-11-11T00:00:00Z"},
+    {"id": "F", "content": "SYNTHETIC-PAYLOAD-ALPHA", "mtime_utc": "2026-11-10T00:00:00Z"}
+  ],
+  "trap": {
+    "description": "mtime differs (F is older) but byte content is identical; correctness MUST be decided by hash equality, never mtime",
+    "mtime_equal": false,
+    "content_equal_by_hash": true
+  },
+  "checks": [
+    {"id": "H1", "description": "recompute each pair's sha256 from bytes, assert equality", "expect_sha_equal": true},
+    {"id": "H2", "description": "denominator (pair count) recomputed from disk, not a constant", "expect_pairs": 2}
+  ],
+  "no_private_data": true,
+  "no_credential": true,
+  "no_network": true
+}

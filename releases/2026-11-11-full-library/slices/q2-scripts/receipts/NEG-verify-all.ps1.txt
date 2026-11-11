@@ -1,0 +1,11 @@
+command: C:/Program Files/Git/usr/bin/timeout.exe 45 C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NoProfile -ExecutionPolicy Bypass -File D:\Software\Tool\WorkStation\debugger\scripts\verify-all.ps1 -h
+cwd: F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+started_utc: 2026-11-10T23:20:21+00:00
+finished_utc: 2026-11-10T23:20:22+00:00
+exit: 2
+--- stdout (0 lines) ---
+--- stderr (3 lines) ---
+verify-all.ps1: refusing argument(s) it would otherwise IGNORE: -h
+  A script that silently accepts an argument it cannot honour reports a pass
+  for work nobody did. Check the spelling, or read the script's param block.
+

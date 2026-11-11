@@ -1,0 +1,10 @@
+command: C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\Software\Tool\WorkStation\debugger\scripts\check_backend_consistency.py
+cwd: F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+started_utc: 2026-11-10T23:20:22+00:00
+finished_utc: 2026-11-10T23:20:22+00:00
+exit: 0
+--- stdout (2 lines) ---
+MCP backend consistency OK: 20 backends wired (template == codex toml == bin/*.cmd == BACKEND_META).
+  backends: apktool, cheatengine, dnspy, frida, ghidra, ida, ilspy, imhex, jadx, mobsf, radare2, rea, reclass, reqable, sevenzip, virustotal, volatility3, wireshark, x64dbg, yaraflux
+--- stderr (0 lines) ---
+

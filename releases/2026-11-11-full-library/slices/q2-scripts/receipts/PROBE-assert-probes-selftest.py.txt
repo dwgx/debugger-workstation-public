@@ -1,0 +1,78 @@
+command: C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\Software\Tool\WorkStation\debugger\scripts\assert-probes-selftest.py
+cwd: F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+started_utc: 2026-11-10T23:19:23+00:00
+finished_utc: 2026-11-10T23:19:30+00:00
+exit: 2
+--- stdout (70 lines) ---
+selftest: driving D:\Software\Tool\WorkStation\debugger\scripts\assert-probes.py
+selftest:   sha256 aa056e357ba3dfbced0ae32f86a60777ab22e88dda14faf049da5fe7b0f6a642 (each case re-checks this before it runs)
+selftest:   registry copies and planted probes under C:\Users\dwgx1\AppData\Local\Temp\assert-probes-selftest-30080
+selftest:   9 properties
+
+  PROVEN  produces-stale      a probe that prints its expect but writes no declared artifact must be DRIFT even though every string matched
+        ok  plant          want=DRIFT     got=DRIFT
+            wants DRIFT naming the byte-identical verdict, NOT OK
+        ok  control        want=OK        got=OK
+
+  PROVEN  produces-unclaimed  without produces declared the entry passes, and the harness says that verdict is STRINGS ONLY rather than reporting it as equal to the filesystem one
+        ok  plant          want=OK        got=OK
+            expected: the weaker OK, which the harness must label
+        ok  must_say[plant] want=NOT a claim that the instrument ran got=found
+            the verdict text has to carry this claim
+        ok  must_say[plant] want=STRINGS only got=found
+            the verdict text has to carry this claim
+
+  PROVEN  prepare             probe.prepare is what creates the input the probe reads; a no-op prepare must not leave the entry green
+        ok  plant          want=DRIFT     got=DRIFT
+            wants DRIFT: the probe had no input to read
+        ok  control        want=OK        got=OK
+
+  PROVEN  prepare-fails       a prepare that exits nonzero is this entry's TOOL-FAULT; the probe never got its input and must not be scored on it
+        ok  plant          want=TOOL-FAULT got=TOOL-FAULT
+            wants TOOL-FAULT present and NO OK verdict
+
+  BROKEN  brace-visible       a bare `{` in argument position delivers a mangled token to the child; when the expect string names it, the run must go red
+        **  plant          want=DRIFT     got=TOOL-FAULT
+            wants DRIFT
+    exit=1 in 0.2s | brace-visible-plant
+    |   TOOL-FAULT  selftest.brace PROBE refused before running: this script declined to execute the command (see the  :: & "D:\Software\Developer\Python314\python.exe" "C:\Users\dwg
+    | assert-probes: 1 entries; verdicts 1 TOOL-FAULT.
+    | TOOL-FAULT is this script's problem, not the registry's: those commands never
+    | ran. Fix this script before reading anything else in this output.
+    | REFUSING TO PASS: all 1 of 1 entries that ran failed to start, so nothing was measured. That is not a green run; it is no run.
+        ok  control        want=OK        got=OK
+        ok  R26-plant      want=R26       got=R26 fired
+            registry-verify.py is the static half of this property
+        ok  R26-control    want=NO-R26    got=R26 silent
+            registry-verify.py is the static half of this property
+
+  BROKEN  brace-silent        a bare `{` whose mangling no recorded string can see must not come back OK -- this is the shape the R26 rule exists for
+        ok  plant          want=NOT-OK    got=TOOL-FAULT
+            wants a refusal; MEASURED: it reports OK
+
+  PROVEN  isolation           an isolation_check is judged under its OWN polarity; driving it under control polarity must be shown to condemn a CLEAN station
+        ok  plant          want=OK        got=OK
+            the station is clean and the verdict says so
+        ok  control        want=DRIFT     got=DRIFT
+        ok  must_say[control] want=ISOLATION exit: expected 1, real=0 got=found
+            the verdict text has to carry this claim
+        ok  must_say[control] want=treat this as an emergency got=found
+            the verdict text has to carry this claim
+
+  BROKEN  toolfault           a probe that cannot start must be TOOL-FAULT and must never be counted as a pass
+        ok  plant          want=TOOL-FAULT got=TOOL-FAULT
+            MEASURED: DRIFT instead -- the missing binary leaves $LASTEXITCODE unset, so the wrapper propagates 0 and tool_fault() returns early on `rc == 0`
+        ok  control        want=TOOL-FAULT got=TOOL-FAULT
+            a quoted exe with no call operator: rc=1 in ~0.27s with ParserError, so the marker scan runs and names it -- proving TOOL-FAULT is reachable and that the plant's failure is the rc==0 gate
+
+  BROKEN  toolfault-green     the extreme case: a probe that cannot start AND declares nothing of its own must not be OK
+        ok  plant          want=NOT-OK    got=TOOL-FAULT
+            wants a refusal; MEASURED: `OK`, sweep exit 0
+
+
+selftest: 9 properties; 4 BROKEN, 5 PROVEN.
+selftest: PROVEN = the script holds this property (plant red, control green).
+selftest: GAP = measured, the script does NOT hold it; the diff is in the report.
+selftest: a GAP is asserted to still reproduce -- if one goes green it was FIXED, which this harness reports as BROKEN so it gets promoted to an assertion.
+--- stderr (0 lines) ---
+

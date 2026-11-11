@@ -1,0 +1,41 @@
+{
+  "$comment": "Round 5 checkpoint (in-flight): Q1-Q7 all ACCEPTED, Q8 active (FINAL verdict), synthesis reserved",
+  "owner": "parent (main line)",
+  "round": 5,
+  "type": "in-flight-q8-final",
+  "as_of": "2026-11-11",
+  "frontier_dispatched": ["Q8"],
+  "workers": {
+    "Q1": "ACCEPTED (COMPLETENESS_VERDICT=NOT_COMPLETE)",
+    "Q2": "ACCEPTED (6 TR:S promotions, 47 receipts)",
+    "Q3": "ACCEPTED (X-001 + G-Q3-1 RESOLVED, disk-derived)",
+    "Q4": "ACCEPTED (promotions=0 honest)",
+    "Q5": "ACCEPTED (12 SM promotions)",
+    "Q6": "ACCEPTED (independent audit, false_passes=0)",
+    "Q7": "ACCEPTED (BOUNDED_RUN_OK, 9->27/+18, 2 keeps)",
+    "Q8": "active (final RELEASE_GATE verdict, NO push)"
+  },
+  "model_lane": "hy4worker (hy4free only)",
+  "metric": {
+    "claims_total": 295,
+    "frozen": true,
+    "real_verified": 27,
+    "declared_unverified": 102,
+    "owner_gated": 151,
+    "missing": 15,
+    "blockers": 268,
+    "RELEASE_GATE": "RED",
+    "COMPLETENESS_VERDICT": "NOT_COMPLETE",
+    "push_executed": "NO",
+    "results.tsv": "baseline 9 -> keep 21 (Q5 +12 SM) -> keep 27 (Q2 +6 TR:S)"
+  },
+  "waves": {"v2": "5/5 ACCEPTED", "v3": "5/5 ACCEPTED", "v4": "6/6 ACCEPTED", "final_verify": "FINAL ALL_GREEN exit 0", "round2": "4/4 ACCEPTED", "research": "Q1-Q7 ACCEPTED"},
+  "contradictions": {"C-001": "resolved", "C-002": "discarded", "X-001": "RESOLVED", "G-Q3-1": "RESOLVED permanently"},
+  "red_line_scan": {"v5_files": 125, "pyc": 0, "token_like": 0, "literal_push_cmds": 0, "credential_value_files": 0, "product_workstation": "7dfabdb/11", "product_debugger": "2c25f26/2"},
+  "gaps": ["G-004=126 unassigned TR:X/N/MB/MC/L/K", "G-Q5-1..4", "OWNER_GATED 151 needs Owner decisions", "publication fork needs ONE Owner sentence (发全量 / 只发 learning-kit / 都不发)"],
+  "external_actions": {"total": 36, "executed": 0, "push_executed": "NO"},
+  "next_on_return": "Q8: re-run ONE ## Verify from W -> accept -> parent writes SYNTHESIS.md + OPEN-QUESTIONS.md + final LEDGER at named STOP condition (STOP-EVIDENCE or STOP-BUDGET); reserve synthesis round; final Owner answer in Chinese first line NOT complete",
+  "budget_used": {"rounds": 5, "minutes_estimate": 70, "tokens_estimate_method": "ceil(chars/4)", "synthesis_reserved": true},
+  "stop": "none yet — one final slice + synthesis reserved",
+  "publication": "OWNER_GATED, no-decision = legal default, keep local staged"
+}

@@ -1,0 +1,33 @@
+OWNER: researcher-q6 | setukou-20261111/v5/slices/q6-audit/receipts/
+Q6 independent re-run of Q1 ONE ## Verify (DIFFERENT actor)
+started_utc      : 2026-11-10T23:15:09Z
+finished_utc     : 2026-11-10T23:15:10Z
+cwd              : F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+command          : "C:/Program Files/Git/usr/bin/timeout.exe" 120 python -X utf8 setukou-20261111/v5/slices/q1-completeness/verify.py
+executed_argv    : ['D:\\Software\\Developer\\Python314\\python.exe', '-X', 'utf8', 'setukou-20261111/v5/slices/q1-completeness/verify.py']
+q6_envelope      : subprocess timeout=90s (bounded); no cmd /c wrapper
+exit             : 0
+----- STDOUT -----
+as_of=2026-11-10T23:15:09Z
+source=SATURATION.tsv sha16=13d822dcc2a0574e
+claims_total=295 (denominator=rows of v5/SATURATION.tsv) as_of=2026-11-10T23:15:09Z
+  status_split: declared_unverified=108 missing=15 owner_gated=151 runnable_real_verified=21 (denominator=295)
+real_verified=21 (denominator=295) as_of=2026-11-10T23:15:09Z
+blockers=274 (denominator=295; =claims_total-real_verified) as_of=2026-11-10T23:15:09Z
+denominator_frozen_ok=True (v4 REAL-VERIFY rows=295 vs SATURATION rows=295) as_of=2026-11-10T23:15:09Z
+RELEASE_GATE=RED (denominator=295; GREEN iff every claim RUNNABLE_REAL_VERIFIED) as_of=2026-11-10T23:15:09Z
+gap_rows=28 gap_yes=8 gap_no=20 (denominator=28; v3 GAP-MATRIX.tsv) as_of=2026-11-10T23:15:09Z
+absorved_rows=320 absorbed_yes=7 absorbed_no=313 (denominator=320; v4 CORPUS-INDEX.tsv) as_of=2026-11-10T23:15:09Z
+v2_v3_v4_accepted_rows=16 (denominator=ACCEPTED cells; v2=5 v3=5 v4=6) as_of=2026-11-10T23:15:09Z
+external_actions_total=36 external_actions_executed=0 external_actions_unexecuted=36 (denominator=36 OWNER DECISION REQUIRED markers; cross_check DECISIONS.tsv rows=18 executed=0) as_of=2026-11-10T23:15:09Z
+odr_markers=36 (denominator=EXTERNAL-ACTIONS.md + PUBLISH-DECISIONS.md OWNER DECISION REQUIRED strings) as_of=2026-11-10T23:15:09Z
+push_executed=NO (denominator=4 decision/state surfaces) as_of=2026-11-10T23:15:09Z
+live_porcelain WorkStation=11 debugger=2 live_porcelain_11_2_ok=True (denominator=expected 11/2) as_of=2026-11-10T23:15:09Z
+COMPLETENESS_VERDICT=NOT_COMPLETE
+negative_control: inject real_verified=295 blockers=0 -> COMPLETENESS_VERDICT=NOT_COMPLETE (expected NOT_COMPLETE; gap_no=20 absorbed_no=313 RELEASE_GATE=RED disagree) negative_control_red_capable=True as_of=2026-11-10T23:15:09Z
+fake_push_negative_control: inject push_executed=YES into in-memory surface -> fake_push_detected=True (expected True; P09 negation defect: 'No push has been executed' scores positive=0) fake_control_ok=True as_of=2026-11-10T23:15:09Z
+positive_control: synthetic all-green (real_verified=295 blockers=0 gap_no=0 absorbed_no=0 RELEASE_GATE=GREEN) -> COMPLETENESS_VERDICT=COMPLETE green_capable=True as_of=2026-11-10T23:15:09Z
+CHECKER_SELFTEST=OK as_of=2026-11-10T23:15:09Z
+----- STDERR -----
+(empty)
+----- END -----

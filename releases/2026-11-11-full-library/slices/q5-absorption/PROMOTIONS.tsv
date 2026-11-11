@@ -1,0 +1,16 @@
+# OWNER: researcher-q5 | setukou-20261111/v5/slices/q5-absorption/PROMOTIONS.tsv
+# as_of 2026-11-11 | claims_total=295 FROZEN; only status moves, no row add/delete/renumber.
+# each row references exactly one receipt in this slice's receipts/<claim_id>.txt (command/cwd/UTC/exit/stdout/stderr).
+claim_id,from_verdict,to_verdict,receipt_path,exit,negative_control
+SM:candidate/BRIDGE.md,DECLARED_UNVERIFIED,RUNNABLE_REAL_VERIFIED,setukou-20261111/v5/slices/q5-absorption/receipts/SM:candidate_BRIDGE.md.txt,0,tamper_caught=1 (RV-S02 in-memory tamper falsifier goes RED)
+SM:candidate/CHANGELOG.md,DECLARED_UNVERIFIED,RUNNABLE_REAL_VERIFIED,setukou-20261111/v5/slices/q5-absorption/receipts/SM:candidate_CHANGELOG.md.txt,0,tamper_caught=1 (RV-S02 in-memory tamper falsifier goes RED)
+SM:candidate/check.py,DECLARED_UNVERIFIED,RUNNABLE_REAL_VERIFIED,setukou-20261111/v5/slices/q5-absorption/receipts/SM:candidate_check.py.txt,0,tamper_caught=1 (RV-S02 in-memory tamper falsifier goes RED)
+SM:candidate/examples/fixture-alpha.txt,DECLARED_UNVERIFIED,RUNNABLE_REAL_VERIFIED,setukou-20261111/v5/slices/q5-absorption/receipts/SM:candidate_examples_fixture-alpha.txt.txt,0,tamper_caught=1 (RV-S02 in-memory tamper falsifier goes RED)
+SM:candidate/examples/fixture-alpha.txt.sha256,DECLARED_UNVERIFIED,RUNNABLE_REAL_VERIFIED,setukou-20261111/v5/slices/q5-absorption/receipts/SM:candidate_examples_fixture-alpha.txt.sha256.txt,0,tamper_caught=1 (RV-S02 in-memory tamper falsifier goes RED)
+SM:candidate/examples/fixture-beta.txt,DECLARED_UNVERIFIED,RUNNABLE_REAL_VERIFIED,setukou-20261111/v5/slices/q5-absorption/receipts/SM:candidate_examples_fixture-beta.txt.txt,0,tamper_caught=1 (RV-S02 in-memory tamper falsifier goes RED)
+SM:candidate/examples/fixture-beta.txt.sha256,DECLARED_UNVERIFIED,RUNNABLE_REAL_VERIFIED,setukou-20261111/v5/slices/q5-absorption/receipts/SM:candidate_examples_fixture-beta.txt.sha256.txt,0,tamper_caught=1 (RV-S02 in-memory tamper falsifier goes RED)
+SM:candidate/LICENSE-NOTE.md,DECLARED_UNVERIFIED,RUNNABLE_REAL_VERIFIED,setukou-20261111/v5/slices/q5-absorption/receipts/SM:candidate_LICENSE-NOTE.md.txt,0,tamper_caught=1 (RV-S02 in-memory tamper falsifier goes RED)
+SM:candidate/README.md,DECLARED_UNVERIFIED,RUNNABLE_REAL_VERIFIED,setukou-20261111/v5/slices/q5-absorption/receipts/SM:candidate_README.md.txt,0,tamper_caught=1 (RV-S02 in-memory tamper falsifier goes RED)
+SM:candidate/RECEIPT-SCHEMA.md,DECLARED_UNVERIFIED,RUNNABLE_REAL_VERIFIED,setukou-20261111/v5/slices/q5-absorption/receipts/SM:candidate_RECEIPT-SCHEMA.md.txt,0,tamper_caught=1 (RV-S02 in-memory tamper falsifier goes RED)
+SM:candidate/SKILL.md,DECLARED_UNVERIFIED,RUNNABLE_REAL_VERIFIED,setukou-20261111/v5/slices/q5-absorption/receipts/SM:candidate_SKILL.md.txt,0,tamper_caught=1 (RV-S02 in-memory tamper falsifier goes RED)
+SM:candidate/tools.json,DECLARED_UNVERIFIED,RUNNABLE_REAL_VERIFIED,setukou-20261111/v5/slices/q5-absorption/receipts/SM:candidate_tools.json.txt,0,tamper_caught=1 (RV-S02 in-memory tamper falsifier goes RED)

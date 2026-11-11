@@ -1,0 +1,22 @@
+{
+  "label": "SYNTHETIC",
+  "owner": "researcher-q5 | setukou-20261111/v5/slices/q5-absorption/fixtures/",
+  "corpus_lesson_id": "BU-ROOT-C10",
+  "corpus_locator": "review/CORRECTIONS.md#C10",
+  "lesson": "临时入口/原始回执/归档副本/最终交付四角色分开；冻结证据不覆盖",
+  "fixture_kind": "four_role_ledger",
+  "roles": {
+    "temporary_entry": {"path": "scratch/entry.tmp", "frozen": false, "may_overwrite": true},
+    "raw_receipt": {"path": "receipts/raw.txt", "frozen": true, "may_overwrite": false},
+    "archive_copy": {"path": "archive/copy.bin", "frozen": true, "may_overwrite": false},
+    "final_delivery": {"path": "deliver/final.md", "frozen": true, "may_overwrite": false}
+  },
+  "checks": [
+    {"id": "R1", "description": "four distinct role keys present", "expect_role_count": 4},
+    {"id": "R2", "description": "frozen evidence (raw_receipt/archive_copy/final_delivery) must NOT be overwriteable", "expect_may_overwrite_false": 3},
+    {"id": "R3", "description": "roles must be distinct paths (no collision)", "expect_distinct_paths": true}
+  ],
+  "no_private_data": true,
+  "no_credential": true,
+  "no_network": true
+}

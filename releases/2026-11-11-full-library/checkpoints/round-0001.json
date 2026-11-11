@@ -1,0 +1,23 @@
+{
+  "round": 1,
+  "type": "merge",
+  "as_of": "2026-11-11",
+  "frontier_dispatched": ["Q1"],
+  "q1_status": "answered-by-checker",
+  "q1_evidence": {
+    "verify": "F:/GENESIS-ARCHIVE/10-STORE/12-RESEARCH-RUNS/build-weapon-library-20261110/setukou-20261111/v5/slices/q1-completeness/verify.py",
+    "parent_rerun_exit": 0,
+    "COMPLETENESS_VERDICT": "NOT_COMPLETE",
+    "measured": {"claims_total": 295, "real_verified": 9, "blockers": 286, "RELEASE_GATE": "RED", "gap_rows": 28, "gap_yes": 8, "gap_no": 20, "absorbed_rows": 320, "absorbed_yes": 7, "absorbed_no": 313, "v2_v3_v4_accepted_rows": 16, "external_actions_total": 36, "external_actions_executed": 0, "push_executed": "NO", "live_porcelain_11_2_ok": true},
+    "negative_control_red_capable": true,
+    "positive_control_green_capable": true,
+    "CHECKER_SELFTEST": "OK"
+  },
+  "q1_artifacts_present": ["v5/slices/q1-completeness/verify.py", "v5/slices/q1-completeness/COMPLETENESS.md", "research/Q1/sources.tsv (16 primary, 8 cols, all locators resolve)"],
+  "q1_artifacts_missing_narrative": ["research/Q1/REPORT.md", "research/Q1/claims.tsv"],
+  "contradiction_C001": "resolved — external_actions_executed 1→0 via 4 authoritative state surfaces; same P09 negation-regex defect as PARENT-PUSH-DETECTOR-FIXTURE.md",
+  "decision": "Q1's machine verdict + sources satisfy the factual prerequisite for Round 2 (baseline is already known and parent-verified). Per auto-deepresearch resume rule (reconstruct frontier from files, do not block a whole round on one narrative artifact), parent marks Q1 answered-by-checker and proceeds; researcher-q1 may still land the 2 narrative files later, to be back-filled without changing verified bytes.",
+  "next_frontier": ["Q2", "Q3", "Q4", "Q5"],
+  "stop": "none",
+  "budget_used": {"rounds": 1, "minutes_estimate": 15, "tokens_estimate_method": "ceil(chars/4), harness exact not exposed"}
+}

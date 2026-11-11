@@ -1,0 +1,38 @@
+# OWNER: researcher-q4 | receipt for LOCAL static check (NOT a backend-usable proof)
+claim_id=LOCAL-TARGET-PATH-FIND
+command="C:/Program Files/Git/usr/bin/timeout.exe" 30 "D:/Software/Developer/Python314/python.exe" -X utf8 -B "F:/GENESIS-ARCHIVE/10-STORE/12-RESEARCH-RUNS/build-weapon-library-20261110/setukou-20261111/v5/slices/q4-wrappers/receipt_tools/find_targets.py"
+cwd=F:/GENESIS-ARCHIVE/10-STORE/12-RESEARCH-RUNS/build-weapon-library-20261110
+started_utc=2026-11-10T22:56:44Z
+finished_utc=2026-11-10T22:56:44Z
+exit=0
+--- stdout ---
+root=D:\Software\Tool\WorkStation\debugger
+wrappers_seen=23
+target|7zip-mcp.cmd|MCP/mcp7zop/.venv/Scripts/python.exe|exists=False
+target|apktool-mcp.cmd|MCP/apktool-mcp-server/.venv/Scripts/python.exe|exists=False
+target|apktool.cmd|Mobile-Android/Apktool/apktool.jar|exists=True
+target|cheatengine-mcp.cmd|MCP/cheatengine-mcp-bridge/MCP_Server/.venv/Scripts/python.exe|exists=False
+target|debugger-router-mcp.cmd|MCP/debugger-router/server.py|exists=True
+target|dnspy-mcp.cmd|MCP/dnspy-mcp/publish/win-x64/DnSpyMcpServer.exe|exists=True
+target|frida-mcp.cmd|MCP/frida-mcp/.venv/Scripts/frida-mcp.exe|exists=False
+target|ghidra-mcp.cmd|MCP/GhidraMCP/.venv/Scripts/python.exe|exists=False
+target|ida-pro-mcp.cmd|MCP/ida-pro-mcp/.venv/Scripts/idalib-mcp.exe|exists=False
+target|ilspy-mcp.cmd|MCP/ILSpy-Mcp/publish/ILSpy.Mcp.exe|exists=True
+target|imhex-mcp.cmd|MCP/imhexMCP/mcp-server/.venv/Scripts/python.exe|exists=False
+target|jadx-mcp.cmd|MCP/jadx-mcp-server/.venv/Scripts/python.exe|exists=False
+target|mobsf-mcp.cmd|MCP/mobsf-mcp-server/node_modules/.bin/tsx.cmd|exists=False
+target|radare2-mcp.cmd|Static-Reversing/radare2/radare2-6.2.2-w64/bin/r2pm.exe|exists=True
+target|rea-mcp.cmd|PATH_RESOLVED|exists=UNKNOWN|launcher=where/npx (no static path)
+target|reclass-mcp.cmd|MCP/ReClass.NET-MCP/ReClassMCP.Server/.venv/Scripts/python.exe|exists=False
+target|reqable-mcp-local.cmd|MCP/reqable-mcp/.venv/Scripts/python.exe|exists=False
+target|virustotal-mcp.cmd|MCP/mcp-virustotal/build/index.js|exists=False
+target|volatility3-mcp.cmd|MCP/volatility3-mcp/.venv/Scripts/python.exe|exists=False
+target|wireshark-mcp.cmd|MCP/mcp-wireshark/.venv/Scripts/mcp-wireshark.exe|exists=False
+target|x64dbg-mcp.cmd|MCP/x64dbg-automate-pyclient/.venv/Scripts/x64dbg-automate-mcp.exe|exists=False
+target|yaraflux-http.cmd|MCP/YaraFlux/.venv/Scripts/yaraflux-mcp-server.exe|exists=False
+target|yaraflux-mcp.cmd|MCP/YaraFlux/.venv/Scripts/python.exe|exists=False
+static_path_present=5 static_path_absent=17 unprobeable=1
+NOTE: path existence = static evidence only; backend_usable UNVERIFIED (no session run)
+--- stderr ---
+--- NOTE ---
+Static/read-only check only; NEVER starts a backend, NEVER runs java/exe/npx/node/r2pm. A backend_usable=True claim would need a real MCP session receipt (HMC/credential/third-party) = OWNER_GATED.

@@ -1,0 +1,112 @@
+command: C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\Software\Tool\WorkStation\debugger\scripts\verify-clone-freshness.py --strict
+cwd: F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+started_utc: 2026-11-10T23:20:20+00:00
+finished_utc: 2026-11-10T23:20:20+00:00
+exit: 1
+--- stdout (104 lines) ---
+verify-clone-freshness
+  repo : D:\Software\Tool\WorkStation\debugger
+  python 3.14.7  static checks only -- no probe is executed
+
+==============================================================================
+1. CORPUS   crackme-corpus/out/   (R3)
+==============================================================================
+  directory : crackme-corpus/out  [present]
+  entries   : 5286 files, 24 directories
+  needed by : 15 capabilities name a path inside it
+              14 of those are CHECKED by scripts/assert-probes.py (out of 25 checked); 1 are on its SKIP list
+    checked -> dynamic.win.frida, native.behaviour.capa, native.disasm.capstone, native.function.match, native.ghidra.decompile, native.ida.decompile, native.ida.list_functions, native.pe.authenticode, native.pe.container, native.pe.hardening, native.pe.packer, native.signature.certverify, native.yara.triage, re.corpus.solve
+    skipped -> native.ghidra.emulate
+          * dynamic.win.frida  probe.prepare  crackme-corpus/out/c01-stringobf.exe
+          * native.pe.container  probe.command  crackme-corpus/out/c01-stringobf.exe
+          * native.function.match  probe.command  crackme-corpus/out/c01-stringobf.exe
+          * native.function.match  probe.command  crackme-corpus/out/c03_antidebug.exe
+          * native.pe.packer  probe.command  crackme-corpus/out/c01-stringobf.exe
+          * native.pe.packer  requires.tools[upx].probe  crackme-corpus/out/c01-stringobf.exe
+          * native.disasm.capstone  probe.command  crackme-corpus/out/c01-stringobf.exe
+          * native.pe.authenticode  probe.command  crackme-corpus/out/c01-stringobf.exe
+          * native.behaviour.capa  probe.command  crackme-corpus/out/c01-stringobf.exe
+          * native.signature.certverify  probe.prepare  crackme-corpus/out/c01-stringobf.exe
+          * native.pe.hardening  probe.command  crackme-corpus/out/c01-stringobf.exe
+          * native.pe.hardening  requires.tools[rabin2].probe  crackme-corpus/out/c01-stringobf.exe
+          * native.ida.decompile  probe.command -> native-lab/tools/loop.mjs:48  crackme-corpus/out/c01-stringobf.exe
+          * native.ida.list_functions  probe.command -> native-lab/tools/loop.mjs:48  crackme-corpus/out/c01-stringobf.exe
+          * re.corpus.solve  probe.command -> crackme-corpus/tools/loop.py:283  crackme-corpus/out
+          * native.ghidra.decompile  probe.command -> scripts/ghidra-failopen-regress.ps1:14  crackme-corpus/out
+            native.ghidra.emulate  probe.command -> scripts/emulation-probe.ps1:76  crackme-corpus/out/c01-stringobf.exe
+          * native.yara.triage  probe.command -> yara-lab/tools/probe.mjs:69  crackme-corpus/out/c01-stringobf.exe
+          (* = a capability the evidence sweep actually runs)
+  
+  REMEDY    : cd crackme-corpus ; python tools\loop.py      (run from the repo root)
+              crackme-corpus/README.md:12  'python tools\\loop.py'
+              README.md:88  'cd crackme-corpus'
+              README.md:89  'python tools\\loop.py'
+              scripts/crackme-corpus.ps1  exists; changes working directory: False
+  NOTE      : this command is NOT run by any script in scripts/; a clone must be told to run it by hand.
+
+==============================================================================
+2. TOOLS    binaries a probe invokes   (R5)
+==============================================================================
+  MISS cmd  adb   [dynamic.device.frida]
+  OK   cmd  idalib-mcp  ->  D:\Software\Developer\Python314\Scripts\idalib-mcp.EXE   [native.ida.list_functions]
+  OK   cmd  java  ->  D:\Software\Developer\jdk\21\bin\java.EXE   [native.function.match]
+  OK   cmd  node  ->  D:\Software\Developer\nodejs\node.EXE   [crypto.jose.parse,forensics.memory.artefact,fuzz.differential.parse,managed.il.decompile,mobile.apk.static,native.crosscompare.ghidra,native.ida.decompile,native.ida.list_functions,native.yara.triage,net.pcap.analyse,net.pcap.selfparse,web.js.cdp]
+  OK   cmd  openssl  ->  C:\Program Files\Git\mingw64\bin\openssl.EXE   [native.signature.certverify]
+  OK   cmd  powershell  ->  C:\Windows\System32\WindowsPowerShell\v1.0\powershell.EXE   [native.function.match,native.ghidra.decompile,native.ghidra.emulate,native.il2cpp.symbols,native.pe.packer]
+  OK   cmd  python  ->  D:\Software\Developer\Python314\python.EXE   [dynamic.win.frida,dynamic.win.frida.intercept,native.behaviour.capa,native.disasm.capstone,native.pe.authenticode,native.pe.container,native.pe.hardening,native.signature.certverify,net.pcap.selfparse,ops.skill.security,re.corpus.solve]
+  MISS path .\Mobile-Android\objection\.venv\Scripts\frida-ps.exe   [dynamic.win.frida]
+  MISS path .\Mobile-Android\objection\.venv\Scripts\frida.exe   [dynamic.win.frida]
+  MISS path .\Mobile-Android\objection\.venv\Scripts\python.exe   [dynamic.win.frida.intercept]
+  OK   path C:\Users\dwgx1\.local\bin\skillspector.exe  ->  C:\Users\dwgx1\.local\bin\skillspector.exe   [ops.skill.security]
+  OK   path D:/Software/Developer/Python314/Scripts/idalib-mcp.exe  ->  D:\Software\Developer\Python314\Scripts\idalib-mcp.exe   [native.ida.decompile]
+  OK   path Ghidra/Features/VersionTracking/ghidra_scripts/AutoVersionTrackingScript.java  ->  D:\Software\Tool\WorkStation\debugger\Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\Ghidra\Features\VersionTracking\ghidra_scripts\AutoVersionTrackingScript.java   [native.crosscompare.ghidra]
+  OK   path Network-HTTP\Wireshark\portable\App\Wireshark\tshark.exe  ->  D:\Software\Tool\WorkStation\debugger\Network-HTTP\Wireshark\portable\App\Wireshark\tshark.exe   [net.pcap.analyse]
+  OK   path Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\support\analyzeHeadless.bat  ->  D:\Software\Tool\WorkStation\debugger\Static-Reversing\Ghidra\ghidra_12.1.3_PUBLIC\support\analyzeHeadless.bat   [native.function.match,native.ghidra.decompile]
+  OK   path Static-Reversing\YARA-X\yr.exe  ->  D:\Software\Tool\WorkStation\debugger\Static-Reversing\YARA-X\yr.exe   [native.yara.triage]
+  OK   path Static-Reversing\capa\capa.exe  ->  D:\Software\Tool\WorkStation\debugger\Static-Reversing\capa\capa.exe   [native.behaviour.capa]
+  OK   path Static-Reversing\die_win64_portable_3.21_x64\die\diec.exe  ->  D:\Software\Tool\WorkStation\debugger\Static-Reversing\die_win64_portable_3.21_x64\die\diec.exe   [native.pe.packer]
+  OK   path Static-Reversing\radare2\radare2-6.2.2-w64\bin\rabin2.exe  ->  D:\Software\Tool\WorkStation\debugger\Static-Reversing\radare2\radare2-6.2.2-w64\bin\rabin2.exe   [native.pe.hardening]
+  OK   path Unpackers-Game/Il2CppDumper-net6-win-v6.7.46/Il2CppDumper.exe  ->  D:\Software\Tool\WorkStation\debugger\Unpackers-Game\Il2CppDumper-net6-win-v6.7.46\Il2CppDumper.exe   [native.il2cpp.symbols]
+  OK   path Unpackers-Game\upx\upx-5.2.1-win64\upx.exe  ->  D:\Software\Tool\WorkStation\debugger\Unpackers-Game\upx\upx-5.2.1-win64\upx.exe   [native.pe.packer]
+  OK   path scripts/ghidra/EmulateDecode.java  ->  D:\Software\Tool\WorkStation\debugger\scripts\ghidra\EmulateDecode.java   [native.ghidra.emulate]
+  OK   path web-reverse/tools/chrome.mjs  ->  D:\Software\Tool\WorkStation\debugger\web-reverse\tools\chrome.mjs   [web.js.cdp]
+  
+  23 distinct targets, 4 absent.
+  
+  UNDECLARED IN manifests/tools.json (2) -- invoked by a probe, named in no manifest, so a clone has no way to learn it must install them:
+    adb   needed by dynamic.device.frida   [absent here AND undeclared]
+    openssl   needed by native.signature.certverify   [present HERE, unknown to a clone]
+
+==============================================================================
+2b. TOOLS   manifests/tools.json declared locations
+==============================================================================
+  declared with dir+entry: 52 present, 3 absent
+    ABSENT  unpackers-game/AssetRipper: Unpackers-Game/AssetRipper/AssetRipper.GUI.Free.exe
+    ABSENT  crypto-lab/crypto-lab oracle (node): crypto-lab/node_modules/jsonwebtoken/tools/oracle-node.mjs
+    ABSENT  crypto-lab/crypto-lab oracle (python): crypto-lab/.venv/tools/oracle.py
+
+==============================================================================
+3. WIKI     %TEMP% in a reproduction step   (R6, READ-ONLY)
+==============================================================================
+  no wiki tree found (looked at <repo>/wiki, <repo>/../wiki and <project>/<private-tree>/wiki).
+  The R6 scan did NOT run. Pass --wiki-root PATH or set DEBUGGER_WIKI_ROOT.
+
+==============================================================================
+VERDICT
+==============================================================================
+  WARN tool: not present: adb (PATH=cmd)  needed by dynamic.device.frida
+  WARN tool: not present: .\Mobile-Android\objection\.venv\Scripts\frida-ps.exe (PATH=path)  needed by dynamic.win.frida
+  WARN tool: not present: .\Mobile-Android\objection\.venv\Scripts\frida.exe (PATH=path)  needed by dynamic.win.frida
+  WARN tool: not present: .\Mobile-Android\objection\.venv\Scripts\python.exe (PATH=path)  needed by dynamic.win.frida.intercept
+  WARN tool-undeclared: adb is invoked by a probe but is absent from manifests/tools.json (absent on this station too)
+  WARN tool-undeclared: openssl is invoked by a probe but is absent from manifests/tools.json (present on this station)
+  WARN tool-declared: unpackers-game/AssetRipper declared at Unpackers-Game/AssetRipper/AssetRipper.GUI.Free.exe but absent
+  WARN tool-declared: crypto-lab/crypto-lab oracle (node) declared at crypto-lab/node_modules/jsonwebtoken/tools/oracle-node.mjs but absent
+  WARN tool-declared: crypto-lab/crypto-lab oracle (python) declared at crypto-lab/.venv/tools/oracle.py but absent
+  WARN wiki: no wiki tree found; the R6 scan did NOT run
+  FAIL --strict: warnings promoted to failures
+
+  findings: 0 FAIL, 10 WARN -> exit 1
+  This clone/station cannot be trusted to run its own proofs until the FAILs above are cleared.
+--- stderr (0 lines) ---
+

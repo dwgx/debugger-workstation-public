@@ -1,0 +1,37 @@
+command: C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\Software\Tool\WorkStation\debugger\scripts\verify-tools-manifest.py --selftest
+cwd: F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+started_utc: 2026-11-10T23:20:21+00:00
+finished_utc: 2026-11-10T23:20:21+00:00
+exit: 0
+--- stdout (29 lines) ---
+  PASS space-bearing quoted path is found                                        
+  PASS space-bearing quoted path with parens is found                            
+  PASS raw-string path is found (quote is not swallowed)                         
+  PASS https URL is rejected                                                     
+  PASS github URL is rejected                                                    
+  PASS xml namespace is rejected                                                 
+  PASS doubled-backslash foreign fixture is a candidate that E2 must drop        
+  PASS   ... and E2 drops exactly that spelling                                  
+  PASS single-backslash launch path survives E2                                  
+  PASS frida_spawn_gate.py is not a launcher                                     
+  PASS   ... with the target built from %TEMP% there is no literal left to find  
+  PASS   ... its target .exe is a candidate the extractor cannot reject          
+  PASS   ... and E3 drops it, so it never enters the inventory                   
+  PASS skill_security_control.ps1 IS a launcher (call operator)                  
+  PASS smoke-all.ps1 IS a launcher ($out = & $p.file ...)                        
+  PASS chrome.mjs IS a launcher (imports node:child_process)                     
+  PASS PS block comment is blanked                                               
+  PASS PS line comment is blanked                                                
+  PASS python docstring is blanked                                               
+  PASS js // comment is blanked                                                  
+  PASS skillspector.exe is in the inventory                                      
+  PASS   ... at the exact line it is launched                                    
+  PASS msedge.exe is satisfied by a needs token                                  
+  PASS skillspector.exe is satisfied by the dir basename                         
+  PASS tshark.exe is satisfied by the entry basename                             
+  PASS node.exe also matches a needs token, not only the coincidental name       
+  PASS a genuinely unknown tool is NOT satisfied                                 
+
+selftest: 27/27 passed
+--- stderr (0 lines) ---
+

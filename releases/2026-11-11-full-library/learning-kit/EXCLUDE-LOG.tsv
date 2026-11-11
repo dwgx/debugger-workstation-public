@@ -1,0 +1,24 @@
+# OWNER: V4ReleaseGate | setukou-20261111/v4/release-gate/RELEASE-CANDIDATE/EXCLUDE-LOG.tsv
+# as_of 2026-11-11 | items deliberately EXCLUDED from the public learning kit, WITH reasons.
+# SANITIZATION: real private absolute paths are NOT written here. They are described by CATEGORY placeholder only (e.g. PRIVATE_PRODUCT_TREE). The value/pattern rule keeps private_path_hits=0 and token_hits=0 in the whole kit.
+# class: PRIVATE | CREDENTIAL_SHAPED | HALLUCINATION_PRONE | ROOT_OVERWRITE | NOISE
+# VALUE RULE: credential-shaped items are noted by CATEGORY only; their VALUE never appears here or anywhere in the kit.
+path_or_pattern	class	reason	action
+PRIVATE_PRODUCT_TREE/**	PRIVATE	real private product tree (absolute path withheld); product trees READ-ONLY, no product write, no mirror of private source	EXCLUDE
+PRIVATE_WORKSTATION_TREE/**	PRIVATE	real private WorkStation tree (11 dirty); sanitized kit must be self-contained, no real private path	EXCLUDE
+PRIVATE_KB_TREE/**	PRIVATE	Owner's own private knowledge base; full text never opened, only staged locators cited, never whole .jsonl	EXCLUDE
+SSH_CONFIG_HOST_ENTRIES	CREDENTIAL_SHAPED	SSH config with 3 ^Host entries (config read only, NO connect); host/token VALUES withheld	EXCLUDE_VALUE_WITHHELD
+**/*.jsonl	HALLUCINATION_PRONE	whole conversation transcripts; banned whole-.jsonl reads; could leak account names / credentials / real text	EXCLUDE
+BUTLER_CORPUS_959_NODES.json	HALLUCINATION_PRONE	raw 959-node conversation corpus (7,680,401 B); absorbed as behaviour rules, NOT bundled as raw private text	EXCLUDE
+NBDEBUG_CORPUS_518_NODES.json	HALLUCINATION_PRONE	raw 518-node conversation corpus (1,157,283 B); absorbed as behaviour rules, NOT bundled as raw private text	EXCLUDE
+REPO_REUSE_129_CARDS.md	HALLUCINATION_PRONE	237,589 B / 3,990-line raw research document with 129 REPO-### cards; distilled into QA-GATES.md rules only	EXCLUDE
+**/token*	CREDENTIAL_SHAPED	any token-like VALUE string; token_hits must be 0 in the whole kit; VALUE never printed	EXCLUDE_VALUE_WITHHELD
+**/secret*	CREDENTIAL_SHAPED	any secret-like VALUE string; VALUE never printed	EXCLUDE_VALUE_WITHHELD
+README.md@root	ROOT_OVERWRITE	public repo root README.md (4-language) must NOT be overwritten; kit README lives INSIDE learning-kit/	EXCLUDE
+LICENSE@root	ROOT_OVERWRITE	public repo root LICENSE (MIT) already present; kit does NOT replace it	EXCLUDE
+LICENSE-docs@root	ROOT_OVERWRITE	public repo root LICENSE-docs (CC BY-SA 4.0) already present; kit does NOT replace it	EXCLUDE
+AGENTS.md@root	ROOT_OVERWRITE	public repo 4-language AGENTS already present; kit does NOT touch them	EXCLUDE
+**/_scratch_*	NOISE	25 historical audit-noise paths; must NOT be resurrected as new content	EXCLUDE
+skills/**	ROOT_OVERWRITE	existing public repo skills/ dir has real content; kit must NOT name a dir skills/ or overwrite it	EXCLUDE
+mcp/**	ROOT_OVERWRITE	existing public repo mcp/ dir has real content; kit must NOT name a dir mcp/ or overwrite it	EXCLUDE
+scripts/**	ROOT_OVERWRITE	existing public repo scripts/ dir has real content; kit must NOT name a dir scripts/ or overwrite it	EXCLUDE

@@ -1,0 +1,14 @@
+command: C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\Software\Tool\WorkStation\debugger\scripts\eval-agent-contract.py
+cwd: F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+started_utc: 2026-11-10T23:20:22+00:00
+finished_utc: 2026-11-10T23:20:22+00:00
+exit: 0
+--- stdout (6 lines) ---
+eval-agent-contract: PASS
+  kind     debugger-workstation
+  locales  en, zh-CN, ja, ko
+  tags     eval:owner-overlay, eval:chat-cannot-waive, eval:no-user-global-mcp, eval:untrusted-data
+  agents   AGENTS.md, AGENTS.zh-CN.md, AGENTS.ja.md, AGENTS.ko.md
+  mdc      .cursor\rules\debugger-workstation.mdc
+--- stderr (0 lines) ---
+

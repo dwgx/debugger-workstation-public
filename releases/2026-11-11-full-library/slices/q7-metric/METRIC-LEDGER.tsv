@@ -1,0 +1,13 @@
+# OWNER: researcher-q7 | setukou-20261111/v5/slices/q7-metric/METRIC-LEDGER.tsv
+# as_of 2026-11-11 | ONE row per results.tsv DATA row + ONE row per Round-2 slice (Q2/Q3/Q4/Q5); all numbers re-derived from disk by verify.py
+# columns: iteration,slice,promotions,metric_before,metric_after,status,evidence_receipt_count,note
+# status vocabulary: keep / discard / crash / no_change / baseline / pending. Q3/Q4 promotions=0 HONEST = no_change (NOT crash, NOT discard). ONE-variable: iter1=Q5 12 SM, iter2=Q2 6 TR:S are two SEPARATE keeps, never merged.
+# DISK state (post Q2 ACCEPT): results.tsv 3 data rows (9/21/27), SATURATION real_verified=27 blockers=268 claims_total=295 FROZEN. DISPATCH snapshot was 21/274/Q2 GAP -> recorded in REPORT only, NOT a ledger row.
+iteration	slice	promotions	metric_before	metric_after	status	evidence_receipt_count	note
+0	baseline	0	9	9	baseline	0	results.tsv iter0 baseline metric=9 claims_total=295; from v4/real-verify/REAL-VERIFY.tsv real_verified=9 blockers=286 RELEASE_GATE=RED; no promotion, no receipt
+1	round2-Q5-12promotions	12	9	21	keep	12	results.tsv iter1 keep metric=21 claims_total=295; ONE-variable = Q5's 12 SM:* DECLARED_UNVERIFIED->RUNNABLE_REAL_VERIFIED; 12 REAL bounded receipts (exit/UTC/STDOUT/STDERR) + 12 tamper RED controls; 12/12 receipt_path resolve from W (Q7-S08/Q7-S10, Q6 A4)
+2	round2-Q2-6promotions	6	21	27	keep	6	results.tsv iter2 keep metric=27 claims_total=295; ONE-variable = Q2's 6 TR:S-* DECLARED_UNVERIFIED->RUNNABLE_REAL_VERIFIED; 6 claim REAL receipts + 6 NEG negative controls + 47 PROBE receipts; 6 honest non-zero exits recorded; parent ACCEPTED Q2 mid-run (Q7-S11)
+2	Q2	6	21	27	keep	6	per-slice view of iteration 2; Q2 DELIVERED + ACCEPTED (NOT pending/GAP); promotions=6 all TR:S-*; evidence_receipt_count=6 claim_*.txt REAL receipts (Q2 PROMOTIONS.tsv 6 rows)
+1	Q3	0	21	21	no_change	0	Q3 PROMOTIONS.tsv 0 data rows HONEST (existence is NOT capability usability); 15 MISSING reclassified in MISSING-RECHECK.tsv ONLY, no SATURATION edit; no receipt-bound promotion; separate no_change row, NOT merged into Q5 keep
+1	Q4	0	21	21	no_change	0	Q4 PROMOTIONS.tsv 0 data rows HONEST; all 23 TR:B-* wrappers launch REAL jars/exes -> stay OWNER_GATED; no receipt-bound promotion; separate no_change row, NOT merged into Q5 keep
+1	Q5	12	9	21	keep	12	per-slice view of iteration 1; Q5 12 SM:* promotions, 12 REAL receipts + 12 in-memory one-byte tamper RED falsifiers; QA:G25/W3:CARD-01 already REAL excluded to avoid double count

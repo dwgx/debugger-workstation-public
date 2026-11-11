@@ -1,0 +1,45 @@
+OWNER: researcher-q6 | setukou-20261111/v5/slices/q6-audit/receipts/
+Q6 independent re-run of Q5 ONE ## Verify (DIFFERENT actor)
+started_utc      : 2026-11-10T23:15:12Z
+finished_utc     : 2026-11-10T23:15:13Z
+cwd              : F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+command          : "C:/Program Files/Git/usr/bin/timeout.exe" 120 python -X utf8 -B setukou-20261111/v5/slices/q5-absorption/verify.py
+executed_argv    : ['D:\\Software\\Developer\\Python314\\python.exe', '-X', 'utf8', '-B', 'setukou-20261111/v5/slices/q5-absorption/verify.py']
+q6_envelope      : subprocess timeout=90s (bounded); no cmd /c wrapper
+exit             : 0
+----- STDOUT -----
+as_of=2026-11-10T23:15:12Z
+cwd=F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+absorb_check_exit=0
+  corpus_absorbed_no=313 (denominator 320)
+  fixture_sha256_match=5/5
+  sm_promotion_receipts=12 sm_green=12 sm_red_capable=12
+  new_behaviour_gates=5
+  gates_green=5
+  gates_red_capable=5
+  sha256_sidecars_ok=True
+  VERDICT=GREEN
+corpus_index_rows=320 (denominator 320)
+absorbed_no_baseline=313 (denominator 313 from v4/corpus-absorb/CORPUS-INDEX.tsv)
+absorbable_rows=313 (must == absorbed_no_baseline 313)
+absorbable_can_local_YES=15 (denominator 313)
+absorbable_can_local_NO=298 (denominator 313)
+qa_sm_range_w3_rows=42 (denominator 42: QA26 SM12 RANGE3 W3 1)
+claims_total=295 (FROZEN 295)
+claims_total_frozen_ok=YES
+existing_receipt_bound=14 (denominator 42)
+bound_receipt_files_exist=14/14
+synthetic_fixtures=5 (denominator >=3 required)
+sha256_match=5/5 sidecars=5
+fixture_label_SYNTHETIC=5/5 fixture_bytes_le_8192=YES
+promotions=12 (denominator 12 SM DECLARED_UNVERIFIED -> REAL)
+promotions_valid=12/12
+new_behaviour_gates=5 (corpus lessons, NOT new SATURATION claims)
+new_behaviour_gates_valid=5/5
+negative_control_no_receipt_fails=YES (RED capable)
+negative_control_no_falsifier_fails=YES (RED capable)
+product_tree_writes=0 (verifier writes NOTHING; absorb_check writes only receipts/ + NEW_BEHAVIOUR_GATE.tsv)
+VERDICT=GREEN
+----- STDERR -----
+(empty)
+----- END -----

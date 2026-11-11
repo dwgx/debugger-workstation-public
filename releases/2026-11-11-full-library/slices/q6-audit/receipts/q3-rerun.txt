@@ -1,0 +1,26 @@
+OWNER: researcher-q6 | setukou-20261111/v5/slices/q6-audit/receipts/
+Q6 independent re-run of Q3 ONE ## Verify (DIFFERENT actor)
+started_utc      : 2026-11-10T23:15:10Z
+finished_utc     : 2026-11-10T23:15:11Z
+cwd              : F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+command          : python setukou-20261111/v5/slices/q3-missing/verify.py
+executed_argv    : ['D:\\Software\\Developer\\Python314\\python.exe', 'setukou-20261111/v5/slices/q3-missing/verify.py']
+q6_envelope      : subprocess timeout=90s (bounded); no cmd /c wrapper
+exit             : 1
+----- STDOUT -----
+as_of=2026-11-11 | disk wins | product trees READ-ONLY | one ## Verify from W
+denominator: claims_total=295 (frozen 295) | declared_rows=108 (GLOBAL DECLARED_UNVERIFIED) | missing_rows=15
+missing_rows=15 real_missing=0 logical_key=5 present_but_unverified=10  [CLAIM view, denom 15: disk truth]
+recheck_rows_class_counts real_missing=1 logical_key=6 present_but_unverified=11 sum=18  [PARENT PRE-ACCEPTANCE view, denom 18 = 15 claims + 3 SUMMARY rows; the 1 REAL_MISSING is the EMPTY-bucket summary, NOT a claim]
+declared_rows=108 path_resolves_real=86 logical_not_a_file=22
+trs_measured: trs_declared=57 trs_total=64 trs_real_verified=7 trs_path_resolves_real=53 trs_logical_not_a_file=4 (120 is GLOBAL, NOT TR:S)
+scripts/ regular files=60 (parent upper-bound key=60)
+recheck_rows=18 (15 per-claim + 3 bucket summaries) artifact_consistent=True
+promotions=0 (EMPTY=honest; existence != capability usability; real_verified stays 9)
+product_tree_writes=0 | WorkStation HEAD=7dfabdb/11 porcelain | debugger HEAD=2c25f26/2 porcelain | git_ro_ok=True
+claims_total_frozen_ok=YES | saturation_sha16=13d822dcc2a0574e (Q3 did NOT edit SATURATION.tsv)
+negative_control: fake exists=True on known-absent path -> gate_RED=True | positive_control_green=True | gate_catches_fake_row=True
+VERDICT=FAIL
+----- STDERR -----
+(empty)
+----- END -----

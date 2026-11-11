@@ -1,0 +1,78 @@
+command: C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\Software\Tool\WorkStation\debugger\scripts\scan-unread-keys.py --fail-on-unread
+cwd: F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+started_utc: 2026-11-10T23:20:02+00:00
+finished_utc: 2026-11-10T23:20:03+00:00
+exit: 1
+--- stdout (70 lines) ---
+registry leaf keys      : 185
+scanned for name matches: 1 dir(s), suffixes ('.py', '.ps1', '.md')
+zero name occurrences   : 59
+
+READ THIS BEFORE BELOW: a name search cannot see a GENERIC reader. `image_base`,
+`aslr`, `sections`, `insns`, `cert_state`, `refs`, `dns_queries`, `win_certificate`,
+`instrument_ordering`, `runtime_hook_hit`, `rip_operands`, `security_offset` and
+`outdir` all appear below and all are FALSE POSITIVES: they are `invoke.fact_map`
+SOURCE keys, forwarded by mission.ps1 by iterating the dict. Judging the rest needs a
+human or a per-key argument, which is why this prints.
+
+  EXIT CODE CANNOT BE TRUSTED        native.yara.triage.instrument_notes.EXIT CODE CANNOT BE TRUSTED
+  analysis_completeness              ops.skill.security.invoke.fact_map.analysis_completeness
+  analysis_note                      ops.skill.security.analysis_note
+  blocker_evidence                   dynamic.device.frida.negative_control.blocker_evidence
+  brace_trap                         re.corpus.solve.negative_control.brace_trap
+  containment_note                   re.corpus.solve.reach.containment_note, dynamic.device.frida.reach.containment_note, dynamic.win.frida.reach.containment_note, ops.skill.security.reach.containment_note
+  control_for_the_correction         native.crosscompare.ghidra.state_correction.control_for_the_correction
+  conversion_note                    managed.il.decompile.negative_control.conversion_note, fuzz.differential.parse.negative_control.conversion_note
+  converted_on                       net.pcap.analyse.negative_control.converted_on, forensics.memory.artefact.negative_control.converted_on, mobile.apk.static.negative_control.converted_on, re.corpus.solve.negative_control.converted_on
+  deprecation_warning                native.ghidra.emulate.deprecation_warning
+  distinct_probe_note                native.ida.decompile.probe.distinct_probe_note, native.ida.list_functions.probe.distinct_probe_note
+  env_note                           crypto.jose.parse.probe.env_note
+  evidence_source_note               native.ida.decompile.evidence_source_note, native.ida.list_functions.evidence_source_note, web.js.cdp.evidence_source_note, crypto.jose.parse.evidence_source_note
+  exit_semantics                     forensics.memory.artefact.negative_control.sibling_control.exit_semantics, native.crosscompare.ghidra.negative_control.exit_semantics
+  expect_note                        web.js.cdp.probe.expect_note, fuzz.differential.parse.probe.expect_note, ops.skill.security.probe.expect_note, dynamic.win.frida.intercept.probe.expect_note
+  expect_output_note                 native.ida.decompile.negative_control.expect_output_note, native.ida.list_functions.negative_control.expect_output_note, crypto.jose.parse.negative_control.expect_output_note, managed.il.decompile.negative_control.expect_output_note
+  export_addr                        dynamic.win.frida.invoke.fact_map.export_addr
+  fact_map_note                      native.ida.list_functions.invoke.fact_map_note, mobile.apk.static.invoke.fact_map_note, native.ghidra.decompile.invoke.fact_map_note, native.pe.packer.invoke.fact_map_note
+  fail_open_closed                   mobile.apk.static.negative_control.fail_open_closed
+  falsifier                          mobile.apk.static.negative_control.falsifier, native.il2cpp.symbols.negative_control.falsifier, native.ghidra.emulate.negative_control.falsifier
+  falsifier_note                     mobile.apk.static.negative_control.falsifier_note
+  family_still_covered               native.crosscompare.ghidra.state_correction.family_still_covered
+  filename_trap                      re.corpus.solve.negative_control.filename_trap
+  flake_note                         dynamic.win.frida.probe.flake_note
+  gate_must_not_delegate_why         native.ida.decompile.gate_must_not_delegate_why, dynamic.win.frida.gate_must_not_delegate_why, ops.skill.security.gate_must_not_delegate_why, dynamic.win.frida.intercept.gate_must_not_delegate_why
+  gates_applies_to_note              native.pe.packer.invoke.gates_applies_to_note
+  hook_addr                          dynamic.win.frida.invoke.fact_map.hook_addr
+  identical_inputs                   native.function.match.invoke.fact_map.identical_inputs
+  install_note                       net.pcap.analyse.requires.install_note, dynamic.win.frida.requires.install_note, ops.skill.security.requires.install_note, dynamic.win.frida.intercept.requires.install_note
+  last_summary                       native.ida.decompile.probe.last_summary, native.ida.list_functions.probe.last_summary, web.js.cdp.probe.last_summary, crypto.jose.parse.probe.last_summary
+  load_sensitivity_note              fuzz.differential.parse.probe.load_sensitivity_note, native.crosscompare.ghidra.probe.load_sensitivity_note
+  measured_case                      native.pe.container.known_incoherence.measured_case
+  measured_through_the_runner        re.corpus.solve.negative_control.measured_through_the_runner
+  measurement_found_its_own_trap     native.crosscompare.ghidra.negative_control.measurement_found_its_own_trap
+  mutation_evidence                  crypto.jose.parse.negative_control.mutation_evidence
+  on_cap                             native.ida.decompile.envelope.on_cap
+  placeholder_note                   native.ghidra.decompile.invoke.placeholder_note
+  prepare_note                       dynamic.win.frida.probe.prepare_note, native.signature.certverify.probe.prepare_note
+  prior_measured_note                forensics.memory.artefact.negative_control.prior_measured_note
+  proc_spawn_note                    native.disasm.capstone.reach.proc_spawn_note, native.pe.authenticode.reach.proc_spawn_note, native.behaviour.capa.reach.proc_spawn_note, native.signature.certverify.reach.proc_spawn_note
+  produces_note                      native.ida.decompile.probe.produces_note, native.ida.list_functions.probe.produces_note, web.js.cdp.probe.produces_note, crypto.jose.parse.probe.produces_note
+  rederive                           native.ida.decompile.session.rederive, native.ida.list_functions.session.rederive
+  response_cap_chars                 native.ida.decompile.envelope.response_cap_chars, native.ida.list_functions.envelope.batch.response_cap_chars
+  risk_assessment                    ops.skill.security.invoke.fact_map.risk_assessment
+  run_summary                        ops.skill.security.probe.run_summary, dynamic.win.frida.intercept.probe.run_summary, native.pe.container.probe.run_summary, native.function.match.probe.run_summary
+  run_summary_note                   ops.skill.security.probe.run_summary_note, net.pcap.selfparse.probe.run_summary_note
+  scope_note                         dynamic.win.frida.scope_note, ops.skill.security.scope_note, dynamic.win.frida.intercept.scope_note, native.pe.container.scope_note
+  skip_exits_note                    native.pe.packer.invoke.skip_exits_note
+  stale_fields_removed               fuzz.differential.parse.negative_control.stale_fields_removed
+  still_blocked_on                   native.ghidra.emulate.negative_control.still_blocked_on
+  subcommand                         native.yara.triage.instrument_notes.subcommand
+  the_answer_i_think_is_right        native.pe.container.known_incoherence.the_answer_i_think_is_right
+  the_fix                            native.pe.container.known_incoherence.the_fix
+  what_this_teaches                  native.pe.container.known_incoherence.what_this_teaches
+  what_would_restore_it              native.crosscompare.ghidra.state_correction.what_would_restore_it
+  why_struck                         net.pcap.analyse.produces.facts[0]._retype_residue_struck_2026_10_03.why_struck
+  witness_mechanism                  native.crosscompare.ghidra.negative_control.witness_mechanism
+  write_scope_note                   web.js.cdp.reach.write_scope_note, managed.il.decompile.reach.write_scope_note, re.corpus.solve.reach.write_scope_note, dynamic.device.frida.reach.write_scope_note
+  yara_x_present                     native.yara.triage.instrument_notes.yara_x_present
+--- stderr (0 lines) ---
+

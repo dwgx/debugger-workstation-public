@@ -1,0 +1,8 @@
+# OWNER: researcher-q2 | v5/slices/q2-scripts/PROMOTIONS.tsv
+claim_id	from_verdict	to_verdict	receipt_path	exit	negative_control
+TR:S-check-requires-tools.py	DECLARED_UNVERIFIED	RUNNABLE_REAL_VERIFIED	receipts/claim_TR_S-check-requires-tools.py.txt	0	receipts/NEG-check-requires-tools.py.txt
+TR:S-gate.ps1	DECLARED_UNVERIFIED	RUNNABLE_REAL_VERIFIED	receipts/claim_TR_S-gate.ps1.txt	0	receipts/NEG-gate.ps1.txt
+TR:S-mission.ps1	DECLARED_UNVERIFIED	RUNNABLE_REAL_VERIFIED	receipts/claim_TR_S-mission.ps1.txt	0	receipts/NEG-mission.ps1.txt
+TR:S-owner-attest.py	DECLARED_UNVERIFIED	RUNNABLE_REAL_VERIFIED	receipts/claim_TR_S-owner-attest.py.txt	0	receipts/NEG-owner-attest.py.txt
+TR:S-reachability-report.py	DECLARED_UNVERIFIED	RUNNABLE_REAL_VERIFIED	receipts/claim_TR_S-reachability-report.py.txt	0	receipts/NEG-reachability-report.py.txt
+TR:S-verify-tools-manifest.py	DECLARED_UNVERIFIED	RUNNABLE_REAL_VERIFIED	receipts/claim_TR_S-verify-tools-manifest.py.txt	0	receipts/NEG-verify-tools-manifest.py.txt

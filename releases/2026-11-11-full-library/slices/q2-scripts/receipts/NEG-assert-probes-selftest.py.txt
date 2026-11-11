@@ -1,0 +1,10 @@
+command: C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\Software\Tool\WorkStation\debugger\scripts\assert-probes-selftest.py --selftest
+cwd: F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+started_utc: 2026-11-10T23:19:30+00:00
+finished_utc: 2026-11-10T23:19:31+00:00
+exit: 2
+--- stdout (0 lines) ---
+--- stderr (2 lines) ---
+usage: assert-probes-selftest.py [-h] [-v] [--strict] [--keep] [ids ...]
+assert-probes-selftest.py: error: unrecognized arguments: --selftest
+

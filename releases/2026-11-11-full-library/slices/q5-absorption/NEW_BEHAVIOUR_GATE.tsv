@@ -1,0 +1,9 @@
+# OWNER: researcher-q5 | setukou-20261111/v5/slices/q5-absorption/NEW_BEHAVIOUR_GATE.tsv
+# as_of 2026-11-11 | corpus absorbed_no lessons -> REAL local executable gates (NOT new SATURATION.tsv claims).
+# claims_total=295 FROZEN. A row WITHOUT its receipt is a hard FAIL (negative control in verify.py).
+lesson_id	corpus_locator	fixture	verdict	marker	negative_control_red_capable	receipt_path
+RR-GATE-1	§7 line 246	gate1-envelope.json	GREEN	GATE1_ENVELOPE_VALID	YES	setukou-20261111/v5/slices/q5-absorption/receipts/RR-GATE-1.txt
+RR-GATE-3	§7 line 258	gate3-cases.json	GREEN	GATE3_TRIPLET_VALID	YES	setukou-20261111/v5/slices/q5-absorption/receipts/RR-GATE-3.txt
+BU-ROOT-C08	review/CORRECTIONS.md#C08 (转引 v2/history/ABSORPTION.md:46-56)	c08-copypair.json	GREEN	C08_HASH_DECIDES	YES	setukou-20261111/v5/slices/q5-absorption/receipts/BU-ROOT-C08.txt
+BU-ROOT-C10	review/CORRECTIONS.md#C10 (转引 v2/history/ABSORPTION.md:46-56)	c10-roles.json	GREEN	C10_ROLES_SEPARATED	YES	setukou-20261111/v5/slices/q5-absorption/receipts/BU-ROOT-C10.txt
+BU-ROOT-C07	review/CORRECTIONS.md#C07 (转引 v2/history/ABSORPTION.md:46-56)	c07-layers.json	GREEN	C07_LAYERS_SEPARATED	YES	setukou-20261111/v5/slices/q5-absorption/receipts/BU-ROOT-C07.txt

@@ -1,0 +1,18 @@
+{
+  "round": 2,
+  "type": "in-flight-partial",
+  "as_of": "2026-11-11",
+  "frontier_dispatched": ["Q2", "Q3", "Q4", "Q5"],
+  "workers": {"Q2": "active", "Q3": "active", "Q4": "ACCEPTED", "Q5": "active"},
+  "model_lane": "hy4worker (hy4free only)",
+  "q4_acceptance": {"verify_exit": 0, "tr_b_rows": 23, "promotions": 0, "still_owner_gated": 23, "receipts_real": 4, "claims_total_frozen_ok": true, "VERDICT": "GREEN ALL_OWNER_GATED_NO_PROMOTIONS"},
+  "q3_partial": {"MISSING-RECHECK.tsv": "18 rows/9 cols = 15 claims + 3 SUMMARY", "PROMOTIONS.tsv": "0 rows honest", "verify.py": "parent-rerun exit 0 VERDICT=OK", "missing_claim_view": {"real_missing": 0, "logical_key": 5, "present_but_unverified": 10}, "declared_rows_global": 120, "trs_declared": 57, "trs_total": 64, "product_tree_writes": 0},
+  "q5_partial": {"ABSORBABLE.tsv": "313 rows/7 cols matching absorbed_no=313", "can_local_check": {"YES": 15, "NO": 298}, "RECEIPT-BINDINGS.tsv": "42 rows", "absorb_check.py": "landed", "sha_sidecars_byte_match": true},
+  "q2_partial": {"stage": "calibrated real probe exits (10+ scripts); building SCRIPT-PROBES/receipts/fixtures", "parent_key": "PARENT-Q2-REAL-PROBES.md registry-verify exit0/107 lines, assert-probes-selftest exit2 (nonzero must be recorded)"},
+  "parent_correction": "ROUND2-CONTRACT.md corrected; G-004=126 unassigned TR:X/N/MB/MC/L/K; claims_total=295 frozen",
+  "SATURATION.tsv": "295 rows, real_verified=9, untouched by all slices",
+  "next_on_return": "validate 5-file contract per Q2/Q3/Q5 -> parent re-run each ## Verify -> merge PROMOTIONS (expected 0 from Q3/Q4, >0 from Q2/Q5) into SATURATION.tsv -> append results.tsv -> contradiction/gap/repeat scan -> checkpoint round-0002 FINAL -> Round 3 frontier [Q6]",
+  "budget_used": {"rounds": 2, "minutes_estimate": 35, "tokens_estimate_method": "ceil(chars/4)"},
+  "stop": "none",
+  "push_executed": "NO"
+}

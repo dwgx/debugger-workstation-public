@@ -1,0 +1,12 @@
+command: C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\Software\Tool\WorkStation\debugger\scripts\doc-facts.py
+cwd: F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+started_utc: 2026-11-10T23:19:31+00:00
+finished_utc: 2026-11-10T23:19:32+00:00
+exit: 0
+--- stdout (4 lines) ---
+SKIP: no wiki at <private-tree> (this is expected in a public checkout)
+doc-facts: registry has 28 capabilities (25 observed, 7 typed edges)
+doc-facts: evidence split -- 25 bound to a retained artifact, 0 unverified, 27 runnable controls, 1 declared plans
+doc-facts: SKIP -- no wiki was scanned, so no claim was compared to prose; the registry figures above are the whole result.
+--- stderr (0 lines) ---
+

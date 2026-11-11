@@ -1,0 +1,13 @@
+claim_id: TR:S-check-requires-tools.py
+command: C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\Software\Tool\WorkStation\debugger\scripts\check-requires-tools.py --registry F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110\setukou-20261111\v5\slices\q2-scripts\fixtures\syn-positive.json --only syn.positive
+cwd: F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+started_utc: 2026-11-10T23:24:00+00:00
+finished_utc: 2026-11-10T23:24:00+00:00
+exit: 0
+expected_marker: 1 ok
+--- stdout (3 lines) ---
+  OK  syn-echo  syn.positive
+
+requires-tools: 1 declared tool probes across 1 capabilities -- 1 ok, 0 wrong, 0 tool-fault, 0 skipped. Every executed probe was run 2x and diffed against its first run.
+--- stderr (0 lines) ---
+

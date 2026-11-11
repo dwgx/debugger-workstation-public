@@ -1,0 +1,28 @@
+{
+  "label": "SYNTHETIC",
+  "owner": "researcher-q5 | setukou-20261111/v5/slices/q5-absorption/fixtures/",
+  "corpus_lesson_id": "RR-GATE-1",
+  "corpus_locator": "REPO-REUSE-2026-11-10.md:246",
+  "lesson": "对同一固定输入完成真实调用；断言返回内容与错误字段，而不是只做 initialize/tools-list",
+  "fixture_kind": "evidence_envelope",
+  "envelope": {
+    "operation": "probe.run",
+    "tool_version": "q5-synthetic-1.0",
+    "subject_hash": "SYNTHETIC_HASH_PLACEHOLDER",
+    "status": "passed",
+    "content": {"real_call": true, "assert_content_and_error": true},
+    "error": null,
+    "confidence": "high",
+    "coverage": "synthetic",
+    "limitations": "no real backend exercised",
+    "artifact_reference": "fixtures/gate1-envelope.json"
+  },
+  "checks": [
+    {"id": "C1", "description": "real_call==true (not merely initialize/tools-list)", "field": "envelope.content.real_call", "expect": true},
+    {"id": "C2", "description": "error envelope present as a field", "field": "envelope.error", "expect_exists": true},
+    {"id": "C3", "description": "subject_hash present (unifies evidence envelope)", "field": "envelope.subject_hash", "expect_nonempty": true}
+  ],
+  "no_private_data": true,
+  "no_credential": true,
+  "no_network": true
+}

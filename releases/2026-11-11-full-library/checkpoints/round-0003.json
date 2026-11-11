@@ -1,0 +1,17 @@
+{
+  "round": 3,
+  "type": "in-flight-x001",
+  "as_of": "2026-11-11",
+  "frontier_dispatched": ["Q6"],
+  "workers": {"Q1": "ACCEPTED", "Q2": "active ~36min, 2 SYNTHETIC fixtures only, 2 steers, NO twin", "Q3": "ACCEPTED → CONDITIONAL (X-001 reopen, fixing verify.py declared_rows==120 hardcode)", "Q4": "ACCEPTED", "Q5": "ACCEPTED", "Q6": "active 82%, 7 artifacts incl AUDIT.tsv 43 rows {pass:40,fail:1,gap:2}", "Q7": "open", "Q8": "open"},
+  "model_lane": "hy4worker (hy4free only)",
+  "metric": {"claims_total": 295, "real_verified": 21, "declared_unverified": 108, "owner_gated": 151, "missing": 15, "blockers": 274, "RELEASE_GATE": "RED", "COMPLETENESS_VERDICT": "NOT_COMPLETE", "push_executed": "NO", "results.tsv": "baseline 9 + keep 21"},
+  "contradictions": {"C-001": "resolved (Q1 negation-regex)", "X-001": "OPEN — Q6 DIFFERENT-actor re-run of Q3 ## Verify = exit 1 VERDICT=FAIL; parent reproduced; root cause verify.py:174 declared_rows==120 stale after parent merged Q5 12 promotions; Q3 same-name steer to recompute from disk; re-verify then Q6 re-audit"},
+  "q6_audit": "receipts/{q1,q3,q4,q5}-rerun.txt written; q1/q4/q5 exit 0, q3 exit 1 (REAL finding); AUDIT.tsv 43 rows 4 cols, X-001 + Q2 GAP recorded",
+  "parent_keys": ["v5/PARENT-Q8-INPUT.md", "v5/PARENT-Q7-CONTRACT.md", "v5/PARENT-Q6-AUDIT-CONTRACT.md", "v5/PARENT-STOP-EXPECTATION.md", "v5/PARENT-Q2-REAL-PROBES.md", "v5/PARENT-Q2-UPPER-BOUND.md", "v5/PARENT-Q4-UPPER-BOUND.md", "v5/ROUND2-CONTRACT.md"],
+  "gaps": ["G-004=126 unassigned TR:X/N/MB/MC/L/K", "G-Q5-1..4", "Q2 non-delivery", "X-001 pending Q3 fix"],
+  "next_on_return": "Q3: re-run ## Verify must be exit 0 (declared_rows=108) -> re-ACCEPT -> resolve X-001; Q6: land remaining reports + research/Q6 3 files, ONE ## Verify exit 0 -> ACCEPT -> Q6 re-audit Q3; Q2: if lands, validate 5-file contract + merge any promotions; then checkpoint round-0003 FINAL -> Round 4 [Q7] -> [Q8] -> SYNTHESIS/OPEN-QUESTIONS/LEDGER final at named STOP",
+  "budget_used": {"rounds": 3, "minutes_estimate": 40, "tokens_estimate_method": "ceil(chars/4)"},
+  "stop": "none",
+  "product_trees": {"WorkStation": "7dfabdb/11", "debugger": "2c25f26/2"}
+}

@@ -1,0 +1,24 @@
+{
+ "schema": {
+  "baseline": "SYNTHETIC",
+  "question_types": [
+   "Q2.locate"
+  ],
+  "label": "SYNTHETIC"
+ },
+ "capabilities": [
+  {
+   "id": "syn.positive",
+   "state": "observed",
+   "requires": {
+    "tools": [
+     {
+      "name": "syn-echo",
+      "probe": "Write-Output 'SYNTHETIC_OK_TOKEN'",
+      "expect": "SYNTHETIC_OK_TOKEN"
+     }
+    ]
+   }
+  }
+ ]
+}

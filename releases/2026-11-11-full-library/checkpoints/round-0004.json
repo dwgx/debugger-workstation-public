@@ -1,0 +1,44 @@
+{
+  "$comment": "Round 4 checkpoint (in-flight): Q1-Q6 all ACCEPTED, Q7 active, Q8 open",
+  "owner": "parent (main line)",
+  "round": 4,
+  "type": "in-flight-q7",
+  "as_of": "2026-11-11",
+  "frontier_dispatched": ["Q7"],
+  "workers": {
+    "Q1": "ACCEPTED (COMPLETENESS_VERDICT=NOT_COMPLETE)",
+    "Q2": "ACCEPTED 43m34s; 6 TR:S promotions merged; 47 receipts; 6 negatives; honest non-zero exits",
+    "Q3": "ACCEPTED (2nd reopen); X-001 + G-Q3-1 RESOLVED with disk-derived trs_partition_ok/trs_monotone_ok, no stale pins",
+    "Q4": "ACCEPTED (promotions=0 honest, 23 TR:B stay gated)",
+    "Q5": "ACCEPTED (12 SM promotions merged)",
+    "Q6": "ACCEPTED (independent audit, false_passes=0, found X-001, Q2 was GAP at audit time)",
+    "Q7": "active ~9min; research/Q7/{sources.tsv, claims.tsv} landed; approved disk-derived 27/+18/2 keeps + labeled DISPATCH-SNAPSHOT 21/+12; NO stale hardcode",
+    "Q8": "open (depends on Q7)"
+  },
+  "model_lane": "hy4worker (hy4free only)",
+  "metric": {
+    "claims_total": 295,
+    "frozen": true,
+    "real_verified": 27,
+    "declared_unverified": 102,
+    "owner_gated": 151,
+    "missing": 15,
+    "blockers": 268,
+    "RELEASE_GATE": "RED",
+    "COMPLETENESS_VERDICT": "NOT_COMPLETE",
+    "push_executed": "NO",
+    "results.tsv": "baseline 9 -> keep 21 (Q5 +12 SM) -> keep 27 (Q2 +6 TR:S); 2 separate keeps, one-variable rule"
+  },
+  "contradictions": {
+    "C-001": "resolved (Q1 negation-regex)",
+    "C-002": "discarded (not a real contradiction, see LEDGER)",
+    "X-001": "RESOLVED (Q3 declared_rows==120 -> disk-derived)",
+    "G-Q3-1": "RESOLVED (Q3 trs 57/7 pins -> trs_partition_ok + trs_monotone_ok, grep stale pins = 0 matches)"
+  },
+  "parent_keys_corrected": ["v5/PARENT-STOP-EXPECTATION.md 21/274 -> 27/268", "v5/PARENT-Q8-INPUT.md 21/274/108 -> 27/268/102; stale duplicate block cut; both Verifies exit 0 print 295/27/RED; NO_STALE_NUMBERS"],
+  "gaps": ["G-004=126 unassigned TR:X/N/MB/MC/L/K", "G-Q5-1..4 (10 can-local lessons, 28 bound=NO, absorbed_yes still 7)", "OWNER_GATED 151 needs Owner decisions", "publication fork (ONE Owner sentence needed)"],
+  "next_on_return": "Q7: re-run ONE ## Verify from W, expect exit 0 with current_metric=27 / delta=+18 / keep_rows=2 / pending_rows=0 / target_reached=NO / claims_total_frozen_ok=YES + labeled DISPATCH-SNAPSHOT 21/+12/Q2 GAP; accept -> dispatch Q8 -> SYNTHESIS/OPEN-QUESTIONS/LEDGER final at named STOP",
+  "budget_used": {"rounds": 4, "minutes_estimate": 55, "tokens_estimate_method": "ceil(chars/4)"},
+  "stop": "none",
+  "product_trees": {"WorkStation": "7dfabdb/11", "debugger": "2c25f26/2"}
+}

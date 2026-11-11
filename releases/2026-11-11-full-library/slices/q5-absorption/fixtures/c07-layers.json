@@ -1,0 +1,20 @@
+{
+  "label": "SYNTHETIC",
+  "owner": "researcher-q5 | setukou-20261111/v5/slices/q5-absorption/fixtures/",
+  "corpus_lesson_id": "BU-ROOT-C07",
+  "corpus_locator": "review/CORRECTIONS.md#C07",
+  "lesson": "report-only != blocking：独立 checker 与聚合须分层",
+  "fixture_kind": "checker_layering",
+  "layers": [
+    {"id": "independent_checker", "kind": "blocking", "can_veto_release": true},
+    {"id": "aggregator", "kind": "report_only", "can_veto_release": false}
+  ],
+  "checks": [
+    {"id": "L1", "description": "independent checker is blocking (can veto)", "expect_blocking": true},
+    {"id": "L2", "description": "aggregator is report-only (cannot veto), proving report-only != blocking", "expect_report_only": true},
+    {"id": "L3", "description": "blocking and report-only are distinct layers, not one merged verdict", "expect_distinct_kinds": true}
+  ],
+  "no_private_data": true,
+  "no_credential": true,
+  "no_network": true
+}

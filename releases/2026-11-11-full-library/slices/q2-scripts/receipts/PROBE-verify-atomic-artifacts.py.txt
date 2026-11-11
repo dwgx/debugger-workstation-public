@@ -1,0 +1,328 @@
+command: C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\Software\Tool\WorkStation\debugger\scripts\verify-atomic-artifacts.py
+cwd: F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+started_utc: 2026-11-10T23:20:04+00:00
+finished_utc: 2026-11-10T23:20:20+00:00
+exit: 0
+--- stdout (320 lines) ---
+verify-atomic-artifacts: can anything tell a FINISHED artifact from a TRUNCATED one?
+====================================================================================================
+Binding under test: scripts/assert-probes.py, which counts a file as produced
+when (size, mtime_ns, sha256) changed across the run. That is a CHANGE detector.
+This survey asks a different question of the same artifacts: is there anything
+that says the producer FINISHED?
+
+PRODUCER SURVEY -- read from source, line numbers are the evidence
+====================================================================================================
+producer                                     direct   completion-marker    verdict       
+----------------------------------------------------------------------------------------------------
+net-reverse/lab/gen-pcaps.mjs                yes      manifest-last        direct+marker 
+net-reverse/tools/trustcheck.mjs             yes      none                 UNGUARDED     
+net-reverse/lab/pcap-writer.mjs              yes      manifest-last        direct+marker 
+net-reverse/tools/replay.mjs                 n/a      n/a                  reader        
+net-reverse/tools/intercept.mjs              n/a      n/a                  reader        
+fuzz-lab/tools/loop.mjs                      yes      schema-count         direct+marker 
+fuzz-lab/lab/triage.mjs                      yes      index-last           direct+marker 
+fuzz-lab/lab/targets.mjs                     yes      none                 UNGUARDED     
+forensics-lab/lab/mkimage.mjs                yes      manifest-last        direct+marker 
+forensics-lab/tools/analyze.mjs              n/a      n/a                  reader        
+forensics-lab/tools/correlate.mjs            yes      none                 UNGUARDED     
+forensics-lab/tools/loop.mjs                 yes      none                 UNGUARDED     
+headless-lab/tools/authenticode.py           yes      none                 UNGUARDED     
+native-lab/tools/disasm.py                   yes      none                 UNGUARDED     
+scripts/assert-probes.py                     yes      header-first         direct+marker 
+scripts/mission.ps1                          yes      termination-reason   direct+marker 
+scripts/gate.ps1                             yes      sealed-hash          direct+marker 
+scripts/ghidra/ExportDecompile.java          yes      sentinel-exists      direct+marker 
+scripts/mobsf-agent.ps1                      yes      sentinel-exists      direct+marker 
+scripts/check-requires-tools.py              yes      none                 UNGUARDED     
+scripts/reachability-report.py               yes      n/a                  direct+marker 
+scripts/sync-wiki-figures.py                 yes      none                 UNGUARDED     
+mobile-lab/tools/loop.mjs                    staged   staged+rename        ATOMIC        
+mobile-lab/lab/build/build-apk.mjs           yes      self-verification    direct+marker 
+managed-lab/tools/loop.mjs                   yes      content-hash         direct+marker 
+crackme-corpus/tools/build-c.ps1             yes      compiler-exit        direct+marker 
+web-reverse/tools/capture.mjs                yes      none                 UNGUARDED     
+web-reverse/tools/recover.mjs                yes      none                 UNGUARDED     
+----------------------------------------------------------------------------------------------------
+  1 ATOMIC  10 UNGUARDED  14 direct+marker  3 reader
+  28 producers surveyed; write sites are at the line numbers in the
+  JSON form and in evidence/atomic-artifacts.md.
+
+  net-reverse/lab/gen-pcaps.mjs
+    artifact : %TEMP%\net-reverse-lab\pcaps\corpus.json  (registry: net.pcap.analyse)
+    writes   : line(s) 392, 399
+    5 .pcap files written straight to their final names, then corpus.json. A kill between file 3 and corpus.json leaves 3 pcaps and NO manifest; a kill during corpus.json itself leaves a short manifest.
+
+  net-reverse/tools/trustcheck.mjs
+    artifact : %TEMP%\net-reverse-lab\trust-baseline.json
+    writes   : line(s) 98
+    The baseline is only written when absent. It is a COMPARISON input: the next run diffs against it and prints 'unchanged since <at>'. A truncated baseline is still parseable JSON if the kill lands after the closing brace is absent -> it is NOT, so it is re-recorded; but a kill that lands mid-write leaves a short file that fails JSON.parse, and the catch at line 94 silently sets baselineBefore=null and OVERWRITES the real baseline.
+
+  net-reverse/lab/pcap-writer.mjs
+    artifact : each <outDir>/*.pcap
+    writes   : line(s) 134
+    writePcapFile returns fs.statSync(file).size, so the caller records the size it just wrote. If the write were partial the size would be recorded as if correct.
+
+  net-reverse/tools/replay.mjs
+    artifact : (reads corpus.json; writes nothing that a probe declares)
+    Reader, not a producer.
+
+  net-reverse/tools/intercept.mjs
+    artifact : (CDP capture; no declared artifact)
+    Reader of the pcap corpus; writes no file the registry binds.
+
+  fuzz-lab/tools/loop.mjs
+    artifact : fuzz-lab/out/last-run.json  (registry: fuzz.differential.parse)
+    writes   : line(s) 289
+    ONE writeFileSync of the whole summary, and it is the LAST statement before process.exit. `ok: failed.length === 0` and `checks[]` are inside the JSON, so a truncated file fails json.loads instead of parsing as a clean pass -- the one producer whose marker survives truncation by accident of format.
+
+  fuzz-lab/lab/triage.mjs
+    artifact : fuzz-lab/crashes/<id>.bin + index.json
+    writes   : line(s) 130, 156
+    index.json is rewritten after the bytes, and it carries the reduced sha256. A reader that trusts index.json without re-hashing the .bin will believe a truncated reproducer is the one that was found.
+
+  fuzz-lab/lab/targets.mjs
+    artifact : %TEMP%\fuzz-lab-work-<pid>\pf-*.pf  (scratch seeds)
+    writes   : line(s) 275
+    Scratch seeds keyed by pid. A truncated seed becomes a fuzz INPUT rather than an artifact: no reader concludes anything from it, it just changes what is tested.
+
+  forensics-lab/lab/mkimage.mjs
+    artifact : <outDir>/d12-lab-image.raw + artifacts/* + manifest.json
+    writes   : line(s) 487, 490, 492, 494, 510
+    manifest.json is written last and names every artifact with its role. rm -rf of outDir happens FIRST (line 482), so a kill leaves either the old complete target or a new partial one -- never a mix. This is the best-behaved direct writer surveyed, and it is still a direct write.
+
+  forensics-lab/tools/analyze.mjs
+    artifact : (reader; consumes d12-lab-image.raw)
+    Reader. Its verdicts come from the image, so a truncated image is read as a real finding surface.
+
+  forensics-lab/tools/correlate.mjs
+    artifact : <carved>/carved-pid<N>-0x<addr>.bin, d12-payload.yar
+    writes   : line(s) 89, 124
+    Carved regions go straight to their final names. The .yar rule file is written AFTER the carving, so its absence is a signal -- but nothing checks for it.
+
+  forensics-lab/tools/loop.mjs
+    artifact : mutates <work>/target/d12-lab-image.raw and artifacts/Srum.txt IN PLACE
+    writes   : line(s) 268, 324, 331
+    THE WORST SHAPE SURVEYED. Lines 324/331 overwrite Srum.txt with a filtered copy and then restore the original. A kill between them leaves the DEMONSTRATION's mutation in place permanently, and the next window reads a doctored corpus as the pristine one.
+
+  headless-lab/tools/authenticode.py
+    artifact : <dst> signed PE fixture
+    writes   : line(s) 88
+    build_fixture opens dst with 'wb' and writes the whole PE. The SECURITY data directory is patched in memory FIRST, so a truncated fixture is a PE whose directory says signed and whose certificate table is short.
+
+  native-lab/tools/disasm.py
+    artifact : --json-out <path>
+    writes   : line(s) 194
+    open(...,'w') then fh.write(text). The whole JSON is one buffered write, so a truncation fails json.loads -- but the file exists, is non-empty, and the binding's (size, mtime_ns, sha256) comparison counts it as produced.
+
+  scripts/assert-probes.py
+    artifact : <evidence-dir>/<cid>.<kind>.log
+    writes   : line(s) 171
+    The evidence log ITSELF is a direct write. The header (command, exit, seconds, and every artifact's sha256) is prepended, so a truncated log still carries a complete-looking sha256 line for an artifact whose log body is cut off.
+
+  scripts/mission.ps1
+    artifact : <caseDir>/plan.json, scope-baseline.txt, artifact.json, trace.jsonl
+    writes   : line(s) 1280, 1303, 1716, 1717
+    The ONLY producer with a real completion marker: artifact.json carries termination.state/reason and scope-baseline.txt hashes the tree. A kill before line 1716 leaves NO artifact.json, which is honest. This is the shape the others should have.
+
+  scripts/gate.ps1
+    artifact : <caseDir>/grant.json + the grant seal
+    writes   : line(s) 740, 825, 1219
+    grant.json carries grant_sha256 over its own canonical identity, and the seal is a second file. A truncated grant.json fails the hash check on read, so it is refused rather than believed.
+
+  scripts/ghidra/ExportDecompile.java
+    artifact : <outDir>/summary.json  (registry: native.ghidra.decompile)
+    writes   : line(s) 96
+    The station's DESIGNED answer to this question. summary.json is written LAST, after every decompiled .c, and scripts/ghidra-headless.ps1 gates on the file EXISTING rather than on an exit code -- documented at ghidra-failopen.md:83 as 'if summary.json exists, Ghidra got far enough to finish'. That is a genuine completion marker, arrived at independently.
+
+  scripts/mobsf-agent.ps1
+    artifact : <OutDir>/report.json, summary.json
+    writes   : line(s) 56, 111
+    summary.json written last and immediately re-read and echoed, so a truncation surfaces as a PowerShell parse error at the call site.
+
+  scripts/check-requires-tools.py
+    artifact : --dump <path>
+    writes   : line(s) 516
+    Diagnostic dump only. json.dumps is materialised BEFORE write_text, so the single write is as atomic as a write gets; the exposure is only the kill window.
+
+  scripts/reachability-report.py
+    artifact : mutates <tmp>/<case>/artifact.json in its OWN selftest fixture
+    writes   : line(s) 479, 546, 585, 603
+    Writes only into tempfile.mkdtemp(). Line 585 deliberately writes '{not json' -- the station already has a truncation-shaped fixture, used to prove the reader refuses it.
+
+  scripts/sync-wiki-figures.py
+    artifact : <project>/<private-tree>/wiki/{INDEX,CHARTER-ARSENAL,methods/*}.md  (IN PLACE)
+    writes   : line(s) 174
+    Rewrites four TRACKED wiki files in place with path.write_text. A kill here leaves a wiki page with half its figures rewritten -- and doc-facts.py reads those exact sentences, so the next check reports a stale claim with no way to tell the file was cut mid-rewrite.
+
+  mobile-lab/tools/loop.mjs
+    artifact : mobile-lab/artifacts/mobilelab.apk
+    writes   : line(s) 109, 110, 140
+    THE ONLY STAGED PRODUCER IN THE STATION. copyFileSync to <apk>.<pid>.tmp then renameSync, with the reason written at line 104: 'writing straight to artifacts/mobilelab.apk is how a parallel reader gets a truncated ZIP and reports "not a ZIP" about a perfectly good APK'. The hazard was found and fixed HERE and nowhere else.
+
+  mobile-lab/lab/build/build-apk.mjs
+    artifact : <WORK>/apk/*.apk, libmobilelab.so, framework-res/*
+    writes   : line(s) 204, 219, 231, 293, 321, 327
+    Every intermediate goes to a pid-scoped %TEMP% dir wiped on exit. Only the PUBLISHED apk is a real artifact, and that publish is the staged one above.
+
+  managed-lab/tools/loop.mjs
+    artifact : managed-lab/out/<m>/.stamp (Ghidra cache stamp)
+    writes   : line(s) 126
+    The stamp's CONTENT is the sha256 of the DLL it was cached from, so a truncated stamp compares unequal and the cache is rebuilt. Correct by accident of design.
+
+  crackme-corpus/tools/build-c.ps1
+    artifact : crackme-corpus/out/*.exe, *.obj
+    writes   : line(s) 59
+    The .bat is written directly (staged would be safer) but the .exe/.obj come from cl.exe, which writes them itself. A truncated PE from a killed link is a PE no downstream tool here checks the length of.
+
+  web-reverse/tools/capture.mjs
+    artifact : --out <path>.json
+    Declared via --out; the write itself is in the CDP recorder, one writeFileSync at close.
+
+  web-reverse/tools/recover.mjs
+    artifact : --out recovered.json
+    Same shape. recover.mjs READS obf.json and writes recovered.json, so a truncated capture in, a truncated recovery out, and the next tool reads recovered.json.
+
+
+UNGUARDED PRODUCERS -- writes directly, no completion marker
+====================================================================================================
+What a reader would mistake the truncated artifact for:
+
+  * net-reverse/tools/trustcheck.mjs
+      A reader mistakes a truncated trust baseline for a machine whose root store did not change:
+      the next run prints 'unchanged since <at>' about a baseline that was never finished being
+      written.
+
+  * fuzz-lab/lab/targets.mjs
+      A reader does not mistake it for anything: a truncated scratch seed becomes a fuzz INPUT, so
+      the cost is a silent change in what was tested, not a false claim.
+
+  * forensics-lab/tools/correlate.mjs
+      A reader mistakes a half-written carved region for the carved region: the .yar rule written
+      after it names the exact marker, so a short .bin and a complete .yar disagree in a way
+      nothing checks.
+
+  * forensics-lab/tools/loop.mjs
+      A reader mistakes the demonstration's mutation for the pristine corpus: after a kill between
+      the Srum filter and its restore, the next window sees a forensic image with rows
+      deliberately removed and reads its findings as the lab's real output.
+
+  * headless-lab/tools/authenticode.py
+      A reader mistakes a half-written signed PE for a signed PE: the SECURITY data directory was
+      patched before the write, so the file announces a certificate table it does not fully
+      contain.
+
+  * native-lab/tools/disasm.py
+      A reader mistakes a truncated disassembly for a short function: the tool's own header says
+      --count 'truncates arbitrarily, so the count says NOTHING about the function's extent', and
+      a killed write looks exactly like a small --count.
+
+  * scripts/check-requires-tools.py
+      A reader mistakes a truncated tool dump for a complete one, and debugs the tools it names
+      rather than the dump.
+
+  * scripts/sync-wiki-figures.py
+      A reader mistakes a half-rewritten wiki page for a page with stale figures: doc-facts.py
+      then reports a claim as drifted when the file was cut mid-rewrite, and the next window edits
+      prose that was never wrong.
+
+
+
+CONTROL C1 -- can a BYTE-TRUNCATED artifact be produced at all?
+====================================================================================================
+  Real writer, run from a %TEMP% working copy, killed partway across its whole
+  measured runtime. Nothing in the repo is touched.
+
+  writer              net-reverse/lab/gen-pcaps.mjs
+  artifact            corpus.json   (registry glob: %TEMP%\net-reverse-lab\pcaps\corpus.json)
+  uninterrupted run   47.8 ms -> 4956 bytes
+  trials              40, of which 37 were killed mid-run
+
+    complete    40 trial(s)
+
+  truncated artifacts produced: 0 of 40
+  write window  (one whole-file write of 4956 B)  0.247 ms
+  kill latency  (taskkill /F /T to process death)               276.9 ms
+  ratio: the kill is 1121.2x SLOWER than the window it would have to
+  land inside.
+
+  -> RESULT: no byte-truncated artifact was produced, and the reason is
+     measured rather than guessed. Every producer surveyed writes with ONE
+     whole-file write, which is effectively atomic at these sizes: the window
+     a kill would have to hit is ~1000x narrower than the kill mechanism.
+     So the TRUNCATION hazard, as the brief framed it, is NOT reachable on this
+     box by killing the producer. It is reachable by a full disk, a machine
+     reset, or an antivirus scanner truncating a file in flight -- none of which
+     this control can simulate. That is said here rather than glossed over.
+
+
+CONTROL C2 -- can the REAL binding tell a killed run from a finished one?
+====================================================================================================
+  The command the registry ACTUALLY declares for net.pcap.analyse, run from a
+  %TEMP% working copy, killed partway, then judged by assert-probes.py's OWN
+  snapshot_produces() and check_produces() -- imported, not reimplemented.
+
+  declared command    node net-reverse/tools/loop.mjs
+  capability          net.pcap.analyse
+  trials              6
+
+    kill@ms  killed  exit  artifact   captures   check_produces  drift
+  --------------------------------------------------------------------
+        100    True     1   present          5            fresh      0
+        150    True     1   present          5            fresh      0
+        200    True     1   present          5            fresh      0
+        250    True     1   present          5            fresh      0
+        300    True     1   present          5            fresh      0
+        400    True     1   present          5            fresh      0
+
+  KILLED RUNS THE BINDING ACCEPTED AS PRODUCED: 6 of 6
+
+  READ THIS CAREFULLY -- it is the finding, and it is not the one the brief
+  predicted. Every one of these runs was killed mid-flight. Each left a
+  COMPLETE, PARSEABLE manifest listing all five captures, and check_produces()
+  returned 'fresh' with ZERO drift messages. The binding cannot distinguish
+  'the instrument produced this' from 'the instrument produced its first step,
+  wrote the artifact, and then died before the other five steps ran' -- because
+  nothing in the artifact records that the other steps ran. corpus.json describes
+  the corpus; it says nothing about the 16 questions, the replay, the CDP
+  interception or the trust isolation check that the probe command also performs.
+  A truncated file would at least fail json.loads. A file that is complete and
+  silent about 5 of 6 steps does not.
+
+  MUTATION -- the same harness against a producer that writes nothing.
+  --------------------------------------------------------------------
+    identical harness, producer replaced by a stub that writes nothing
+    binding_state      stale
+    drift_messages     1
+    goes RED           True
+
+    -> The mutation went red, so 'fresh' in the table above is a real verdict
+       this harness earned, not a default. The binding DOES catch a producer
+       that touches nothing. What it cannot catch is a producer that writes
+       its artifact and then fails.
+
+
+WHAT THIS DOES NOT CLAIM
+====================================================================================================
+  * It does not claim a producer is BROKEN. Every one produces correct bytes
+    when allowed to finish.
+  * It does not claim the binding is wrong. (size, mtime_ns, sha256) is the right
+    check for 'this run touched this file' and the MUTATION above shows it
+    catches a stub. It is silent on 'this run finished'.
+  * The classifications are readings of source; the line numbers printed with
+    each row are the evidence for that reading. Only C1 and C2 are measured.
+  * No producer was modified. The fix, where one is wanted, is temp-then-rename
+    or a manifest that records what ELSE must exist -- mobile-lab/tools/loop.mjs:104
+    already does the first and writes down why.
+
+
+THE ONE-LINE FINDING
+====================================================================================================
+  A run of node net-reverse/tools/loop.mjs killed mid-flight was accepted as
+  PRODUCED in 6 of 6 trials, with
+  zero DRIFT. The artifact is complete; what is missing is any record that
+  the run did the other five things the command does.
+  Byte-truncation was NOT reachable in 40 kills, because the
+  write window is 0.247 ms and the kill takes 276.9 ms.
+--- stderr (0 lines) ---
+

@@ -1,0 +1,115 @@
+command: C:/Program Files/Git/usr/bin/timeout.exe 45 D:/Software/Developer/Python314/python.exe -X utf8 -B D:\Software\Tool\WorkStation\debugger\scripts\registry-verify.py --selftest
+cwd: F:\GENESIS-ARCHIVE\10-STORE\12-RESEARCH-RUNS\build-weapon-library-20261110
+started_utc: 2026-11-10T23:19:57+00:00
+finished_utc: 2026-11-10T23:19:58+00:00
+exit: 0
+--- stdout (107 lines) ---
+  PASS  baseline must be clean                                                   clean
+  PASS  R3 absent may have empty proves                                          correctly silent
+  PASS  R3 absent still needs does_not_prove                                     caught
+  PASS  R1 empty registry fails                                                  caught
+  PASS  R2 observed without probe                                                caught
+  PASS  R2 observed with a PROSE probe (a pointer, not a command)                caught
+  PASS  R2 a real command with no file extension is still accepted               caught
+  PASS  R19 two capabilities sharing one probe                                   caught
+  PASS  R19 distinct probes are accepted                                         caught
+  PASS  R20 fact_map forwards to an undeclared fact                              caught
+  PASS  R20 a fact_map naming declared facts is accepted                         caught
+  PASS  R34 a command naming another machine's absolute path                     caught
+  PASS  R34 a control naming another machine's absolute path                     caught
+  PASS  R34 a command using %TEMP% is accepted                                   caught
+  PASS  R34 a repo-relative command is accepted                                  caught
+  PASS  R33 an envelope naming a success sentinel as its error field             caught
+  PASS  R33 an envelope naming a real error field is accepted                    caught
+  PASS  R32 an owner-decision entry that became grantable                        caught
+  PASS  R32 an ungrantable entry with no stated reason                           caught
+  PASS  R32 an owner-decision entry that stays ungrantable is accepted           caught
+  PASS  R31 an observed entry declaring neither                                  caught
+  PASS  R31 an observed entry declaring both                                     caught
+  PASS  R31 a not_callable with no reason                                        caught
+  PASS  R31 an ABSENT entry needs neither                                        caught
+  PASS  R21 a prose negative control                                             caught
+  PASS  R21 a runnable negative control is accepted                              caught
+  PASS  R21 a declared plan with a reason and a checkable reference is accepted  caught
+  PASS  R21 a plan with NO reason is refused                                     caught
+  PASS  R22 ungrantable with no recorded reason                                  caught
+  PASS  R22 ungrantable WITH a reason is accepted                                caught
+  PASS  R22 a grantable capability needs no reason                               caught
+  PASS  R23 an escalation class with no recorded reason                          caught
+  PASS  R23 the reason under the WRONG key is still no reason                    caught
+  PASS  R23 an escalation class WITH a reason is accepted                        caught
+  PASS  R23 a class of none needs no reason                                      caught
+  PASS  R24 an input typed with a FACT type                                      caught
+  PASS  R24 an input with no type at all                                         caught
+  PASS  R24 an input typed from the vocabulary is accepted                       caught
+  PASS  R25 a plan with no machine-checkable reference                           caught
+  PASS  R25 a file: reference that does not exist                                caught
+  PASS  R25 a missing: reference that MATCHES something                          caught
+  PASS  R25 undecidable: with no reason                                          caught
+  PASS  R25 a reference in a form nobody defined                                 caught
+  PASS  R25 a file: reference that resolves is accepted                          caught
+  PASS  R3 missing does_not_prove                                                caught
+  PASS  R3 observed with empty proves                                            caught
+  PASS  R5 control with no expect_exit                                           caught
+  PASS  R-shape missing a required key                                           caught
+  PASS  R-shape state outside the valid set                                      caught
+  PASS  R4 fact type mismatch                                                    caught
+  PASS  R5 control expecting exit 0                                              caught
+  PASS  R5 control missing                                                       caught
+  PASS  R6 admin without escalation                                              caught
+  PASS  R7 duplicate id                                                          caught
+  PASS  R10 invoke without success_when                                          caught
+  PASS  R10 invoke argv as a shell string                                        caught
+  PASS  R10 invoke naming a missing script                                       caught
+  PASS  R10 chain whose fact nobody produces                                     caught
+  PASS  R8 net=any without declared reach                                        caught
+  PASS  R8 fs_write with escalation none                                         caught
+  PASS  R8 undeclared proc_spawn (entry runs a probe)                            caught
+  PASS  R8 undeclared fs_read (entry consumes an input)                          caught
+  PASS  R8 exec_target without containment                                       caught
+  PASS  R8 containment outside the gate enumeration                              caught
+  PASS  R11 edge to a capability that does not exist                             caught
+  PASS  R11 edge to a field its producer never emits                             caught
+  PASS  R11 edge with no field named                                             caught
+  PASS  R12 edge out of a capability that cannot run                             caught
+  PASS  R12 edge into a capability that cannot run                               caught
+  PASS  R13 invented question type                                               caught
+  PASS  R14 observed producer with no edge and no root_reason                    caught
+  PASS  R14 registry shrank below the pinned count                               caught
+  PASS  R26 a bare brace in a control command                                    caught
+  PASS  R26 a bare brace in a probe command                                      caught
+  PASS  R27 the unreadable spelling probe.exit                                   caught
+  PASS  R27 probe.exit with a deliberately wrong value                           caught
+  PASS  R28 a run_log git does not carry                                         caught
+  PASS  R30 requires.net outside the vocabulary                                  caught
+  PASS  R30 gate.lane outside the vocabulary                                     caught
+  PASS  R30 a registry with no net_requirements vocabulary is refused            caught
+  PASS  R30 a registry with no lanes vocabulary is refused                       caught
+  PASS  R29 a fact typed outside the vocabulary                                  caught
+  PASS  R29 a fact typed from the vocabulary is accepted                         caught
+  PASS  R28 a tracked run_log is accepted                                        caught
+  PASS  R27 probe.expect_exit alone is accepted                                  caught
+  PASS  R26 braces inside a quoted span are accepted                             caught
+  PASS  R14 question-type enumeration removed from the schema                    caught
+  PASS  R14 retired entry with no reason                                         caught
+  PASS  R14 retired capability still present                                     caught
+  PASS  R15 artifact bound by nothing                                            caught
+  PASS  R16 placeholder with no substitution source                              caught
+  PASS  R16 placeholder for an undeclared input                                  caught
+  PASS  R17 observed with nothing binding the run date                           caught
+  PASS  R17 unverified marker with no reason                                     caught
+  PASS  R17 a run_log that is a sentence, not a file                             caught
+  PASS  R17 a run_log naming a file that does not exist                          caught
+  PASS  R17 a sha256 that does not match the file it names                       caught
+  PASS  R17 a sha256 with no run_log to hash                                     caught
+  PASS  R17 a run_log naming a file that exists is accepted                      caught
+  PASS  R18 one instrument wearing two families                                  caught
+  PASS  R18 evidence_source outside the declared families                        caught
+  PASS  R18 family enumeration removed from the schema                           caught
+  PASS  R18 one instrument may have one family                                   correctly silent
+  PASS  R9 batch consumed with no envelope                                       caught
+  PASS  R9 envelope batch missing aggregate                                      caught
+
+SELFTEST OK: 104 cases each fire on a registry built to break them.
+--- stderr (0 lines) ---
+

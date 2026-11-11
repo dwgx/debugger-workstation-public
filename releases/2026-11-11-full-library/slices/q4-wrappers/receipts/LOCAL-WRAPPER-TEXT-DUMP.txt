@@ -1,0 +1,213 @@
+# OWNER: researcher-q4 | receipt for LOCAL static check (NOT a backend-usable proof)
+claim_id=LOCAL-WRAPPER-TEXT-DUMP
+command="C:/Program Files/Git/usr/bin/timeout.exe" 30 "D:/Software/Developer/Python314/python.exe" -X utf8 -B "F:/GENESIS-ARCHIVE/10-STORE/12-RESEARCH-RUNS/build-weapon-library-20261110/setukou-20261111/v5/slices/q4-wrappers/receipt_tools/dump_wrappers.py"
+cwd=F:/GENESIS-ARCHIVE/10-STORE/12-RESEARCH-RUNS/build-weapon-library-20261110
+started_utc=2026-11-10T22:57:18Z
+finished_utc=2026-11-10T22:57:18Z
+exit=0
+--- stdout ---
+wrappers_dumped=23
+=== BEGIN 7zip-mcp.cmd ===
+  1|@echo off
+  2|set "PYTHONIOENCODING=utf-8"
+  3|set "PATH=%~dp0..\..\Unpackers-Game\7-Zip-full;%PATH%"
+  4|cd /d "%~dp0..\..\MCP\mcp7zop"
+  5|".venv\Scripts\python.exe" -m mcp7zop --mcp-server
+=== END 7zip-mcp.cmd ===
+=== BEGIN apktool-mcp.cmd ===
+  1|@echo off
+  2|set "PYTHONUTF8=1"
+  3|set "PYTHONIOENCODING=utf-8"
+  4|set "FASTMCP_SHOW_SERVER_BANNER=false"
+  5|set "FASTMCP_CHECK_FOR_UPDATES=off"
+  6|set "FASTMCP_ENABLE_RICH_LOGGING=false"
+  7|set "PATH=%~dp0..\..\MCP\bin;%PATH%"
+  8|set "APKTOOL_WORKSPACE=%~dp0..\..\MCP\workspaces\apktool"
+  9|cd /d "%~dp0..\..\MCP\apktool-mcp-server"
+ 10|".venv\Scripts\python.exe" "apktool_mcp_server.py" --workspace "%~dp0..\..\MCP\workspaces\apktool"
+=== END apktool-mcp.cmd ===
+=== BEGIN apktool.cmd ===
+  1|@echo off
+  2|java -jar "%~dp0..\..\Mobile-Android\Apktool\apktool.jar" %*
+=== END apktool.cmd ===
+=== BEGIN cheatengine-mcp.cmd ===
+  1|@echo off
+  2|set "PYTHONIOENCODING=utf-8"
+  3|REM 安全:默认关闭 shell 执行能力。确需时手动改为 1(理解风险:等于经此 backend 获得任意 shell)。
+  4|set "CE_MCP_ALLOW_SHELL=0"
+  5|cd /d "%~dp0..\..\MCP\cheatengine-mcp-bridge\MCP_Server"
+  6|".venv\Scripts\python.exe" "mcp_cheatengine.py"
+  7|
+=== END cheatengine-mcp.cmd ===
+=== BEGIN debugger-router-mcp.cmd ===
+  1|@echo off
+  2|set "PYTHONUTF8=1"
+  3|set "PYTHONIOENCODING=utf-8"
+  4|set "FASTMCP_SHOW_SERVER_BANNER=false"
+  5|set "FASTMCP_CHECK_FOR_UPDATES=off"
+  6|set "FASTMCP_ENABLE_RICH_LOGGING=false"
+  7|cd /d "%~dp0..\..\MCP\debugger-router"
+  8|REM 优先用 router 自己的 venv(bootstrap -Apply 会建并装 requirements.txt)。
+  9|REM 回退到 frida-mcp 的 venv(同样含 mcp),再回退系统 python。
+ 10|set "ROUTER_PY=%~dp0..\..\MCP\debugger-router\.venv\Scripts\python.exe"
+ 11|if not exist "%ROUTER_PY%" set "ROUTER_PY=%~dp0..\..\MCP\frida-mcp\.venv\Scripts\python.exe"
+ 12|if not exist "%ROUTER_PY%" set "ROUTER_PY=python"
+ 13|"%ROUTER_PY%" "server.py"
+=== END debugger-router-mcp.cmd ===
+=== BEGIN dnspy-mcp.cmd ===
+  1|@echo off
+  2|cd /d "%~dp0..\..\MCP\dnspy-mcp\publish\win-x64"
+  3|"%~dp0..\..\MCP\dnspy-mcp\publish\win-x64\DnSpyMcpServer.exe"
+=== END dnspy-mcp.cmd ===
+=== BEGIN frida-mcp.cmd ===
+  1|@echo off
+  2|cd /d "%~dp0..\..\MCP\frida-mcp"
+  3|".venv\Scripts\frida-mcp.exe"
+=== END frida-mcp.cmd ===
+=== BEGIN ghidra-mcp.cmd ===
+  1|@echo off
+  2|set "PYTHONIOENCODING=utf-8"
+  3|cd /d "%~dp0..\..\MCP\GhidraMCP"
+  4|".venv\Scripts\python.exe" "bridge_mcp_ghidra.py" --transport stdio
+=== END ghidra-mcp.cmd ===
+=== BEGIN ida-pro-mcp.cmd ===
+  1|@echo off
+  2|REM Headless IDA via idalib (already on this PC). GUI 13337 is optional when IDA is open.
+  3|set "PYTHONIOENCODING=utf-8"
+  4|set "PYTHONUTF8=1"
+  5|cd /d "%~dp0..\..\MCP\ida-pro-mcp"
+  6|if exist ".venv\Scripts\idalib-mcp.exe" (
+  7|  ".venv\Scripts\idalib-mcp.exe" --stdio
+  8|) else (
+  9|  "D:\Software\Developer\Python314\Scripts\idalib-mcp.exe" --stdio
+ 10|)
+=== END ida-pro-mcp.cmd ===
+=== BEGIN ilspy-mcp.cmd ===
+  1|@echo off
+  2|REM ILSpy MCP - .NET 9 dotnet tool. Upstream ships no prebuilt exe.
+  3|REM Build after clone (see docs/TOOLS_INDEX.md): dotnet publish -c Release -o publish
+  4|REM Produces publish\ILSpy.Mcp.exe; dotnet pack + tool install produces publish\ilspy-mcp.exe.
+  5|set "DOTNET_ROOT=%~dp0..\..\MCP\Runtime\dotnet"
+  6|set "PATH=%DOTNET_ROOT%;%PATH%"
+  7|if exist "%~dp0..\..\MCP\ILSpy-Mcp\publish\ILSpy.Mcp.exe" (
+  8|  "%~dp0..\..\MCP\ILSpy-Mcp\publish\ILSpy.Mcp.exe"
+  9|) else (
+ 10|  "%~dp0..\..\MCP\ILSpy-Mcp\publish\ilspy-mcp.exe"
+ 11|)
+=== END ilspy-mcp.cmd ===
+=== BEGIN imhex-mcp.cmd ===
+  1|@echo off
+  2|set "IMHEX_HOST=localhost"
+  3|set "IMHEX_PORT=31337"
+  4|cd /d "%~dp0..\..\MCP\imhexMCP\mcp-server"
+  5|".venv\Scripts\python.exe" "server.py"
+=== END imhex-mcp.cmd ===
+=== BEGIN jadx-mcp.cmd ===
+  1|@echo off
+  2|set "PYTHONUTF8=1"
+  3|set "PYTHONIOENCODING=utf-8"
+  4|set "FASTMCP_SHOW_SERVER_BANNER=false"
+  5|set "FASTMCP_CHECK_FOR_UPDATES=off"
+  6|set "FASTMCP_ENABLE_RICH_LOGGING=false"
+  7|cd /d "%~dp0..\..\MCP\jadx-mcp-server"
+  8|".venv\Scripts\python.exe" "jadx_mcp_server.py"
+=== END jadx-mcp.cmd ===
+=== BEGIN mobsf-mcp.cmd ===
+  1|@echo off
+  2|setlocal
+  3|cd /d "%~dp0..\..\MCP\mobsf-mcp-server"
+  4|if exist "node_modules\.bin\tsx.cmd" (
+  5|  call "node_modules\.bin\tsx.cmd" server.ts
+  6|) else (
+  7|  npx tsx server.ts
+  8|)
+=== END mobsf-mcp.cmd ===
+=== BEGIN radare2-mcp.cmd ===
+  1|@echo off
+  2|REM radare2 official MCP (r2mcp). Start via r2pm, do not run r2mcp.exe directly.
+  3|set "PYTHONIOENCODING=utf-8"
+  4|set "PATH=%~dp0..\..\Static-Reversing\radare2\radare2-6.2.2-w64\bin;%PATH%"
+  5|r2pm -r r2mcp
+=== END radare2-mcp.cmd ===
+=== BEGIN rea-mcp.cmd ===
+  1|@echo off
+  2|REM REA (morluto/rea) — "Reverse Engineer Anything" MCP backend.
+  3|REM Upstream: https://github.com/morluto/rea · npm package: rea-agents (pinned 6.4.0, 2026-10-12).
+  4|REM Install: npm install --global rea-agents@6.4.0   (Node 22.19+/24.11+ required; this box: v24.21.0)
+  5|REM Starts REA's local MCP server on stdio. Falls back to npx if the global shim is absent.
+  6|set "PYTHONIOENCODING=utf-8"
+  7|where rea >nul 2>nul
+  8|if %errorlevel%==0 (
+  9|  rea mcp
+ 10|) else (
+ 11|  npx -y rea-agents@6.4.0 mcp
+ 12|)
+=== END rea-mcp.cmd ===
+=== BEGIN reclass-mcp.cmd ===
+  1|@echo off
+  2|set "PYTHONIOENCODING=utf-8"
+  3|cd /d "%~dp0..\..\MCP\ReClass.NET-MCP\ReClassMCP.Server"
+  4|".venv\Scripts\python.exe" "reclass_mcp_server.py"
+=== END reclass-mcp.cmd ===
+=== BEGIN reqable-mcp-local.cmd ===
+  1|@echo off
+  2|set "PYTHONIOENCODING=utf-8"
+  3|set "REQABLE_DATA_DIR=%~dp0..\..\MCP\workspaces\reqable"
+  4|cd /d "%~dp0..\..\MCP\reqable-mcp"
+  5|".venv\Scripts\python.exe" -m reqable_mcp
+=== END reqable-mcp-local.cmd ===
+=== BEGIN virustotal-mcp.cmd ===
+  1|@echo off
+  2|setlocal
+  3|REM VirusTotal 威胁情报 MCP(Node/TypeScript)。
+  4|REM 需在环境中预先设置 VIRUSTOTAL_API_KEY(勿写入本脚本、勿入库)。
+  5|REM clone 后构建: npm install && npm run build
+  6|if "%VIRUSTOTAL_API_KEY%"=="" echo [warn] VIRUSTOTAL_API_KEY not set; VirusTotal calls will fail. 1>&2
+  7|cd /d "%~dp0..\..\MCP\mcp-virustotal"
+  8|if exist "build\index.js" (
+  9|  node "build\index.js"
+ 10|) else (
+ 11|  npx -y tsx src/index.ts
+ 12|)
+=== END virustotal-mcp.cmd ===
+=== BEGIN volatility3-mcp.cmd ===
+  1|@echo off
+  2|set "PYTHONIOENCODING=utf-8"
+  3|cd /d "%~dp0..\..\MCP\volatility3-mcp"
+  4|".venv\Scripts\python.exe" "bridge_mcp_volatility.py"
+=== END volatility3-mcp.cmd ===
+=== BEGIN wireshark-mcp.cmd ===
+  1|@echo off
+  2|set "PYTHONIOENCODING=utf-8"
+  3|set "PATH=%~dp0..\..\Network-HTTP\Wireshark\portable\App\Wireshark;%~dp0..\..\Network-HTTP\Wireshark;%PATH%"
+  4|cd /d "%~dp0..\..\MCP\mcp-wireshark"
+  5|".venv\Scripts\mcp-wireshark.exe"
+=== END wireshark-mcp.cmd ===
+=== BEGIN x64dbg-mcp.cmd ===
+  1|@echo off
+  2|set "X64DBG_PATH=%~dp0..\..\Debuggers\x64dbg\release\x64\x64dbg.exe"
+  3|cd /d "%~dp0..\..\MCP\x64dbg-automate-pyclient"
+  4|".venv\Scripts\x64dbg-automate-mcp.exe"
+=== END x64dbg-mcp.cmd ===
+=== BEGIN yaraflux-http.cmd ===
+  1|@echo off
+  2|cd /d "%~dp0..\..\MCP\YaraFlux"
+  3|if exist ".env" for /f "usebackq eol=# tokens=1,* delims==" %%A in (".env") do (
+  4|  if not "%%A"=="" set "%%A=%%B"
+  5|)
+  6|".venv\Scripts\yaraflux-mcp-server.exe" run --host 127.0.0.1 --port 8000
+  7|
+=== END yaraflux-http.cmd ===
+=== BEGIN yaraflux-mcp.cmd ===
+  1|@echo off
+  2|cd /d "%~dp0..\..\MCP\YaraFlux"
+  3|if exist ".env" for /f "usebackq eol=# tokens=1,* delims==" %%A in (".env") do (
+  4|  if not "%%A"=="" set "%%A=%%B"
+  5|)
+  6|".venv\Scripts\python.exe" "-m" "yaraflux_mcp_server.mcp_server" --transport stdio
+  7|
+=== END yaraflux-mcp.cmd ===
+NOTE: text dump = static evidence only; backend_usable UNVERIFIED
+--- stderr ---
+--- NOTE ---
+Static/read-only check only; NEVER starts a backend, NEVER runs java/exe/npx/node/r2pm. A backend_usable=True claim would need a real MCP session receipt (HMC/credential/third-party) = OWNER_GATED.

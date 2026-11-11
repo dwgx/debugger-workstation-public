@@ -1,0 +1,18 @@
+{
+  "round": 0,
+  "type": "boot",
+  "as_of": "2026-11-11",
+  "goal_slug": "workstation-capability-saturation",
+  "ledger_root": "C:/Users/dwgx1/.dwgx/ops/research/workstation-capability-saturation/",
+  "experiment_root": "F:/GENESIS-ARCHIVE/10-STORE/12-RESEARCH-RUNS/build-weapon-library-20261110/setukou-20261111/v5/",
+  "adapter": "C:/Users/dwgx1/.dwgx/ops/research/workstation-capability-saturation/researchd/adapters/workstation.md",
+  "budget": {"rounds": 8, "minutes": 240, "tokens": 1500000, "concurrency": 6},
+  "baseline": {"claims_total": 295, "real_verified": 9, "declared_unverified": 120, "missing": 15, "owner_gated": 151, "blockers": 286, "RELEASE_GATE": "RED"},
+  "product_trees": {"WorkStation": "7dfabdb/11", "debugger": "2c25f26/2", "Hackerone": "eb9914a/6"},
+  "question_statuses": {"Q0": "root", "Q1": "active", "Q2": "open", "Q3": "open", "Q4": "open", "Q5": "open", "Q6": "open", "Q7": "open", "Q8": "open"},
+  "frontier_dispatched": ["Q1"],
+  "worker": "researcher-q1",
+  "model_lane": "hy4worker (hy4free only; researcher agent forbidden by hard floor)",
+  "git_mechanism": "DISABLED",
+  "push_executed": "NO"
+}

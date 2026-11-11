@@ -1,0 +1,46 @@
+# OWNER: researcher-q5 | setukou-20261111/v5/slices/q5-absorption/RECEIPT-BINDINGS.tsv
+# as_of 2026-11-11 | source: v5/SATURATION.tsv (42 QA/SM/RANGE/W3 rows) + on-disk receipt dirs
+# bound = a REAL receipt file (stdout+exit+UTC) exists on disk and is mapped to this claim. NOT re-run.
+claim_id	status_in_saturation	bound_YES_NO	receipt_path	negative_control	verified_by	notes
+QA:G01	OWNER_GATED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+QA:G02	DECLARED_UNVERIFIED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+QA:G03	DECLARED_UNVERIFIED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+QA:G04	DECLARED_UNVERIFIED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+QA:G05	OWNER_GATED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+QA:G06	OWNER_GATED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+QA:G07	OWNER_GATED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+QA:G08	OWNER_GATED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+QA:G09	DECLARED_UNVERIFIED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+QA:G10	DECLARED_UNVERIFIED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+QA:G11	DECLARED_UNVERIFIED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+QA:G12	DECLARED_UNVERIFIED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+QA:G13	DECLARED_UNVERIFIED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+QA:G14	DECLARED_UNVERIFIED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+QA:G15	OWNER_GATED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+QA:G16	OWNER_GATED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+QA:G17	OWNER_GATED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+QA:G18	DECLARED_UNVERIFIED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+QA:G19	OWNER_GATED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+QA:G20	DECLARED_UNVERIFIED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+QA:G21	DECLARED_UNVERIFIED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+QA:G22	DECLARED_UNVERIFIED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+QA:G23	DECLARED_UNVERIFIED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+QA:G24	DECLARED_UNVERIFIED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+QA:G25	RUNNABLE_REAL_VERIFIED	YES	setukou-20261111/v4/real-verify/receipts/RV-P10-repo-qa-check.txt	setukou-20261111/v4/real-verify/receipts/RV-N01-fake-passed-negative.txt	already-REAL	existing on-disk REAL receipt bound (read-only)
+QA:G26	DECLARED_UNVERIFIED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+SM:candidate/BRIDGE.md	DECLARED_UNVERIFIED	YES	setukou-20261111/v4/real-verify/receipts/RV-S02-skill-package-verify.txt	setukou-20261111/v4/real-verify/receipts/RV-S02-skill-package-verify.txt#tamper_caught=1	staged-REAL	existing on-disk REAL receipt bound (read-only)
+SM:candidate/CHANGELOG.md	DECLARED_UNVERIFIED	YES	setukou-20261111/v4/real-verify/receipts/RV-S02-skill-package-verify.txt	setukou-20261111/v4/real-verify/receipts/RV-S02-skill-package-verify.txt#tamper_caught=1	staged-REAL	existing on-disk REAL receipt bound (read-only)
+SM:candidate/check.py	DECLARED_UNVERIFIED	YES	setukou-20261111/v4/real-verify/receipts/RV-S02-skill-package-verify.txt	setukou-20261111/v4/real-verify/receipts/RV-S02-skill-package-verify.txt#tamper_caught=1	staged-REAL	existing on-disk REAL receipt bound (read-only)
+SM:candidate/examples/fixture-alpha.txt	DECLARED_UNVERIFIED	YES	setukou-20261111/v4/real-verify/receipts/RV-S02-skill-package-verify.txt	setukou-20261111/v4/real-verify/receipts/RV-S02-skill-package-verify.txt#tamper_caught=1	staged-REAL	existing on-disk REAL receipt bound (read-only)
+SM:candidate/examples/fixture-alpha.txt.sha256	DECLARED_UNVERIFIED	YES	setukou-20261111/v4/real-verify/receipts/RV-S02-skill-package-verify.txt	setukou-20261111/v4/real-verify/receipts/RV-S02-skill-package-verify.txt#tamper_caught=1	staged-REAL	existing on-disk REAL receipt bound (read-only)
+SM:candidate/examples/fixture-beta.txt	DECLARED_UNVERIFIED	YES	setukou-20261111/v4/real-verify/receipts/RV-S02-skill-package-verify.txt	setukou-20261111/v4/real-verify/receipts/RV-S02-skill-package-verify.txt#tamper_caught=1	staged-REAL	existing on-disk REAL receipt bound (read-only)
+SM:candidate/examples/fixture-beta.txt.sha256	DECLARED_UNVERIFIED	YES	setukou-20261111/v4/real-verify/receipts/RV-S02-skill-package-verify.txt	setukou-20261111/v4/real-verify/receipts/RV-S02-skill-package-verify.txt#tamper_caught=1	staged-REAL	existing on-disk REAL receipt bound (read-only)
+SM:candidate/LICENSE-NOTE.md	DECLARED_UNVERIFIED	YES	setukou-20261111/v4/real-verify/receipts/RV-S02-skill-package-verify.txt	setukou-20261111/v4/real-verify/receipts/RV-S02-skill-package-verify.txt#tamper_caught=1	staged-REAL	existing on-disk REAL receipt bound (read-only)
+SM:candidate/README.md	DECLARED_UNVERIFIED	YES	setukou-20261111/v4/real-verify/receipts/RV-S02-skill-package-verify.txt	setukou-20261111/v4/real-verify/receipts/RV-S02-skill-package-verify.txt#tamper_caught=1	staged-REAL	existing on-disk REAL receipt bound (read-only)
+SM:candidate/RECEIPT-SCHEMA.md	DECLARED_UNVERIFIED	YES	setukou-20261111/v4/real-verify/receipts/RV-S02-skill-package-verify.txt	setukou-20261111/v4/real-verify/receipts/RV-S02-skill-package-verify.txt#tamper_caught=1	staged-REAL	existing on-disk REAL receipt bound (read-only)
+SM:candidate/SKILL.md	DECLARED_UNVERIFIED	YES	setukou-20261111/v4/real-verify/receipts/RV-S02-skill-package-verify.txt	setukou-20261111/v4/real-verify/receipts/RV-S02-skill-package-verify.txt#tamper_caught=1	staged-REAL	existing on-disk REAL receipt bound (read-only)
+SM:candidate/tools.json	DECLARED_UNVERIFIED	YES	setukou-20261111/v4/real-verify/receipts/RV-S02-skill-package-verify.txt	setukou-20261111/v4/real-verify/receipts/RV-S02-skill-package-verify.txt#tamper_caught=1	staged-REAL	existing on-disk REAL receipt bound (read-only)
+W3:CARD-01	RUNNABLE_REAL_VERIFIED	YES	setukou-20261111/v4/real-verify/receipts/RV-S03-w3-adoption-verify.txt	setukou-20261111/w3-adoption/receipts/02-negative-smoke.txt	already-REAL	existing on-disk REAL receipt bound (read-only)
+RANGE:real-RE-binary	OWNER_GATED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+RANGE:production-MCP	OWNER_GATED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
+RANGE:third-party-network	OWNER_GATED	NO	none	none	none	no claim-specific REAL receipt on disk; stays at its frozen status
