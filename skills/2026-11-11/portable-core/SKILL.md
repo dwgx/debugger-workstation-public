@@ -1,5 +1,5 @@
 ---
-name: debuggerstation-selfdeploy
+name: portable-core
 description: Deploy a debugger-station / WorkStation repo from a single entry, add this skill to your own harness, run the verification tests, self-repair tool and environment failures, and self-diagnose from official+community fix knowledge. Use when an AI is handed the repo, when SKILL.md/AGENTS.md is missing or deleted, when shell/encoding/glob/exit-code probes fail, or when a fix must be looked up before applying. NOT for vrc-dcc/VRC overlays, NOT for live hosts or bounty targets, NOT a claim that all capabilities work.
 license: MIT
 compatibility: "Python 3.10+ with stdlib only for the verify scripts (pathlib/re/subprocess/sys); git required for repo and HEAD probes; optional gh CLI used READ-ONLY (search/view) and never to write a remote; Windows + Git-Bash paths assumed at the station, POSIX fine for verify.py; no network needed to run the tests."
@@ -7,9 +7,9 @@ metadata:
   version: "1"
   last-reviewed: "2026-11-11"
   spec: "agentskills.io/specification"
+  owner: "parent (took over stalled PackageDesign slice) | package/SKILL.md"
 ---
-OWNER: parent (took over stalled PackageDesign slice) | package/SKILL.md
-# debuggerstation-selfdeploy — portable CORE (router stays at the station)
+# portable-core — portable CORE (router stays at the station)
 
 This skill is the **portable CORE**, not the station router. The 2 machine skills
 (`debugger-workstation`, `debugger-review`) are station-bound: their authoritative
@@ -19,7 +19,7 @@ scoped Worker; ship THIS package to any AI harness.
 
 ## Trigger branches (one per branch, front-loaded, per writing-for-agents S7)
 - **Deploy** — AI is handed the repo → read `SELF-DEPLOY.md`, run ONE env self-check, ONE clone+verify.
-- **Add to harness** — copy this dir as a skill dir named exactly `debuggerstation-selfdeploy`; `name` must match the manifest (SmartCLI S18); steps in `references/INSTALL.md`; then read `AGENTS.md`.
+- **Add to harness** — copy this dir as a skill dir named exactly `portable-core` (if you rename the dir, rename the frontmatter `name` with it); `name` must match the install dir (SmartCLI S18); steps in `references/INSTALL.md`; then read `AGENTS.md`.
 - **Test** — run `scripts/verify.py` (same check as the `## Verify` command below); exit 0 + measured numbers required.
 - **Self-repair** — tool/env failure → official fixes first, then community fixes (`references/FIX-KB.md`), dry-run first, re-run tests, rollback point in `SELF-REPAIR.md`.
 - **Diagnose** — a fix has no verify command or no date → `[UNVERIFIED]`, never auto-apply.

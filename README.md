@@ -4,6 +4,14 @@
 **English** · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md)
 <!-- I18N:END -->
 
+## Start here
+
+1. **Clone**, then read [`AGENTS.md`](AGENTS.md) — the authoritative AI contract (ask-then-act, stop lines).
+2. **Dry run only:** `pwsh scripts/bootstrap.ps1 -InstallRoot "D:\Tool\debugger"` — prints the plan, writes and downloads nothing.
+3. **What actually shipped:** [`releases/2026-11-11-full-library/README.md`](releases/2026-11-11-full-library/README.md) and its [`RELEASE-GATE-STATUS.md`](releases/2026-11-11-full-library/RELEASE-GATE-STATUS.md) — `RELEASE_GATE=RED`, `COMPLETENESS_VERDICT=NOT_COMPLETE`, **268 blockers**; publishing does not change either fact.
+4. **Skills:** [`skills/2026-11-11/`](skills/2026-11-11/) — portable core + station routers; check with `python -X utf8 skills/2026-11-11/portable-core/verify.py`.
+5. **AI entry point:** [`docs/AI_ENTRY.md`](docs/AI_ENTRY.md) · what changed: [`CHANGELOG.md`](CHANGELOG.md) · releases: [`RELEASE.md`](RELEASE.md).
+
 A **skeleton repository** for a portable reverse-engineering / security-analysis / debugging / unpacking / mobile-analysis / network-capture / system-inspection / MCP-automation workstation.
 
 Any agent (Claude / Codex / Gemini / Cursor / Copilot) or human can clone this repo and reconstruct, on their own machine, a tooling station that is **optimized for AI to drive** — following the docs and manifests here. This tree is a **reference skeleton**: the clone owner keeps their own tools and prompts (`OWNER.example.md` → gitignored `OWNER.md`). Agents may **self-maintain this clone** when the owner asks; stop lines cannot be waived in chat ([docs/MAINTAIN.md](docs/MAINTAIN.md)).

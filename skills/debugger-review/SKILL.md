@@ -5,6 +5,7 @@ metadata:
   version: 1
   last-reviewed: 2026-10-28
 ---
+SUPERSEDED by skills/2026-11-11/station-routers/debugger-review/SKILL.md (2026-11-11). Kept for history; the authoritative version is in the 2026-11-11 package.
 # debugger-review (station review router)
 
 Read-only review of a debugger work item. Authoritative artifacts:

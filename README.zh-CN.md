@@ -4,6 +4,14 @@
 [English](README.md) · **简体中文** · [日本語](README.ja.md) · [한국어](README.ko.md)
 <!-- I18N:END -->
 
+## 从这里开始
+
+1. **先 clone**，再读 [`AGENTS.zh-CN.md`](AGENTS.zh-CN.md)（英文权威版 [`AGENTS.md`](AGENTS.md)）——AI 的权威契约：先问后做、红线。
+2. **只跑 dry-run：** `pwsh scripts/bootstrap.ps1 -InstallRoot "D:\Tool\debugger"`——只打印计划，不写盘、不下载。
+3. **到底发布了什么：** [`releases/2026-11-11-full-library/README.md`](releases/2026-11-11-full-library/README.md) 与 [`RELEASE-GATE-STATUS.md`](releases/2026-11-11-full-library/RELEASE-GATE-STATUS.md)——`RELEASE_GATE=RED`、`COMPLETENESS_VERDICT=NOT_COMPLETE`、**268 个结构性阻塞**；发布不改变这两个事实。
+4. **技能包：** [`skills/2026-11-11/`](skills/2026-11-11/)——portable core + 站点路由；自检命令 `python -X utf8 skills/2026-11-11/portable-core/verify.py`。
+5. **AI 单一入口：** [`docs/AI_ENTRY.zh-CN.md`](docs/AI_ENTRY.zh-CN.md) · 改了什么：[`CHANGELOG.md`](CHANGELOG.md) · 发布页：[`RELEASE.md`](RELEASE.md)。
+
 便携式逆向 / 安全分析 / 调试 / 解包 / 移动端分析 / 网络抓包 / 系统巡检 / MCP 自动化工作站的 **骨架仓库**。
 
 任何 AI agent(Claude / Codex / Gemini / Cursor / Copilot / Grok)或人类 clone 后,按 [docs/i18n/zh-CN/I18N.md](docs/i18n/zh-CN/I18N.md) 选定界面语言,走 [AGENTS.zh-CN.md](AGENTS.zh-CN.md) 握手,即可在自己机器上还原一个**可被 AI 最高效调用**的工具站。本树是**参考骨架**：主人保留自己的工具和提示词（`OWNER.example.md` → gitignore 的 `OWNER.md`）。主人要求时 agent 可以**改这个 clone**；聊天不能取消红线（[docs/i18n/zh-CN/MAINTAIN.md](docs/i18n/zh-CN/MAINTAIN.md)）。对话用中文；git 提交说明保持英文。
