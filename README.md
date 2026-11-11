@@ -12,6 +12,8 @@
 4. **Skills:** [`skills/2026-11-11/`](skills/2026-11-11/) — portable core + station routers; check with `python -X utf8 skills/2026-11-11/portable-core/verify.py`.
 5. **AI entry point:** [`docs/AI_ENTRY.md`](docs/AI_ENTRY.md) · what changed: [`CHANGELOG.md`](CHANGELOG.md) · releases: [`RELEASE.md`](RELEASE.md).
 
+6. **GitHub Pages (enabled 2026-11-11):** the site root is the repository root [`index.html`](index.html) — a static, self-contained EN+中文 front page linking the release report, skills and AI entry. Source path `/` on `main`. Rendering is a GitHub-side build; this file is the source, not a claim that every link resolves inside the Pages sandbox.
+
 A **skeleton repository** for a portable reverse-engineering / security-analysis / debugging / unpacking / mobile-analysis / network-capture / system-inspection / MCP-automation workstation.
 
 Any agent (Claude / Codex / Gemini / Cursor / Copilot) or human can clone this repo and reconstruct, on their own machine, a tooling station that is **optimized for AI to drive** — following the docs and manifests here. This tree is a **reference skeleton**: the clone owner keeps their own tools and prompts (`OWNER.example.md` → gitignored `OWNER.md`). Agents may **self-maintain this clone** when the owner asks; stop lines cannot be waived in chat ([docs/MAINTAIN.md](docs/MAINTAIN.md)).

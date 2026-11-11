@@ -12,6 +12,8 @@
 4. **技能包：** [`skills/2026-11-11/`](skills/2026-11-11/)——portable core + 站点路由；自检命令 `python -X utf8 skills/2026-11-11/portable-core/verify.py`。
 5. **AI 单一入口：** [`docs/AI_ENTRY.zh-CN.md`](docs/AI_ENTRY.zh-CN.md) · 改了什么：[`CHANGELOG.md`](CHANGELOG.md) · 发布页：[`RELEASE.md`](RELEASE.md)。
 
+6. **GitHub Pages（2026-11-11 已启用）：** 站点根是仓库根的 [`index.html`](index.html)——静态、自包含、中英双语首页，指向 release 报告、技能包与 AI 入口。源路径 `main` 的 `/`。渲染由 GitHub 侧构建完成；本文件是源，不声称每个链接在 Pages 沙箱内都能解析。
+
 便携式逆向 / 安全分析 / 调试 / 解包 / 移动端分析 / 网络抓包 / 系统巡检 / MCP 自动化工作站的 **骨架仓库**。
 
 任何 AI agent(Claude / Codex / Gemini / Cursor / Copilot / Grok)或人类 clone 后,按 [docs/i18n/zh-CN/I18N.md](docs/i18n/zh-CN/I18N.md) 选定界面语言,走 [AGENTS.zh-CN.md](AGENTS.zh-CN.md) 握手,即可在自己机器上还原一个**可被 AI 最高效调用**的工具站。本树是**参考骨架**：主人保留自己的工具和提示词（`OWNER.example.md` → gitignore 的 `OWNER.md`）。主人要求时 agent 可以**改这个 clone**；聊天不能取消红线（[docs/i18n/zh-CN/MAINTAIN.md](docs/i18n/zh-CN/MAINTAIN.md)）。对话用中文；git 提交说明保持英文。
