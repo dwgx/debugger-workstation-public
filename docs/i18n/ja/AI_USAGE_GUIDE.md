@@ -37,7 +37,7 @@ Npcap インストーラは取ってよい。ドライバは黙って入れな�
 
 - ドキュメント、マニフェスト、ノートを読む。
 - bootstrap のドライラン。
-- 仕事のあと双軸レビュー（`skills/debugger-review`）。
+- 仕事のあと双軸レビュー（`skills/2026-11-11/station-routers/debugger-review`）。
 
 ## 確認が要ること
 

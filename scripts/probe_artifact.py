@@ -65,7 +65,19 @@ def write_artifact(tool: str, payload: dict, out_dir: str = "native-lab/out") ->
     """
     rel = artifact_path(tool, out_dir)
     try:
-        full = REPO_ROOT / out_dir / pathlib.Path(rel).name
+        # The strict bounded runner owns this absolute per-attempt root. Legacy
+        # callers keep their established paths when no override is present.
+        override = os.environ.get("DEBUGGER_PROBE_ARTIFACT_ROOT")
+        if override:
+            base = pathlib.Path(override)
+            subdir = pathlib.Path(out_dir)
+            if not base.is_absolute() or subdir.is_absolute() or ".." in subdir.parts:
+                raise ValueError("invalid per-attempt artifact root or output directory")
+            full = base / subdir / pathlib.Path(rel).name
+            if not full.resolve().is_relative_to(base.resolve()):
+                raise ValueError("artifact escaped its per-attempt root")
+        else:
+            full = REPO_ROOT / out_dir / pathlib.Path(rel).name
         full.parent.mkdir(parents=True, exist_ok=True)
         doc = {
             "schema": "probe-artifact@1",
@@ -87,8 +99,8 @@ def write_artifact(tool: str, payload: dict, out_dir: str = "native-lab/out") ->
                 "fail": sum(1 for c in checks if not (c.get("ok") or c.get("pass"))),
             }
         out = full.write_text(json.dumps(doc, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-        print(f"ARTIFACT {out_dir}/{full.name}", file=sys.stderr)
-        return rel
+        print(f"ARTIFACT {str(full) if override else rel}", file=sys.stderr)
+        return str(full) if override else rel
     except Exception as exc:  # noqa: BLE001
         print(f"ARTIFACT WRITE FAILED: {exc} -- the probe ran but left nothing checkable",
               file=sys.stderr)

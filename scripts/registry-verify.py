@@ -731,6 +731,36 @@ def r9_batch_must_account(reg, doc):
                            f"not a verdict on this class of server.")
     return out
 
+def _powershell_entry_script(argv, runner):
+    """Locate a literal File/positional entry, never a script's output arguments.
+
+    These startup forms cover the registry's PowerShell invokes. Command modes and
+    unknown options are not interpreted as file entries; they need runtime checks.
+    """
+    switches = {"-noprofile", "-nop", "-nologo", "-noninteractive", "-noexit", "-sta", "-mta"}
+    takes_value = {"-executionpolicy", "-ex", "-ep", "-inputformat", "-outputformat",
+                   "-windowstyle", "-workingdirectory", "-configurationname"}
+    i = 0
+    while i < len(argv):
+        arg = argv[i]
+        if not isinstance(arg, str):
+            return None, None
+        option = arg.lower()
+        if option in ("-file", "-f"):
+            if i + 1 >= len(argv) or not isinstance(argv[i + 1], str) or not argv[i + 1]:
+                return None, "PowerShell -File requires a script path or stdin '-'"
+            return (None if argv[i + 1] == "-" else argv[i + 1]), None
+        if option in switches:
+            i += 1
+        elif option in takes_value or (option == "-version" and runner == "powershell"):
+            i += 2
+        elif option.startswith("-"):
+            return None, None  # Includes -Command/-EncodedCommand; the rest is code.
+        else:
+            return (arg if arg.lower().endswith(".ps1") else None), None
+    return None, None
+
+
 def r10_invoke_must_runnable(reg, doc):
     """An `invoke` block is what makes a capability CALLABLE rather than merely probeable.
 
@@ -772,14 +802,31 @@ def r10_invoke_must_runnable(reg, doc):
         # wolf on a clean checkout is worse than no validator, because the fix is to stop
         # reading its output. Recorded by a worker that had earlier written the bug down as
         # fixed; it was not.
-        script = next((a for a in argv if isinstance(a, str) and a.endswith((".mjs", ".js", ".py"))), None)
-        if script:
-            cand = pathlib.Path(script)
-            if not cand.is_absolute() and not (REPO_ROOT / cand).exists():
-                cand2 = pathlib.Path(DEFAULT).parent.parent / cand
-                if not cand2.exists():
-                    out.append(f"R10 {cid}: invoke names {script!r}, which does not exist "
-                               f"in this repo (looked in {REPO_ROOT / script}).")
+        runner = str(inv.get("runner") or "").replace("\\", "/").rsplit("/", 1)[-1].lower()
+        if runner.endswith(".exe"):
+            runner = runner[:-4]
+        if runner in ("powershell", "pwsh"):
+            script, error = _powershell_entry_script(argv, runner)
+            if error:
+                out.append(f"R10 {cid}: {error}.")
+            # A placeholder names a runtime input/scratch artifact, not a repository file.
+            if script and not re.search(r"\{[^{}]+\}", script):
+                cand = pathlib.Path(script)
+                if not cand.is_absolute():
+                    cand = REPO_ROOT / cand
+                if not cand.is_file():
+                    out.append(f"R10 {cid}: PowerShell entry {script!r} is not an existing "
+                               f"script file (looked in {cand}).")
+        else:
+            # Preserve the existing non-PowerShell check in this bounded repair.
+            script = next((a for a in argv if isinstance(a, str) and a.endswith((".mjs", ".js", ".py"))), None)
+            if script:
+                cand = pathlib.Path(script)
+                if not cand.is_absolute() and not (REPO_ROOT / cand).exists():
+                    cand2 = pathlib.Path(DEFAULT).parent.parent / cand
+                    if not cand2.exists():
+                        out.append(f"R10 {cid}: invoke names {script!r}, which does not exist "
+                                   f"in this repo (looked in {REPO_ROOT / script}).")
         # A declared chain must be real: whatever it consumes_fact, someone must produce it.
         need = inv.get("consumes_fact")
         if need:
@@ -819,14 +866,15 @@ def r_shape(reg, doc):
 # ------------------------------------------------------- composition (R11 - R14)
 
 def _fact_fields(reg):
-    """key -> (producer_id, [field names]). The `fields` list is what R11 checks an
-    edge's `field` against, so a selector naming a field the fact does not carry is
-    caught here rather than as a KeyError inside some orchestrator."""
+    """(producer_id, fact_key) -> field names for that producer's fact.
+
+    A key may be emitted by more than one producer. An edge must bind to its named
+    producer, not whichever declaration happened to overwrite a global key."""
     out = {}
     for c in reg:
         for f in (c.get("produces") or {}).get("facts") or []:
             if k := f.get("key"):
-                out[k] = (c.get("id", "?"), list(f.get("fields") or []))
+                out[(c.get("id", "?"), k)] = list(f.get("fields") or [])
     return out
 
 
@@ -861,12 +909,12 @@ def r11_edge_target_exists(reg, doc):
             out.append(f"R11 {cid}: input {inp.get('name','?')!r} has a from with no "
                        f"field. Say WHICH field of {cap} it consumes.")
             continue
-        if field not in produced:
+        if (cap, field) not in produced:
             out.append(f"R11 {cid}: input {inp.get('name','?')!r} consumes "
                        f"{field!r} from {cap}, which produces no such fact.")
             continue
         # A selector may name the whole fact or one of its declared fields.
-        fields = produced[field][1]
+        fields = produced[(cap, field)]
         if fields and inp.get("select_path") and inp["select_path"] not in fields:
             out.append(f"R11 {cid}: input {inp.get('name','?')!r} selects "
                        f"{inp['select_path']!r} out of {field!r}, whose declared fields "
@@ -2176,6 +2224,20 @@ def selftest() -> int:
         invoke={"runner": "sh", "argv": "node a.mjs b.mjs", "success_when": "ok"}), "R10")
     case("R10 invoke naming a missing script", lambda b: b[0].update(
         invoke={"runner": "node", "argv": ["scripts/does-not-exist.mjs"], "success_when": "ok"}), "R10")
+    def _ps_invoke(b, argv):
+        b[0].pop("not_callable", None)
+        b[0]["invoke"] = {"runner": "powershell", "argv": argv, "success_when": "ok"}
+
+    case("R10 PowerShell File entry missing", lambda b: _ps_invoke(
+        b, ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts/does-not-exist.ps1"]), "R10")
+    case("R10 PowerShell positional entry missing", lambda b: _ps_invoke(
+        b, ["scripts/does-not-exist.ps1"]), "R10")
+    case("R10 PowerShell File operand missing", lambda b: _ps_invoke(b, ["-File"]), "R10")
+    case("R10 PowerShell File names a directory", lambda b: _ps_invoke(b, ["-File", "scripts"]), "R10")
+    nocase("R10 existing PowerShell entry ignores runtime output paths", lambda b: _ps_invoke(
+        b, ["-File", "scripts/ghidra-headless.ps1", "-Output", "not-created-yet.py"]), "R10")
+    nocase("R10 existing PowerShell positional entry", lambda b: _ps_invoke(
+        b, ["-NoProfile", "scripts/ghidra-headless.ps1"]), "R10")
     case("R10 chain whose fact nobody produces", lambda b: b[0].update(
         invoke={"runner": "node", "argv": ["scripts/registry-verify.py"],
                 "success_when": "ok", "consumes_fact": "nobody.produces.this"}), "R10")
@@ -2207,6 +2269,21 @@ def selftest() -> int:
     case("R11 edge to a field its producer never emits",
          _edge("b.two", "b.nonexistent"), "R11")
     case("R11 edge with no field named", _edge("b.two", None), "R11")
+    case("R11 existing field belongs to another producer",
+         _edge("a.one", "b.out"), "R11")
+
+    def _shared_fact_edge(b, selector):
+        b[0]["reach"]["fs_read"] = True
+        b[0]["produces"]["facts"][0]["fields"] = ["from_a"]
+        b[1]["produces"]["facts"].append(
+            {"key": "example.out", "type": "string", "fields": ["from_b"]})
+        _edge("a.one", "example.out")(b)
+        b[0]["consumes"]["inputs"][0]["select_path"] = selector
+
+    nocase("R11 shared key retains the named producer's fields",
+           lambda b: _shared_fact_edge(b, "from_a"), "R11")
+    case("R11 selector belongs to another producer's same-key fact",
+         lambda b: _shared_fact_edge(b, "from_b"), "R11")
     case("R12 edge out of a capability that cannot run", lambda b: (b[1].__setitem__(
         "state", "blocked"), _edge("b.two", "b.out")(b)), "R12")
     case("R12 edge into a capability that cannot run", lambda b: (b[0].__setitem__(

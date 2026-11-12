@@ -9,7 +9,9 @@ router itself) must appear consistently in:
   - mcp/debugger-router/server.py     (BACKEND_META has the key)
 
 Also flags backend manifest entries whose `wired: false` must NOT appear in the
-template, and template backends that lack a manifest clone target.
+template, and template backends that lack an upstream declaration matching the
+wrapper path or a named package-manager adapter. This checks source wiring, not
+installed dependencies or real-provider readiness.
 
 Exit non-zero on any mismatch. Pure stdlib so CI needs no deps.
 """
@@ -81,6 +83,54 @@ man_entries = list(manifest.get("third_party", []))
 ru = manifest.get("resolved_upstream", {})
 man_entries += list(ru.get("entries", []))
 unwired = {e["name"] for e in man_entries if e.get("wired") is False}
+
+# Resolve upstream declarations from the paths the wrappers actually reference.
+# Names such as sevenzip/mcp7zop and reclass/ReClass.NET-MCP are intentionally
+# different; normalizing names would silently map the wrong source. Runtime,
+# workspace and bin directories are shared infrastructure, not clone targets.
+manifest_by_dir: dict[str, list[dict]] = {}
+manifest_by_name: dict[str, list[dict]] = {}
+for entry in man_entries:
+    manifest_by_name.setdefault(entry['name'].casefold(), []).append(entry)
+    parts = re.split(r'[\\/]+', entry.get('path', '').strip())
+    if len(parts) >= 2 and parts[0].casefold() == 'mcp':
+        manifest_by_dir.setdefault(parts[1].casefold(), []).append(entry)
+
+# These wrappers use package-manager commands, not a path under MCP/<upstream>.
+package_adapters = {
+    'radare2': ('radare2-mcp', r'(?mi)^\s*r2pm\s+-r\s+r2mcp\s*$'),
+    'rea': ('rea', r'(?mi)^\s*npx\s+-y\s+rea-agents@[^\s]+\s+mcp\s*$'),
+}
+
+def require_upstream(backend: str, label: str, entries: list[dict]) -> None:
+    if len(entries) != 1:
+        fail(f"backend '{backend}': expected one manifest upstream for {label}, found {len(entries)}")
+        return
+    entry = entries[0]
+    if entry.get('wired') is False:
+        fail(f"backend '{backend}': referenced manifest upstream '{entry['name']}' is wired:false")
+    if not isinstance(entry.get('git'), str) or not entry['git'].strip():
+        fail(f"backend '{backend}': manifest upstream '{entry['name']}' has no git source")
+
+for backend, cmd in tpl_backends.items():
+    wrapper = BIN / cmd
+    if not wrapper.is_file():
+        continue  # Reported by the wrapper existence check above.
+    source = '\n'.join(line for line in wrapper.read_text(encoding='utf-8-sig').splitlines()
+                       if not re.match(r'^\s*(?:@?rem(?:\s|$)|::)', line, re.I))
+    directories = {name.casefold() for name in re.findall(r'MCP[\\/]+([^\\/"%\s;]+)', source, re.I)}
+    directories -= {'bin', 'runtime', 'workspaces', 'debugger-router'}
+    if directories:
+        for directory in sorted(directories):
+            require_upstream(backend, f'MCP/{directory}', manifest_by_dir.get(directory, []))
+    elif backend in package_adapters:
+        name, invocation = package_adapters[backend]
+        if not re.search(invocation, source):
+            fail(f"backend '{backend}': package adapter launch command is missing from {cmd}")
+        require_upstream(backend, f'package adapter {name}', manifest_by_name.get(name, []))
+    else:
+        fail(f"backend '{backend}': wrapper has no recognized upstream path or package adapter")
+
 
 # --- Cross-checks ---
 tpl_keys = set(tpl_backends)

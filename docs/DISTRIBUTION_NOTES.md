@@ -18,11 +18,11 @@ D:\Tool\debugger
 
 给人和 AI agent 的阅读顺序：
 
-1. `TOOLS_INDEX.md`
-2. `AI_USAGE_GUIDE.md`
-3. `AGENTS.md`
+1. `AGENTS.md`
+2. `docs\AI_USAGE_GUIDE.md`
+3. `docs\TOOLS_INDEX.md`
 4. `MCP\codex-mcp-config.example.toml`
-5. `Reports\INDEX.md`
+5. `Reports\INDEX.md`（本机报告目录存在时）
 
 进入 `OriginalBase` 前还要读：
 
@@ -45,7 +45,7 @@ OriginalBase\AGENTS.md
 
 ## AI/MCP 用法
 
-默认推荐只启用 `debugger-router`，它会按需启动后端 MCP，并让该后端进程跨调用保活（空闲超时后回收，默认 600s）。不要默认一次性加载全部 19 个后端，除非你明确要做全量 MCP 调试。
+默认推荐只启用 `debugger-router`，它会按需启动后端 MCP，并让该后端进程跨调用保活（空闲超时后回收，默认 600s）。不要默认一次性加载全部 20 个后端，除非你明确要做全量 MCP 调试。
 
 核心入口：
 
@@ -65,6 +65,8 @@ MCP\codex-mcp-config.example.toml
 - Frida 真实运行时分析需要设备与命名进程。
 
 ## 分发包应排除
+
+以下规则适用于经过 Owner 授权的私有工具包 staging。公开骨架仍不包含第三方二进制、运行时、样本或凭据；公开源码交付与私有工具包不能共用一个无区分的打包清单。
 
 分发包不应包含：
 
@@ -97,6 +99,6 @@ Reports\DISTRIBUTION_EXCLUDES_20260621.md
 3. 可运行目录放外层分类目录。
 4. smoke test。
 5. 清理临时残留。
-6. 更新 `TOOLS_INDEX.md` 和 `Reports\`。
+6. 更新 `docs\TOOLS_INDEX.md` 和 `Reports\`。
 
 Cheat Engine 不默认更新，除非使用者明确要求。

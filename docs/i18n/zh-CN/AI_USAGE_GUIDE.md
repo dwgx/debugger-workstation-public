@@ -37,7 +37,7 @@ powershell -File scripts\download-tools.ps1 -Apply
 
 - 读文档、清单、笔记。
 - dry-run bootstrap。
-- 任务后双轴审查（`skills/debugger-review`）。
+- 任务后双轴审查（`skills/2026-11-11/station-routers/debugger-review`）。
 
 ## 需要确认的
 

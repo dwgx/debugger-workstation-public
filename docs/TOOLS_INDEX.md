@@ -10,9 +10,9 @@ English contract: [`AGENTS.md`](../AGENTS.md). This cheat-sheet is Chinese. Path
 
 > **说明(GitHub 读者)**:本文档描述的是 **bootstrap 部署后** 的完整工作站布局。`OriginalBase\`、`Launchers\` 等目录由本机生成,骨架仓库中刻意不含。
 >
-> **本文档定位**:不是"有什么",而是"怎么用"。每个工具给出 路径 / 核心用途(动词开头,一句话)/ 关键命令(2–3 条最常用命令+示例)。想要场景驱动的分析工作流(组合拳),看 `EXPERT_PLAYBOOK.md`。Agent 开火顺序: `skills/debugger-workstation/references/triage.md`。
+> **本文档定位**:不是"有什么",而是"怎么用"。每个工具给出 路径 / 核心用途(动词开头,一句话)/ 关键命令(2–3 条最常用命令+示例)。想要场景驱动的分析工作流(组合拳),看 `EXPERT_PLAYBOOK.md`。Agent 先读 [当前站点路由](../skills/2026-11-11/station-routers/debugger-workstation/SKILL.md)，再按 [EXPERT_PLAYBOOK.md §0](EXPERT_PLAYBOOK.md) 分诊。
 
-所有路径均相对安装根。
+所有工具路径均相对安装根；文档位于 `docs/`。以上日期是历史本机核验，不表示当前安装或最新上游版本。运行前按 `manifests/tools.json` 与实际文件核实路径；当前 MCP 配置数量的来源见 [BOOTSTRAP.md](BOOTSTRAP.md)。
 
 ---
 
@@ -26,7 +26,7 @@ English contract: [`AGENTS.md`](../AGENTS.md). This cheat-sheet is Chinese. Path
 | `Network-HTTP\` | HTTP/HTTPS 抓包、pcap 离线解析 |
 | `Unpackers-Game\` | 解包、安装器提取、Unity/IL2CPP、Go/PyInstaller 恢复 |
 | `System-Forensics\` | 进程/启动项/网络/句柄巡检、内存取证 |
-| `MCP\` | debugger-router(自研)+ 19 个后端包装脚本 + 运行时 |
+| `MCP\` | debugger-router(自研)+ 20 个后端包装脚本 + 运行时 |
 
 ---
 
@@ -257,7 +257,7 @@ English contract: [`AGENTS.md`](../AGENTS.md). This cheat-sheet is Chinese. Path
 
 ## MCP / AI 辅助分析
 
-**策略**:默认只启用 `debugger-router` 一个轻量 MCP,它按需启动 19 个后端里需要的那个,后端进程跨调用保活(每个 `session_id` 一个进程),空闲超时(默认 600s)或 `close_backend_session` 后才回收。不要一次性全加载。需要直连用 profile。
+**策略**:默认只启用 `debugger-router` 一个轻量 MCP,它按需启动 20 个后端里需要的那个,后端进程跨调用保活(每个 `session_id` 一个进程),空闲超时(默认 600s)或 `close_backend_session` 后才回收。不要一次性全加载。需要直连用 profile。
 
 启动脚本目录:`MCP\bin\`;配置:`MCP\.mcp.json`(bootstrap 生成)。
 
@@ -270,22 +270,23 @@ English contract: [`AGENTS.md`](../AGENTS.md). This cheat-sheet is Chinese. Path
 | `mcp-net` | Wireshark、Reqable |
 | `mcp-ce` | Cheat Engine、x64dbg、ReClass |
 | `mcp-intel` | Volatility3、VirusTotal、YaraFlux |
-| `mcp-all` | 全部 19 个后端 |
+| `mcp-all` | 全部 20 个后端 |
 
-示例:`codex --profile mcp-mobile`。
+这些 profile 在 `mcp/codex-mcp-config.example.toml` 中是注释示例，需按选定范围写入实际客户端配置后才能使用；例如启用 `mcp-mobile` 后执行 `codex --profile mcp-mobile`。
 
 ### 后端一览
 
 | MCP | 启动器 | 用法要点 |
 | --- | --- | --- |
 | **Debugger Router**(自研,默认启用) | `debugger-router-mcp.cmd` | 工具:`list_backends` / `list_backend_tools` / `call_backend_tool` / `open_backend_session` / `list_backend_sessions` / `close_backend_session` / `smoke_backend` / `workflow_help`。后端进程跨调用保活,用 `session_id` 寻址;单次调用上限 `DEBUGGER_ROUTER_TIMEOUT`(默认 900s),空闲回收 `DEBUGGER_ROUTER_IDLE_TIMEOUT`(默认 600s)。AI 分析入口。 |
+| REA | `rea-mcp.cmd` | 优先调用已安装的 `rea mcp`，否则 wrapper 尝试固定版本 `npx`；配置存在不等于已安装或已验收。 |
 | GhidraMCP | `ghidra-mcp.cmd` | 需 Ghidra 开项目+装插件才能真实分析。 |
-| IDA Pro MCP | `ida-pro-mcp.cmd` | 需 IDA Pro 8.3+ 打开并 `--install` 插件,端口 13337。 |
+| IDA Pro MCP | `ida-pro-mcp.cmd` | 当前 wrapper 启动 `idalib-mcp --stdio`，需用户提供兼容 IDA/idalib；GUI 13337 插件是另一条路径，不是该 wrapper 的前置条件。 |
 | radare2 MCP | `radare2-mcp.cmd` | 纯 C 官方 r2mcp,先 `r2pm -Uci r2mcp`。 |
 | x64dbg automate MCP | `x64dbg-mcp.cmd` | 需 automate 插件 + 活调试会话。 |
 | JADX MCP | `jadx-mcp.cmd` | 已强制 UTF-8;真实分析需 JADX GUI plugin listener。 |
 | Apktool MCP | `apktool-mcp.cmd` | 工作区 `MCP\workspaces\apktool`。 |
-| Frida MCP | `frida-mcp.cmd` | 取决于 Frida 设备/进程;其 .venv 被 router 复用为 python 解释器。 |
+| Frida MCP | `frida-mcp.cmd` | 取决于 Frida 设备/进程;router 优先使用自己的 .venv；Frida 的 .venv 仅是解释器回退之一。 |
 | YaraFlux MCP / HTTP | `yaraflux-mcp.cmd` / `yaraflux-http.cmd` | 规则+样本+扫描管理;HTTP 默认健康端口 8000。 |
 | MobSF MCP | `mobsf-mcp.cmd` | 需 MobSF URL + API key。 |
 | ImHex MCP | `imhex-mcp.cmd` | 需 ImHex 网络接口 `localhost:31337`。 |

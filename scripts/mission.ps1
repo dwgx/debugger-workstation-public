@@ -25,7 +25,7 @@
      tempting simplification in this design and it is the one thing that must never ship.
 
   3. THE VERDICT IS COMPUTED, NOT AUTHORED. The caller proposes a claim; this script
-     decides whether it survives seven gates. A verdict written by the same mind that read
+     decides whether it survives eight gates. A verdict written by the same mind that read
      the evidence is not independent.
 
   4. THE STOP NOTE IS GENERATED FROM THE REGISTRY, so it cannot go stale. A stage that
@@ -50,7 +50,7 @@
   Plan     print the route the registry gives this question type and exit without running
            a single tool. A route that cannot run anything is a REFUSAL (exit 2), not a plan.
   Selftest prove the orchestrator is not decorative (controls N1-N4 and the routing controls)
-  Ablate   rewrite each of the seven gates to `$true` in a temporary copy, then rewrite each
+  Ablate   rewrite each of the eight gates to `$true` in a temporary copy, then rewrite each
            of the six routing rules, and prove the suite notices either way. A gate that can
            be deleted without turning the suite red is not a gate, it is a sentence in a
            comment. This is the control that keeps the other seven from rotting back into
@@ -118,6 +118,15 @@ param(
 $ErrorActionPreference = 'Continue'
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $RepoRoot
+# The machine contract module is required. A missing installation dependency must
+# stop before routing or launching any runner.
+$contractModule = Join-Path $PSScriptRoot 'mission-success-contract.ps1'
+if (-not (Test-Path -LiteralPath $contractModule -PathType Leaf)) {
+    Write-Error 'Required mission-success-contract.ps1 is missing; reinstall the complete station.'
+    exit 2
+}
+. $contractModule
+$script:MissionSuccessContracts = Read-MissionContractSet (Join-Path $RepoRoot 'manifests\success-contracts.json')
 
 # Which of the two budget spellings the CALLER actually typed. Read from the binder rather
 # than inferred from a sentinel value, because a sentinel cannot distinguish "the caller
@@ -128,7 +137,7 @@ Set-Location $RepoRoot
 $script:BudgetSpelling = @{ max_steps = $PSBoundParameters.ContainsKey('MaxSteps')
                            max_rounds = $PSBoundParameters.ContainsKey('MaxRounds') }
 
-function Out-Json($o) { $o | ConvertTo-Json -Compress -Depth 12 }
+function Out-Json($o) { $o | ConvertTo-Json -Compress -Depth 64 }
 function Say($s) { if (-not $Json) { Write-Host $s } }
 
 function Resolve-Budget {
@@ -1061,7 +1070,9 @@ function Get-TreeHash {
 
 # -------------------------------------------------------------------- success_when
 #
-# WHAT THIS IS. A capability's `success_when` is the only sentence that says what its
+# RETIRED EXPERIMENT: the prose parser below is intentionally not called. Live rounds
+# use the explicit, fingerprinted machine contracts in mission-success-contract.ps1.
+# WHAT THIS WAS. A capability's `success_when` is the only sentence that says what its
 # output MEANS. This section evaluates that sentence, clause by clause, and refuses a
 # round that satisfies only part of it.
 #
@@ -1459,6 +1470,9 @@ function Invoke-Mission {
     $budget = Resolve-Budget -Spelling $script:BudgetSpelling -MaxSteps $MaxSteps -MaxRounds $MaxRounds
     $intake = Invoke-Intake
     $reg = $intake.registry
+    if (-not $script:MissionSuccessContracts.valid) {
+        Refuse 2 'success contracts unavailable' 'The installed machine contract set is missing or invalid. No capability was invoked.'
+    }
     $qt = $intake.question_type
     if (-not $Question) { $Question = $intake.question_text }
 
@@ -1742,6 +1756,7 @@ function Invoke-Mission {
         # thing stays an ARRAY. Never a shell string -- the path is attacker-influenced.
         $argList = @()
         $unresolved = @()
+        $roundArtifactContext = $null
         foreach ($a in $cap.invoke.argv) {
             $v = $a
             $v = $v -replace '\{target\}', (Resolve-Path -LiteralPath $Target).Path
@@ -1750,8 +1765,19 @@ function Invoke-Mission {
                 # purpose: the wrapper ALSO writes a Ghidra project under %TEMP% whatever we do
                 # (measured), but the capability's own OUTPUT belongs to the mission, so the
                 # entry's `write_scope: case_dir` stays true instead of becoming a courtesy.
-                $sd = Join-Path $caseDir ('scratch-' + $Matches[1])
-                if (-not (Test-Path -LiteralPath $sd)) { New-Item -ItemType Directory -Path $sd -Force | Out-Null }
+                $scratchName = $Matches[1]
+                if ($cap.id -ceq 'native.ghidra.decompile' -and $scratchName -ceq 'ghidra-out') {
+                    # A unique empty directory binds summary.json to this round. Never reuse
+                    # an earlier run's artifact or trust a directory named by stdout.
+                    $sd = Join-Path $caseDir ('scratch-ghidra-out-' + [guid]::NewGuid().ToString('N'))
+                    New-Item -ItemType Directory -Path $sd -ErrorAction Stop | Out-Null
+                    $summaryPath = Join-Path $sd 'summary.json'
+                    $roundArtifactContext = [ordered]@{ directory = $sd; path = $summaryPath; fresh_directory = $true;
+                                                        absent_before = -not (Test-Path -LiteralPath $summaryPath) }
+                } else {
+                    $sd = Join-Path $caseDir ('scratch-' + $scratchName)
+                    if (-not (Test-Path -LiteralPath $sd)) { New-Item -ItemType Directory -Path $sd -Force | Out-Null }
+                }
                 $v = $sd
             } elseif ($v -match '\{input\.([^}]+)\}') {
                 # Resolve the CONSUMED FACT, then apply the declared selector to narrow it.
@@ -1879,7 +1905,9 @@ function Invoke-Mission {
         # both the process result AND the declared success_when is the fix.
         $parsed = $null
         try { $parsed = $raw | ConvertFrom-Json } catch { $parsed = $null }
-        $declaredOk = ($rc -eq 0) -and ($null -ne $parsed)
+        $successContract = Test-MissionSuccessContract -Capability $cap -Subject $parsed -ExitCode $rc `
+            -Contracts $script:MissionSuccessContracts -ArtifactContext $roundArtifactContext
+        $declaredOk = $successContract.ok
         if ($cap.invoke.stdout -eq 'json') {
             if ($cap.invoke.fact_map -and $null -ne $parsed) {
                 # Each mapped key must be present and non-null. A missing key is a failure,
@@ -1890,19 +1918,12 @@ function Invoke-Mission {
                 # and then :861 dereferenced $parsed.PSObject and threw "Cannot index into
                 # a null array", killing the whole mission on round 3 with exit 0 and no
                 # verdict. A correct refusal was being swallowed into a successful run.
-                foreach ($k in $cap.invoke.fact_map.PSObject.Properties) {
-                    $src = $k.Name; $dst = $k.Value
-                    if ($null -ne $parsed.PSObject.Properties[$src]) {
-                        $v = $parsed.$src
-                        if ($null -ne $v) { $ev.facts += [ordered]@{ key = $dst; source_field = $src; value = $v } }
-                    }
-                }
+                $ev.facts = @(Get-MissionOutputFacts $cap $parsed)
             }
-            if ($cap.invoke.success_when -match 'ok == true' -and $parsed.ok -ne $true) { $declaredOk = $false }
-            if ($cap.invoke.success_when -match 'code is non-null' -and $null -eq $parsed.code) { $declaredOk = $false }
         }
 
         $ev['ok'] = $declaredOk
+        $ev['success_contract'] = $successContract
         $ev['evidence_source'] = $cap.gate.lane + '/' + $cap.id
         $evidence += $ev
 
@@ -2071,7 +2092,7 @@ function Invoke-Mission {
     # The two lines above and here answer different questions, and printing only the first
     # is what let a truncated mission read as a finished one at the console too.
     Say "ended because $($termReason.reason) -- $($termReason.why)"
-    Say "verdict       $($verdict.tier)   (computed by seven gates; the caller proposed, this script disposed)"
+    Say "verdict       $($verdict.tier)   (computed by eight gates; the caller proposed, this script disposed)"
     foreach ($g in $verdict.gates) { Say ("  {0}  {1,-16} {2}" -f $(if ($g.pass) { 'PASS' } else { 'FAIL' }), $g.name, $g.detail) }
     Say ''
     Say "evidence chain: $(@($artifact.chain).Count) step(s), $round step(s) of a cap of $maxSteps"
@@ -2241,7 +2262,7 @@ function Get-Termination {
 }
 
 
-# ---------------------------------------------------------------------- the seven gates
+# ---------------------------------------------------------------------- the eight gates
 
 function Test-EvidenceIds {
     <#
@@ -2350,7 +2371,7 @@ function Get-RegistryFacts {
 
 function Get-Verdict {
     <#
-      The model never writes the verdict. This function does, from seven gates, and every
+      The model never writes the verdict. This function does, from eight gates, and every
       gate that failed is reported by name. Fail any gate and the claim is downgraded to
       `unresolved`, which cannot be the terminal answer.
 
@@ -2603,6 +2624,20 @@ function Get-Verdict {
     }
     G 'discharged' $dischargedOk $dDetail
 
+    # 8. Only rounds offered as successful evidence must carry a complete contract.
+    # Failed or inapplicable attempts remain visible without invalidating other evidence.
+    # Re-evaluate the stored inputs; a caller-written pass marker is not a contract.
+    $contractProblems = @()
+    foreach ($entry in $good) {
+        $definition = @($Registry.capabilities | Where-Object { $_.id -ceq $entry.capability }) | Select-Object -First 1
+        $checked = Test-MissionContractRecord $entry.success_contract $definition $script:MissionSuccessContracts
+        if (-not $checked.ok) { $contractProblems += ("$($entry.id)/$($entry.capability): $($checked.reason)") }
+    }
+    $contractOk = ($contractProblems.Count -eq 0)
+    $contractDetail = if ($contractOk) { "$($good.Count) successful evidence round(s) carry complete, rechecked output contracts" }
+                      else { 'legacy, unsupported or invalid output contract: ' + ($contractProblems -join '; ') }
+    G 'success_contract' $contractOk $contractDetail
+
     # Read back from the script scope the helper wrote to. Returning the LOCAL `$vGates`
     # -- which nothing ever appended to -- produced an EMPTY gate list, and an empty gate
     # list passes vacuously. That is the most dangerous shape this script has: it looks
@@ -2645,6 +2680,18 @@ function Invoke-Selftest {
     $script:mCases = @()
     function C($n, $body, $want) { $script:mCases += ,@($n, (& $body), $want) }
 
+    # The original seven-gate controls keep their exact assertions and synthetic facts.
+    # Supply explicit JSON/transport fixtures through the REAL evaluator so their positive
+    # substrate satisfies the new output gate. This local adapter is only a test fixture;
+    # the live runner never obtains these fabricated IDA transport objects.
+    . (Join-Path $RepoRoot 'tests\mission_contract\fixtures.ps1')
+    $verdictUnderTest = ${function:Get-Verdict}
+    function Get-Verdict {
+        param([string]$Claim, [string]$QuestionType, $Evidence, $Registry, [string[]]$DischargedIn = @())
+        $prepared = @(Add-MissionContractFixtures $Evidence $Registry $script:MissionSuccessContracts $tmp)
+        & $verdictUnderTest -Claim $Claim -QuestionType $QuestionType -Evidence $prepared -Registry $Registry -DischargedIn $DischargedIn
+    }
+
     # Refusals throw, so a control can observe one. Without this the first refusal ended
     # the whole selftest and there was nothing to assert against.
     function RefusalCode($block) {
@@ -2655,7 +2702,10 @@ function Invoke-Selftest {
     # failed. A tier alone cannot tell seven gates from one -- which is precisely why six
     # of them were deletable with the suite still green. Asserting the set pins the
     # cause, so a control cannot pass for a second gate's reason.
-    function Sig($v) { "$($v.tier) failed=$(@($v.failed_gates) -join '+')" }
+    # This signature continues to pin only the original seven gates. FullSig below pins
+    # the complete eight-gate result; it deliberately bypasses the fixture adapter.
+    function Sig($v) { "$($v.tier) failed=$(@($v.failed_gates | Where-Object { $_ -ne 'success_contract' }) -join '+')" }
+    function FullSig($v) { "$($v.tier) failed=$(@($v.failed_gates) -join '+')" }
 
     # THE SUBSTRATE. Every gate control below is read against this, so it satisfies all
     # seven gates; each control then changes exactly one thing to fail exactly one gate.
@@ -3567,6 +3617,7 @@ function Invoke-Selftest {
         }
         Copy-Item -LiteralPath $PSCommandPath -Destination (Join-Path $root 'scripts\mission.ps1') -Force
         Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\gate.ps1') -Destination (Join-Path $root 'scripts\gate.ps1') -Force
+        Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts\mission-success-contract.ps1') -Destination (Join-Path $root 'scripts\mission-success-contract.ps1') -Force
         Set-Content -LiteralPath (Join-Path $root 'target.bin') -Value 'MZ probe target' -Encoding ASCII
 
         # THREE runnable steps, so a cap of 1 truncates and a cap of 6 does not. The runners
@@ -3594,6 +3645,19 @@ function Invoke-Selftest {
         }
         Set-Content -LiteralPath (Join-Path $root 'manifests\capabilities.json') `
             -Value ($reg | ConvertTo-Json -Depth 12) -Encoding UTF8
+        # A fixture registry owns an explicit fixture contract set. Unknown production
+        # capability ids never get an automatic success fallback.
+        $probeContracts = @()
+        foreach ($definition in $caps) {
+            $probeContracts += [ordered]@{
+                capability = $definition.id; section = 'invoke'
+                declaration_sha256 = Get-ContractTextSha $definition.invoke.success_when
+                invoke_binding = [ordered]@{ runner = $definition.invoke.runner; argv = @($definition.invoke.argv); stdout = 'json' }
+                subject = 'stdout_json'; predicates = @([ordered]@{ op = 'boolean_equals'; path = 'ok'; value = $true })
+            }
+        }
+        [ordered]@{ schema = 'mission-success-contracts/1'; version = 1; contracts = $probeContracts } |
+            ConvertTo-Json -Depth 16 | Set-Content -LiteralPath (Join-Path $root 'manifests\success-contracts.json') -Encoding UTF8
 
         # The scope guard hashes the tree with `git ls-files`, and a directory that is not a
         # repository answers nothing -- which is a separate latent crash in this file's
@@ -3760,6 +3824,53 @@ function Invoke-Selftest {
     } 'matched=1 first=native.pe.packer halt=grant_halt rounds=1 names-exit-6=True'
 
 
+    # The eighth gate is tested on the unwrapped implementation. No fixture helper may
+    # add missing proof here or turn a legacy evidence record into a verified one.
+    C 'success_contract: legacy good evidence is refused by the eighth gate alone' {
+        FullSig (& $verdictUnderTest -Claim $boundedClaim -QuestionType 'Q2.locate' -Evidence (ChainEvidence) -Registry (Get-Registry))
+    } 'unresolved failed=success_contract'
+    C 'success_contract: explicit evaluator results preserve a sufficient good chain' {
+        $reg = Get-Registry
+        $ev = @(Add-MissionContractFixtures (ChainEvidence) $reg $script:MissionSuccessContracts $tmp)
+        FullSig (& $verdictUnderTest -Claim $boundedClaim -QuestionType 'Q2.locate' -Evidence $ev -Registry $reg)
+    } 'confirmed failed='
+    C 'success_contract: a forged pass marker does not replace semantic evaluation' {
+        $reg = Get-Registry
+        $ev = @(Add-MissionContractFixtures (ChainEvidence) $reg $script:MissionSuccessContracts $tmp)
+        $ev[0].success_contract = [ordered]@{ ok = $true; complete = $true }
+        FullSig (& $verdictUnderTest -Claim $boundedClaim -QuestionType 'Q2.locate' -Evidence $ev -Registry $reg)
+    } 'unresolved failed=success_contract'
+    C 'success_contract: a failed unrelated round does not invalidate sufficient good evidence' {
+        $reg = Get-Registry
+        $ev = @(Add-MissionContractFixtures (ChainEvidence) $reg $script:MissionSuccessContracts $tmp)
+        $ev += [ordered]@{ id = 'e4'; round = 4; capability = 'native.yara.triage'; ok = $false; facts = @() }
+        FullSig (& $verdictUnderTest -Claim $boundedClaim -QuestionType 'Q2.locate' -Evidence $ev -Registry $reg)
+    } 'confirmed failed='
+    C 'success_contract: live IDA output without its transport cannot pass or forward facts' {
+        $reg = Get-Registry
+        $cap = @($reg.capabilities | Where-Object { $_.id -ceq 'native.ida.list_functions' })[0]
+        $fixture = New-MissionContractFixture $cap.id $tmp
+        $r = Test-MissionSuccessContract -Capability $cap -Subject $fixture.subject -ExitCode 0 -Contracts $script:MissionSuccessContracts
+        "ok=$($r.ok) complete=$($r.complete) reason=$(@($r.sections | Where-Object { $_.section -ceq 'envelope' })[0].reason)"
+    } 'ok=False complete=False reason=transport_subject_unavailable'
+    foreach ($negative in @(
+        @{ id = 'native.ida.list_functions'; field = 'count'; value = 0 },
+        @{ id = 'native.ida.decompile'; field = 'error'; value = 'analysis failed' },
+        @{ id = 'mobile.apk.static'; field = 'pinning'; value = $null },
+        @{ id = 'ops.skill.security'; field = 'execution_successful'; value = $false },
+        @{ id = 'dynamic.win.frida.intercept'; field = 'verdict'; value = 'NOT_PROVEN' },
+        @{ id = 'native.behaviour.capa'; field = 'rules_matched'; value = 1.5 },
+        @{ id = 'managed.il.decompile'; field = 'code'; value = '' },
+        @{ id = 'web.js.cdp'; field = 'nodes'; value = 'not a list' }
+    )) {
+        C ('success_contract: reject original false-green ' + $negative.id + '/' + $negative.field) {
+            $cap = @((Get-Registry).capabilities | Where-Object { $_.id -ceq $negative.id })[0]
+            $fixture = New-MissionContractFixture $cap.id $tmp
+            $fixture.subject | Add-Member -NotePropertyName $negative.field -NotePropertyValue $negative.value -Force
+            (Test-MissionSuccessContract -Capability $cap -Subject $fixture.subject -ExitCode 0 -Contracts $script:MissionSuccessContracts -TransportSubject $fixture.transport).ok
+        } $false
+    }
+
     Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
 
     $mCases = $script:mCases
@@ -3786,7 +3897,7 @@ function Invoke-Ablate {
       Two passes, because this file now has two kinds of removable decision, and both were
       found by this instrument:
 
-      PASS 1 -- the seven verdict gates. Measured 2026-10-02, on the version that had 15
+      PASS 1 -- the eight current verdict gates. Measured 2026-10-02, on the version that had 15
       controls: rewriting any six of the seven `G '<name>' <expr>` expressions to `$true`
       left the whole suite green. Six of seven gates were a sentence in a comment. This
       function is what found it and is kept so it cannot be undone quietly.
@@ -3842,7 +3953,7 @@ function Invoke-Ablate {
         @{ name = 'host-fit';     rx = '(?m)^(\s*)\$hostBlocker\s*=\s*Get-HostBlocker.*$'; to = '$1$hostBlocker = $null'
           what = 'the host-fit check: requires.ram_mb and requires.disk_mb would go back to being read by nothing' }
     )
-    $names = @('process', 'reachability', 'observation', 'independence', 'bounded_claim', 'uncertainty', 'discharged')
+    $names = @('process', 'reachability', 'observation', 'independence', 'bounded_claim', 'uncertainty', 'discharged', 'success_contract')
     $src = Get-Content -LiteralPath $PSCommandPath -Raw
     $copy = Join-Path $PSScriptRoot ('mission-ablate-{0}.ps1' -f [guid]::NewGuid().ToString('N').Substring(0, 8))
     $loadBearing = 0; $unproved = 0; $errs = 0

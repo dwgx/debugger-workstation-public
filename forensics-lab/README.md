@@ -29,6 +29,21 @@ powershell -File scripts\forensics-lab.ps1 loop     # or: node forensics-lab/too
 37 assertions. Exit `0` means the loop closed on this machine, in this run; exit `9` means
 an assertion failed and the table says which.
 
+The loop and its separable `--control=srum` mode use these explicit exits:
+
+| exit | meaning in `tools/loop.mjs` |
+|---|---|
+| 0 | full loop closed, or the control's self-test form held |
+| 2 | a stray argument was refused |
+| 3 | the selected SRUM control failed to hold |
+| 4 | the SRUM control with `--expect` proved the demanded refusal; **control success** |
+| 9 | one or more full-loop assertions were refuted |
+| 64 | an unknown `--control` name was refused |
+
+The registry deliberately expects `4` for `--control=srum --expect INJECTED_PRIVATE_RWX_REGION`.
+Read that exit with the command's `CONTROL srum: PASS` verdict and named missing finding;
+the control does not establish that the full loop ran. Its success code remains unchanged.
+
 ```
   PASS  image built and hashed                                   151552 bytes
   PASS  regenerating the image produces identical bytes          35a6a51d5cc607af… == 35a6a51d5cc607af…

@@ -62,7 +62,7 @@ $probes = [ordered]@{
     'il2cpp-probe'       = @{ file = $PSExe; args = @('-NoProfile','-ExecutionPolicy','Bypass','-File','scripts/il2cpp-probe.ps1'); expect = 'IL2CPP ABSENT' }
     'emulation-probe'    = @{ file = $PSExe; args = @('-NoProfile','-ExecutionPolicy','Bypass','-File','scripts/emulation-probe.ps1'); expect = 'PCODE EMULATION BLOCKED' }
     'web-reverse'         = @{ file = $Node; args = @('web-reverse/tools/loop.mjs');  expect = 'LOOP CLOSED' }
-    'web-reverse-ast'     = @{ file = $Node; args = @('web-reverse/tools/loop2.mjs'); expect = 'LOOP CLOSED' }
+    'web-reverse-ast'     = @{ file = $Node; args = @('web-reverse/tools/loop2.mjs'); expect = 'STATIC TOOLCHAIN PROVEN' }
     'crypto-lab'          = @{ file = $Node; args = @('crypto-lab/tools/loop.mjs');   expect = 'JSON-SUMMARY' }
     'net-reverse'         = @{ file = $Node; args = @('net-reverse/tools/loop.mjs'); expect = 'LANE CLOSED' }
     'net-trustcheck'      = @{ file = $Node; args = @('net-reverse/tools/trustcheck.mjs'); expect = 'ISOLATION HELD' }

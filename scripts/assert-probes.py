@@ -46,7 +46,7 @@ expanded, `**` honoured. After the run the pattern is resolved:
 
 Freshness is what makes this a check rather than a formality, and it is measured in BYTES, not
 seconds. The checker hashes every declared path before launching the probe and again after, and
-counts a file as produced only if its size, mtime or content changed. Existence alone would be
+counts a file as produced only if its size or content changed; mtime alone is diagnostic. Existence alone would be
 worthless: one honest green run leaves a file behind and every stub run afterwards inherits it.
 A time window was implemented first and MEASURED WRONG -- with 4 seconds of slack, the real
 capability's own artifact, written 0.4 s earlier in the same sweep, satisfied the stub's check and
@@ -90,7 +90,12 @@ import re
 import subprocess
 import sys
 import time
+import tempfile
+import shutil
+import uuid
 from pathlib import Path
+
+sys.dont_write_bytecode = True
 
 REPO = Path(__file__).resolve().parent.parent
 REG = REPO / "manifests" / "capabilities.json"
@@ -167,7 +172,7 @@ REQUIRE_PRODUCES = False
 
 # Freshness is decided by IDENTITY, not by a clock. The checker records (size, mtime_ns, sha256)
 # for every matched file BEFORE launching the probe and compares after it returns; a file counts
-# as produced only if one of those three changed. A time window was tried first and measured
+# as produced only if size or SHA-256 changed; mtime alone is diagnostic. A time window was tried first and measured
 # wrong: with a 4-second slack the real capability's own artifact -- written 0.4 s earlier in the
 # same sweep -- satisfied the STUB's check, and both capabilities came back OK. Two green
 # verdicts from one real run and one stub is precisely the defect this file exists to close, so
@@ -206,7 +211,10 @@ def save_evidence(cid: str, kind: str, cmd: str, rc: int, secs: float, blob: str
                  f"#   bytes: {path.stat().st_size}\n"
                  f"#   written-by-this-run: {'yes' if fresh else 'NO -- pre-existing'}\n")
     head += f"{'-' * 72}\n"
-    (EVIDENCE_DIR / f"{cid}.{kind}.log").write_text(head + blob, encoding="utf-8")
+    attempt_dir = EVIDENCE_DIR / ("legacy-attempt-" + uuid.uuid4().hex)
+    attempt_dir.mkdir(exist_ok=False)
+    with (attempt_dir / f"{cid}.{kind}.log").open("x", encoding="utf-8") as fh:
+        fh.write(head + blob)
 
 
 def sha256_of(path: Path) -> str:
@@ -283,6 +291,11 @@ def snapshot_produces(specs: list[str]) -> dict[Path, tuple[int, int, str]]:
     return snap
 
 
+def content_changed(before, after):
+    """An mtime-only touch never establishes new bytes in the legacy path."""
+    return after is not None and (before is None or (before[0], before[2]) != (after[0], after[2]))
+
+
 def check_produces(cid: str, specs: list[str], cmd: str,
                    before: dict[Path, tuple[int, int, str]]
                    ) -> tuple[str, list[tuple[str, str]], dict[Path, tuple[int, int, str]]]:
@@ -318,7 +331,7 @@ def check_produces(cid: str, specs: list[str], cmd: str,
                         f"path. :: {cmd[:60]}"))
             continue
         for p in hits:
-            (fresh if before.get(p) != after.get(p) else stale).append(p)
+            (fresh if content_changed(before.get(p), after.get(p)) else stale).append(p)
     if not out and fresh and not stale:
         return "fresh", [], after
     if not out and fresh:
@@ -385,7 +398,8 @@ def run(cmd: str, timeout: int, env: dict | None = None) -> tuple[int, str, floa
                      f"itself, and hands the child -encodedCommand <base64 of a mangled token> "
                      f"instead of the recorded value -- measured with stderr empty and exit 0, so "
                      f"the damage is invisible unless you know to look for it.>"), 0.0
-    script = REPO / "_assert_probe_cmd.ps1"
+    attempt_dir = Path(tempfile.mkdtemp(prefix="assert-probe-"))
+    script = attempt_dir / "command.ps1"
     t0 = time.time()
     try:
         # The wrapper MUST propagate the exit code. `powershell -File` returns 0 unless the
@@ -397,8 +411,8 @@ def run(cmd: str, timeout: int, env: dict | None = None) -> tuple[int, str, floa
         merged = dict(os.environ)
         merged.update(env or {})
         p = subprocess.run(
-            f'powershell -NoProfile -ExecutionPolicy Bypass -File "{script}"',
-            shell=True, cwd=REPO, capture_output=True, text=True,
+            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script)],
+            shell=False, cwd=REPO, capture_output=True, text=True,
             timeout=timeout, encoding="utf-8", errors="replace", env=merged)
         return p.returncode, (p.stdout or "") + (p.stderr or ""), time.time() - t0
     except subprocess.TimeoutExpired:
@@ -407,7 +421,7 @@ def run(cmd: str, timeout: int, env: dict | None = None) -> tuple[int, str, floa
         return -2, f"<could not run: {e}>", time.time() - t0
     finally:
         try:
-            script.unlink()
+            shutil.rmtree(attempt_dir)
         except OSError:
             pass
 
@@ -582,7 +596,7 @@ def check(cap: dict, timeout: int) -> list[tuple[str, str]]:
     before = snapshot_produces(specs)
     rc, blob, secs = run(cmd, timeout, (probe.get("env") or None))
     pstate, pverdicts, after = check_produces(cid, specs, cmd, before)
-    artifacts = [(p, before.get(p) != after.get(p)) for p in sorted(after)]
+    artifacts = [(p, content_changed(before.get(p), after.get(p))) for p in sorted(after)]
     save_evidence(cid, "probe", cmd, rc, secs, blob, artifacts)
     fault = tool_fault(rc, blob, secs)
     if fault:
@@ -735,6 +749,8 @@ def check(cap: dict, timeout: int) -> list[tuple[str, str]]:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
+    ap.add_argument("--plan", help="external caller-frozen bounded CLI run plan")
+    ap.add_argument("--expected-plan-sha256", help="plan SHA-256 supplied independently by the caller")
     ap.add_argument("ids", nargs="*", help="capability ids; default = every safe one")
     ap.add_argument("--timeout", type=int, default=180)
     ap.add_argument("--list", action="store_true", help="show what would run, run nothing")
@@ -761,18 +777,34 @@ def main() -> int:
                          "the suite can be mutation-tested without editing the real one. This "
                          "script never writes to either.")
     ap.add_argument("--save-evidence", metavar="DIR", default=None,
-                    help="write each probe's and control's REAL output to DIR/<id>.<kind>.log")
+                    help="retain each legacy output under an independent DIR/legacy-attempt-<uuid>/ directory (diagnostic only)")
     ap.add_argument("--require-produces", action="store_true",
                     help="require every entry that runs to declare probe.produces, and to leave a "
                          "file this run wrote. Off by default: an entry without the field is "
                          "unaffected, it just gets the weaker OK verdict that admits it.")
     args = ap.parse_args()
+    if args.plan or args.expected_plan_sha256:
+        if not args.plan or not args.expected_plan_sha256 or args.ids or args.registry or args.save_evidence or args.list:
+            print("VERDICT=PROFILE_BLOCKED\nreason: strict plan mode needs --plan and --expected-plan-sha256 and owns its selected command and outputs")
+            return 2
+        import runner_evidence
+        try:
+            result = runner_evidence.run_plan(args.plan, args.expected_plan_sha256)
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            print("VERDICT=PROFILE_BLOCKED\nreason: " + type(exc).__name__ + ": " + str(exc))
+            return 2
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+        print("VERDICT=" + result["verdict"])
+        return runner_evidence.EXIT[result["verdict"]]
     global EVIDENCE_DIR, REQUIRE_PRODUCES
     REQUIRE_PRODUCES = args.require_produces
     if args.save_evidence:
         EVIDENCE_DIR = Path(args.save_evidence)
         if not EVIDENCE_DIR.is_absolute():
-            EVIDENCE_DIR = REPO / EVIDENCE_DIR
+            ap.error("--save-evidence requires an absolute directory outside the source tree")
+        EVIDENCE_DIR = EVIDENCE_DIR.resolve()
+        if EVIDENCE_DIR == REPO or REPO in EVIDENCE_DIR.parents:
+            ap.error("--save-evidence must be outside the source tree")
 
     caps = load(Path(args.registry) if args.registry else None)
     known = {c["id"] for c in caps}

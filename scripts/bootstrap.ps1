@@ -51,6 +51,23 @@ $ErrorActionPreference = "Stop"
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $Mode = if ($Apply) { "APPLY" } else { "DRY-RUN" }
 
+# Validate the complete release before locale lookup, mkdir, copy, config or venv.
+# A source snapshot with a missing dependency is an explicit blocked install.
+$closureHelper = Join-Path $PSScriptRoot 'installation-closure.ps1'
+if (-not (Test-Path -LiteralPath $closureHelper -PathType Leaf)) {
+    $failure = [ordered]@{
+        contract = 'installation-closure.1'; status = 'BLOCKED'; mode = $Mode
+        errors = @(@{ code = 'MISSING_REQUIRED'; path = 'scripts/installation-closure.ps1' })
+    }
+    Write-Output ('INSTALL_CLOSURE=' + ($failure | ConvertTo-Json -Depth 6 -Compress))
+    exit 1
+}
+. $closureHelper
+$closurePreflight = Get-InstallationClosure -RepoRoot $RepoRoot -Mode $Mode
+Write-Output ('INSTALL_CLOSURE=' + ($closurePreflight.Report | ConvertTo-Json -Depth 6 -Compress))
+if ($closurePreflight.Report.status -ne 'READY') { exit 1 }
+$InstallClosure = $closurePreflight.Manifest
+
 . (Join-Path $PSScriptRoot 'resolve-locale.ps1')
 $localeProbe = $RepoRoot
 if (Test-Path -LiteralPath (Join-Path $InstallRoot 'local.json')) {
@@ -107,7 +124,7 @@ foreach ($m in $selfMap) {
     Write-Plan "copy $($m.src) -> $dst"
     if ($Apply) {
         New-Item -ItemType Directory -Force -Path (Split-Path -Parent $dst) | Out-Null
-        Copy-Item $src $dst -Force
+        Copy-Item -LiteralPath $src -Destination $dst -Force
     }
 }
 # bin 脚本整目录
@@ -126,23 +143,16 @@ if (Test-SamePath $binSrc $binDst) {
 function Copy-RelTree([string]$Rel) {
     $src = Join-Path $RepoRoot $Rel
     $dst = Join-Path $InstallRoot $Rel
-    if (-not (Test-Path -LiteralPath $src)) { return }
     if (Test-SamePath $src $dst) { Write-Plan "[skip self-copy] $Rel"; return }
     Write-Plan "copy $Rel -> $dst"
     if ($Apply) {
-        New-Item -ItemType Directory -Force -Path $dst | Out-Null
-        Get-ChildItem -LiteralPath $src -Force | Where-Object {
-            $_.Name -notin @('__pycache__', '.venv', '.git')
-        } | ForEach-Object {
-            Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $dst $_.Name) -Recurse -Force
-        }
+        Copy-InstallationTree -Source $src -Destination $dst -Closure $InstallClosure
     }
 }
 
 function Copy-RelFile([string]$Rel) {
     $src = Join-Path $RepoRoot $Rel
     $dst = Join-Path $InstallRoot $Rel
-    if (-not (Test-Path -LiteralPath $src)) { return }
     if (Test-SamePath $src $dst) { Write-Plan "[skip self-copy] $Rel"; return }
     Write-Plan "copy $Rel -> $dst"
     if ($Apply) {
@@ -151,24 +161,10 @@ function Copy-RelFile([string]$Rel) {
     }
 }
 
-# AI 入口 + 合同 + 手册：安装根必须能独立被 agent 打开
-Write-Step "部署骨架文件 (合同 / docs / skills / manifests / scripts)"
-$rootFiles = @(
-    'AGENTS.md', 'AGENTS.zh-CN.md', 'AGENTS.ja.md', 'AGENTS.ko.md',
-    'README.md', 'README.zh-CN.md', 'README.ja.md', 'README.ko.md',
-    'DISCLAIMER.md', 'DISCLAIMER.zh-CN.md', 'DISCLAIMER.ja.md', 'DISCLAIMER.ko.md',
-    'CLAUDE.md', 'GEMINI.md', 'CONTRIBUTING.md', 'OWNER.example.md',
-    'locales.json', 'local.json.example'
-)
-foreach ($f in $rootFiles) { Copy-RelFile $f }
-Copy-RelFile '.github\copilot-instructions.md'
-Copy-RelFile '.cursor\rules\debugger-workstation.mdc'
-Copy-RelFile 'mcp\.mcp.json.template'
-Copy-RelFile 'mcp\client-mcp.json.template'
-Copy-RelFile 'mcp\codex-mcp-config.example.toml'
-foreach ($tree in @('manifests', 'skills', 'docs', 'scripts', 'templates')) {
-    Copy-RelTree $tree
-}
+# AI entry / contracts / selected CLI / schemas / retained evidence are one closure.
+Write-Step "部署骨架文件 (合同 / docs / skills / manifests / scripts / evidence)"
+foreach ($f in $InstallClosure.copy_files) { Copy-RelFile $f }
+foreach ($tree in $InstallClosure.copy_trees) { Copy-RelTree $tree }
 
 # --- 2. 生成本机 .mcp.json ---
 Write-Step "生成本机 MCP\.mcp.json (替换 {{DEBUGGER_ROOT}})"
@@ -177,7 +173,7 @@ $cfgDst  = Join-Path $mcpRoot ".mcp.json"
 $escaped = $InstallRoot.Replace('\', '\\')
 Write-Plan "template -> $cfgDst  (DEBUGGER_ROOT=$escaped)"
 if ($Apply) {
-    $content = Get-Content $tplPath -Raw -Encoding UTF8
+    $content = Get-Content -LiteralPath $tplPath -Raw -Encoding UTF8
     $content = $content.Replace('{{DEBUGGER_ROOT}}', $escaped)
     New-Item -ItemType Directory -Force -Path $mcpRoot | Out-Null
     Write-Utf8NoBom $cfgDst $content
@@ -189,7 +185,7 @@ Write-Step "写入项目 MCP (.mcp.json / .cursor\mcp.json) — 仅 debugger-rou
 $clientTpl = Join-Path $RepoRoot "mcp\client-mcp.json.template"
 $clientText = $null
 if (Test-Path -LiteralPath $clientTpl) {
-    $clientText = (Get-Content $clientTpl -Raw -Encoding UTF8).Replace('{{DEBUGGER_ROOT}}', $escaped)
+    $clientText = (Get-Content -LiteralPath $clientTpl -Raw -Encoding UTF8).Replace('{{DEBUGGER_ROOT}}', $escaped)
 } else {
     Write-Warn2 "缺少 mcp\client-mcp.json.template"
 }
@@ -210,7 +206,7 @@ if (Test-Path $tomlTpl) {
     $tomlDst = Join-Path $mcpRoot "codex-mcp-config.toml"
     Write-Plan "codex toml template -> $tomlDst"
     if ($Apply) {
-        $tomlOut = (Get-Content $tomlTpl -Raw -Encoding UTF8).Replace('{{DEBUGGER_ROOT}}', $escaped)
+        $tomlOut = (Get-Content -LiteralPath $tomlTpl -Raw -Encoding UTF8).Replace('{{DEBUGGER_ROOT}}', $escaped)
         Write-Utf8NoBom $tomlDst $tomlOut
     }
 }
@@ -257,6 +253,13 @@ function Test-ValidClone($path) {
 }
 
 function Invoke-CloneBackend($b) {
+    # Package coordinates are dependency declarations, never filesystem paths.
+    # -CloneMcp only clones repositories; it must not implicitly install a global
+    # npm package or pass "npm:... (global)" as a Windows clone destination.
+    if ($b.path -like 'npm:*') {
+        Write-Plan "[external npm dependency] $($b.name): $($b.path); not cloned. Install the declared package separately before using its wrapper."
+        return
+    }
     $target = Join-Path $InstallRoot ($b.path.Replace('/', '\'))
     if (Test-Path $target) {
         if (Test-ValidClone $target) {

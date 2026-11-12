@@ -18,8 +18,8 @@
  * decoration, and a rule that never rejects is decoration. Each one is a real
  * mutation of a real artefact, not a mock.
  *
- * Exit 0 means the loop closed on this machine, in this run. Non-zero means one of the
- * assertions above did not hold, and the failing step says which.
+ * Exit 0 closes the full loop or self-test; 9 refutes a full-loop assertion. In
+ * --control=srum mode, 4 means the demanded refusal held and 3 means the control failed.
  *
  * `--control=<name>` runs ONE section on its own exit code, so a registry probe can point
  * at a control instead of at the whole loop. It prints `CONTROL ... ONLY` and a summary
@@ -418,7 +418,7 @@ function summarizeControl(demand) {
     console.log(`CONTROL srum: FAIL — the control did not hold. ${failed.length} check(s) failed:`);
     for (const s of failed) console.log(`  - ${s.label}: ${s.detail}`);
     console.log(notLoop);
-    process.exit(9);
+    process.exit(3);
   }
   if (failed.length === 0) {
     console.log('CONTROL srum: the independence gate held. INJECTED_PRIVATE_RWX_REGION was demoted to');
@@ -432,7 +432,7 @@ function summarizeControl(demand) {
   console.log(`CONTROL srum: FAIL — the gate did not hold. ${failed.length} check(s) failed:`);
   for (const s of failed) console.log(`  - ${s.label}: ${s.detail}`);
   console.log(notLoop);
-  process.exit(9);
+  process.exit(3);
 }
 
 function summarize() {

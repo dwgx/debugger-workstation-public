@@ -1,3 +1,49 @@
+# Current resolution — 2026-11-12
+
+The four measured collisions below are now repaired at five exit sites in this tree.
+This is a local code and branch-verification result; adoption, full lab runs, and product
+acceptance remain separate claims. The dated measurement that follows is retained verbatim
+as historical context, including its former OPEN status and unapplied-plan wording.
+
+| source | repaired path | exit after repair | preserved result |
+|---|---|---:|---|
+| `crypto-lab/tools/loop.mjs` | uncaught `main()` exception | 2 | completed assertion refutation remains 1 |
+| `forensics-lab/tools/loop.mjs` | both failed SRUM-control branches | 3 | demanded-refusal control success remains 4; full-loop refutation remains 9 |
+| `mobile-lab/tools/loop.mjs` | build produced no APK | 6 | completed refutation remains 9; skipped-only remains 8 |
+| `web-reverse/tools/loop2.mjs` | factory produced no known answer | 6 | completed refutation remains 9 |
+
+The existing registry commands still expect full-loop success `0` and forensics control
+success `4`; no `expect_exit`, `gate_role`, or `skip_exits` was changed for these repairs.
+Each lab README now distinguishes its loop contract from analyzer or control commands.
+
+Verification used exact source branches in fresh Node processes with controlled inputs,
+without executing installed external tools or writing product artifacts: **13/20** controls
+met the intended semantics before the fix and **20/20** after it. The seven old failures
+exercise the five changed sites (the missing-known-answer site has three input shapes).
+Successful/refuted/skip branches and forensics success `4` were positive controls.
+The receipts and source hashes are in the closeout audit's `docs/exit-branches-{before,after}.json`.
+
+The old source-line concern in §6 was checked through the consumer: `write_lines` in
+`scripts/verify-atomic-artifacts.py` is survey metadata printed by the report. `main()` checks
+producer existence; its executable C1/C2 controls use `net-reverse/lab/gen-pcaps.mjs` and
+`net-reverse/tools/loop.mjs`, not those line numbers. The edited loop files nevertheless keep
+their original line counts, and the atomic-artifact verifier was left unchanged.
+
+The smoke consumer also needed a precise binding: `web-reverse-ast` now expects the static
+loop's own `STATIC TOOLCHAIN PROVEN` marker and still requires exit `0`. The former
+`LOOP CLOSED` expectation could be satisfied by the echoed runtime sub-loop. Six controlled
+transcript/exit pairs passed on each of PowerShell 5.1 and 7 after the change; they include a
+runtime-only marker, absent marker, and genuine marker with nonzero exit as negative controls.
+These are verdict-block tests, not a fresh end-to-end web lab run.
+
+No general numeric-convention checker, registry renumbering, publication, or historical-gate
+rewrite was needed for this bounded repair. Section 7 is a historical plan, not current
+authorization to commit or push.
+
+---
+
+## Historical measurement (2026-10-03 / 2026-11-01)
+
 STATUS: OPEN — 2026-11-01. This file read `STATUS: BLOCKED` from 2026-10-03 until today; the label
 was accurate about that session and misleading about the file. The defect it measures is STILL IN
 THE TREE and the fix in §4 is still unapplied; §8 re-measures it and resolves the one item §1 left

@@ -44,7 +44,7 @@ EXIT CODES (each refusal its own code and message; 0 = ok)
    8  nonce already used (single-use)
    9  nonce expired (TTL)
   10  channel unknown / no transcripts in it
-  11  nonce not in a user-attribution message NEWER than the challenge
+  11  sentence/nonce not exactly bound to a newer user-attribution message
   12  sentence names neither the target basename nor the case_id
   13  gate.ps1 refused the mint (its own exit code is in the message)
   14  ledger chain broken, or the challenges/ledger file is unreadable (Verify, Mint)
@@ -244,12 +244,14 @@ def message_text(content) -> str:
     return ""
 
 
-def find_user_reply(channel_dir: Path, nonce: str, newer_than_ms: int):
-    """First user-attribution message in the channel containing the nonce, NEWER than the
-    challenge record. Both conditions are the design's (Option A): role AND attribution must
-    be 'user' (an assistant message, or a user record the harness did not attribute to the
-    user, does not count), and the message must postdate the challenge (a planted older line
-    is exactly the forgery this ordering exists to kill). Returns None or the evidence dict.
+def find_user_reply(channel_dir: Path, nonce: str, newer_than_ms: int, expected_sentence: str):
+    """Find the exact caller sentence in a newer user-attribution message.
+
+    message_text's existing block joining is the only text transformation: do not strip,
+    case-fold, or Unicode-normalize the body. The nonce keeps its existing case-insensitive
+    token rule. An earlier nonce mention with different text does not hide a later exact
+    reply. The returned hash/index still identify that selected raw JSONL line.
+    This binds text to its attributed source; it does not classify that text as consent.
     """
     needle = nonce.lower()
     for path in transcript_files(channel_dir):
@@ -277,7 +279,10 @@ def find_user_reply(channel_dir: Path, nonce: str, newer_than_ms: int):
             ts = int(ts)
             if ts <= newer_than_ms:
                 continue
-            if needle not in message_text(msg.get("content")).lower():
+            body = message_text(msg.get("content"))
+            if body != expected_sentence:
+                continue
+            if needle not in {token.lower() for token in NONCE_RE.findall(body)}:
                 continue
             return {
                 "path": str(path),
@@ -374,9 +379,9 @@ def cmd_mint(args) -> int:
     if now_ms() > ts + ttl * 60_000:
         refuse(EXIT_EXPIRED, f"nonce {nonce} expired: challenged {iso(ts)} with TTL {ttl} min; run Challenge again and ask the Owner to answer the fresh line")
 
-    ev = find_user_reply(channel_dir, nonce, ts)
+    ev = find_user_reply(channel_dir, nonce, ts, sentence)
     if ev is None:
-        refuse(EXIT_NO_USER_MSG, f"nonce {nonce} does not appear in any user-attribution message newer than the challenge in {channel_dir}/*.jsonl (a record needs message.role=='user' AND message.attribution=='user' AND message.timestamp > the challenge); an assistant message does not count")
+        refuse(EXIT_NO_USER_MSG, f"no exact user-attribution message binds -Sentence and nonce {nonce} after the challenge in {channel_dir}/*.jsonl (requires role=='user', attribution=='user', timestamp > challenge, and the unchanged message_text body); an assistant message or a different sentence does not count")
 
     target_raw = str(rec.get("target", "")).strip()
     if not target_raw:
@@ -536,6 +541,19 @@ def cmd_verify(args) -> int:
                         got = sha256_hex(parts[line_index])
                         if got != want:
                             why = f"line {line_index} sha256 mismatch: ledger {want[:16]}... vs file {got[:16]}..."
+                        else:
+                            # A raw-line hash alone can preserve a historical wrong binding:
+                            # the line may be real while owner_word_sha256 names another text.
+                            # Report it as unresolved without changing Verify's exit contract.
+                            try:
+                                record = json.loads(parts[line_index].decode("utf-8"))
+                                message = record.get("message") if isinstance(record, dict) else None
+                                if not isinstance(message, dict) or message.get("role") != "user" or message.get("attribution") != "user":
+                                    why = f"line {line_index} is not a user-attribution message"
+                                elif sha256_hex(message_text(message.get("content")).encode("utf-8")) != e.get("owner_word_sha256"):
+                                    why = f"line {line_index} owner_word_sha256 does not match the attributed message_text body"
+                            except (ValueError, TypeError) as ex:
+                                why = f"line {line_index} cannot be read as attributed message text: {type(ex).__name__}"
         if why:
             unresolved.append((e.get("seq"), why))
         else:

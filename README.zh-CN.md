@@ -8,11 +8,12 @@
 
 1. **先 clone**，再读 [`AGENTS.zh-CN.md`](AGENTS.zh-CN.md)（英文权威版 [`AGENTS.md`](AGENTS.md)）——AI 的权威契约：先问后做、红线。
 2. **只跑 dry-run：** `pwsh scripts/bootstrap.ps1 -InstallRoot "D:\Tool\debugger"`——只打印计划，不写盘、不下载。
-3. **到底发布了什么：** [`releases/2026-11-11-full-library/README.md`](releases/2026-11-11-full-library/README.md) 与 [`RELEASE-GATE-STATUS.md`](releases/2026-11-11-full-library/RELEASE-GATE-STATUS.md)——`RELEASE_GATE=RED`、`COMPLETENESS_VERDICT=NOT_COMPLETE`、**268 个结构性阻塞**；发布不改变这两个事实。
-4. **技能包：** [`skills/2026-11-11/`](skills/2026-11-11/)——portable core + 站点路由；自检命令 `python -X utf8 skills/2026-11-11/portable-core/verify.py`。
+3. **2026-11-11 证据发布：** [`releases/2026-11-11-full-library/README.md`](releases/2026-11-11-full-library/README.md) 与 [`RELEASE-GATE-STATUS.md`](releases/2026-11-11-full-library/RELEASE-GATE-STATUS.md)——`RELEASE_GATE=RED`、`COMPLETENESS_VERDICT=NOT_COMPLETE`、**历史分类中的 268 个结构性阻塞**；发布不改变该结论。295 条是清单主张，不等于 295 个可运行工具。
+4. **技能包：** [`skills/2026-11-11/`](skills/2026-11-11/)——portable core + 站点路由。规范技能名与安装目录是 **`portable-core`**（frontmatter `name` = 目录名）；`debuggerstation-selfdeploy` 是 2026-11-11 研究轮的归档别名，永远不是安装目标。自检在当前 clone 内完成、不依赖研究目录：`python -X utf8 skills/2026-11-11/portable-core/verify.py`（安装契约：`tests/entry_checks.py`）。
 5. **AI 单一入口：** [`docs/AI_ENTRY.zh-CN.md`](docs/AI_ENTRY.zh-CN.md) · 改了什么：[`CHANGELOG.md`](CHANGELOG.md) · 发布页：[`RELEASE.md`](RELEASE.md)。
 
-6. **GitHub Pages（2026-11-11 已启用）：** 站点根是仓库根的 [`index.html`](index.html)——静态、自包含、中英双语首页，指向 release 报告、技能包与 AI 入口。源路径 `main` 的 `/`。渲染由 GitHub 侧构建完成；本文件是源，不声称每个链接在 Pages 沙箱内都能解析。
+6. **静态首页：** 仓库根的 [`index.html`](index.html) 是当前中英双语源码；[`docs/site/index.html`](docs/site/index.html) 保留为 2026-11-11 的历史首页快照。部署状态与实际站点 URL 须另外核验。
+7. **有限 CLI 验收：** [`docs/CURRENT-CLI-PROFILE.md`](docs/CURRENT-CLI-PROFILE.md) 给出候选 runner 与离线 PCAP profile 的入口；它与包级检查、真实 MCP provider 验收、全产品发布分别报告。
 
 便携式逆向 / 安全分析 / 调试 / 解包 / 移动端分析 / 网络抓包 / 系统巡检 / MCP 自动化工作站的 **骨架仓库**。
 
@@ -32,7 +33,7 @@
 | `CLAUDE.md` / `GEMINI.md` / `.github/copilot-instructions.md` / `.cursor/rules/` | 各客户端入口,均指向 `AGENTS.md`。 |
 | `templates/INIT_QUESTIONNAIRE.md` | 驱动动态初始化的澄清问题清单。 |
 | `docs/` | 给人/AI 的文档。任务结束后的进化：`docs/AGENT_EVOLUTION.md`。 |
-| `skills/debugger-review/` | 双轴审查 + 把教训写回笔记/手册。 |
+| `skills/2026-11-11/station-routers/debugger-review/` | 双轴审查 + 把教训写回笔记/手册。 |
 | `notes/` | 可入库短笔记（无样本、无密钥）。 |
 | `docs/extensions/INDEX.md` | curated 的 MCP server / AI skill 扩展资源索引。 |
 | `manifests/tools.json` | 工具清单:名称、版本、官方下载源、放置路径。 |
@@ -54,10 +55,10 @@ pwsh scripts\bootstrap.ps1 -InstallRoot "D:\Tool\debugger"
 # 2. 确认无误后执行:部署自研 MCP + 生成本机配置 + clone 第三方 MCP
 pwsh scripts\bootstrap.ps1 -Apply -CloneMcp -InstallRoot "D:\Tool\debugger"
 
-# 3. 按 dry-run 列出的官方源,下载工具二进制到对应分类目录
-#    (本仓库不代下载第三方工具二进制)
+# 3. 确认所需工具后，可用下载脚本从官方源获取便携包
+powershell -File scripts\download-tools.ps1 -Apply
 
-# 4. 重建第三方 MCP 的 .venv / dotnet / node 依赖,然后 smoke test
+# 4. 重建所选第三方 MCP 的 .venv / dotnet / node 依赖，再逐项 smoke test
 ```
 
 > Windows PowerShell 5.1 也可运行(脚本为 UTF-8 BOM)。优先用 PowerShell 7 (`pwsh`)。
@@ -78,7 +79,7 @@ pwsh scripts\bootstrap.ps1 -Apply -CloneMcp -InstallRoot "D:\Tool\debugger"
 
 ## MCP 策略
 
-默认只启用 `debugger-router` 一个轻量 MCP,它按需临时启动 19 个后端中需要的那个,该后端进程跨调用保活(每个 `session_id` 一个进程),空闲超时或主动关闭后才回收。不要默认一次性加载全部后端。需要直连时用 profile(`mcp-mobile` / `mcp-re` / `mcp-net` / `mcp-ce` / `mcp-intel` / `mcp-all`)。
+默认只启用 `debugger-router` 一个轻量 MCP,它按需临时启动 20 个后端中需要的那个,该后端进程跨调用保活(每个 `session_id` 一个进程),空闲超时或主动关闭后才回收。不要默认一次性加载全部后端。需要直连时，按 [`mcp/codex-mcp-config.example.toml`](mcp/codex-mcp-config.example.toml) 选择 profile（`mcp-mobile` / `mcp-re` / `mcp-net` / `mcp-ce` / `mcp-intel` / `mcp-all`）；其中 profile 是注释示例，尚须按需启用。运行配置与上游清单的数量定义见 [`docs/BOOTSTRAP.md`](docs/BOOTSTRAP.md)。
 
 ## 安全姿态
 

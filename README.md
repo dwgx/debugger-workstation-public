@@ -8,17 +8,18 @@
 
 1. **Clone**, then read [`AGENTS.md`](AGENTS.md) — the authoritative AI contract (ask-then-act, stop lines).
 2. **Dry run only:** `pwsh scripts/bootstrap.ps1 -InstallRoot "D:\Tool\debugger"` — prints the plan, writes and downloads nothing.
-3. **What actually shipped:** [`releases/2026-11-11-full-library/README.md`](releases/2026-11-11-full-library/README.md) and its [`RELEASE-GATE-STATUS.md`](releases/2026-11-11-full-library/RELEASE-GATE-STATUS.md) — `RELEASE_GATE=RED`, `COMPLETENESS_VERDICT=NOT_COMPLETE`, **268 blockers**; publishing does not change either fact.
-4. **Skills:** [`skills/2026-11-11/`](skills/2026-11-11/) — portable core + station routers; check with `python -X utf8 skills/2026-11-11/portable-core/verify.py`.
+3. **2026-11-11 evidence release:** [`releases/2026-11-11-full-library/README.md`](releases/2026-11-11-full-library/README.md) and its [`RELEASE-GATE-STATUS.md`](releases/2026-11-11-full-library/RELEASE-GATE-STATUS.md) — `RELEASE_GATE=RED`, `COMPLETENESS_VERDICT=NOT_COMPLETE`, **268 blockers in that historical classification**; publishing does not change its verdict. Its 295 rows are inventory claims, not 295 runnable tools.
+4. **Skills:** [`skills/2026-11-11/`](skills/2026-11-11/) — portable core + station routers. The canonical skill name and install dir are **`portable-core`** (frontmatter `name` = dir name); `debuggerstation-selfdeploy` is an archived 2026-11-11 research-run alias, never an install target. Verify from this clone — no research directory needed: `python -X utf8 skills/2026-11-11/portable-core/verify.py` (install contract: `tests/entry_checks.py`).
 5. **AI entry point:** [`docs/AI_ENTRY.md`](docs/AI_ENTRY.md) · what changed: [`CHANGELOG.md`](CHANGELOG.md) · releases: [`RELEASE.md`](RELEASE.md).
 
-6. **GitHub Pages (enabled 2026-11-11):** the site root is the repository root [`index.html`](index.html) — a static, self-contained EN+中文 front page linking the release report, skills and AI entry. Source path `/` on `main`. Rendering is a GitHub-side build; this file is the source, not a claim that every link resolves inside the Pages sandbox.
+6. **Current state:** single source — [docs/STATUS.md](docs/STATUS.md) (as_of 2026-11-12; includes Pages config, URL codes, CI and release counts).
+7. **Selected CLI profile:** [`docs/CURRENT-CLI-PROFILE.md`](docs/CURRENT-CLI-PROFILE.md) describes the candidate runner and bounded offline PCAP acceptance. Report it separately from package checks, real MCP-provider acceptance and whole-product release readiness.
 
 A **skeleton repository** for a portable reverse-engineering / security-analysis / debugging / unpacking / mobile-analysis / network-capture / system-inspection / MCP-automation workstation.
 
 Any agent (Claude / Codex / Gemini / Cursor / Copilot) or human can clone this repo and reconstruct, on their own machine, a tooling station that is **optimized for AI to drive** — following the docs and manifests here. This tree is a **reference skeleton**: the clone owner keeps their own tools and prompts (`OWNER.example.md` → gitignored `OWNER.md`). Agents may **self-maintain this clone** when the owner asks; stop lines cannot be waived in chat ([docs/MAINTAIN.md](docs/MAINTAIN.md)).
 
-After a job, agents score the slice (`skills/debugger-review`) and write `notes/` so the next session does not rediscover the same failure (Windows in-place `mcp`/`MCP`, Defender PUA, lazy MCP). See [docs/AGENT_EVOLUTION.md](docs/AGENT_EVOLUTION.md).
+After a job, agents score the slice (`skills/2026-11-11/station-routers/debugger-review`) and write `notes/` so the next session does not rediscover the same failure (Windows in-place `mcp`/`MCP`, Defender PUA, lazy MCP). See [docs/AGENT_EVOLUTION.md](docs/AGENT_EVOLUTION.md).
 
 > 📍 **Operating this station: start at [`.agent/HANDOFF.md`](.agent/HANDOFF.md).** It carries the
 > one rule everything else follows from, the four-command workflow, the capability table,
@@ -41,7 +42,7 @@ After a job, agents score the slice (`skills/debugger-review`) and write `notes/
 | `CLAUDE.md` / `GEMINI.md` / `.github/copilot-instructions.md` / `.cursor/rules/` | Per-client entry files, all pointing to `AGENTS.md`. |
 | `templates/INIT_QUESTIONNAIRE.md` | The clarifying-questions checklist that drives dynamic initialization. |
 | `docs/` | Human- and AI-facing docs. After-action: `docs/AGENT_EVOLUTION.md`. |
-| `skills/debugger-review/` | Dual-axis review + learning loop for agents. |
+| `skills/2026-11-11/station-routers/debugger-review/` | Dual-axis review + learning loop for agents. |
 | `notes/` | Short durable facts (no samples, no secrets). |
 | `docs/extensions/INDEX.md` | Curated index of MCP servers / AI skills you can add. |
 | `manifests/tools.json` | Tool manifest: name, version, official download source, install path. |
@@ -67,17 +68,17 @@ pwsh scripts\bootstrap.ps1 -Apply -CloneMcp -InstallRoot "D:\Tool\debugger"
 # 3. download tool binaries (uses gh when available)
 powershell -File scripts\download-tools.ps1 -Apply
 
-# 4. rebuild each third-party MCP's .venv / dotnet / node dependencies, then smoke-test
+# 4. build the dependencies of the selected third-party MCPs, then smoke-test those backends
 ```
 
 > Windows PowerShell 5.1 also works (the script is UTF-8 BOM). Prefer PowerShell 7 (`pwsh`).
 
 ## What a fresh clone does not have
 
-Everything below was measured on 2026-10-03 against a pristine `git archive HEAD` export (383 tracked
-files) — not against this workstation, which has been built for a month.
+Everything below was measured on 2026-10-03 against a pristine `git archive HEAD` export; current tracked-file
+counts live in [`docs/STATUS.md`](docs/STATUS.md) (as_of 2026-11-12) — not against this workstation, which has been built for a month.
 
-**A clone ships 383 files and zero build products.** `.gitignore` excludes every `out/` directory, so
+**That 2026-10-03 export contained 383 files and zero build products.** `.gitignore` excludes every `out/` directory, so
 `crackme-corpus/out/`, `managed-lab/out/` and `headless-lab/out/` are empty directories that do not
 even exist. That exclusion is deliberate and permanent: `crackme-corpus/README.md` states `out/` holds
 compiled binaries plus ~1500 machine-generated decompiled C files and "exporting decompiled C into git
@@ -181,13 +182,13 @@ Further reading:
 
 ## MCP strategy
 
-Only `debugger-router` — one lightweight MCP — is enabled by default. It spins up whichever of the 20 backends is needed, on demand, and keeps that backend process warm between calls (one process per `session_id`) until it idles out or is closed. Do not load all backends at once by default. For direct connections, use a profile (`mcp-mobile` / `mcp-re` / `mcp-net` / `mcp-ce` / `mcp-intel` / `mcp-all`).
+Only `debugger-router` — one lightweight MCP — is enabled by default. It spins up whichever of the 20 backends is needed, on demand, and keeps that backend process warm between calls (one process per `session_id`) until it idles out or is closed. Do not load all backends at once by default. For direct connections, opt into a profile from [`mcp/codex-mcp-config.example.toml`](mcp/codex-mcp-config.example.toml) (`mcp-mobile` / `mcp-re` / `mcp-net` / `mcp-ce` / `mcp-intel` / `mcp-all`). Its profile definitions are commented examples, not automatically installed active profiles. See [`docs/BOOTSTRAP.md`](docs/BOOTSTRAP.md) for the distinct runtime and manifest counts.
 
 ## Security posture
 
 The toolset includes debuggers, injectors, hooks, Frida, packet capture, and memory-analysis tools that may trigger AV/EDR. For high-risk operations (installing drivers/services/Npcap, modifying registry/Defender/startup, running untrusted samples on the host), the AI will brief you on consequences and rollback before proceeding — it won't silently act or refuse. Intended for security testing, CTFs, reverse engineering, research, and education.
 
-> `bootstrap.ps1 -CloneMcp` clones and builds third-party MCP backends from their upstream repos (a few have no declared license). This is opt-in — review the code you clone before running it.
+> `bootstrap.ps1 -Apply -CloneMcp` clones third-party MCP source from its upstream repos; their builds and dependencies are separate steps (a few have no declared license). This is opt-in — review the code you clone before running it.
 
 ## License
 

@@ -2,10 +2,12 @@
 
 Status: verified（2026-10-16 实测；AwesomeUI W9 波 au9-extensionkit / au9-mac-remainder 两单均按此恢复）
 
+公开副本脱敏（2026-11-12）：设备名、MAC与局域网地址使用占位符；实际值从Owner的私有设备配置获取。技术方法与原核验日期保留。
+
 ## 事实
 
-1. 宿主 Mac（dwgx-macos，192.168.11.20）夜间会睡眠：`ping` 仍应答，但 ssh/所有 TCP 连接黑洞（超时无响应）——易误判为链路/服务故障。
-2. 唤醒：WoL magic packet（目标 MAC `18:3f:70:d6:cc:64` → UDP 广播 `192.168.11.255:9`（或 :7））约 **1 秒** 恢复。
+1. 宿主 Mac（`<HOST_NAME>` / `<LAN_IP>`）夜间会睡眠：`ping` 仍应答，但 ssh/所有 TCP 连接黑洞（超时无响应）——易误判为链路/服务故障。
+2. 唤醒：WoL magic packet（目标 MAC `<HOST_MAC>` → UDP 广播 `<LAN_BROADCAST>:9`（或 :7））约 **1 秒** 恢复。
 3. 夜窗操作顺序：**先发 WoL → 立刻 ssh**；不要在 TCP 超时上反复重试空耗。
 4. 记录落点：AwesomeUI `ui-atlas/macos/deep/inventory/RECON2.md` §9「运维注记」。
 

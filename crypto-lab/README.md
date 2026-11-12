@@ -28,6 +28,16 @@ powershell -File scripts\crypto-lab.ps1 loop     # or: node crypto-lab/tools/loo
 It runs 12 classification cases, a 5×4 issuer×verifier acceptance matrix, the two-oracle
 cross-check, and a negative control on the analyzer's own guard — then prints PASS/FAIL.
 
+The **loop** (`tools/loop.mjs`) has its own exit contract:
+
+| exit | loop meaning |
+|---|---|
+| 0 | every named check held; the loop closed |
+| 1 | the loop completed and one or more named checks were refuted |
+| 2 | usage was refused, or an uncaught harness exception prevented a trustworthy verdict |
+
+These are separate from the analyzer's `0/2/3/4` table below.
+
 ```
   PASS  strong           alg=RS256  sig=valid                          exp=valid
         findings  (none)
@@ -69,6 +79,8 @@ powershell -File scripts\agent-cli.ps1 crypto-lab loop
 powershell -File scripts\crypto-lab.ps1 status
 powershell -File scripts\crypto-lab.ps1 serve    # blocking; not needed for `loop`
 ```
+
+**Analyzer exits** (`tools/analyze.mjs`):
 
 | exit | meaning |
 |---|---|

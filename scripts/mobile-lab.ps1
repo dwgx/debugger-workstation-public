@@ -47,8 +47,9 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 
-$Rest = @(@($NodeArgs) + @($NodeArgs) | ForEach-Object { $_ -split '[,\s]+' } | Where-Object { $_ -ne '' } |
-    ForEach-Object { $_ })
+# NodeArgs is an argv array, not a command string. Preserve each value exactly once,
+# including spaces, commas and empty values.
+$Rest = @($NodeArgs)
 
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $LabRoot = Join-Path $RepoRoot 'mobile-lab'
@@ -99,7 +100,13 @@ function Invoke-Node([string]$script, [string[]]$extra) {
         [ordered]@{ ok = $false; error = "missing tool: $file" } | ConvertTo-Json -Compress
         exit 2
     }
-    & $node.Source $file @extra
+    # Windows PowerShell 5.1's native binder drops empty arguments and consumes literal
+    # quotes. Pass one encoded JSON argv to Node, then let Node spawn the same interpreter
+    # with its argv API. No shell interprets the data; inherited stdio remains streaming.
+    $argvJson = ConvertTo-Json -InputObject (@($file) + @($extra)) -Compress
+    $argvData = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($argvJson))
+    $forward = "const cp=require('node:child_process');const argv=JSON.parse(Buffer.from(process.argv[1],'base64').toString('utf8'));const r=cp.spawnSync(process.execPath,argv,{stdio:'inherit'});if(r.error){console.error(r.error.message);process.exit(2);}process.exit(r.status===null?2:r.status);"
+    & $node.Source -e $forward $argvData
     $code = $LASTEXITCODE
     if ($code -ne 0) { exit $code }
 }

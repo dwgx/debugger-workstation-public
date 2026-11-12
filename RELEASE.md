@@ -21,6 +21,4 @@ Read in this order: the package [`README.md`](releases/2026-11-11-full-library/R
 then [`RELEASE-GATE-STATUS.md`](releases/2026-11-11-full-library/RELEASE-GATE-STATUS.md),
 then `SATURATION.tsv` (one row per claim), `MASTER-INDEX.md`, and `ROLLBACK.md`.
 
-The website content source for GitHub Pages lives in
-[`docs/site/index.html`](docs/site/index.html). **GitHub Pages is not enabled** in
-this repository; the source is prepared, nothing is served.
+Current repository and Pages state: [`docs/STATUS.md`](docs/STATUS.md) (as_of 2026-11-12).

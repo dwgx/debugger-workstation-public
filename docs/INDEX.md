@@ -1,10 +1,18 @@
 # Repository index — classification, not deletion
 
-`as_of 2026-11-11`. What lives where, and which files look like duplicates but are
+`as_of 2026-11-12`. Historical measurements below retain their original date and denominator. What lives where, and which files look like duplicates but are
 not. **Nothing was deleted to build this index**; overlapping files are kept because
 they answer different questions at different resolutions.
 
-## `.agent/` — 11 files, operating memory of this station
+## Current entry routes
+
+- [`AI_ENTRY.md`](AI_ENTRY.md) / [`AI_ENTRY.zh-CN.md`](AI_ENTRY.zh-CN.md): contract, package checks and evidence scopes.
+- [`CURRENT-CLOSEOUT.md`](CURRENT-CLOSEOUT.md): current reviewed source, evidence boundaries, and interrupted-closeout re-entry.
+- [`CURRENT-CLI-PROFILE.md`](CURRENT-CLI-PROFILE.md): candidate strict runner and bounded offline PCAP profile.
+- [`BOOTSTRAP.md`](BOOTSTRAP.md): router-only client entry, 20 backend definitions, and the distinct 24-component manifest denominator.
+- [`../index.html`](../index.html): current static front page source. `docs/site/index.html` is a frozen 2026-11-11 frontage snapshot retained for its historical verifier; it does not describe current deployment status.
+
+## `.agent/` — 11 top-level files, operating memory of this station
 
 | File | Class | What it answers |
 | --- | --- | --- |
@@ -51,7 +59,7 @@ Subdirectory `probes/` holds the raw `.probe.log` / `.control.log` transcripts.
 
 Subdirectories: `docs/extensions/INDEX.md` (curated MCP / skill extensions),
 `docs/i18n/{zh-CN,ja,ko}/` (localized copies), `docs/research/` (research notes,
-`workers/` reports), `docs/site/` (Pages content source).
+`workers/` reports), `docs/site/` (frozen 2026-11-11 frontage source and verifier input).
 
 ## Overlaps that are deliberate (C9)
 
@@ -74,9 +82,14 @@ Both legacy files carry a `SUPERSEDED` line in their header. They are kept so ol
 links and old clones do not break; the authoritative versions are in the 2026-11-11
 package.
 
-## Counts used above
+## Counts used above (2026-11-11 snapshot)
 
 - `.agent/` = 11 `.md` files (denominator: top-level `*.md`, subdirectories excluded).
 - `evidence/` = 2 `.md` files (plus `probes/` logs).
 - `docs/` = 12 topic `.md` files (denominator: top-level `*.md` before this index and
-  the `AI_ENTRY` pair were added).
+  the `AI_ENTRY` pair were added). Later entry documents are linked above rather than silently folded into that historical count.
+
+A selected audit/installation snapshot may omit old `.agent/audit/` fixtures and
+reports. Resolve historical paths against the source commit or full checkout;
+a missing file in a selected snapshot does not prove that it was deleted from
+the source repository.

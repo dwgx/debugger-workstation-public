@@ -1,5 +1,5 @@
 OWNER: parent (took over stalled PackageDesign slice) | package/README.zh-CN.md
-# debuggerstation-selfdeploy — 可移植 skill 包
+# portable-core — 可移植 skill 包
 
 [English](README.md) · [简体中文](README.zh-CN.md)
 
@@ -16,13 +16,17 @@ OWNER: parent (took over stalled PackageDesign slice) | package/README.zh-CN.md
 
 ## AI 三步接手
 1. 读 `SKILL.md`，再读 `SELF-DEPLOY.md`（带 `[NOT EXECUTED]` 横幅）。
-2. 跑一条环境自检 + 一条 clone+verify；期望 `PUSHED_SHA=875cd108… / VERDICT=PUBLISHED`。
-3. 跑 `tests/verify.py`；失败就查 `SELF-REPAIR.md` + `FIX-KB/*.tsv`，先 dry-run、再改、再测，exit≠0 就回滚。
+2. 跑一条环境自检 + 一条 clone+verify；clone HEAD 只打印、不写死——期望验证器给出 `VERDICT=PASS`。
+3. 跑 `tests/verify.py`，再跑 `tests/entry_checks.py`（安装契约）；失败就查 `SELF-REPAIR.md` + `FIX-KB/*.tsv`，先 dry-run、再改、再测，exit≠0 就回滚。
 
 ## 状态 / 许可
-`RELEASE_GATE=RED`（295/27/268）。拟 MIT(代码)/CC BY-SA 4.0(文档) 双许可；远端目前 `NOASSERTION`，是已知缺口不是授权。上一波图/入口按指针引用、不复制：`public-repo-best-handoff-20261111/assets/`、`deploy/AGENT-ENTRY.md`、`i18n/README*.md`。
+`RELEASE_GATE=RED`（295/27/268）。包内 `LICENSE` 已提供 MIT 文本：代码、配置和 agent contract 采用 MIT；仓库文档正文采用 CC BY-SA 4.0（`LICENSE-docs`）。已记录的 GitHub 仓库元数据仍显示 `NOASSERTION`，这是元数据识别滞后，不是另一份许可。上一波的图/入口属研究归档来源，不在本 clone 内：`public-repo-best-handoff-20261111/assets/`、`deploy/AGENT-ENTRY.md`、`i18n/README*.md`。
+
+## 名称
+规范安装名是 **`portable-core`**——frontmatter `name` 必须等于安装目录名。`debuggerstation-selfdeploy` 是 2026-11-11 研究轮的别名：只归档，永远不是安装目标，也永远不进活命令。
 
 ## Verify
+在 clone 根目录（`repo_root` = 含 `skills/` 的那层）跑：
 ```sh
-cd "F:/GENESIS-ARCHIVE/10-STORE/12-RESEARCH-RUNS/debuggerstation-skill-revival-ai-selfdeploy-20261111" && python -X utf8 package/verify.py
+python -X utf8 skills/2026-11-11/portable-core/verify.py
 ```

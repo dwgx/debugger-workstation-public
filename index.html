@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>debugger-workstation — evidence library &amp; skeleton (2026-11-11)</title>
+<title>debugger-workstation — evidence library &amp; skeleton (2026-11-12)</title>
 <style>
   :root {
     --ink: #12161c;
@@ -18,6 +18,7 @@
   * { box-sizing: border-box; }
   body {
     margin: 0;
+    overflow-wrap: anywhere;
     background: var(--bg);
     color: var(--ink);
     font: 16px/1.6 -apple-system, "Segoe UI", "Noto Sans", "Microsoft YaHei", sans-serif;
@@ -47,7 +48,7 @@
   .gate strong { color: var(--red); }
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
     gap: 14px;
   }
   .card {
@@ -85,6 +86,11 @@
   }
   footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); padding-top: 16px; }
   hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+  @media (max-width: 600px) {
+    table { table-layout: fixed; }
+    th, td { padding: 10px 8px; }
+    th:first-child, td:first-child { width: 40%; }
+  }
 </style>
 </head>
 <body>
@@ -101,9 +107,9 @@
   <div class="wrap">
 
     <section class="gate">
-      <h2 style="margin-top:0">Release gate: RED — this is a finding, not a status page</h2>
-      <p><strong>RELEASE_GATE=RED</strong> · <strong>COMPLETENESS_VERDICT=NOT_COMPLETE</strong> · <strong>268 structural blockers</strong> · 295 claims (27 REAL / 102 DECLARED / 151 OWNER_GATED / 15 MISSING).</p>
-      <p>Publishing this repository does not change either fact. Per-claim status is preserved verbatim in <a href="releases/2026-11-11-full-library/SATURATION.tsv">SATURATION.tsv</a>; an unverified claim is not a capability.</p>
+      <h2 style="margin-top:0">2026-11-11 release gate: RED</h2>
+      <p><strong>RELEASE_GATE=RED</strong> · <strong>COMPLETENESS_VERDICT=NOT_COMPLETE</strong> · <strong>268 structural blockers</strong> · 295 historical inventory claims (27 REAL / 102 DECLARED / 151 OWNER_GATED / 15 MISSING).</p>
+      <p>This historical inventory includes scripts, skills, notes and metadata; it is not a count of runnable tools. Per-claim status is preserved verbatim in <a href="releases/2026-11-11-full-library/SATURATION.tsv">SATURATION.tsv</a>; an unverified claim is not a capability.</p>
     </section>
 
     <section>
@@ -115,11 +121,11 @@
         </div>
         <div class="card">
           <h3>AI entry point</h3>
-          <p>One page that routes to the contract, the 2026-11-11 package and the single verify command: <a href="docs/AI_ENTRY.md">docs/AI_ENTRY.md</a> · <a href="docs/AI_ENTRY.zh-CN.md">中文</a>.</p>
+          <p>One page that routes to the contract, package checks and bounded CLI acceptance: <a href="docs/AI_ENTRY.md">docs/AI_ENTRY.md</a> · <a href="docs/AI_ENTRY.zh-CN.md">中文</a>.</p>
         </div>
         <div class="card">
           <h3>What shipped</h3>
-          <p><a href="releases/2026-11-11-full-library/README.md">Release README</a> and <a href="releases/2026-11-11-full-library/RELEASE-GATE-STATUS.md">RELEASE-GATE-STATUS.md</a> — 295 claims, 8 research questions, 8 work slices with receipts.</p>
+          <p><a href="releases/2026-11-11-full-library/README.md">Release README</a> and <a href="releases/2026-11-11-full-library/RELEASE-GATE-STATUS.md">RELEASE-GATE-STATUS.md</a> — the 2026-11-11 evidence library: 295 inventory claims, 8 research questions and 8 work slices with receipts.</p>
         </div>
         <div class="card">
           <h3>Skills</h3>
@@ -129,9 +135,9 @@
     </section>
 
     <section>
-      <h2>The one verify command</h2>
+      <h2>Portable package check</h2>
       <pre><code>python -X utf8 skills/2026-11-11/portable-core/verify.py</code></pre>
-      <p>Exit 0 and <code>VERDICT=PASS</code> is the package check. Anything else is a finding, not a local detail to patch away.</p>
+      <p>Exit 0 and <code>VERDICT=PASS</code> is the package check. The <a href="docs/CURRENT-CLI-PROFILE.md">candidate offline PCAP profile</a> has its own frozen execution and semantic acceptance contract. Report these scopes separately; neither establishes whole-product or real MCP-provider acceptance.</p>
     </section>
 
     <section>
@@ -140,15 +146,14 @@
         <tr><th>Not this</th><th>Reality</th></tr>
         <tr><td>A tool bundle</td><td>No third-party binaries ship here. Tools come from their official sources via <code>manifests/</code> and <code>scripts/bootstrap.ps1</code>.</td></tr>
         <tr><td>An automatic installer</td><td>Agents ask before acting; drivers, services, Npcap, Defender changes and untrusted samples need consequence + rollback stated first.</td></tr>
-        <tr><td>A green release</td><td>The gate is RED with 268 structural blockers. See <a href="RELEASE.md">RELEASE.md</a> and the package gate file.</td></tr>
+        <tr><td>A green release</td><td>The 2026-11-11 gate records RED with 268 structural blockers. See <a href="RELEASE.md">RELEASE.md</a> and the package gate file.</td></tr>
       </table>
     </section>
 
     <section class="notice">
-      <strong>GitHub Pages is not enabled in this repository.</strong>
-      This file is the prepared content source (<code>docs/site/index.html</code> plus <code>.nojekyll</code>);
-      nothing is served at any site URL. Enabling Pages, setting a homepage and changing the licence are
-      owner-gated remote settings and were not touched.
+      <strong>Current front page source: repository-root <code>index.html</code>.</strong>
+      The older <code>docs/site/index.html</code> is a frozen 2026-11-11 frontage snapshot retained for its historical verifier.
+      This source file does not establish the current deployment state or served URL; verify those separately.
     </section>
 
     <hr>
@@ -156,31 +161,31 @@
     <section id="zh">
       <h2>简体中文</h2>
       <div class="gate">
-        <p><strong>RELEASE_GATE=RED</strong> · <strong>COMPLETENESS_VERDICT=NOT_COMPLETE</strong> · <strong>268 个结构性阻塞</strong> · 295 条主张（27 REAL / 102 DECLARED / 151 OWNER_GATED / 15 MISSING）。</p>
-        <p>发布本仓库不改变这两个事实。每条主张的状态逐字保留在 <a href="releases/2026-11-11-full-library/SATURATION.tsv">SATURATION.tsv</a>；未验证的主张不是能力。</p>
+        <p><strong>RELEASE_GATE=RED</strong> · <strong>COMPLETENESS_VERDICT=NOT_COMPLETE</strong> · <strong>268 个结构性阻塞</strong> · 2026-11-11 的 295 条历史清单主张（27 REAL / 102 DECLARED / 151 OWNER_GATED / 15 MISSING）。</p>
+        <p>该历史清单混有脚本、技能、笔记和元数据，不等于可运行工具数。每条主张的状态逐字保留在 <a href="releases/2026-11-11-full-library/SATURATION.tsv">SATURATION.tsv</a>；未验证的主张不是能力。</p>
       </div>
 
       <h3>从这里开始</h3>
       <ul>
-        <li><a href="README.zh-CN.md">README.zh-CN.md</a> —— 仓库首页（中文），含「从这里开始」五步最短路径。</li>
+        <li><a href="README.zh-CN.md">README.zh-CN.md</a> —— 仓库首页（中文），含「从这里开始」入口。</li>
         <li><a href="AGENTS.zh-CN.md">AGENTS.zh-CN.md</a> —— 中文权威契约：先问后做、克隆主人覆盖层、MCP 策略、红线。</li>
         <li><a href="docs/AI_ENTRY.zh-CN.md">docs/AI_ENTRY.zh-CN.md</a> —— AI 单一入口：权威文件在哪、跑什么、什么不能说。</li>
         <li><a href="releases/2026-11-11-full-library/README.md">releases/2026-11-11-full-library/</a> —— 已发布的证据 / 主张库。</li>
         <li><a href="skills/2026-11-11/">skills/2026-11-11/</a> —— 便携核心技能 + 两个站点路由。</li>
       </ul>
 
-      <h3>唯一自检命令</h3>
+      <h3>便携技能包检查</h3>
       <pre><code>python -X utf8 skills/2026-11-11/portable-core/verify.py</code></pre>
-      <p>exit 0 且 <code>VERDICT=PASS</code> 才算通过；其它结果都是发现，不是可以就地抹掉的细节。</p>
+      <p>exit 0 且 <code>VERDICT=PASS</code> 表示包级检查通过。<a href="docs/CURRENT-CLI-PROFILE.md">候选离线 PCAP profile</a> 另有固定计划、真实执行与语义验收契约；两者都不等于全产品或真实 MCP provider 已通过。</p>
 
       <h3>本仓库不是什么</h3>
       <ul>
         <li><strong>不是工具包</strong>：不分发任何第三方二进制，工具按 <code>manifests/</code> 从官方源拉取。</li>
         <li><strong>不是自动安装器</strong>：AI 先问后做；驱动 / 服务 / Npcap / Defender / 可疑样本先写后果与回滚。</li>
-        <li><strong>不是绿色发布</strong>：闸门 RED，268 个结构性阻塞，见 <a href="RELEASE.md">RELEASE.md</a>。</li>
+        <li><strong>不是绿色发布</strong>：2026-11-11 历史闸门为 RED、268 个结构性阻塞，见 <a href="RELEASE.md">RELEASE.md</a>。</li>
       </ul>
 
-      <p><strong>本仓库未启用 GitHub Pages。</strong>此文件只是备好的内容源（<code>docs/site/index.html</code> 与 <code>.nojekyll</code>），没有任何站点 URL 在对外服务。启用 Pages、设置 homepage、更改许可证都属于需 Owner 决定的远端设置，本次未触碰。</p>
+      <p><strong>当前首页源码为仓库根的 <code>index.html</code>。</strong><code>docs/site/index.html</code> 保留为 2026-11-11 历史首页和旧验证器输入。本文件不能证明当前部署状态或实际服务 URL，应另外核验。</p>
 
       <h3>更多</h3>
       <ul>
@@ -190,8 +195,9 @@
       </ul>
     </section>
 
+      <p><strong>Current state:</strong> <a href="docs/STATUS.md">docs/STATUS.md</a> (as_of 2026-11-12).</p>
     <footer>
-      <p>debugger-workstation · public skeleton · as_of 2026-11-11 · content source only, Pages not enabled.</p>
+      <p>debugger-workstation · public skeleton · as_of 2026-11-12 · current source · historical release verdict preserved.</p>
     </footer>
 
   </div>

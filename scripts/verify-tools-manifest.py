@@ -97,6 +97,7 @@ undeclared · 2 = the manifest or the source tree could not be read.
 
 from __future__ import annotations
 
+from collections import Counter
 import json
 import os
 import re
@@ -494,11 +495,11 @@ def scan(sources: list[Source]) -> tuple[dict[str, dict], dict[str, int]]:
         for lineno, (raw, code) in enumerate(zip(src.raw_lines, src.code_lines), 1):
             paths, urls = candidate_paths(code)
             excl["E1-url"] += urls
-            is_comment = raw != code
+            # Only candidates removed by comment stripping belong to E4. A trailing
+            # comment does not turn the surviving launch expression into a comment.
+            raw_paths, _ = candidate_paths(raw)
+            excl["E4-comment"] += sum((Counter(raw_paths) - Counter(paths)).values())
             for text in paths:
-                if is_comment:
-                    excl["E4-comment"] += 1
-                    continue
                 if "\\\\" in text:
                     excl["E2-escaped-spelling"] += 1
                     continue
@@ -845,6 +846,23 @@ def selftest() -> int:
     want("PS line comment is blanked", strip_comments('& "a.exe" # note', ".ps1")[0], '& "a.exe" ')
     want("python docstring is blanked", strip_comments('"""a.exe"""\nx=1', ".py")[0], "")
     want("js // comment is blanked", strip_comments('const a=1; // "b.exe"', ".mjs")[0], "const a=1; ")
+
+    # A trailing comment must not discard the executable path before it. These
+    # fixtures exercise the real strip/scan boundary that the old E4 branch missed.
+    for ext, prefix, launch, comment in (
+        (".ps1", "", "& 'C:/owned-fixture/unlisted.exe'", " # explanatory note"),
+        (".py", "import subprocess\n", "subprocess.run(['C:/owned-fixture/unlisted.exe'])", " # explanatory note"),
+        (".mjs", "import {spawnSync} from 'node:child_process';\n", "spawnSync('C:/owned-fixture/unlisted.exe', []);", " // explanatory note"),
+    ):
+        fixture = Source.__new__(Source)
+        fixture.rel = "selftest-inline" + ext
+        raw = prefix + launch + comment
+        fixture.raw_lines = raw.splitlines()
+        fixture.code_lines = strip_comments(raw, ext)
+        fixture.can_launch = True  # each literal fixture above explicitly launches
+        found, excluded = scan([fixture])
+        want("inline comment preserves the launch path " + ext, "unlisted.exe" in found, True)
+        want("surviving code is not counted as E4 " + ext, excluded["E4-comment"], 0)
 
     # The real thing the brief named, asserted end to end rather than by grep.
     inv, _ = scan([Source("headless-lab/tools/skill_security_control.ps1")])

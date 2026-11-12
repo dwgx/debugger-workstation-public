@@ -37,7 +37,7 @@ Npcap 설치 패키지는 받아도 된다. 드라이버는 조용히 설치하�
 
 - 문서, 매니페스트, 노트를 읽는다.
 - bootstrap 드라이런.
-- 작업 후 쌍축 리뷰（`skills/debugger-review`）.
+- 작업 후 쌍축 리뷰（`skills/2026-11-11/station-routers/debugger-review`）.
 
 ## 확인이 필요한 일
 

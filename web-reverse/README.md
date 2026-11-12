@@ -200,6 +200,11 @@ Exit `0` means, in that run: a genuinely obfuscated sample was generated, it was
 deobfuscated, the recovery was graded against a key the run itself did not know in
 advance, and the recovered code signed a request the live gate accepted.
 
+The explicit exits of `tools/loop2.mjs` are `0` for that completed static chain,
+`6` when the sample factory left no generated known answer, and `9` when one or more
+steps were refuted. Its success marker is `STATIC TOOLCHAIN PROVEN`; `LOOP CLOSED`
+belongs to the runtime sub-loop and alone does not establish the static result.
+
 ### What it does, stage by stage
 
 The order is the method (`wiki/methods/web-reverse-method.md`, Layer 0-1):

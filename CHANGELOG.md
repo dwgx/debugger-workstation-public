@@ -5,10 +5,11 @@ Nothing becomes "done" because it was written down.
 
 ## 2026-11-11 — frontage bridge (this commit)
 
+- Current state: [`docs/STATUS.md`](docs/STATUS.md) (as_of 2026-11-12).
 - Added the front door: `README.md` / `README.zh-CN.md` "Start here / 从这里开始"
   bridge, `docs/AI_ENTRY.md` + `docs/AI_ENTRY.zh-CN.md`, root `CHANGELOG.md` +
   `RELEASE.md`, `docs/INDEX.md`, `docs/site/index.html` + `docs/site/.nojekyll`
-  (**Pages content source only — GitHub Pages is not enabled**), and a read-only
+  (**Pages content source only**), and a read-only
   `frontage-verify.py`.
 - Marked `skills/debugger-workstation/SKILL.md` and `skills/debugger-review/SKILL.md`
   `SUPERSEDED` by `skills/2026-11-11/station-routers/*`. Files kept; nothing deleted.

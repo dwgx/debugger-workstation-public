@@ -1,6 +1,6 @@
 # AI 操作指南（安装根）
 
-本文件给 Codex、Claude、Gemini、Cursor 等 AI agent 使用。进入**本机安装根**（默认示例 `D:\Tool\debugger`，以 `local.json` / 当前 clone 为准）处理工具、MCP、更新、清理或报告前，先读本文件和 `TOOLS_INDEX.md`。
+本文件给 Codex、Claude、Gemini、Cursor 等 AI agent 使用。进入**本机安装根**（默认示例 `D:\Tool\debugger`，以 `local.json` / 当前 clone 为准）处理工具、MCP、更新、清理或报告前，先读根 `AGENTS.md`，再读本文件和 `docs\TOOLS_INDEX.md`。
 
 > **说明(GitHub 读者)**:本文档描述 **bootstrap 部署后** 的工作站。文中的 `D:\Tool\debugger` 是**示例安装根**，换成你的 clone / `local.json` 即可。`OriginalBase\`、`Launchers\`、`Reports\`、`MCP\tests\` 等目录由你在本机生成,骨架仓库中不含。
 
@@ -14,7 +14,7 @@
 
 | 路径 | 作用 |
 | --- | --- |
-| `TOOLS_INDEX.md` | 当前工具、版本、入口、MCP 状态和报告索引。先读它。 |
+| `docs\TOOLS_INDEX.md` | 当前工具、版本、入口、MCP 状态和报告索引。先读它。 |
 | `Static-Reversing\` | 静态逆向、反编译、二进制结构分析。 |
 | `Debuggers\` | 调试器、注入、反反调试、内存工具。 |
 | `Mobile-Android\` | APK、DEX、Frida、MobSF、objection。 |
@@ -28,12 +28,12 @@
 
 ## 工作原则
 
-1. 先查本地事实：读 `TOOLS_INDEX.md`、相关目录、报告和配置，再行动。
+1. 先查本地事实：读 `docs\TOOLS_INDEX.md`、相关目录、报告和配置，再行动。
 2. 需要最新版本时必须联网核验官方来源、GitHub release 或软件官网。
 3. 优先便携版。只有驱动、服务、系统集成、Npcap、shell 集成等必须场景才考虑安装版。
 4. 更新工具时保留“原始包”和“可运行目录”两层：原始包放 `OriginalBase`，运行目录放外层分类目录。
 5. 每次更新或整理后要 smoke test，并清理测试残留。
-6. 重要改动要写入 `TOOLS_INDEX.md` 和 `Reports\`。
+6. 重要改动要写入 `docs\TOOLS_INDEX.md` 和 `Reports\`。
 7. 默认中文记录，路径写绝对路径或从 `D:\Tool\debugger` 开始的相对路径。
 
 ## 更新流程
@@ -48,7 +48,7 @@
 6. 冒烟测试：GUI 能打开关闭、CLI 能输出版本/help、MCP 能握手、关键工具能做只读调用。
 7. 关闭测试启动的进程。
 8. 清理运行缓存、临时工作区、`.codex_extracted`、临时解包目录。
-9. 更新 `TOOLS_INDEX.md`，并在 `Reports\` 写报告或补充现有报告。
+9. 更新 `docs\TOOLS_INDEX.md`，并在 `Reports\` 写报告或补充现有报告。
 
 ## OriginalBase 规则
 
@@ -66,7 +66,7 @@
 
 ## MCP 规则
 
-Codex 默认只启用 `debugger-router`。19 个后端 MCP 默认 disabled，由 router 按需启动，进程跨调用保活（空闲超时回收，默认 600s；单次调用上限 `DEBUGGER_ROUTER_TIMEOUT`，默认 900s）。
+Codex 默认只启用 `debugger-router`。20 个后端 MCP 默认 disabled，由 router 按需启动，进程跨调用保活（空闲超时回收，默认 600s；单次调用上限 `DEBUGGER_ROUTER_TIMEOUT`，默认 900s）。
 
 常用检查：
 
@@ -74,13 +74,15 @@ Codex 默认只启用 `debugger-router`。19 个后端 MCP 默认 disabled，由
 & 'C:\Users\<user>\AppData\Roaming\npm\codex.cmd' mcp list
 ```
 
-全量 smoke test：
+仓内 MCP 冒烟入口（先完成选定后端的安装，再按本机范围决定是否运行）：
 
 ```powershell
-& 'D:\Tool\debugger\MCP\frida-mcp\.venv\Scripts\python.exe' 'D:\Tool\debugger\MCP\tests\mcp_smoke_test.py' --timeout 60
+powershell -NoProfile -File scripts\smoke-mcp.ps1 -InstallRoot "D:\Tool\debugger"
 ```
 
-直接 profile：
+该脚本枚举配置，检查 four required backends（sevenzip / apktool / jadx / wireshark）并尝试一组 optional backends；它不是 20 个真实 provider 的全量功能验收。默认会启动这些后端，不能把退出码 0 当成未安装后端或全产品通过。旧 `MCP\tests\mcp_smoke_test.py` 是本机私有脚本，不随公开骨架分发。有限离线 CLI 验收见 [CURRENT-CLI-PROFILE.md](CURRENT-CLI-PROFILE.md)。
+
+直接 profile（`mcp/codex-mcp-config.example.toml` 内是注释示例，按需启用后才能使用）：
 
 | Profile | 用途 |
 | --- | --- |
@@ -89,7 +91,7 @@ Codex 默认只启用 `debugger-router`。19 个后端 MCP 默认 disabled，由
 | `mcp-net` | Wireshark、Reqable。 |
 | `mcp-ce` | Cheat Engine、x64dbg、ReClass。 |
 | `mcp-intel` | Volatility3、VirusTotal、YaraFlux。 |
-| `mcp-all` | 全部 19 个后端 MCP。 |
+| `mcp-all` | 全部 20 个后端 MCP。 |
 
 注意：
 
@@ -124,7 +126,7 @@ Get-Process | Where-Object { $_.ProcessName -match 'python|dotnet|ReClass|Cheat|
 
 ## 分发和交接规则
 
-需要把工具箱给别人、发 ZIP、做 staging 或交给下一位 AI 时，默认不要直接压缩 live 目录。先在 `D:\Tool\debugger-staging\` 下生成干净 staging，再从 staging 压 ZIP。
+以下保留运行时的规则仅适用于 Owner 授权的私有工具包；公开骨架继续排除第三方二进制、运行时和凭据。需要把私有工具箱给别人、发 ZIP、做 staging 或交给下一位 AI 时，默认不要直接压缩 live 目录。先在 `D:\Tool\debugger-staging\` 下生成干净 staging，再从 staging 压 ZIP。
 
 分发 staging 必须排除：
 
@@ -139,7 +141,7 @@ Get-Process | Where-Object { $_.ProcessName -match 'python|dotnet|ReClass|Cheat|
 - 可运行工具目录。
 - `OriginalBase` 中的官方原始包。
 - MCP server、`.venv`、`node_modules`、`MCP\Runtime` 和 `MCP\bin`，以保证 AI/MCP 尽量开箱可用。
-- `TOOLS_INDEX.md`、`AGENTS.md`、`DISTRIBUTION_NOTES.md`、`AI_USAGE_GUIDE.md`、`Reports\INDEX.md`。
+- `docs\TOOLS_INDEX.md`、`AGENTS.md`、`docs\DISTRIBUTION_NOTES.md`、`docs\AI_USAGE_GUIDE.md`、`Reports\INDEX.md`。
 
 分发后至少检查 staging 中没有 `.env`、`.git`、pcap、dump、APK、CT 表和临时工作区，并用 7-Zip 测试 ZIP 完整性。
 

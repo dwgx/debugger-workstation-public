@@ -891,8 +891,11 @@
             "key": "forensics.artefact.rows",
             "type": "structure",
             "fields": [
-              "offset",
-              "field"
+              "pslist",
+              "psscan",
+              "netscan",
+              "malfind",
+              "handlescan"
             ]
           }
         ],
@@ -949,14 +952,14 @@
           "forensics-lab/tools/analyze.mjs",
           "--target",
           "{target}",
-          "--print-header"
+          "--json"
         ],
         "stdout": "json",
         "success_when": "parsed JSON has ok == true AND triage present; the analyser exits 3 when the image cannot be read",
         "fact_map": {
           "triage": "forensics.artefact.rows"
         },
-        "note": "The invoke is correct AS FAR AS IT GOES and still cannot succeed in a mission, because {target} is a single caller-named artefact and this tool needs a lab scenario directory that only forensics-lab/tools/loop.mjs produces. It is left in place rather than removed: a caller who can name that directory should be able to use the capability, and the alternative is deleting a working analyser because no current caller wants it."
+        "note": "2026-11-12: --json emits the complete analysis object required by success_when and fact_map. --print-header intentionally remains a triage-only human/debugging entry. The target must still be a synthetic lab scenario directory containing manifest.json, not a raw memory image; this output-contract fix does not change that input boundary."
       },
       "negative_control": {
         "id": "forensics.memory.triangulation",
@@ -1892,7 +1895,7 @@
             "type": "path_ref",
             "glob": "*.c",
             "unbound": {
-              "reason": "UNBOUND, AND THE PREVIOUS 'BOUND' WAS FALSE. R20 forced this entry to admit it. The artifact used to look bound because invoke.fact_map sent outdir to 'native.ghidra.c' -- but this entry never declared that fact key, so the binding pointed at nothing. Independent verification on 2026-10-02 found it; the registry had reported REGISTRY CLEAN throughout. This artifact is written by the Ghidra analyzeHeadless path (scripts/ghidra/ExportDecompile.java:67 writes safeName(name)+'.c'), not by the decompile.mjs this invoke drives -- and P8 measured that decompile.mjs performs NO fs.write at all, its entire output being stdout JSON. So while the Ghidra route can produce it, the capability a mission actually calls cannot, and binding it would promise a file the routed path never writes."
+              "reason": "UNBOUND, AND THE PREVIOUS 'BOUND' WAS FALSE. R20 forced this entry to admit it. The artifact used to look bound because invoke.fact_map sent outdir to 'native.ghidra.c' -- but this entry never declared that fact key, so the binding pointed at nothing. Independent verification on 2026-10-02 found it; the registry had reported REGISTRY CLEAN throughout. This artifact is written by the Ghidra analyzeHeadless path (scripts/ghidra/ExportDecompile.java:67 writes safeName(name)+'.c'), not by the decompile.mjs this invoke drives -- and P8 measured that decompile.mjs performs NO fs.write at all, its entire output being stdout JSON. So while the Ghidra route can produce it, the capability a mission actually calls cannot, and binding it would promise a file the routed path never writes. CURRENT 2026-11-12 CORRECTION: this invoke now drives ghidra-headless.ps1, so the earlier decompile.mjs rationale is historical. The current route can write .c files; binding the outdir summary alone still does not identify and hash each produced .c artifact, so those artifacts remain unbound."
             }
           }
         ],
@@ -1979,13 +1982,13 @@
         "stdout": "json",
         "success_when": "summary.json exists and ok == true; the exit code is NOT the signal",
         "fact_map": {
-          "summary": "native.ghidra.summary",
+          "$": "native.ghidra.summary",
           "outdir": "native.ghidra.outdir"
         },
         "passed": [],
         "note": "argv is an array and is never joined. The success test is declared in words because it cannot be reduced to an exit code -- see envelope.success_when.",
         "placeholder_note": "TWO CORRECTIONS TO THIS FIELD, both measured. (1) 2026-09-30: this was `-OutDir {outdir}` and mission.ps1 substitutes only {target} and {input.<name>}, so the literal string {outdir} reached the command line and the wrapper created a directory NAMED '{outdir}'. (2) 2026-10-03: `{input.outdir}` was worse than useless -- the input was declared but NO capability produces an outdir fact, so every round resolved to `skipped_unmet_input` and this entry, callable since 2026-10-02, had never actually run. It is now `{scratch:ghidra-out}`, a RUNNER-PROVIDED directory the loop creates inside the mission's own case dir. Neither alternative was acceptable: dropping -OutDir would make `write_scope: case_dir` a lie (measured -- scripts/ghidra-headless.ps1:26-28 falls back to %TEMP% on an empty -OutDir, so the export would land outside the case dir), and inventing a producer capability for a directory would be new machinery for a thing that is not evidence. A scratch dir is supplied by the loop, never typed as a fact, and never named in consumes_fact.",
-        "fact_map_note": "Corrected TWICE on 2026-10-02. R20 first caught it forwarding outdir to 'native.ghidra.c', a key this entry never declared. Fixing that DROPPED the summary mapping by accident, leaving native.ghidra.summary declared but never forwarded -- and assert-probes could not see it, because a missing mapping only misbehaves when a mission runs. A rule that validates the shape of a thing does not validate that the thing still works; the demonstration run is what caught this one, and it is a reminder that adding a rule is not the same as having run the code."
+        "fact_map_note": "Corrected TWICE on 2026-10-02. R20 first caught it forwarding outdir to 'native.ghidra.c', a key this entry never declared. Fixing that DROPPED the summary mapping by accident, leaving native.ghidra.summary declared but never forwarded -- and assert-probes could not see it, because a missing mapping only misbehaves when a mission runs. A rule that validates the shape of a thing does not validate that the thing still works; the demonstration run is what caught this one, and it is a reminder that adding a rule is not the same as having run the code. CURRENT 2026-11-12: ExportDecompile emits program/language/functions/decompiled at its JSON root, not inside a summary member. The reserved fact_map source key $ now selects that complete report; mission validates success before forwarding it."
       },
       "negative_control": {
         "id": "native.ghidra.decompile.not_a_binary",

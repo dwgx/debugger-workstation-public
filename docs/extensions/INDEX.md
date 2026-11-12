@@ -68,13 +68,13 @@
 - [x] 确认 `x64dbg-automate` / `x64dbg-automate-pyclient` → **dariushoule/* (MIT)**。
 - [ ] 评估是否用 bethington/ghidra-mcp(LaurieWired fork,工具数更多)升级 Ghidra backend。
 - [ ] Owner-named `-Apply` for disk vs upstream: JADX 1.5.5→1.5.6, Apktool 3.0.2→3.0.3, radare2 6.2.0→6.2.2, ILSpy 10.1→11.0. AssetRipper 1.3.14→2.0.0 is a **major**; do not auto-jump.
-- [x] 2026-09-20: agent playbooks `skills/debugger-workstation/references/{triage,arsenal,mcp-router}.md`。Client MCP remains router-only.
+- [x] 2026-09-20 历史记录：曾有 `skills/debugger-workstation/references/{triage,arsenal,mcp-router}.md`，这些旧文件不随当前公开树提供。现行入口是 [station router](../../skills/2026-11-11/station-routers/debugger-workstation/SKILL.md) 与 [EXPERT_PLAYBOOK](../EXPERT_PLAYBOOK.md)。Client MCP remains router-only.
 
 ---
 
 ## 6. 候选新 MCP server(2026-06-29 联网核验,补充现有工具链缺口)
 
-> 以下为本工作站当前**没有**的方向,star/活跃度为核验时读数。纳入前回到上游核验当前状态。
+> 以下保留 2026-06-29 的缺口候选快照；部分项目已在后续版本接入，现行声明以第 1 节和 manifest 为准。star/活跃度是当时读数，纳入前回到上游核验当前状态。
 
 ### 逆向 / 二进制分析(补 IDA / radare2 / Binary Ninja)
 | 项目 | 上游 | 说明 |

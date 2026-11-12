@@ -1,0 +1,832 @@
+{
+  "schema": "mission-success-contracts/1",
+  "version": 1,
+  "note": "Explicit machine contracts; prose is fingerprinted, never parsed. Transport subjects are not supplied by the current mission runner. Synthetic transport fixtures prove predicates only.",
+  "contracts": [
+    {
+      "capability": "native.ida.decompile",
+      "section": "invoke",
+      "declaration_sha256": "f1fef56f0c1d48f88cfbdc6484e93b013481d15c33aacaaaba0e0e333207dbd7",
+      "invoke_binding": {
+        "runner": "node",
+        "argv": [
+          "native-lab/tools/decompile.mjs",
+          "{target}",
+          "{input.function}"
+        ],
+        "stdout": "json"
+      },
+      "subject": "stdout_json",
+      "predicates": [
+        {
+          "op": "boolean_equals",
+          "path": "ok",
+          "value": true
+        },
+        {
+          "op": "present",
+          "path": "code"
+        },
+        {
+          "op": "absent",
+          "path": "error"
+        }
+      ]
+    },
+    {
+      "capability": "native.ida.decompile",
+      "section": "envelope",
+      "declaration_sha256": "cd310b58160fc0f007691f50607eb954ba85db02b5b981e11d68cf94c153d5c6",
+      "invoke_binding": {
+        "runner": "node",
+        "argv": [
+          "native-lab/tools/decompile.mjs",
+          "{target}",
+          "{input.function}"
+        ],
+        "stdout": "json"
+      },
+      "subject": "transport_json",
+      "predicates": [
+        {
+          "op": "present",
+          "path": "body.code"
+        },
+        {
+          "op": "absent",
+          "path": "body.error"
+        }
+      ]
+    },
+    {
+      "capability": "native.ida.list_functions",
+      "section": "invoke",
+      "declaration_sha256": "c6c8be9f51c92d09e7471c92a8450f3d7604e83d6d7c3208d1645dc7558b50af",
+      "invoke_binding": {
+        "runner": "node",
+        "argv": [
+          "native-lab/tools/list-funcs.mjs",
+          "{target}",
+          "--json"
+        ],
+        "stdout": "json"
+      },
+      "subject": "stdout_json",
+      "predicates": [
+        {
+          "op": "boolean_equals",
+          "path": "ok",
+          "value": true
+        },
+        {
+          "op": "number_gt",
+          "path": "count",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "capability": "native.ida.list_functions",
+      "section": "envelope",
+      "declaration_sha256": "05d4d04a01b46755a827cb35cb04fb6e948f43466a831e9f8c0e4f135eb8363c",
+      "invoke_binding": {
+        "runner": "node",
+        "argv": [
+          "native-lab/tools/list-funcs.mjs",
+          "{target}",
+          "--json"
+        ],
+        "stdout": "json"
+      },
+      "subject": "transport_json",
+      "predicates": [
+        {
+          "op": "array",
+          "path": "queries"
+        },
+        {
+          "op": "array",
+          "path": "result"
+        },
+        {
+          "op": "array_length_equals",
+          "path": "result",
+          "other": "queries"
+        },
+        {
+          "op": "array_objects",
+          "path": "result"
+        }
+      ]
+    },
+    {
+      "capability": "web.js.cdp",
+      "section": "invoke",
+      "declaration_sha256": "96f5cb224330cfdee2700a80d1e0b2f8515a68f9623546d2efb9c9292ff10a65",
+      "invoke_binding": {
+        "runner": "node",
+        "argv": [
+          "web-reverse/tools/cdp-nodes.mjs",
+          "--url",
+          "{input.url}"
+        ],
+        "stdout": "json"
+      },
+      "subject": "stdout_json",
+      "predicates": [
+        {
+          "op": "boolean_equals",
+          "path": "ok",
+          "value": true
+        },
+        {
+          "op": "number_gt",
+          "path": "count",
+          "value": 0
+        },
+        {
+          "op": "array",
+          "path": "nodes"
+        }
+      ]
+    },
+    {
+      "capability": "crypto.jose.parse",
+      "section": "invoke",
+      "declaration_sha256": "8e9de99701a83838602d3b2025b0ec7a74d47f5311f2f7fef56118f67bab5051",
+      "invoke_binding": {
+        "runner": "node",
+        "argv": [
+          "crypto-lab/tools/analyze.mjs",
+          "--token",
+          "{input.token}",
+          "--quiet",
+          "--json"
+        ],
+        "stdout": "json"
+      },
+      "subject": "stdout_json",
+      "predicates": [
+        {
+          "op": "boolean_equals",
+          "path": "ok",
+          "value": true
+        },
+        {
+          "op": "present",
+          "path": "claims"
+        }
+      ]
+    },
+    {
+      "capability": "net.pcap.analyse",
+      "section": "invoke",
+      "declaration_sha256": "543000a53ad474252dad7d49bd0c1d971e34254bb87ee280296ee264758fef4c",
+      "invoke_binding": {
+        "runner": "node",
+        "argv": [
+          "net-reverse/tools/pcap-lab.mjs",
+          "ask",
+          "--pcap",
+          "{target}",
+          "--question",
+          "dns-query-count",
+          "--json"
+        ],
+        "stdout": "json"
+      },
+      "subject": "stdout_json",
+      "predicates": [
+        {
+          "op": "boolean_equals",
+          "path": "ok",
+          "value": true
+        },
+        {
+          "op": "nonempty_string",
+          "path": "stdout"
+        }
+      ]
+    },
+    {
+      "capability": "forensics.memory.artefact",
+      "section": "invoke",
+      "declaration_sha256": "578fb8f50e7cde1d078f71a4bf7904b839884f8b1e271a3a855618cd0dfdb47e",
+      "invoke_binding": {
+        "runner": "node",
+        "argv": [
+          "forensics-lab/tools/analyze.mjs",
+          "--target",
+          "{target}",
+          "--json"
+        ],
+        "stdout": "json"
+      },
+      "subject": "stdout_json",
+      "predicates": [
+        {
+          "op": "boolean_equals",
+          "path": "ok",
+          "value": true
+        },
+        {
+          "op": "present",
+          "path": "triage"
+        }
+      ]
+    },
+    {
+      "capability": "managed.il.decompile",
+      "section": "invoke",
+      "declaration_sha256": "7688648bb070cce9b9e319c3ffee426e8595c7cdc9782f3390ecb1c58538190a",
+      "invoke_binding": {
+        "runner": "node",
+        "argv": [
+          "managed-lab/tools/decompile-assembly.mjs",
+          "--asm",
+          "{input.assembly}"
+        ],
+        "stdout": "json"
+      },
+      "subject": "stdout_json",
+      "predicates": [
+        {
+          "op": "boolean_equals",
+          "path": "ok",
+          "value": true
+        },
+        {
+          "op": "nonempty_string",
+          "path": "code"
+        },
+        {
+          "op": "nonempty_string",
+          "path": "method"
+        }
+      ]
+    },
+    {
+      "capability": "mobile.apk.static",
+      "section": "invoke",
+      "declaration_sha256": "f89694ce0c3be30de8c951682c2c085016dfb042f74e3014960c738ef008402b",
+      "invoke_binding": {
+        "runner": "node",
+        "argv": [
+          "mobile-lab/tools/analyze.mjs",
+          "{target}",
+          "--json"
+        ],
+        "stdout": "json"
+      },
+      "subject": "stdout_json",
+      "predicates": [
+        {
+          "op": "present",
+          "path": "manifest"
+        },
+        {
+          "op": "present",
+          "path": "pinning"
+        }
+      ]
+    },
+    {
+      "capability": "re.corpus.solve",
+      "section": "invoke",
+      "declaration_sha256": "9fa10f28c64b484be4017028bf69f4c239d91127e857d8fb640af9d7bd1c5927",
+      "invoke_binding": {
+        "runner": "python",
+        "argv": [
+          "crackme-corpus/tools/solve-one.py",
+          "--exe",
+          "{input.binary}"
+        ],
+        "stdout": "json"
+      },
+      "subject": "stdout_json",
+      "predicates": [
+        {
+          "op": "boolean_equals",
+          "path": "ok",
+          "value": true
+        },
+        {
+          "op": "string_equals",
+          "path": "verdict",
+          "value": "SOLVED-AND-ACCEPTED-BY-THE-BINARY"
+        },
+        {
+          "op": "nonempty_string",
+          "path": "answer"
+        }
+      ]
+    },
+    {
+      "capability": "dynamic.win.frida",
+      "section": "invoke",
+      "declaration_sha256": "a62313a140f6a099a2a6181a2203ad5bcb815d1845408617442ff422f3726031",
+      "invoke_binding": {
+        "runner": ".\\Mobile-Android\\objection\\.venv\\Scripts\\python.exe",
+        "argv": [
+          "native-lab/tools/frida_runtime_facts.py",
+          "--target",
+          "{target}",
+          "--stage-dir",
+          "{scratch:frida}"
+        ],
+        "stdout": "json"
+      },
+      "subject": "stdout_json",
+      "predicates": [
+        {
+          "op": "boolean_equals",
+          "path": "ok",
+          "value": true
+        },
+        {
+          "op": "present",
+          "path": "module_base"
+        },
+        {
+          "op": "present",
+          "path": "export_addr"
+        },
+        {
+          "op": "string_equals",
+          "path": "hook_attach",
+          "value": "ACCEPTED"
+        }
+      ]
+    },
+    {
+      "capability": "fuzz.differential.parse",
+      "section": "invoke",
+      "declaration_sha256": "76068a26be37656b6992839b12b0eb69aaadff8c9e027c92b77a9907edea7b6d",
+      "invoke_binding": {
+        "runner": "node",
+        "argv": [
+          "fuzz-lab/tools/parse-target.mjs",
+          "--target",
+          "{input.target}"
+        ],
+        "stdout": "json"
+      },
+      "subject": "stdout_json",
+      "predicates": [
+        {
+          "op": "boolean_equals",
+          "path": "ok",
+          "value": true
+        },
+        {
+          "op": "array",
+          "path": "findings"
+        },
+        {
+          "op": "fuzz_accounting",
+          "path": ""
+        }
+      ]
+    },
+    {
+      "capability": "native.ghidra.decompile",
+      "section": "invoke",
+      "declaration_sha256": "bb9b3d69d0edb55e0f635e09cfaefcf3c9d7340a8d3402cdfc088cb5ccde1eb3",
+      "invoke_binding": {
+        "runner": "powershell",
+        "argv": [
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          "scripts/ghidra-headless.ps1",
+          "-Sample",
+          "{target}",
+          "-OutDir",
+          "{scratch:ghidra-out}"
+        ],
+        "stdout": "json"
+      },
+      "subject": "scratch_summary_json",
+      "predicates": [
+        {
+          "op": "boolean_equals",
+          "path": "ok",
+          "value": true
+        }
+      ]
+    },
+    {
+      "capability": "native.ghidra.decompile",
+      "section": "envelope",
+      "declaration_sha256": "256bfb16641541a13a790134f97d33141019444334c6c1a9dbd15dee0ae9eca2",
+      "invoke_binding": {
+        "runner": "powershell",
+        "argv": [
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          "scripts/ghidra-headless.ps1",
+          "-Sample",
+          "{target}",
+          "-OutDir",
+          "{scratch:ghidra-out}"
+        ],
+        "stdout": "json"
+      },
+      "subject": "scratch_summary_json",
+      "predicates": [
+        {
+          "op": "boolean_equals",
+          "path": "ok",
+          "value": true
+        }
+      ]
+    },
+    {
+      "capability": "native.crosscompare.ghidra",
+      "section": "invoke",
+      "declaration_sha256": "b6c1a04088cab355d6524b0987fa90416077b9da287553ef430b721a341a74b4",
+      "invoke_binding": {
+        "runner": "powershell",
+        "argv": [
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          "headless-lab/tools/match-functions.ps1",
+          "-Source",
+          "{input.source}",
+          "-Dest",
+          "{input.dest}",
+          "-WorkDir",
+          "{scratch:fnmatch}"
+        ],
+        "stdout": "json"
+      },
+      "subject": "stdout_json",
+      "predicates": [
+        {
+          "op": "boolean_equals",
+          "path": "ok",
+          "value": true
+        },
+        {
+          "op": "integer",
+          "path": "changed_total"
+        },
+        {
+          "op": "array",
+          "path": "changed"
+        }
+      ]
+    },
+    {
+      "capability": "native.ghidra.emulate",
+      "section": "envelope",
+      "declaration_sha256": "2c06a1807680636ca9e19b54b6596bee56ad92abe9eef2f445131e7ca9744db3",
+      "invoke_binding": null,
+      "subject": "unsupported",
+      "predicates": [],
+      "unsupported_reason": "no_invoke_research_artifact"
+    },
+    {
+      "capability": "ops.skill.security",
+      "section": "invoke",
+      "declaration_sha256": "6140a0a5a53f870e5a25d7efbc4cc3201f9098fe166d31983792cb955ca1a3c7",
+      "invoke_binding": {
+        "runner": "cmd.exe",
+        "argv": [
+          "/c",
+          "%USERPROFILE%\\.local\\bin\\skillspector.exe",
+          "scan",
+          "{input.skill_path}",
+          "--no-llm",
+          "--format",
+          "json"
+        ],
+        "stdout": "json"
+      },
+      "subject": "stdout_json",
+      "predicates": [
+        {
+          "op": "boolean_equals",
+          "path": "execution_successful",
+          "value": true
+        },
+        {
+          "op": "array",
+          "path": "issues"
+        },
+        {
+          "op": "present",
+          "path": "analysis_completeness"
+        }
+      ]
+    },
+    {
+      "capability": "dynamic.win.frida.intercept",
+      "section": "invoke",
+      "declaration_sha256": "c887b67d04b7a144a31adbb3ea62de3bb0f5b3493d27673cea1074e62a3b7b49",
+      "invoke_binding": {
+        "runner": ".\\Mobile-Android\\objection\\.venv\\Scripts\\python.exe",
+        "argv": [
+          "native-lab/tools/frida_spawn_gate.py",
+          "{target}",
+          "positive"
+        ],
+        "stdout": "json"
+      },
+      "subject": "stdout_json",
+      "predicates": [
+        {
+          "op": "boolean_equals",
+          "path": "ok",
+          "value": true
+        },
+        {
+          "op": "string_equals",
+          "path": "verdict",
+          "value": "INTERCEPT-PROVEN"
+        },
+        {
+          "op": "number_gt",
+          "path": "runtime_hook_hit.count",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "capability": "native.pe.container",
+      "section": "invoke",
+      "declaration_sha256": "d8e4c46c063a3efefde0edfb3d29c4a13f4c8ec228188ac30b05f583e6e6aab2",
+      "invoke_binding": {
+        "runner": "python",
+        "argv": [
+          "native-lab/tools/pe_probe.py",
+          "{target}"
+        ],
+        "stdout": "json"
+      },
+      "subject": "stdout_json",
+      "predicates": [
+        {
+          "op": "boolean_equals",
+          "path": "ok",
+          "value": true
+        },
+        {
+          "op": "present",
+          "path": "image_base"
+        },
+        {
+          "op": "present",
+          "path": "aslr"
+        }
+      ]
+    },
+    {
+      "capability": "native.function.match",
+      "section": "invoke",
+      "declaration_sha256": "b992f6bf44a9325b5be198f05535fe1a59b2047961ec3b98d62e26ec031b1b6f",
+      "invoke_binding": {
+        "runner": "powershell",
+        "argv": [
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          "headless-lab/tools/match-functions.ps1",
+          "-Source",
+          "{input.source}",
+          "-Dest",
+          "{input.dest}"
+        ],
+        "stdout": "json"
+      },
+      "subject": "stdout_json",
+      "predicates": [
+        {
+          "op": "boolean_equals",
+          "path": "ok",
+          "value": true
+        },
+        {
+          "op": "integer",
+          "path": "matched"
+        },
+        {
+          "op": "number_gte",
+          "path": "matched",
+          "value": 0
+        },
+        {
+          "op": "boolean",
+          "path": "identical_inputs"
+        }
+      ]
+    },
+    {
+      "capability": "native.pe.packer",
+      "section": "invoke",
+      "declaration_sha256": "21b50c09ade5e57c52063e88b4e816c4aa2421b2b4022f21a3f0fcf43e2b1685",
+      "invoke_binding": {
+        "runner": "powershell",
+        "argv": [
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          "headless-lab/tools/triage-packer.ps1",
+          "-Target",
+          "{target}"
+        ],
+        "stdout": "json"
+      },
+      "subject": "stdout_json",
+      "predicates": [
+        {
+          "op": "boolean_equals",
+          "path": "ok",
+          "value": true
+        }
+      ]
+    },
+    {
+      "capability": "native.disasm.capstone",
+      "section": "invoke",
+      "declaration_sha256": "b8d9e985a6fde2236a48c2cd8611766fa50cae3ec5d92ac6c572831ba4723108",
+      "invoke_binding": {
+        "runner": "python",
+        "argv": [
+          "native-lab/tools/disasm.py",
+          "{target}",
+          "--hex",
+          "{input.function}",
+          "--count",
+          "48"
+        ],
+        "stdout": "json"
+      },
+      "subject": "stdout_json",
+      "predicates": [
+        {
+          "op": "boolean_equals",
+          "path": "ok",
+          "value": true
+        },
+        {
+          "op": "number_gt",
+          "path": "count",
+          "value": 0
+        },
+        {
+          "op": "array",
+          "path": "rip_operands"
+        }
+      ]
+    },
+    {
+      "capability": "native.pe.authenticode",
+      "section": "invoke",
+      "declaration_sha256": "ea3b03a501399f18aac112821c7340338c51d490bd130d4673716e35fa6fc892",
+      "invoke_binding": {
+        "runner": "python",
+        "argv": [
+          "headless-lab/tools/authenticode.py",
+          "{target}"
+        ],
+        "stdout": "json"
+      },
+      "subject": "stdout_json",
+      "predicates": [
+        {
+          "op": "boolean_equals",
+          "path": "ok",
+          "value": true
+        }
+      ]
+    },
+    {
+      "capability": "native.behaviour.capa",
+      "section": "invoke",
+      "declaration_sha256": "d4a6de0622105f473f271b71841a970a4666a45485801090d60e420bbc9c84d8",
+      "invoke_binding": {
+        "runner": "python",
+        "argv": [
+          "native-lab/tools/capa_probe.py",
+          "{target}"
+        ],
+        "stdout": "json"
+      },
+      "subject": "stdout_json",
+      "predicates": [
+        {
+          "op": "boolean_equals",
+          "path": "ok",
+          "value": true
+        },
+        {
+          "op": "integer",
+          "path": "rules_matched"
+        }
+      ]
+    },
+    {
+      "capability": "native.signature.certverify",
+      "section": "invoke",
+      "declaration_sha256": "af747656ccd74955d0a93af1827a1d59b52d80eecb5775f81fefd46165b802e9",
+      "invoke_binding": {
+        "runner": "python",
+        "argv": [
+          "native-lab/tools/cert_verify.py",
+          "{target}"
+        ],
+        "stdout": "json"
+      },
+      "subject": "stdout_json",
+      "predicates": [
+        {
+          "op": "boolean_equals",
+          "path": "ok",
+          "value": true
+        }
+      ]
+    },
+    {
+      "capability": "net.pcap.selfparse",
+      "section": "invoke",
+      "declaration_sha256": "83b66fb71992b721c6f5daa4c0645666430765e48b0250650f1bf98a112b1642",
+      "invoke_binding": {
+        "runner": "python",
+        "argv": [
+          "net-reverse/tools/pcap_reader.py",
+          "{target}"
+        ],
+        "stdout": "json"
+      },
+      "subject": "stdout_json",
+      "predicates": [
+        {
+          "op": "boolean_equals",
+          "path": "ok",
+          "value": true
+        }
+      ]
+    },
+    {
+      "capability": "native.pe.hardening",
+      "section": "invoke",
+      "declaration_sha256": "6df5f50c5c064968f818a12da0746f7002c25cc826213c5f6506a4dde70e0cc6",
+      "invoke_binding": {
+        "runner": "python",
+        "argv": [
+          "native-lab/tools/hardening_probe.py",
+          "{target}"
+        ],
+        "stdout": "json"
+      },
+      "subject": "stdout_json",
+      "predicates": [
+        {
+          "op": "boolean_equals",
+          "path": "ok",
+          "value": true
+        },
+        {
+          "op": "object",
+          "path": "image"
+        },
+        {
+          "op": "present",
+          "path": "image.arch"
+        },
+        {
+          "op": "present",
+          "path": "image.bintype"
+        }
+      ]
+    },
+    {
+      "capability": "native.yara.triage",
+      "section": "invoke",
+      "declaration_sha256": "96a3107a108def8fd3bb768f6eb6fa53442bb09b0730b1cbd3ca731ec7ce3ba4",
+      "invoke_binding": {
+        "runner": "cmd.exe",
+        "argv": [
+          "/c",
+          "Static-Reversing\\YARA-X\\yr.exe",
+          "scan",
+          "--output-format=json",
+          "{input.rules}",
+          "{target}"
+        ],
+        "stdout": "json"
+      },
+      "subject": "unsupported",
+      "predicates": [],
+      "unsupported_reason": "ambiguous_question_predicate"
+    }
+  ]
+}

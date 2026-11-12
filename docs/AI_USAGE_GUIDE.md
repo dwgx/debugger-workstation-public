@@ -37,7 +37,7 @@ Npcap installer may be fetched; do not silent-install. Cheat Engine is clickwrap
 
 - Read docs, manifests, notes.
 - Dry-run bootstrap.
-- Dual-axis review after a job (`skills/debugger-review`).
+- Dual-axis review after a job (`skills/2026-11-11/station-routers/debugger-review`).
 
 ## What needs confirmation
 

@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:debugger-workstation:run-receipt.v3",
+  "title": "Bounded local CLI runner receipt v3",
+  "description": "Observations only. Product acceptance also requires a caller-pinned external run plan and runner terminal. This schema alone never establishes execution or provenance.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_id", "attempt_id", "parent_attempt_id", "plan_sha256", "profile", "source", "runtime", "tool", "target", "invocation", "execution", "completed_steps", "artifacts", "checks", "result", "problems", "limitations"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "run-receipt.3"},
+    "run_id": {"type": "string", "minLength": 3},
+    "attempt_id": {"type": "string", "minLength": 3},
+    "parent_attempt_id": {"type": ["string", "null"]},
+    "plan_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "profile": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "version", "capability_id", "limitations"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^bounded-cli-"},
+        "version": {"type": "string", "minLength": 1},
+        "capability_id": {"type": "string", "minLength": 1},
+        "limitations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "source": {
+      "type": ["object", "null"], "additionalProperties": false,
+      "required": ["kind", "repo", "commit", "dirty", "manifest_sha256", "files_sha256", "commit_observation", "git_head"],
+      "properties": {
+        "kind": {"type": "string", "enum": ["manifest-snapshot", "git-checkout"]},
+        "repo": {"type": "string", "minLength": 1},
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "dirty": {"type": "boolean"},
+        "manifest_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "files_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "commit_observation": {"type": "string", "enum": ["pinned-manifest", "git-HEAD"]},
+        "git_head": {"type": ["string", "null"]}
+      }
+    },
+    "runtime": {
+      "type": ["object", "null"], "additionalProperties": false,
+      "required": ["executable", "version", "sha256", "size_bytes"],
+      "properties": {
+        "executable": {"type": "string", "minLength": 1}, "version": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}, "size_bytes": {"type": "integer", "minimum": 0}
+      }
+    },
+    "tool": {
+      "type": "object", "additionalProperties": false, "required": ["path", "sha256", "size_bytes"],
+      "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}, "size_bytes": {"type": "integer", "minimum": 0}}
+    },
+    "target": {
+      "type": "object", "additionalProperties": false, "required": ["path", "sha256", "size_bytes", "kind", "fixture_id"],
+      "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}, "size_bytes": {"type": "integer", "minimum": 0}, "kind": {"type": "string", "minLength": 1}, "fixture_id": {"type": "string", "minLength": 1}}
+    },
+    "invocation": {
+      "type": "object", "additionalProperties": false, "required": ["argv", "cwd", "artifact_root", "env_keys"],
+      "properties": {"argv": {"type": "array", "items": {"type": "string"}}, "cwd": {"type": "string", "minLength": 1}, "artifact_root": {"type": "string", "minLength": 1}, "env_keys": {"type": "array", "items": {"type": "string"}}}
+    },
+    "execution": {
+      "type": "object", "additionalProperties": false,
+      "required": ["started_utc", "finished_utc", "started_ns", "cleanup_finished_ns", "pid", "backend_executed", "terminal_state", "observed_exit", "timeout_s", "cancelled", "cleanup"],
+      "properties": {
+        "started_utc": {"type": "string", "minLength": 1}, "finished_utc": {"type": "string", "minLength": 1},
+        "started_ns": {"type": ["integer", "null"], "minimum": 0}, "cleanup_finished_ns": {"type": ["integer", "null"], "minimum": 0},
+        "pid": {"type": ["integer", "null"], "minimum": 1}, "backend_executed": {"type": "boolean"},
+        "terminal_state": {"type": "string", "enum": ["not_run", "exited", "timeout", "cancelled", "interrupted"]},
+        "observed_exit": {"type": ["integer", "null"]}, "timeout_s": {"type": "number", "minimum": 0}, "cancelled": {"type": "boolean"},
+        "cleanup": {"type": "object", "additionalProperties": false, "required": ["status", "scope", "child_reaped", "detail"],
+          "properties": {"status": {"type": "string", "enum": ["converged", "not_converged", "not_applicable"]}, "scope": {"type": "string", "minLength": 1}, "child_reaped": {"type": "boolean"}, "detail": {"type": "string"}}}
+      }
+    },
+    "completed_steps": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "artifacts": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["path", "sha256", "size_bytes"], "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}, "size_bytes": {"type": "integer", "minimum": 0}}}},
+    "checks": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["id", "kind", "status", "detail"], "properties": {"id": {"type": "string", "minLength": 3}, "kind": {"type": "string", "enum": ["integrity", "execution", "semantic", "negative"]}, "status": {"type": "string", "enum": ["passed", "failed"]}, "detail": {"type": "string"}}}},
+    "result": {"type": "object", "additionalProperties": false, "required": ["verdict", "checks_total", "required_case_ids"], "properties": {"verdict": {"type": "string", "enum": ["PROFILE_PASS", "PROFILE_FAIL", "PROFILE_BLOCKED", "PROFILE_NOT_RUN"]}, "checks_total": {"type": "integer", "minimum": 1}, "required_case_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}}}},
+    "problems": {"type": "array", "items": {"type": "string"}},
+    "limitations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+  }
+}

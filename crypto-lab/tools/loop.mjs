@@ -11,8 +11,8 @@
  * the matrix to come out right — that is the "recognition" half, stated as assertions
  * rather than as prose.
  *
- * Anything that does not match its expectation sets `ok = false` and the process exits
- * non-zero. Silent misclassification is the failure mode this file exists to prevent.
+ * Exit 0 closes the loop; 1 means a named check refuted its expectation; 2 means
+ * usage was refused or an uncaught harness exception prevented a trustworthy verdict.
  *
  * Child processes are spawned ASYNCHRONOUSLY: `spawnSync` would block this process's
  * event loop, and the lab server answering the verification calls lives in it. (That
@@ -324,5 +324,5 @@ async function main() {
 
 main().catch((e) => {
   process.stderr.write(`loop: ${e.stack || e.message}\n`);
-  process.exit(1);
+  process.exit(2);
 });

@@ -130,13 +130,18 @@ notes/2026-09-01-full-tool-download.md
 .idea/
 *.log
 
-# EXCEPTION, and it is the only one. Rule R17 binds a probe to `evidence/probes/<id>.probe.log`
+# PROBE EXCEPTION. Rule R17 binds a probe to `evidence/probes/<id>.probe.log`
 # by path AND sha256, which is the whole point: a hash of a file git refuses to carry is a hash
 # the next window and the next machine cannot check. `assert-probes.py --save-evidence` writes
 # one `.probe.log` and one `.control.log` per capability here, and nothing else writes here, so
 # the whole directory is exempt rather than a hand-maintained list of filenames.
 !evidence/probes/
 !evidence/probes/*.log
+
+# SYNTHETIC retry fixture: the parent failure bytes are part of the receipt contract.
+# Keep these exact v1/v2 paths in release inventories; unrelated logs stay ignored.
+!evidence/profile-receipts/retry-preserves-failure/artifacts/attempt-1-failure.log
+!evidence/profile-receipts/attempts/attempt-20261112-101/failure.log
 Thumbs.db
 desktop.ini
 .DS_Store

@@ -24,8 +24,8 @@
  *       for a key that is not in it; the toolchain must exit 4 and report the
  *       expect missing. A check that cannot fail proves nothing.
  *
- * Every step is the same tool an analyst would call by hand. Exit 0 means the
- * static capability is real on this machine, in this run.
+ * Every step is the same tool an analyst would call by hand. Exit 0 proves the static
+ * chain in this run; 6 means no generated known answer; 9 means a step was refuted.
  *
  *   node tools/loop2.mjs
  */
@@ -104,7 +104,7 @@ if (gen.pass && genReport) {
 if (!genReport || !genReport.manifest || !fs.existsSync(genReport.manifest)) {
   console.error(`loop2: the sample factory left no known answer at ${genReport ? genReport.manifest : '<no report>'}`);
   server.close();
-  process.exit(9);
+  process.exit(6);
 }
 const known = JSON.parse(fs.readFileSync(genReport.manifest, 'utf8'));
 const pageV = known.variants.find(v => v.id === 'page');

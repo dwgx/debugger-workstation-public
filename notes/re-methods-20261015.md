@@ -528,8 +528,13 @@ def fde_starts(data):
    ```
    修法是一行（`wiki/INDEX.md` 的 methods 表里，紧跟 `adversarial-verdict-patterns.md` 那行之后）：
    ```
-   | [methods/re-method-upgrades-2026-10-15.md](methods/re-method-upgrades-2026-10-15.md) | **RE 方法升级建议（2026-10-15 station 实测）** — 损坏节表三态检测 + FDE 回退；描述符 blob 边界缺陷（55 blob → 62 个描述符）；Ghidra `PcodeEmulator` 核实；DAP / 符号执行现状 |
+   | `methods/re-method-upgrades-2026-10-15.md` | **RE 方法升级建议（2026-10-15 station 实测）** — 损坏节表三态检测 + FDE 回退；描述符 blob 边界缺陷（55 blob → 62 个描述符）；Ghidra `PcodeEmulator` 核实；DAP / 符号执行现状 |
    ```
+   > `wiki/methods/re-method-upgrades-2026-10-15.md` 是 **wiki 侧**页面，本 clone 内不存在
+   > （**archived-missing**）。上面这行是「粘进 `wiki/INDEX.md`」的片段，不是本仓库的相对链接：
+   > 这里写成行内代码，`link-check` 才不会把它当成本地路径解析。目标不伪造，检查也不删。
+   > 最近的同类真文档是 [`notes/2026-10-15-re-toolkit.md`](2026-10-15-re-toolkit.md)（RE 工具清单，
+   > 2026-10-15），但它不是同一篇；这里只作指针，不冒充替代。
    补完后 `doc-facts.py` 与 `arsenal-two-tree-check.py` 都应回到 exit 0
    （`doc-facts.py` 在本页存在的情况下已经实测 exit 0）。
 

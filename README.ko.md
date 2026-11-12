@@ -8,11 +8,15 @@
 
 아무 AI 에이전트(Claude / Codex / Gemini / Cursor / Copilot / Grok)나 사람이 clone한 뒤 [docs/i18n/ko/I18N.md](docs/i18n/ko/I18N.md)로 UI 언어를 정하고, 맞는 [AGENTS.md](AGENTS.md)([한국어](AGENTS.ko.md)) 핸드셰이크를 따르면 자기 머신에 **AI가 다루기 쉬운** 도구 스테이션을 복원할 수 있습니다. 대화는 그 언어로, git 커밋 메시지는 영어입니다.
 
-작업 후 에이전트는 `skills/debugger-review`로 점수를 매기고 `notes/`에 남깁니다. [docs/AGENT_EVOLUTION.md](docs/AGENT_EVOLUTION.md).
+작업 후 에이전트는 `skills/2026-11-11/station-routers/debugger-review`로 점수를 매기고 `notes/`에 남깁니다. [docs/AGENT_EVOLUTION.md](docs/AGENT_EVOLUTION.md).
 
 > ⚠️ **서드파티 도구 바이너리는 포함하지 않습니다.** `manifests/`와 `scripts/bootstrap.ps1`로 각 공식 소스를 따릅니다. [DISCLAIMER.ko.md](DISCLAIMER.ko.md).
 
 ---
+
+## 현재 진입점과 검증 범위
+
+[AI 진입점](docs/AI_ENTRY.md)에서 계약, 현행 스킬, 검증 명령을 확인하세요.[2026-11-11 공개 증거](releases/2026-11-11-full-library/RELEASE-GATE-STATUS.md)의 판정은 `RELEASE_GATE=RED` / `COMPLETENESS_VERDICT=NOT_COMPLETE`입니다. 295행은 당시 주장 목록이며 실행 가능한 도구 수가 아닙니다.[제한된 CLI profile](docs/CURRENT-CLI-PROFILE.md)의 오프라인 PCAP 검증은 패키지 검사, 실제 MCP provider, 전체 제품 승인과 구분해서 보고합니다.
 
 ## 이 저장소에 있는 것
 
@@ -30,11 +34,11 @@ powershell -File scripts\download-tools.ps1 -Apply
 
 ## AI 에이전트에게
 
-clone 후 로케일을 정하고 **해당 AGENTS를 먼저 읽으세요**. 질문한 뒤에 `bootstrap.ps1`을 실행합니다. 클라이언트 MCP는 `debugger-router`만. 백엔드 19개를 사용자 전역 MCP에 넣지 마세요.
+clone 후 로케일을 정하고 **해당 AGENTS를 먼저 읽으세요**. 질문한 뒤에 `bootstrap.ps1`을 실행합니다. 클라이언트 MCP는 `debugger-router`만. 백엔드 20개를 사용자 전역 MCP에 넣지 마세요.
 
 ## MCP
 
-기본은 가벼운 `debugger-router` 하나입니다. 필요한 백엔드 하나를 켜고 끝냅니다.
+기본은 가벼운 `debugger-router` 하나입니다.[설정 템플릿](mcp/.mcp.json.template)의 백엔드 20개 중 필요한 것을 시작하고 같은 `session_id`의 프로세스를 호출 사이에 재사용합니다. 유휴 시간 초과 또는 명시적인 종료로 회수합니다.[BOOTSTRAP](docs/BOOTSTRAP.md)은 실행 설정과 상위 컴포넌트의 개수를 구분합니다.
 
 ## 보안
 

@@ -1,7 +1,7 @@
 # EXPERT_PLAYBOOK.md — 逆向 / 恶意样本 / 安全分析实战手册
 
 > 场景驱动。每节 = 遇到什么 → 怎么下手 → 具体命令参数 → 组合拳 → 老手才知道的坑。
-> 路径相对安装根（本机 `<repo>`）。工具明细见 `TOOLS_INDEX.md`。Agent 第一页：`skills/debugger-workstation/references/triage.md`。
+> 路径相对安装根（本机 `<repo>`）。工具明细见 [TOOLS_INDEX.md](TOOLS_INDEX.md)。Agent 先读 [当前站点路由](../skills/2026-11-11/station-routers/debugger-workstation/SKILL.md)，本页 §0 提供分诊步骤。版本化命令是安装布局示例，运行前核对实际工具路径。
 
 ---
 
@@ -292,10 +292,10 @@ workflow_help                          # 内置工作流提示
 ```
 
 **要点**:
-- router 按需起后端并保活,空闲超时(默认 600s)自动回收,别手动把 19 个全拉起来。
+- router 按需起后端并保活,空闲超时(默认 600s)自动回收,别手动把 20 个全拉起来。
 - 需要持续直连(如整场 Ghidra 分析)才切 profile(`mcp-re` 等)。
 - 需 key 的后端(VirusTotal / MobSF / YaraFlux)先配好 `.env`,否则 smoke 就挂。
-- 真实分析类后端(Ghidra/IDA/ReClass/CE)必须先在对应 GUI 里开项目+加载插件,MCP 只是通道,不开 GUI 就是空连接。
+- GUI/bridge 型后端（如 Ghidra 插件、ReClass、CE）需对应 GUI 或 bridge 就绪；当前 IDA wrapper 走 `idalib-mcp --stdio`，不能套用 GUI 13337 的前置条件。逐项核对 wrapper 和实际 provider，握手成功不代表分析能力已验收。
 
 ---
 

@@ -34,6 +34,17 @@ It builds the APK, cross-checks the hand-built `.so` against pyelftools, runs th
 runs the 40-case Frida suite, cross-checks against **JADX and Apktool**, and runs five
 negative controls. Exit `0` means all of that held on this machine, in that run.
 
+| exit | meaning in `tools/loop.mjs` |
+|---|---|
+| 0 | every required check ran and held; the loop closed |
+| 2 | a stray argument was refused |
+| 6 | the APK build prerequisite failed; no downstream claim could be judged |
+| 8 | no check failed, but at least one required cross-check was skipped |
+| 9 | one or more executed checks were refuted |
+
+A skipped decoder is not independent corroboration, and a failed build is not a verdict
+about the APK analysis claims.
+
 ```
   PASS  build a real signed APK from source (javac + d8 + aapt2 + zipalign + apksigner)  25135 bytes
   PASS  AndroidManifest.xml is binary AXML, not text               magic 0x00080003, 3136 bytes

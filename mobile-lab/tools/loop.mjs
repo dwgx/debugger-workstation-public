@@ -11,7 +11,7 @@
  *
  *   node tools/loop.mjs [--skip-jadx] [--skip-apktool]
  *
- * Exit codes, three and not two, because "wrong" and "not run" are different facts:
+ * Exit codes: 0 closed; 2 usage; 6 build prerequisite; 8 incomplete; 9 refuted.
  *   0  every check ran and held
  *   8  nothing failed, but at least one cross-check was SKIPPED -- so this run has no
  *      independent corroboration of the manifest and the loop did NOT close
@@ -41,8 +41,8 @@ import { writeRunArtifact } from '../../scripts/probe_artifact.mjs';
 // The precedent is already in the tree and this follows it rather than inventing a second
 // convention: crackme-corpus/tools/loop.py uses argparse and rejects `unrecognized arguments`
 // with exit 2. The JS loops had no argument parser at all, which is the defect.
-const ALLOWED = new Set(['--json']);
-const extra = process.argv.slice(2).filter((a) => !ALLOWED.has(a) && !a.startsWith('--only='));
+const ALLOWED = new Set(['--json', '--skip-jadx', '--skip-apktool']);
+const extra = process.argv.slice(2).filter((a) => !ALLOWED.has(a));
 if (extra.length) {
   console.error(`loop: refusing an argument it would otherwise IGNORE: ${extra.join(' ')}`);
   console.error('  This is a regression suite over its own built fixtures. It has no --target.');
@@ -140,7 +140,7 @@ if (!built) {
   console.log('\nBuild failed; nothing downstream can be judged.');
   writeRunArtifact('mobile-lab', { checks: steps, outDir: 'mobile-lab/out',
     extra: { ok: false, exit_reason: 'failed' } });
-  process.exit(9);
+  process.exit(6);
 }
 
 /* The manifest must be real binary AXML, not a text file renamed .xml. */

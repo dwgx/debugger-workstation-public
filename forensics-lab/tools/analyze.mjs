@@ -290,6 +290,11 @@ function shaOf(img, off, len) {
 /* ------------------------------------------------------------------ cli */
 
 function main(argv) {
+  const jsonOutput = argv.includes('--json');
+  if (jsonOutput && argv.includes('--print-header')) {
+    console.error('analyze: --json and --print-header select different output objects; choose one');
+    return 2;
+  }
   const i = argv.indexOf('--target');
   const target = (i >= 0 ? argv[i + 1] : null) || path.join(process.env.TEMP || process.cwd(), 'd12-forensics-lab', 'target');
   // REFUSE CLEANLY, DO NOT THROW. Measured 2026-10-02: pointed at a PE this script raised an
@@ -323,6 +328,12 @@ function main(argv) {
       console.error(`analyze: --expect mismatch  missing=[${missing}] unexpected=[${extra}]`);
       return 4;
     }
+    if (!jsonOutput) return 0;
+  }
+  if (jsonOutput) {
+    // The mission consumes the complete object: ok, triage and the measured
+    // findings. --expect above remains a gate even when JSON output is requested.
+    console.log(JSON.stringify(r, null, 2));
     return 0;
   }
   const line = (c) => `  [${c.verdict.padEnd(11)}] ${c.tier.padEnd(9)} ${c.id}\n      ${c.verdictReason}\n      ${c.title}`;

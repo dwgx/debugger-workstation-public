@@ -36,6 +36,7 @@ from probe_artifact import write_artifact  # noqa: E402
 PCAP_MAGIC_LE = 0xA1B2C3D4
 PCAP_MAGIC_BE = 0xD4C3B2A1
 PCAP_MAGIC_NS_LE = 0xA1B23C4D
+PCAP_MAGIC_NS_BE = 0x4D3CB2A1
 LINKTYPE_ETHERNET = 1
 
 ETHERTYPE_IPV4, ETHERTYPE_IPV6, ETHERTYPE_VLAN = 0x0800, 0x86DD, 0x8100
@@ -66,12 +67,21 @@ def parse(path: str) -> dict:
         magic = struct.unpack("<I", gh[:4])[0]
         if magic in (PCAP_MAGIC_LE, PCAP_MAGIC_NS_LE):
             endian = "<"
-        elif magic in (PCAP_MAGIC_BE,):
+        elif magic in (PCAP_MAGIC_BE, PCAP_MAGIC_NS_BE):
             endian = ">"
         else:
-            die(2, f"not a pcap: magic 0x{magic:08x} is neither 0xa1b2c3d4 nor its byte-swapped twin",
+            die(2, f"not a pcap: unsupported magic 0x{magic:08x}; expected microsecond or nanosecond pcap in either byte order",
                 first_bytes=gh[:4].hex())
-        vmaj, vmin, _tz, _sig, snaplen, link = struct.unpack(endian + "HHiIII", gh[4:24])
+        vmaj, vmin, _tz, _sig, snaplen, link_word = struct.unpack(endian + "HHiIII", gh[4:24])
+        if (vmaj, vmin) != (2, 4):
+            die(2, f"unsupported pcap version {vmaj}.{vmin}; this reader implements version 2.4")
+        # pcap-savefile(5): only the low 16 bits are LINKTYPE. P plus the
+        # top nibble optionally describe the captured frame check sequence.
+        if link_word & 0x0BFF0000:
+            die(2, "pcap link-layer additional information has nonzero reserved bits",
+                linktype_word=link_word)
+        link = link_word & 0xFFFF
+        fcs_bytes = ((link_word >> 28) & 15) * 2 if link_word & 0x04000000 else None
         if link != LINKTYPE_ETHERNET:
             die(2, f"link type {link} is not Ethernet (1); this reader only decodes Ethernet frames "
                    f"and will not pretend otherwise", linktype=link)
@@ -87,6 +97,7 @@ def parse(path: str) -> dict:
         # rather than landing silently in `other_proto` -- which is what made two wrong
         # readings look like deliberate classifications.
         fragments_first = fragments_continuation = ipv6_ext_headers = 0
+        unparsed_network_headers = 0
         flows: dict[tuple, int] = {}
         ports: dict[int, int] = {}
         payload_bytes = 0
@@ -133,7 +144,12 @@ def parse(path: str) -> dict:
         if off + incl > n:
             die(2, f"packet {packets} claims {incl} bytes but only {n - off} remain: the capture is "
                    f"truncated mid-packet", packets=packets)
-        frame = data[off:off + incl]
+        if fcs_bytes is not None and orig < fcs_bytes:
+            die(2, f"packet {packets} is shorter than its declared FCS", packets=packets)
+        # In a snaplen-truncated record the FCS can be absent or only partly
+        # captured. Bound by the original frame's data extent, not incl - FCS.
+        data_length = min(incl, orig - fcs_bytes) if fcs_bytes is not None else incl
+        frame = data[off:off + data_length]
         off += incl
         packets += 1
         bytes_on_wire += orig
@@ -160,8 +176,13 @@ def parse(path: str) -> dict:
         sport = dport = None
         if etype == ETHERTYPE_IPV4 and len(frame) >= l3 + 20:
             ihl = (frame[l3] & 0x0F) * 4
-            if len(frame) < l3 + ihl:
+            total_length = struct.unpack(">H", frame[l3 + 2:l3 + 4])[0]
+            if frame[l3] >> 4 != 4 or ihl < 20 or total_length < ihl or len(frame) < l3 + ihl:
+                unparsed_network_headers += 1
                 continue
+            # Ethernet padding is outside the IP datagram. A snaplen-short capture
+            # may still expose complete headers, but bytes beyond total_length cannot.
+            packet_end = min(len(frame), l3 + total_length)
             ipv4 += 1
             proto = frame[l3 + 9]
             src = str(ipaddress.IPv4Address(frame[l3 + 12:l3 + 16]))
@@ -185,24 +206,13 @@ def parse(path: str) -> dict:
                 continue
             if more_frags:
                 fragments_first += 1
-            if proto == IPPROTO_UDP and len(frame) >= l4 + 8:
-                sport, dport = struct.unpack(">HH", frame[l4:l4 + 4])
-                udp += 1
-                if (sport == 53 or dport == 53) and len(frame) >= l4 + 10:
-                    # A DNS message is at least 12 bytes; bit 15 of the flags field marks a reply.
-                    dns_off = l4 + 8
-                    if len(frame) >= dns_off + 4:
-                        if struct.unpack(">H", frame[dns_off + 2:dns_off + 4])[0] & 0x8000:
-                            dns_responses += 1
-                        else:
-                            dns_queries += 1
-            elif proto == IPPROTO_TCP and len(frame) >= l4 + 4:
-                sport, dport = struct.unpack(">HH", frame[l4:l4 + 4])
-                tcp += 1
-            else:
-                other_proto += 1
         elif etype == ETHERTYPE_IPV6 and len(frame) >= l3 + 40:
+            if frame[l3] >> 4 != 6:
+                unparsed_network_headers += 1
+                continue
             ipv6 += 1
+            payload_length = struct.unpack(">H", frame[l3 + 4:l3 + 6])[0]
+            packet_end = min(len(frame), l3 + 40 + payload_length)
             proto = frame[l3 + 6]
             src = str(ipaddress.IPv6Address(frame[l3 + 8:l3 + 24]))
             dst = str(ipaddress.IPv6Address(frame[l3 + 24:l3 + 40]))
@@ -218,48 +228,89 @@ def parse(path: str) -> dict:
             # (Payload Len + 2) * 4. An unrecognised or truncated header stops the walk and the
             # frame is counted as `other_proto` -- never guessed at.
             l4, nxt, walked = l3 + 40, frame[l3 + 6], 0
+            continuation = False
             while nxt in IPV6_EXT_HEADERS and walked < 8:
-                if nxt == IPPROTO_AH:
-                    if len(frame) < l4 + 2:
+                if nxt == 44:
+                    # RFC 8200 section 4.5: fixed eight bytes, not Hdr Ext Len.
+                    # The second octet is reserved and must be ignored on reception.
+                    step = 8
+                    if packet_end < l4 + step:
+                        break
+                    fragment_word = struct.unpack(">H", frame[l4 + 2:l4 + 4])[0]
+                    if fragment_word >> 3:
+                        fragments_continuation += 1
+                        continuation = True
+                    elif fragment_word & 1:
+                        fragments_first += 1
+                elif nxt == IPPROTO_AH:
+                    if packet_end < l4 + 2:
                         break
                     step = (frame[l4 + 1] + 2) * 4
                 else:
-                    if len(frame) < l4 + 2:
+                    if packet_end < l4 + 2:
                         break
                     step = (frame[l4 + 1] + 1) * 8
-                if step <= 0 or len(frame) < l4 + step:
+                if step <= 0 or packet_end < l4 + step:
                     break
                 nxt, l4, walked = frame[l4], l4 + step, walked + 1
                 ipv6_ext_headers += 1
-            if nxt != frame[l3 + 6]:
-                proto = nxt
-            if proto == IPPROTO_UDP and len(frame) >= l4 + 8:
+                if continuation:
+                    break
+            if continuation:
+                other_proto += 1
+                continue
+            proto = nxt
+        else:
+            if etype in (ETHERTYPE_IPV4, ETHERTYPE_IPV6):
+                unparsed_network_headers += 1
+            continue
+
+        # Transport parsing uses the tighter of capture, IP and UDP boundaries.
+        # DNS counters identify a complete 12-byte header on port 53; they do not
+        # validate questions, records, checksums, names, or a reassembled message.
+        if proto == IPPROTO_UDP and packet_end >= l4 + 8:
+            udp_length = struct.unpack(">H", frame[l4 + 4:l4 + 6])[0]
+            if udp_length >= 8:
                 sport, dport = struct.unpack(">HH", frame[l4:l4 + 4])
                 udp += 1
-                if (sport == 53 or dport == 53) and len(frame) >= l4 + 10:
+                udp_end = min(packet_end, l4 + udp_length)
+                if (sport == 53 or dport == 53) and udp_end >= l4 + 8 + 12:
                     dns_off = l4 + 8
-                    if len(frame) >= dns_off + 4:
-                        if struct.unpack(">H", frame[dns_off + 2:dns_off + 4])[0] & 0x8000:
-                            dns_responses += 1
-                        else:
-                            dns_queries += 1
-            elif proto == IPPROTO_TCP and len(frame) >= l4 + 4:
+                    if struct.unpack(">H", frame[dns_off + 2:dns_off + 4])[0] & 0x8000:
+                        dns_responses += 1
+                    else:
+                        dns_queries += 1
+            else:
+                unparsed_network_headers += 1
+                other_proto += 1
+        elif proto == IPPROTO_TCP and packet_end >= l4 + 20:
+            tcp_header_length = (frame[l4 + 12] >> 4) * 4
+            if tcp_header_length >= 20 and packet_end >= l4 + tcp_header_length:
                 sport, dport = struct.unpack(">HH", frame[l4:l4 + 4])
                 tcp += 1
             else:
+                unparsed_network_headers += 1
                 other_proto += 1
         else:
-            continue
+            other_proto += 1
+            if proto in (IPPROTO_TCP, IPPROTO_UDP) or proto in IPV6_EXT_HEADERS:
+                unparsed_network_headers += 1
 
         if src is not None:
             flows[(src, dst, proto)] = flows.get((src, dst, proto), 0) + 1
         for pt in (sport, dport):
-            if pt:
+            if pt is not None:
                 ports[pt] = ports.get(pt, 0) + 1
+
+    if off != n:
+        die(2, f"{n - off} trailing bytes form an incomplete 16-byte packet record header",
+            packets=packets, trailing_bytes=n - off)
 
     return {
         "ok": True, "exit": 0, "file": path,
         "pcap": {"version": f"{vmaj}.{vmin}", "snaplen": snaplen, "linktype": link,
+                 "linktype_word": link_word, "fcs_bytes": fcs_bytes,
+                 "timestamp_resolution": "nanoseconds" if magic in (PCAP_MAGIC_NS_LE, PCAP_MAGIC_NS_BE) else "microseconds",
                  "endian": "little" if endian == "<" else "big"},
         "packets": packets, "bytes_on_wire": bytes_on_wire, "captured_bytes": payload_bytes,
         "frames_over_snaplen": truncated,
@@ -271,9 +322,12 @@ def parse(path: str) -> dict:
         "fragments_first": fragments_first,
         "fragments_continuation": fragments_continuation,
         "ipv6_ext_headers": ipv6_ext_headers,
+        "unparsed_network_headers": unparsed_network_headers,
         "distinct_flows": len(flows),
         "top_ports": sorted(((c, p) for p, c in ports.items()), reverse=True)[:6],
-        "limits": ("NO REASSEMBLY AND NO TLS. A DNS name split across packets, or any encrypted "
+        "limits": ("NO REASSEMBLY, TLS, CHECKSUM VALIDATION, OR IPV6 JUMBOGRAMS. DNS counters require "
+                   "a complete header on UDP port 53 but do not validate the question or record sections. "
+                   "A DNS name split across packets, or any encrypted "
                    "payload, is not decoded here -- this reader counts what it can see and reports "
                    "the rest as a limit rather than as an absence. Agreement with TShark on the "
                    "counts is corroboration of the COUNTS only; it says nothing about names, and "
