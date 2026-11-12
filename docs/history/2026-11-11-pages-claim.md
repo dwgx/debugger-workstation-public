@@ -6,7 +6,7 @@ These are the superseded current-state claims, kept verbatim. The single current
 
 ## README.md:15 — claimed "enabled 2026-11-11"
 
-> 6. **GitHub Pages (enabled 2026-11-11):** the site root is the repository root [`index.html`](index.html) — a static, self-contained EN+中文 front page linking the release report, skills and AI entry. Source path `/` on `main`. Rendering is a GitHub-side build; this file is the source, not a claim that every link resolves inside the Pages sandbox.
+> 6. **GitHub Pages (enabled 2026-11-11):** the site root is the repository root `index.html` — a static, self-contained EN+中文 front page linking the release report, skills and AI entry. Source path `/` on `main`. Rendering is a GitHub-side build; this file is the source, not a claim that every link resolves inside the Pages sandbox.
 
 ## index.html:148-151 — claimed "not enabled"
 
@@ -26,7 +26,7 @@ These are the superseded current-state claims, kept verbatim. The single current
 ## RELEASE.md:24-26 — claimed "not enabled"
 
 > The website content source for GitHub Pages lives in
-> [`docs/site/index.html`](docs/site/index.html). **GitHub Pages is not enabled** in
+> `docs/site/index.html`. **GitHub Pages is not enabled** in
 > this repository; the source is prepared, nothing is served.
 
 ## CHANGELOG.md:8-12 — claimed "not enabled"
@@ -39,7 +39,7 @@ These are the superseded current-state claims, kept verbatim. The single current
 
 ## APPEND 2026-11-12 — README.md line 15 at final60 adoption (superseded by this wave)
 
-> 6. **Static front page:** the repository-root [`index.html`](index.html) is the current EN+中文 source. The older [`docs/site/index.html`](docs/site/index.html) is a frozen 2026-11-11 frontage snapshot. Deployment status and the served URL require a separate check.
+> 6. **Static front page:** the repository-root `index.html` is the current EN+中文 source. The older `docs/site/index.html` is a frozen 2026-11-11 frontage snapshot. Deployment status and the served URL require a separate check.
 
 ## APPEND 2026-11-12 — README.md tracked-file sentence at final60 adoption (superseded by this wave)
 
