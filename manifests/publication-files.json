@@ -549,6 +549,11 @@
       "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
     },
     {
+      "path": "docs/APK_ROUNDTRIP.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "authored selected build/decode live MCP demo scope, 2026-11-20"
+    },
+    {
       "path": "docs/BOOTSTRAP.md",
       "license": "CC-BY-SA-4.0",
       "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
@@ -582,6 +587,11 @@
       "path": "docs/EXPERT_PLAYBOOK.md",
       "license": "CC-BY-SA-4.0",
       "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/FIRST-SUCCESS.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "authored offline demo quickstart with explicit bounded scope, 2026-11-20"
     },
     {
       "path": "docs/I18N.md",
@@ -3384,6 +3394,11 @@
       "provenance": "reviewed publication increment 2026-11-19"
     },
     {
+      "path": "scripts/first-success.py",
+      "license": "MIT",
+      "provenance": "authored provider-free PCAP run controller with hash-pinned argv, 2026-11-20"
+    },
+    {
       "path": "scripts/floss-agent.ps1",
       "license": "MIT",
       "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
@@ -3634,6 +3649,11 @@
       "provenance": "authored bounded tool laboratory source and controlled regression tests, reviewed 2026-11-19"
     },
     {
+      "path": "scripts/tool_lab/apk_oracles.py",
+      "license": "MIT",
+      "provenance": "authored benign APK fixture facts and independent offline oracles, 2026-11-20"
+    },
+    {
       "path": "scripts/tool_lab/catalog.py",
       "license": "MIT",
       "provenance": "authored bounded tool laboratory source and controlled regression tests, reviewed 2026-11-19"
@@ -3702,6 +3722,11 @@
       "path": "scripts/tool_lab/raw_mcp.py",
       "license": "MIT",
       "provenance": "authored bounded tool laboratory source and controlled regression tests, reviewed 2026-11-19"
+    },
+    {
+      "path": "scripts/tool_lab/run_apk_roundtrip.py",
+      "license": "MIT",
+      "provenance": "bounded original-wrapper fixture runner with strict per-attempt result ownership, 2026-11-20"
     },
     {
       "path": "scripts/tool_lab/run_apktool.py",
@@ -4067,6 +4092,16 @@
       "path": "tests/runner_evidence/test_runner_evidence.py",
       "license": "MIT",
       "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "tests/test_apk_roundtrip.py",
+      "license": "MIT",
+      "provenance": "authored fixture/corruption/refusal contract tests (no provider), 2026-11-20"
+    },
+    {
+      "path": "tests/test_first_success.py",
+      "license": "MIT",
+      "provenance": "authored Windows/Linux true product-run and tamper controls, 2026-11-20"
     },
     {
       "path": "tests/test_smoke_tools.py",

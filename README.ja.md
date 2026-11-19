@@ -4,7 +4,7 @@
 [English](README.md) · [简体中文](README.zh-CN.md) · **日本語** · [한국어](README.ko.md)
 <!-- I18N:END -->
 
-[Reproducible tool labs](docs/TOOL_LAB.md) · [Tool inventory and version probes](docs/TOOL_SMOKE.md) · [Public source releases](https://github.com/dwgx/debugger-workstation-public/releases)
+[One-command first success](docs/FIRST-SUCCESS.md) · [Reproducible tool labs](docs/TOOL_LAB.md) · [Tool inventory and version probes](docs/TOOL_SMOKE.md) · [Public source releases](https://github.com/dwgx/debugger-workstation-public/releases)
 
 ポータブルなリバースエンジニアリング / セキュリティ分析 / デバッグ / 展開 / モバイル分析 / パケットキャプチャ / システム検査 / MCP 自動化のための**雛形リポジトリ**です。
 

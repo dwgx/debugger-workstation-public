@@ -2,6 +2,8 @@
 
 Snapshot: 2026-11-19. This is a bounded fixture audit, not a certification of arbitrary targets or every tool in the station.
 
+**Increment, 2026-11-20 JST:** The original APKTool wrapper has additionally passed a self-authored positive `build_apk` → `decode_apk` roundtrip with independent bytes/semantics and explicit negative controls. See [APK_ROUNDTRIP.md](APK_ROUNDTRIP.md). The table below is a frozen earlier 142-call snapshot; this incremental run is **not** silently merged into that denominator. It is one additional selected version/environment observation, not arbitrary-APK acceptance.
+
 The registry contains **20 backends**. Actual runtime catalogs were observed for **10 backends / 331 methods**. The other backends have **408 unique source-declared names at 410 declaration sites**; their complete runtime catalogs are unknown. Source declarations do not establish successful startup or a working tool call.
 
 The selected current original-wrapper evidence contains **142 calls across 101 unique backend/method pairs**. A separate historical APK source-entry run contains 17 calls. Those calls are not added to original-wrapper coverage.

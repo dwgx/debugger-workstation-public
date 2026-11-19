@@ -8,6 +8,10 @@ How `-Apply` turns this skeleton into a station. Dry-run is the default.
 Read [`AGENTS.md`](../AGENTS.md) first; use the install root and scope already
 agreed with the clone owner.
 
+## First verified result (no third-party backend)
+
+For a beginner, [run this one-command demo first](FIRST-SUCCESS.md). It uses an authored PCAP and the existing strict CLI product verifier, without installing the workstation or configuring an MCP backend. Its `PROFILE_PASS` covers only that parser fixture.
+
 ## Public quickstart
 
 Use a Windows PowerShell 5.1 or PowerShell 7 prompt with Git and Python available.

@@ -4,7 +4,7 @@
 [English](README.md) · **简体中文** · [日本語](README.ja.md) · [한국어](README.ko.md)
 <!-- I18N:END -->
 
-[Reproducible tool labs](docs/TOOL_LAB.md) · [Tool inventory and version probes](docs/TOOL_SMOKE.md) · [Public source releases](https://github.com/dwgx/debugger-workstation-public/releases)
+[一键首次成功：离线 PCAP Demo](docs/FIRST-SUCCESS.md) · [APKTool 构建反编译闭环](docs/APK_ROUNDTRIP.md) · [Reproducible tool labs](docs/TOOL_LAB.md) · [Tool inventory and version probes](docs/TOOL_SMOKE.md) · [Public source releases](https://github.com/dwgx/debugger-workstation-public/releases)
 
 ## 从这里开始
 

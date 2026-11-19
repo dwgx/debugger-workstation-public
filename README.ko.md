@@ -4,7 +4,7 @@
 [English](README.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · **한국어**
 <!-- I18N:END -->
 
-[Reproducible tool labs](docs/TOOL_LAB.md) · [Tool inventory and version probes](docs/TOOL_SMOKE.md) · [Public source releases](https://github.com/dwgx/debugger-workstation-public/releases)
+[One-command first success](docs/FIRST-SUCCESS.md) · [Reproducible tool labs](docs/TOOL_LAB.md) · [Tool inventory and version probes](docs/TOOL_SMOKE.md) · [Public source releases](https://github.com/dwgx/debugger-workstation-public/releases)
 
 휴대용 리버스 엔지니어링 / 보안 분석 / 디버깅 / 언팩 / 모바일 분석 / 패킷 캡처 / 시스템 점검 / MCP 자동화를 위한 **뼈대 저장소**입니다.
 
