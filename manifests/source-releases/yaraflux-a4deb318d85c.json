@@ -1,0 +1,848 @@
+{
+  "schema": "workstation-preserved-source/v1",
+  "project": "ThreatFlux/YaraFlux",
+  "version": "1.0.17",
+  "origin": "https://github.com/ThreatFlux/YaraFlux.git",
+  "revision": "a4deb318d85cd2febe8b87695008444ee294dee7",
+  "is_shallow_repository": true,
+  "license": "MIT",
+  "license_sha256": "6640cd91be1596395264bf0968e46fd44d292713a6c90adc38a7b3525c977746",
+  "source_files": [
+    {
+      "path": ".dockerignore",
+      "git_object": "80f7f2c2204b73718a1211fc4fc8541aff5551db",
+      "mode": "100644",
+      "bytes": 372,
+      "sha256": "8aabb49bb9ad66b8149d25d1f5709d0ff52e15a0eb6a4550743e9bf2a0a72313"
+    },
+    {
+      "path": ".env.example",
+      "git_object": "c7a9c5c7bf7f6aa1278a974c0d042ed644286626",
+      "mode": "100644",
+      "bytes": 435,
+      "sha256": "01ef2a9f2fc431b1aefa8a9f18895f65b4ec31a5bec88de9a61aba18142b9313"
+    },
+    {
+      "path": ".github/dependabot.yml",
+      "git_object": "497a71e3af7ff6c7ee0e8586cd67b747707608d5",
+      "mode": "100644",
+      "bytes": 522,
+      "sha256": "67584da95261f726b747fb97e3e1d10302bfe1ca94f99f8d3d1c021bfa9096c6"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "git_object": "3c946cca4a43e16cea6d38f2529f3af3f44f3e43",
+      "mode": "100644",
+      "bytes": 2205,
+      "sha256": "18a84257c8dfcb087f691159a1d1fdccf0fd8abfa880d4f85c15fca07b68a939"
+    },
+    {
+      "path": ".github/workflows/codeql.yml",
+      "git_object": "3586d85e8609701b53d50a79a47e5d6743a3dae5",
+      "mode": "100644",
+      "bytes": 4664,
+      "sha256": "4e31f5254eb79bbcb827b726b8b6d9dd7e14b2143341de988d873264623cbc89"
+    },
+    {
+      "path": ".github/workflows/publish-release.yml",
+      "git_object": "29c2b3786295757a89703a30561fe92f54b39647",
+      "mode": "100644",
+      "bytes": 4231,
+      "sha256": "c66bdc5f152929181509061d9d5ddfe655c56b0ef6f1d2a2a4502c419a7d6fef"
+    },
+    {
+      "path": ".github/workflows/safety_scan.yml",
+      "git_object": "90bde7fc2cb9e3061140c8997fe5790f0ecd6f0d",
+      "mode": "100644",
+      "bytes": 5389,
+      "sha256": "a5393d8afe091c98ebc580941bcd919c1dc17b3e433259bddf617c2507423c16"
+    },
+    {
+      "path": ".github/workflows/update-actions.yml",
+      "git_object": "0b888c2c44e7f2c8d857286e089525e3b188aaa9",
+      "mode": "100644",
+      "bytes": 850,
+      "sha256": "2895a0f6724b44dadec6021834c04033a6fee255b5e1e3f9c74c36d23afd5cf0"
+    },
+    {
+      "path": ".github/workflows/version-bump.yml",
+      "git_object": "07409831b7de2d9d8e8b7ff32e74117d5a32b275",
+      "mode": "100644",
+      "bytes": 2771,
+      "sha256": "2221510bd0796efdfa931c50d3382818c06b0e6dfee58e99ba814615236e0955"
+    },
+    {
+      "path": ".gitignore",
+      "git_object": "71faaf80723061771433c63c3fc69d3a48a84795",
+      "mode": "100644",
+      "bytes": 1239,
+      "sha256": "6484619f5c32bdf35afeb97307c114ff808625ce73fbd1ea597220a8e34530fc"
+    },
+    {
+      "path": ".pylintrc",
+      "git_object": "98a00e9cd98819613584a8067a1d8ef21ff7c151",
+      "mode": "100644",
+      "bytes": 4655,
+      "sha256": "683598d9c9efc7e07f5f00cc0804f191c59fa3d7c9210f7df9dc5c65742d59da"
+    },
+    {
+      "path": ".safety-project.ini",
+      "git_object": "cb7bfb90b2e35df74aa66ebd2bfca0e24f3300e3",
+      "mode": "100644",
+      "bytes": 103,
+      "sha256": "ac9e46f5a0a8f6e77c7d917451969287c00e77fd4d848becf6905920da1d5a8e"
+    },
+    {
+      "path": "Dockerfile",
+      "git_object": "9efd68e130f88f27e3c07065cf92c64f7c3110e1",
+      "mode": "100644",
+      "bytes": 3822,
+      "sha256": "c521992b99bed8c6ae0d5be152411a1145eb29face0acaab2c03dd424e134ccf"
+    },
+    {
+      "path": "LICENSE",
+      "git_object": "97b3ee37a0b9d66a3aee4311d08bf89dfb694c99",
+      "mode": "100644",
+      "bytes": 1067,
+      "sha256": "6640cd91be1596395264bf0968e46fd44d292713a6c90adc38a7b3525c977746"
+    },
+    {
+      "path": "Makefile",
+      "git_object": "54fdee1129addb1449b783f188c7e9da8f6c57e5",
+      "mode": "100644",
+      "bytes": 15239,
+      "sha256": "d56765050cfdea162df77e97cd5e8af5d4cadb728b513b047a6b385d4061a687"
+    },
+    {
+      "path": "README.md",
+      "git_object": "d4161196f23958ec3cc776ca93b1e80ebc7a0bec",
+      "mode": "100644",
+      "bytes": 14426,
+      "sha256": "fbfc54380d7430a0a75b032c1bc9e90b961094469f9506e6fe4eb575f709940a"
+    },
+    {
+      "path": "SECURITY.md",
+      "git_object": "034e848032092eaf8ef96eac731b6ed5961987f3",
+      "mode": "100644",
+      "bytes": 619,
+      "sha256": "ba9643955bfcb04524a6fe5a8c2929b54abc2e67bb3480ce806e742d506e4dc9"
+    },
+    {
+      "path": "bandit.yaml",
+      "git_object": "cd8aff9d890ff8e67ab5df32682f5afcf7052bb9",
+      "mode": "100644",
+      "bytes": 2631,
+      "sha256": "02c09000fcdee472ef81d96ea39d533cf27464d77c9b022726b50b8a0798a45c"
+    },
+    {
+      "path": "codecov.yml",
+      "git_object": "f03a34ce903b6a774dfc19f68695ec4ce37d2b25",
+      "mode": "100644",
+      "bytes": 54,
+      "sha256": "7ae0693183e02d839b4e563e08603b614b3fe35d3e6886b747cf492e79b70331"
+    },
+    {
+      "path": "docker-compose.yml",
+      "git_object": "f1934dd9023074f3841b90d7f793179c47c97dd8",
+      "mode": "100644",
+      "bytes": 759,
+      "sha256": "0380e1ea44073f12107bd9cf086a1e2cb5669d9381b965d36de1e7d8a80bddbc"
+    },
+    {
+      "path": "docker-entrypoint.sh",
+      "git_object": "120c2ced65ce2317ade43876db49162e656c0b3c",
+      "mode": "100644",
+      "bytes": 1569,
+      "sha256": "e70f966263c3f391247612b90ce916eab9364ee7298b7455b0f2459135c8b207"
+    },
+    {
+      "path": "docs/README.md",
+      "git_object": "fbafebae75cc6c8984f9c529caef986566ff2b1c",
+      "mode": "100644",
+      "bytes": 7696,
+      "sha256": "73a3a68174f6d186c466548e0907835654b00160d42ed74c12e08af0979b8c2a"
+    },
+    {
+      "path": "docs/api.md",
+      "git_object": "c55401288b1b2e6bc295509d9524d2cb7f540d21",
+      "mode": "100644",
+      "bytes": 4480,
+      "sha256": "a4c5a8927bd32b1e97f89719ae41c9e34e49911b21f05d78ca7341ddf5345a66"
+    },
+    {
+      "path": "docs/api_mcp_architecture.md",
+      "git_object": "d331334a354823be3a682785218df54dc40368bc",
+      "mode": "100644",
+      "bytes": 4687,
+      "sha256": "d0a6dc7dad1e673d70f55d0ffd6ec1db9a5e6672f226c49d307be526941219b8"
+    },
+    {
+      "path": "docs/architecture_diagram.md",
+      "git_object": "de835a083d5a4749fe4fef566854bf6944532c97",
+      "mode": "100644",
+      "bytes": 4197,
+      "sha256": "f075839619d20ec328544ef7329c9f6a8945d348ed241f9a0a5fac56dd946fbf"
+    },
+    {
+      "path": "docs/cli.md",
+      "git_object": "69204ee5ccea9b177cd3d56cba05b828177ba8b2",
+      "mode": "100644",
+      "bytes": 3410,
+      "sha256": "f7083b2e4b4cea4d6353e83625963f1120e67389d7e253998801e0de7dac9276"
+    },
+    {
+      "path": "docs/examples.md",
+      "git_object": "6da8edb9566265b743ed44128211fe7c62d802a6",
+      "mode": "100644",
+      "bytes": 8261,
+      "sha256": "7b47ccc31566f6b921be860c0b5f6559d4603e5e88528a5ab7732b3ea72337e9"
+    },
+    {
+      "path": "docs/file_management.md",
+      "git_object": "0e9427391597476e0a1e1b6da7b130188fec448d",
+      "mode": "100644",
+      "bytes": 4362,
+      "sha256": "4c639b32b761c63a201a9b87ca49e2a1b4aa5e199080f46e08bb2f642f161f05"
+    },
+    {
+      "path": "docs/installation.md",
+      "git_object": "47ca25c926a6a51f7c03581a52ce4188e209347d",
+      "mode": "100644",
+      "bytes": 2990,
+      "sha256": "cdb9d7142cf1fd25b1198ccf69966cd2f93dbf82cc7b5fbfe0bf75f9993b21ab"
+    },
+    {
+      "path": "docs/mcp.md",
+      "git_object": "fd995086cf150996f89e3ee7b2657cabe6ad6b6e",
+      "mode": "100644",
+      "bytes": 9197,
+      "sha256": "58d2ac5fc192333129a6cae80815ae28fbf0ee831f18ba2d19679bb647c7d5c8"
+    },
+    {
+      "path": "docs/yara_rules.md",
+      "git_object": "0ed85e270044ab9f3e28de448ef2b10eedcac73a",
+      "mode": "100644",
+      "bytes": 4746,
+      "sha256": "510b089e9615e7beedbb36f6ab52d102ad41cd7917ee44c39a9582e73461c8bb"
+    },
+    {
+      "path": "entrypoint.sh",
+      "git_object": "0bd2a0edcb514f2527f177e4da7c3c0a16441c5b",
+      "mode": "100644",
+      "bytes": 531,
+      "sha256": "b728b144ab9c6e57f22af42fd94421f649d97fd597b7be21b686d307ab504b19"
+    },
+    {
+      "path": "examples/claude_desktop_config.json",
+      "git_object": "57c957a056025b4677d5bfdc2046c59ee6158baf",
+      "mode": "100644",
+      "bytes": 996,
+      "sha256": "7cb94837c57fcb476e13313f58148d03b9b440d001bccbc03ee5038d5d6b004e"
+    },
+    {
+      "path": "examples/install_via_smithery.sh",
+      "git_object": "bdcdedc03200ccc9f0e56f5121969a3fd58238c9",
+      "mode": "100644",
+      "bytes": 693,
+      "sha256": "b7227b7420692f289f66afe8e3fa561a41ac435bfbe3d83581fe6f88d5f93a9a"
+    },
+    {
+      "path": "glama.json",
+      "git_object": "89f17207e177b27bbd4548d7508b3b81afe7aa90",
+      "mode": "100644",
+      "bytes": 99,
+      "sha256": "dfe3d3fa2366790cd2addc636eb9c1ea3ee4635550a00bf837d1a8389d49b780"
+    },
+    {
+      "path": "images/architecture.svg",
+      "git_object": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "mode": "100644",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "images/architecture.txt",
+      "git_object": "442fb3f31c9b254f112a7a4804d30339fb1f4f10",
+      "mode": "100644",
+      "bytes": 1157,
+      "sha256": "df53c9eca1a54abce14295dc5fce67eadeb4ddad20682d8f0976a736111d378c"
+    },
+    {
+      "path": "mypy.ini",
+      "git_object": "4ac9d7c3abe8c11b06202a91c55ae8624d311c38",
+      "mode": "100644",
+      "bytes": 490,
+      "sha256": "41541b8ae836a0f5b524b3866cbfd3de245b849b98bbad929a82e7f28e38574d"
+    },
+    {
+      "path": "pyproject.toml",
+      "git_object": "c8779d1641d1c2b073dc75dc632569a389b9ba30",
+      "mode": "100644",
+      "bytes": 2222,
+      "sha256": "d57e7bcd08267ec692654dd7cf1c8f8abbe4e49eb288114d2ee58576c4f2c8fa"
+    },
+    {
+      "path": "pytest.ini",
+      "git_object": "c5d7b29d063876562545289363a70fe77faf326d",
+      "mode": "100644",
+      "bytes": 233,
+      "sha256": "b51e820ba2d359a9cffba546bbb1413116918e06bbd0016473cb6119d91e8b7e"
+    },
+    {
+      "path": "requirements-dev-lock.txt",
+      "git_object": "71a629460dceb2d1cc1602738c0882d320b6b161",
+      "mode": "100644",
+      "bytes": 144165,
+      "sha256": "4814fe9b98cde116d2d713bdbc9a26b97e987374577229fd81cf7faa7280d151"
+    },
+    {
+      "path": "requirements-lock.txt",
+      "git_object": "188b328c6bc9153065f655bea540c5cebfe30a54",
+      "mode": "100644",
+      "bytes": 96781,
+      "sha256": "c872b2b6d82f6b57e045c3fd0f4d18e4b53c9ed1c4d54e9e0a9a3aa5dce035e9"
+    },
+    {
+      "path": "requirements.txt",
+      "git_object": "6754107fc2429948a6e768a6eeb9f7e4265cc646",
+      "mode": "100644",
+      "bytes": 294,
+      "sha256": "0e7e22903af94de3de1b0d6cac1e44d8d018423c64bddde374097bd9903c78c6"
+    },
+    {
+      "path": "setup.py",
+      "git_object": "e7cd82edf3a5326e32ac3a3b3b36ea44700da6fb",
+      "mode": "100644",
+      "bytes": 136,
+      "sha256": "17a90d9ec81118df8b3fb0a12cd089fc287d1d8e5fb81dd2d67a13b4a98360c4"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/__init__.py",
+      "git_object": "982459f59ea030e705a87d423eb5b987202b80de",
+      "mode": "100644",
+      "bytes": 269,
+      "sha256": "8268e899d8df993e9cfcced36cec1195f05987706a2890725490a06fd8b9b676"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/__main__.py",
+      "git_object": "7fcc0d2c7ca830ddb3c7dfff5d3ef24559ff085a",
+      "mode": "100644",
+      "bytes": 2762,
+      "sha256": "a03042fdd3040a5281a2dae85203dbd65217bf2decc53bc5d9af85e1e45e0cff"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/app.py",
+      "git_object": "9bf9508446318aa6be9513e6d2dbfe094d6b2df5",
+      "mode": "100644",
+      "bytes": 5388,
+      "sha256": "cb106070a79d3662b093ee65995fcccc5a6c42990801bd928e4c1d727c9de22e"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/auth.py",
+      "git_object": "3d2240d0dffad72b991d59266314e398c0616da1",
+      "mode": "100644",
+      "bytes": 10192,
+      "sha256": "010e26c85801e08a8ba04f61d1961f2b586054eb7066ab5fc4995b3cccb0b53c"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/claude_mcp.py",
+      "git_object": "bfc85af158826f22ce153d2bc6bf266fdcda641b",
+      "mode": "100644",
+      "bytes": 1295,
+      "sha256": "9926ebaf9dc5f09c591de8289a9aaa18ac1d19d677425aace7378077abebd47d"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/claude_mcp_tools.py",
+      "git_object": "dedcb9805f28968cc8ffec8cdfd236695e677ec5",
+      "mode": "100644",
+      "bytes": 1493,
+      "sha256": "a8e68c42f70d895093958f6a9b1c2912d46b8711aa2fcd7755b0724dace923a2"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/config.py",
+      "git_object": "824ceb8a95f41ead87589d7bebc99d0d8a7becd8",
+      "mode": "100644",
+      "bytes": 4045,
+      "sha256": "058c1b14003c689b849c9eddde23f76f709b8ad195e5288a1661587dd79fb024"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/mcp_server.py",
+      "git_object": "448eeb03be2e2351449f6e3f9946336143c92d85",
+      "mode": "100644",
+      "bytes": 10930,
+      "sha256": "29265e191526cdb53feb6ef9ebbb8d319991086639ab281fd74a80dce993ef13"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/mcp_tools/__init__.py",
+      "git_object": "85fde1863bea843a32805e74cb9358237f2953ae",
+      "mode": "100644",
+      "bytes": 3767,
+      "sha256": "ced578fa09adbd58184fe45d2f0ea2ac15bfd29ab4bc3359db839cfcea271fb9"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/mcp_tools/base.py",
+      "git_object": "1c3c3be6da85d7a753e3eace53cd4ec5832cf908",
+      "mode": "100644",
+      "bytes": 5252,
+      "sha256": "1d0756be3377b6cfec22d66ea2edcc21c3a4c23b9003469dc7a04b466d9108cf"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/mcp_tools/file_tools.py",
+      "git_object": "843ed994442e3d98de040a39b5562c21cfc861a3",
+      "mode": "100644",
+      "bytes": 15262,
+      "sha256": "bd6e3422051a031b5f1f33ab7a0279f2a11a5bb5607663b4673b2f74282fd94a"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/mcp_tools/rule_tools.py",
+      "git_object": "16bd03a9c1a2d17536927a8f4a05cbbac2fa854f",
+      "mode": "100644",
+      "bytes": 17661,
+      "sha256": "af590be9d44648e808373a018b4dd1bf3df7c2bfca2c61993d835cff630c4c7b"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/mcp_tools/scan_tools.py",
+      "git_object": "0ea6818cabc9d843a6f36e74dec86d66bedc601a",
+      "mode": "100644",
+      "bytes": 8007,
+      "sha256": "8673dd5b4aa73cc78106b02998c30596d49f1f21138c4fa2ec139eb6dbbd95e1"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/mcp_tools/storage_tools.py",
+      "git_object": "21baf7806c9c5a94e8a791df3566fd85ae6937a7",
+      "mode": "100644",
+      "bytes": 10453,
+      "sha256": "5183b007d1a69466a9956e3ef4ec38cd0bf01ffe8e0a55560e9fec24472f689e"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/models.py",
+      "git_object": "001ac879875e24dccab6d0f2c7c093d79c369b57",
+      "mode": "100644",
+      "bytes": 6068,
+      "sha256": "40fd4b46dabfc90fb5624fe3d451d43c76c9996f61361ee6796242fb834aad55"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/routers/__init__.py",
+      "git_object": "e495e59f34df868e6e034ce89504730df43b170e",
+      "mode": "100644",
+      "bytes": 390,
+      "sha256": "78d8bd83a7d64a5b0f41b1e114ec434da5f22b673af10b88c896fb910b2fef32"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/routers/auth.py",
+      "git_object": "08f25cf61bdd356c19831cf5ef0a162db0d78cfe",
+      "mode": "100644",
+      "bytes": 5271,
+      "sha256": "321a70da1a628d35d2a662b47f498b111355055bc86d1b403e5387fb2df97dc1"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/routers/files.py",
+      "git_object": "b6172ebbe08aed3d1c01dbf4debee7615001980e",
+      "mode": "100644",
+      "bytes": 11673,
+      "sha256": "259debbee5d348d3da4889ef3ded329f2d5bdb782176a63ff4d9297b3ea85010"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/routers/rules.py",
+      "git_object": "6e07abdf7672ab5010c597de248821c225d263b7",
+      "mode": "100644",
+      "bytes": 14492,
+      "sha256": "f7c7b14a20b28d9b5b187999e1700095a6296944cacf484bbecac75dd3403e42"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/routers/scan.py",
+      "git_object": "3816523e078d1cbba279c61b06dc7236c770508f",
+      "mode": "100644",
+      "bytes": 4755,
+      "sha256": "6b531985c85340632162dac4f90676a9bdcbccf48517c28cac5a284cc2851885"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/run_mcp.py",
+      "git_object": "aff96e096a0c833304614ee8f2c456b03efccf2e",
+      "mode": "100644",
+      "bytes": 1941,
+      "sha256": "01cf855b97abd445df6334a2cc492354448c6d568a7f2bf45ec3456eef4ea8d8"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/storage/__init__.py",
+      "git_object": "32b2a7a3a9a9e8d36cba9dffc6478aac8499e354",
+      "mode": "100644",
+      "bytes": 773,
+      "sha256": "d9b8c12fbad120c6946276e348ffe235ca6357d96b351893987e02a16de0e6f5"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/storage/base.py",
+      "git_object": "cd84ea3b99ee4946e9f88854f2d8916166a05b3f",
+      "mode": "100644",
+      "bytes": 6387,
+      "sha256": "a1194de7d5aea9f062fa0c6e59524dd2eefecc31754d0fb4265b7b184eef3e74"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/storage/factory.py",
+      "git_object": "0f3af3ac56a0f0be09a3e15851e9d48543ecb472",
+      "mode": "100644",
+      "bytes": 1545,
+      "sha256": "beadbcaaffb2b4f86471362dc284d29b1bd3a32d89fb4b53739cc613e1ec2c4a"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/storage/local.py",
+      "git_object": "9d8dee50bca2471dfeec7b7c7ef27e97f605859a",
+      "mode": "100644",
+      "bytes": 20330,
+      "sha256": "9bedf40b8cc0c49f24ec45006b67cd0d83e0a9242ca649ffa89e8aea8d52f4f8"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/storage/minio.py",
+      "git_object": "d382dfeaa67a74e6e14e64032f00446e3ad355c2",
+      "mode": "100644",
+      "bytes": 6239,
+      "sha256": "19c093204310d268489b842ca83a8a5e9e1ddb09874c5aaa8b0d6099fcd73c37"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/utils/__init__.py",
+      "git_object": "0bac5bfafba15408473e7129a0772e4b84cc6602",
+      "mode": "100644",
+      "bytes": 572,
+      "sha256": "af9d56a33c02a7bf922df930a7da4f9c6d1e5260b3e0f0c81036ae2c20b209d9"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/utils/error_handling.py",
+      "git_object": "ca15bea5fb5e9dce1adeeb1b7c6d8cf159445f3a",
+      "mode": "100644",
+      "bytes": 3713,
+      "sha256": "b91fddab872990892c35f804891ef872a7eadbdc4d2558c1f2e11e25cc4d407b"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/utils/logging_config.py",
+      "git_object": "27e141987870b34d746d0155dc3a81de23cde3dc",
+      "mode": "100644",
+      "bytes": 10764,
+      "sha256": "44ef375ffa78560f4842e854c2229b04d9a4a76401e3200c48ec21a3233e0389"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/utils/param_parsing.py",
+      "git_object": "12400e997489c6f9adb86d2d92fd75ebd2621223",
+      "mode": "100644",
+      "bytes": 8583,
+      "sha256": "88828599aa47d4115bb783fa1e0c6cd462a11297f9d0004f10f511aa039cbfbb"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/utils/wrapper_generator.py",
+      "git_object": "e1faf6efd7afb18cf79b4ae57f8b72373535f591",
+      "mode": "100644",
+      "bytes": 9253,
+      "sha256": "2a7a066a812cd2422ede715cf4e3b28a94c94ee560ec7e220acfae3c3fea1c93"
+    },
+    {
+      "path": "src/yaraflux_mcp_server/yara_service.py",
+      "git_object": "4ef8c38a526a922a53a23bd1e579daa8420b83cd",
+      "mode": "100644",
+      "bytes": 32777,
+      "sha256": "c18278cb9c42b23e19fc7a3cdd5aa3ad4f3ff0a95b501983f28d98e31795c567"
+    },
+    {
+      "path": "tests/conftest.py",
+      "git_object": "13e28f40ac836b5405d29816446506cedf1e22f4",
+      "mode": "100644",
+      "bytes": 1649,
+      "sha256": "9cf3f18daafba565b09a911a354c2d33902f288181f896a6f034dcff27fad8ad"
+    },
+    {
+      "path": "tests/functional/__init__.py",
+      "git_object": "a0c04f8202b0d5181d0ccba8a7c6bde150a24d89",
+      "mode": "100644",
+      "bytes": 48,
+      "sha256": "35b02437cc057c4c6bbb71905d7d027e7d2101f25a50420edd3e405b80b91d33"
+    },
+    {
+      "path": "tests/integration/__init__.py",
+      "git_object": "fe0f79ea1d3d5cc4245b03516435435171794332",
+      "mode": "100644",
+      "bytes": 49,
+      "sha256": "c90147812014a8c6bfe1e745e3ef72d171f459c13563a95256c03458ba6be69d"
+    },
+    {
+      "path": "tests/unit/__init__.py",
+      "git_object": "19a2b8640dc6a26bc3240ff0a00d03f350d05f32",
+      "mode": "100644",
+      "bytes": 42,
+      "sha256": "9e81f2acc49bd352afa789d40b15c879b8caf7f3f5f402b8424a9cdab9058f23"
+    },
+    {
+      "path": "tests/unit/test_app.py",
+      "git_object": "b6145092d05449c5c2febb19aaa60232fa94b865",
+      "mode": "100644",
+      "bytes": 11294,
+      "sha256": "2c2514e061b94d283533c882829433f2d88496817a3b818464923b40e598e6ed"
+    },
+    {
+      "path": "tests/unit/test_auth.py",
+      "git_object": "599e1163118dd13c4164c3da721132fde25c223a",
+      "mode": "100644",
+      "bytes": 12244,
+      "sha256": "1d2536f727145510acefdd1f0c629b4021e7aff7b221d07efb36f4a37fe28155"
+    },
+    {
+      "path": "tests/unit/test_auth_fixtures/test_token_auth.py",
+      "git_object": "e7773cea2db338dd1f9759d424a32814953dd2c0",
+      "mode": "100644",
+      "bytes": 6002,
+      "sha256": "c4ef2c1439aa36a51adfeb6430df125180db8f9e28ee2fa53c71b7df4ef0ec9f"
+    },
+    {
+      "path": "tests/unit/test_auth_fixtures/test_user_management.py",
+      "git_object": "3cb74587c3872860d7666eed9133afc8821c67e9",
+      "mode": "100644",
+      "bytes": 5500,
+      "sha256": "5bf38467c709c6c9a890cd4f5ed6d269ddef59fad7d75c0c3a7c1001c0d01ae5"
+    },
+    {
+      "path": "tests/unit/test_claude_mcp_tools.py",
+      "git_object": "d55e3be316c555b6dabebf9d0d3184d9a50dfaf0",
+      "mode": "100644",
+      "bytes": 4048,
+      "sha256": "f486921f246679482f77b7c1b3bf629dedeb853d90d27d0a4c81b073ee3208ea"
+    },
+    {
+      "path": "tests/unit/test_cli/__init__.py",
+      "git_object": "e196ac8a92f75cdedebaba41d2adefce9b8ad8f4",
+      "mode": "100644",
+      "bytes": 37,
+      "sha256": "7292a3bae83ba1d5cb84e9a654180bc7f86e5805e9f71a553ff651ae981241cb"
+    },
+    {
+      "path": "tests/unit/test_cli/test_main.py",
+      "git_object": "9b11f3309c2777a0438041522019886fe9ddb481",
+      "mode": "100644",
+      "bytes": 6054,
+      "sha256": "f032bd775e32ef38abc97a3d503e9b4353e273e9aff07d7d81c08c23231c0583"
+    },
+    {
+      "path": "tests/unit/test_cli/test_run_mcp.py",
+      "git_object": "444231165324af842c6eb33dc4d2f862b994dab0",
+      "mode": "100644",
+      "bytes": 5491,
+      "sha256": "39d52919fdbb90081af954377ebcd9d3a9072c13e730794c6bb493ba525c04ea"
+    },
+    {
+      "path": "tests/unit/test_config.py",
+      "git_object": "674ccac1aaf086c30c2203918deb60350cecb847",
+      "mode": "100644",
+      "bytes": 4046,
+      "sha256": "bffd097d202089f03e2e497c8daf996ef69fa8984674f9c6d1b8f53f25e2f846"
+    },
+    {
+      "path": "tests/unit/test_mcp_server.py",
+      "git_object": "bb5399ba99fb7bed2213ba0b0a8d4db97488d4ff",
+      "mode": "100644",
+      "bytes": 9645,
+      "sha256": "fc0a281ebf0e0d4a1d9b82ff54f8a17d0ecfbbb85d02d57711f46c9927da1f6b"
+    },
+    {
+      "path": "tests/unit/test_mcp_tools.py",
+      "git_object": "b2db1ccbf602a0059549c7981a2f788a264b1cb0",
+      "mode": "100644",
+      "bytes": 24551,
+      "sha256": "0c22888a11931b48af3306ac56b13db4ed10e09c7c4474ad38547585f0a0aa6c"
+    },
+    {
+      "path": "tests/unit/test_mcp_tools/test_file_tools.py",
+      "git_object": "8d9b7c374b065be37de9a395194ddd018cabcc26",
+      "mode": "100644",
+      "bytes": 13777,
+      "sha256": "1c01db8e8f06fc39a44d80180f7d60032193ea899621ce17c531a1d22f944b09"
+    },
+    {
+      "path": "tests/unit/test_mcp_tools/test_file_tools_extended.py",
+      "git_object": "b3e57506f9b8a5770a6650b4cc39d14fe0084571",
+      "mode": "100644",
+      "bytes": 15143,
+      "sha256": "0f0103e100d7c6284fc016effa119079be526f3f10a120123f9e4e12e348b383"
+    },
+    {
+      "path": "tests/unit/test_mcp_tools/test_init.py",
+      "git_object": "ca3a41ece279fe17618e45831181b4d4df508f9c",
+      "mode": "100644",
+      "bytes": 8026,
+      "sha256": "70f17b40a4d8ac43bcb97a64d57cf532b5f34f9fddcce5d6edd1480c8910198c"
+    },
+    {
+      "path": "tests/unit/test_mcp_tools/test_rule_tools.py",
+      "git_object": "bfefe6bf306f9752919fd0febaddda51c2f6773a",
+      "mode": "100644",
+      "bytes": 17588,
+      "sha256": "109264ca3f2f417a7b8f31aa1c9d11a4d4235bd86534eea1dfca98adc0c381cf"
+    },
+    {
+      "path": "tests/unit/test_mcp_tools/test_rule_tools_extended.py",
+      "git_object": "cf6c1f210e26e53bd07e6c09c6fc64bcbcd402a2",
+      "mode": "100644",
+      "bytes": 18168,
+      "sha256": "368c5bec2cd2e318fcea616e6aa295ec2f1aa4d710402a56b4e8c7e6d69869d4"
+    },
+    {
+      "path": "tests/unit/test_mcp_tools/test_scan_tools.py",
+      "git_object": "52439f8b405d2e4df985fe2d053c68699204ac26",
+      "mode": "100644",
+      "bytes": 11172,
+      "sha256": "f381ca5cb7687bab742d7bf4233399f99100003e64c4e22e6254a4e23c30923f"
+    },
+    {
+      "path": "tests/unit/test_mcp_tools/test_scan_tools_extended.py",
+      "git_object": "3c6c69513f31cd3e4a79485c50138faddd2b94ea",
+      "mode": "100644",
+      "bytes": 13366,
+      "sha256": "5460bfd1c7d1d9574838cd861cd1381728bf319c92ece6dc0a321b90ef33106c"
+    },
+    {
+      "path": "tests/unit/test_mcp_tools/test_storage_tools.py",
+      "git_object": "6d50f114226e64a9114a0ba62c46151b6961a9e9",
+      "mode": "100644",
+      "bytes": 7781,
+      "sha256": "73538001efec2f74a3c01dd5976bb05e1e1a331b7c4028040bb013fe347a206b"
+    },
+    {
+      "path": "tests/unit/test_mcp_tools/test_storage_tools_enhanced.py",
+      "git_object": "97980da0918f8989376519e7a56c3eeaaa26b6a4",
+      "mode": "100644",
+      "bytes": 26554,
+      "sha256": "900af65f545bc218ed5e00cba9e46d48125c98804560258d9a2ba92a1d87e469"
+    },
+    {
+      "path": "tests/unit/test_routers/test_auth_router.py",
+      "git_object": "e13422cf04bdea58366ea893963e224eb519e3ef",
+      "mode": "100644",
+      "bytes": 10538,
+      "sha256": "58e60ddacd12eba9cc27923cd15e3779c4059be45333b4d49adae94fe61cdd96"
+    },
+    {
+      "path": "tests/unit/test_routers/test_files.py",
+      "git_object": "0ab0ffef58173dcc82ccdd8384ef98d291ec13a5",
+      "mode": "100644",
+      "bytes": 21258,
+      "sha256": "de5f513ffb0eca21d4e8946f10d173d4ac2fafb2d05de2e0d13532a2ad922c11"
+    },
+    {
+      "path": "tests/unit/test_routers/test_rules.py",
+      "git_object": "12c2ae46c1ddd4ad25baa6321461d8a7916a3ce0",
+      "mode": "100644",
+      "bytes": 24784,
+      "sha256": "638bed3b0f6f0553f7727e8ffe4d87588e01bb9a9dbe6cf29346723b94e8e678"
+    },
+    {
+      "path": "tests/unit/test_routers/test_scan.py",
+      "git_object": "5093059c872d8ecb49be94562a053120b2a4a98d",
+      "mode": "100644",
+      "bytes": 12607,
+      "sha256": "5385f8b99a875388a7285e329907547b4cd8103dadf72eaa0242666f5d876a0c"
+    },
+    {
+      "path": "tests/unit/test_storage/test_factory.py",
+      "git_object": "4b4f02babaeccde1ce1fb224a69fde1e1a45aa30",
+      "mode": "100644",
+      "bytes": 5099,
+      "sha256": "41d7998bd3d2765507a9ca4eab6a95ab6550829fd92b454fa6c0b13d11e68b54"
+    },
+    {
+      "path": "tests/unit/test_storage/test_local_storage.py",
+      "git_object": "4a9716cc73aecea5563fab7b0d7fbb6ee0dc571e",
+      "mode": "100644",
+      "bytes": 17481,
+      "sha256": "1997c7970d07b065b5693b5683eabf21ed207eed00f29bde70866fbea7b52488"
+    },
+    {
+      "path": "tests/unit/test_storage/test_minio_storage.py",
+      "git_object": "dcdc117854dd9eac43c04860774e1d04d0309d87",
+      "mode": "100644",
+      "bytes": 8228,
+      "sha256": "2fa2adbd63148a37f72014c4a29e9db9629d2d6a8fcb62b04fb777a68380d189"
+    },
+    {
+      "path": "tests/unit/test_storage_base.py",
+      "git_object": "e07cf8a4f495688d834dadecb337a9d440a1552b",
+      "mode": "100644",
+      "bytes": 12123,
+      "sha256": "c48076b37cae0bc125342513b1469eba2462f890f6b3abb33aa2afa0db13f923"
+    },
+    {
+      "path": "tests/unit/test_utils/__init__.py",
+      "git_object": "da536a8620cb0ee221fee9f3e150053977a6b983",
+      "mode": "100644",
+      "bytes": 40,
+      "sha256": "b7c55282476e430875098a02e78e82c8ccb752cb82f62bb6d2fab18902b25d40"
+    },
+    {
+      "path": "tests/unit/test_utils/test_error_handling.py",
+      "git_object": "77f7e970a2bd1bc00cd6d14f110a37be1808f128",
+      "mode": "100644",
+      "bytes": 11256,
+      "sha256": "bab568ac4d6583b7d6c1cea9f4aa23c39f5c59daac652a40f4dc168db1f6da46"
+    },
+    {
+      "path": "tests/unit/test_utils/test_logging_config.py",
+      "git_object": "6e3a346f154b34c6a435a78f1cef7da3d7dc428b",
+      "mode": "100644",
+      "bytes": 15325,
+      "sha256": "5c78e00ad44dc251f4d06b1d9dcf373c80bc844c4a21a37155aa7c35e5754ea7"
+    },
+    {
+      "path": "tests/unit/test_utils/test_param_parsing.py",
+      "git_object": "54e33afb155ba94ca4f0d6815ef8efff6626a700",
+      "mode": "100644",
+      "bytes": 9613,
+      "sha256": "11b90d21be2834227a163ea9cf3d2f664c3fdf2eedc25548c360229c9b4ecd64"
+    },
+    {
+      "path": "tests/unit/test_utils/test_wrapper_generator.py",
+      "git_object": "893827c7281061b920038e19de2acd4d8024f01f",
+      "mode": "100644",
+      "bytes": 18578,
+      "sha256": "7d2c6f8cc61a7adfe67dd86637f3bcc7342ee62b369af64550b9e30057a799d3"
+    },
+    {
+      "path": "tests/unit/test_yara_rule_compilation.py",
+      "git_object": "303f6b345dedb5609385cc9b0138311466345ec5",
+      "mode": "100644",
+      "bytes": 25776,
+      "sha256": "34396539a8a12847346f51c13862748189557331492ffd7383db10fb8e08ee62"
+    },
+    {
+      "path": "tests/unit/test_yara_service.py",
+      "git_object": "662e04efef4e8f1312321867cc03d488652e03cf",
+      "mode": "100644",
+      "bytes": 13238,
+      "sha256": "3105d1f84861fe026978bc0d5cf236a5565440f2ae643277aecd8374188c87fc"
+    },
+    {
+      "path": "uv.lock",
+      "git_object": "17c711b5d83b2bd99faef6fb4f6ccf2b52f47f10",
+      "mode": "100644",
+      "bytes": 167370,
+      "sha256": "d750e1f0e6216312091d0f26bcbfc7d87e30d222ba9def7381b24d6a06e18986"
+    }
+  ],
+  "excluded": [
+    {
+      "path": ".env",
+      "reason": "Runtime environment values; excluded without reading."
+    },
+    {
+      "path": "images/image copy.png",
+      "reason": "Binary documentation image; this archival release is a text source bundle."
+    },
+    {
+      "path": "images/image.png",
+      "reason": "Binary documentation image; this archival release is a text source bundle."
+    },
+    {
+      "path": "test.txt",
+      "reason": "Upstream loose fixture payload; not part of the Python package; excluded from source release."
+    }
+  ],
+  "checks": {
+    "utf8_sources": 116,
+    "python_ast": 72,
+    "credential_pattern_hits": 0
+  },
+  "byte_source": "git-blob; no worktree config read"
+}

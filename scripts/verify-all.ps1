@@ -8,34 +8,100 @@
 #   doc-facts.py              a live false claim in the charter's own headline paragraph
 #
 # Each was correct, and each was silently checking nothing.
+[CmdletBinding()]
+param(
+    [ValidateSet('Package', 'Station', 'Paired')]
+    [string]$Scope = 'Station',
+    [string]$PrivateTree = ''
+)
+$ErrorActionPreference = 'Stop'
+
+# Package checks the distributable source only. Station retains the runtime gates.
+# Paired adds an explicitly configured private wiki; absent integration is not PASS.
+if ($Scope -ne 'Paired' -and $PrivateTree) {
+    Write-Error '-PrivateTree requires -Scope Paired.' -ErrorAction Continue
+    exit 2
+}
+if ($Scope -eq 'Paired') {
+    if (-not $PrivateTree -or -not (Test-Path -LiteralPath $PrivateTree -PathType Container)) {
+        Write-Error 'Paired verification requires -PrivateTree pointing to the real wiki repository.' -ErrorAction Continue
+        exit 2
+    }
+    $PrivateTree = (Resolve-Path -LiteralPath $PrivateTree).Path
+    if (-not (Test-Path -LiteralPath (Join-Path $PrivateTree 'wiki/INDEX.md') -PathType Leaf)) {
+        Write-Error 'Paired verification requires the selected repository wiki/INDEX.md.' -ErrorAction Continue
+        exit 2
+    }
+}
+
 $t0 = Get-Date
 $repo = Split-Path -Parent $PSScriptRoot
 Set-Location $repo
 
-# ARGUMENT REFUSAL. This script declares NO param block, so every argument it is handed lands in
-# $args and is silently ignored -- the strongest form of the defect. Measured 2026-10-05 on this
-# very script: `ghidra-failopen-regress.ps1 C:/nope/nothing.dll` printed LOOP CLOSED, 4 of 4
-# green, exit 0, having measured nothing the caller asked for. A script that accepts an
-# argument it cannot honour reports a pass for work nobody did.
+# Reject unbound arguments as well as unknown named parameters; never ignore requested scope.
 . (Join-Path $PSScriptRoot 'assert-no-stray-args.ps1')
 Assert-NoStrayArgs -ScriptName 'verify-all.ps1'
 $script:fail = @()
+$script:notRun = @()
+$script:steps = 0
 
 function Step {
     param([string]$Name, [scriptblock]$Body)
     Write-Host ""
     Write-Host "=== $Name" -ForegroundColor Cyan
-    & $Body
-    if ($LASTEXITCODE -ne 0) {
-        $script:fail += "$Name (exit $LASTEXITCODE)"
+    $script:steps++
+    $global:LASTEXITCODE = 0
+    try {
+        & $Body
+        $stepExit = $LASTEXITCODE
+    } catch {
+        Write-Host $_ -ForegroundColor Red
+        $stepExit = 1
+    }
+    if ($stepExit -ne 0) {
+        $script:fail += "$Name (exit $stepExit)"
         Write-Host "--- $Name FAILED" -ForegroundColor Red
     }
+}
+
+function Complete-Verification {
+    Write-Host "VERIFY-ALL scope=$Scope; selected steps=$($script:steps); failed=$($script:fail.Count); not_run=$($script:notRun.Count)"
+    if ($script:fail.Count -gt 0) {
+        Write-Host "VERIFY-ALL: FAIL -> $($script:fail -join ', ')" -ForegroundColor Red
+        exit 1
+    }
+    if ($script:notRun.Count -gt 0) {
+        Write-Host "VERIFY-ALL: BLOCKED -> $($script:notRun -join ', ')" -ForegroundColor Yellow
+        exit 2
+    }
+    Write-Host "VERIFY-ALL: PASS for selected $Scope checks only." -ForegroundColor Green
+    exit 0
+}
+
+if ($Scope -eq 'Package') {
+    Step 'installation source closure' {
+        . (Join-Path $PSScriptRoot 'installation-closure.ps1')
+        $closure = Get-InstallationClosure -RepoRoot $repo -Mode 'PACKAGE'
+        Write-Output ('INSTALL_CLOSURE=' + ($closure.Report | ConvertTo-Json -Depth 6 -Compress))
+        if ($closure.Report.status -ne 'READY') { $global:LASTEXITCODE = 1 }
+    }
+    Step 'portable package' { python -X utf8 -B skills/2026-11-11/portable-core/verify.py }
+    Step 'portable entry controls' { python -X utf8 -B skills/2026-11-11/portable-core/tests/entry_checks.py }
+    Write-Host 'NOT_APPLICABLE: paired private-wiki checks (Package scope).'
+    Write-Host 'NOT_RUN: station runtime, providers, capability sweep and product/release acceptance (outside Package scope).'
+    Complete-Verification
+}
+
+if ($Scope -eq 'Station') {
+    Write-Host 'NOT_APPLICABLE: wiki prose, wiki figure synchronization and wiki tree structure (no paired integration selected).'
 }
 
 Step 'registry-verify'        { python scripts/registry-verify.py }
 Step 'registry selftest'      { python scripts/registry-verify.py --selftest }
 Step 'requires-tools'         { python scripts/check-requires-tools.py }
-Step 'doc-facts (wiki drift)' { python scripts/doc-facts.py }
+if ($Scope -eq 'Paired') {
+    Step 'doc-facts (wiki drift)' { python -B scripts/doc-facts.py --repo $repo --wiki $PrivateTree }
+}
 Step 'gate selftest'          { powershell -NoProfile -File scripts/gate.ps1 -Action Selftest }
 Step 'mission selftest'       { powershell -NoProfile -File scripts/mission.ps1 -Action Selftest }
 Step 'mission ablate'         { powershell -NoProfile -File scripts/mission.ps1 -Action Ablate }
@@ -103,6 +169,7 @@ Step 'mcp surface' {
         # skipped the summary and returned 0 while a doc-facts failure was on the record -- a gate
         # reporting green because of something I added to it, measured, and exactly the class of
         # defect this file exists to catch.
+        $script:notRun += 'mcp surface: missing mcp runtime'
         $global:LASTEXITCODE = 0
         return
     }
@@ -125,7 +192,9 @@ Step 'mcp surface' {
 # `_REPO`, and it silently skipped them -- a wiki claiming 41 rules read as "already current" while
 # doc-facts on the same bytes exited 1. A drift check that cannot detect drift is worse than no
 # drift check, and this one is the one that would have caught it.
-Step 'wiki figures in sync'    { python scripts/sync-wiki-figures.py --check }
+if ($Scope -eq 'Paired') {
+    Step 'wiki figures in sync' { python -B scripts/sync-wiki-figures.py --check --repo $repo --wiki (Join-Path $PrivateTree 'wiki') }
+}
 
 # Two writers and two readers, so that neither can be correct alone. `--selftest` proves the gate
 # can fail; the other proves it is right. Both are mutation-tested inside the harness itself.
@@ -175,7 +244,9 @@ Step 'artifact atomicity'      { python scripts/verify-atomic-artifacts.py }
 # registered nowhere, plus six survey pages and a card template, plus a relative link in
 # `methods/repo-discovery-method.md` pointing at a directory that has never existed. Eight pages
 # and one broken pointer, none of which any command in either tree could see.
-Step 'wiki tree structure'   { python scripts/arsenal-two-tree-check.py }
+if ($Scope -eq 'Paired') {
+    Step 'wiki tree structure' { python -B scripts/arsenal-two-tree-check.py --repo $repo --wiki $PrivateTree }
+}
 Step 'wiki tree selftest'    { python scripts/arsenal-two-tree-check.py --selftest }
 
 # RULE ENFORCEMENT, not structure. `arsenal-two-tree-check.py` above asks "is the wiki tree
@@ -191,7 +262,10 @@ Step 'wiki tree selftest'    { python scripts/arsenal-two-tree-check.py --selfte
 # backends whose only provenance is a `git` URL -- including the egress warning on the one that
 # posts IOCs to a public API. Reports, not gates, because a permanently red gate is a gate
 # people learn to ignore.
-Step 'doctrine (R4 provenance)' { python scripts/arsenal-doctrine-check.py }
+Step 'doctrine (R4 provenance)' {
+    if ($Scope -eq 'Paired') { python -B scripts/arsenal-doctrine-check.py --repo $repo --wiki $PrivateTree }
+    else { python -B scripts/arsenal-doctrine-check.py --repo $repo }
+}
 Step 'doctrine selftest'        { python scripts/arsenal-doctrine-check.py --selftest }
 
 # MAINTENANCE DEBT, by name: unpushed commits, tracked-mod/untracked/ignored counts, dotgit
@@ -222,16 +296,6 @@ Step 'owner attest ledger (report)' {
 
 $elapsed = (Get-Date) - $t0
 Write-Host ""
-Write-Host ("VERIFY-ALL wall clock {0:mm\:ss}. ONE command, BOTH trees: the station gate set plus" -f $elapsed)
-Write-Host "  the wiki tree's own structure. Re-measure any single figure with its own command;"
-Write-Host "  every row of wiki/INDEX.md carries the command that produces it."
-
-Write-Host ""
-if ($script:fail.Count -eq 0) {
-    Write-Host "VERIFY-ALL: every check passed, INCLUDING the bounded probe sweep above." -ForegroundColor Green
-    Write-Host "  The sweep is partial by design: read its NOT RUN list. The full sweep is" -ForegroundColor Yellow
-    Write-Host "  `python scripts/assert-probes.py` and takes ~24 min, dominated by the fuzz loop." -ForegroundColor Yellow
-    exit 0
-}
-Write-Host "VERIFY-ALL: $($script:fail.Count) FAILED -> $($script:fail -join ', ')" -ForegroundColor Red
-exit 1
+Write-Host ("VERIFY-ALL wall clock {0:mm\:ss}; scope=$Scope" -f $elapsed)
+Write-Host 'Read each probe NOT RUN / prerequisite result; package or selected-runtime success is not whole-product release acceptance.'
+Complete-Verification

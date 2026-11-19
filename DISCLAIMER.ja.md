@@ -6,15 +6,15 @@
 
 ## サードパーティ製ツール
 
-**debugger-workstation** は**雛形 / ブートストラップ**です。サードパーティのリバースエンジニアリング・デバッグ・セキュリティツールのソースやバイナリを**含みません、配布しません、再発行しません**。例：Ghidra、IDA Pro、radare2、x64dbg、ImHex、capa、Cheat Engine、JADX、Wireshark、7-Zip など（英語版の列挙と同じ）。
+**debugger-workstation** は**雛形 / ブートストラップ**です。ツールのバイナリは各公式から取得します。審査済みソースパッチと個別許諾の保存ソース資産は元の表示を保持し、公開カタログで特定します。例：Ghidra、IDA Pro、radare2、x64dbg、ImHex、capa、Cheat Engine、JADX、Wireshark、7-Zip など（英語版の列挙と同じ）。
 
 **IDA Pro は Hex-Rays の商用ソフトウェア**です。ライセンスは自分で買い、公式から入れます。本リポジトリは IDA 本体を配らず、ライセンス回避もしません。
 
-著作権・商標・ライセンスは各公式に残ります。ここにあるのは `manifests/tools.json` の名前・版・**公式 URL** だけです。
+著作権・商標・ライセンスは各公式に残ります。ツール一覧には `manifests/tools.json` の名前・版・**公式 URL** を記録します。
 
 ## サードパーティ MCP
 
-`manifests/mcp-backends.json` のコードは git にありません。bootstrap は上流 URL を `git clone` するだけです。**VirusTotal MCP** は IOC を VirusTotal の公開 API に送り、`VIRUSTOTAL_API_KEY` が必要です。自分の調査でのみ使用し、機微サンプルは上げないでください。
+完全なバックエンドは `manifests/mcp-backends.json` の上流から取得します。審査済みパッチは上流のライセンスを保持します。bootstrap は宣言された URL を clone します。**VirusTotal MCP** は IOC を VirusTotal の公開 API に送り、`VIRUSTOTAL_API_KEY` が必要です。自分の調査でのみ使用し、機微サンプルは上げないでください。
 
 ## 自作部分
 

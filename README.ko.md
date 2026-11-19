@@ -4,6 +4,8 @@
 [English](README.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · **한국어**
 <!-- I18N:END -->
 
+[Reproducible tool labs](docs/TOOL_LAB.md) · [Tool inventory and version probes](docs/TOOL_SMOKE.md) · [Public source releases](https://github.com/dwgx/debugger-workstation-public/releases)
+
 휴대용 리버스 엔지니어링 / 보안 분석 / 디버깅 / 언팩 / 모바일 분석 / 패킷 캡처 / 시스템 점검 / MCP 자동화를 위한 **뼈대 저장소**입니다.
 
 아무 AI 에이전트(Claude / Codex / Gemini / Cursor / Copilot / Grok)나 사람이 clone한 뒤 [docs/i18n/ko/I18N.md](docs/i18n/ko/I18N.md)로 UI 언어를 정하고, 맞는 [AGENTS.md](AGENTS.md)([한국어](AGENTS.ko.md)) 핸드셰이크를 따르면 자기 머신에 **AI가 다루기 쉬운** 도구 스테이션을 복원할 수 있습니다. 대화는 그 언어로, git 커밋 메시지는 영어입니다.
@@ -50,4 +52,4 @@ clone 후 로케일을 정하고 **해당 AGENTS를 먼저 읽으세요**. 질�
 
 - **코드와 설정 — MIT** ([LICENSE](LICENSE)). `mcp/debugger-router`, `mcp/bin`, `scripts`, `manifests`, `skills`, `templates`, 에이전트 계약(`AGENTS*.md`, `CLAUDE.md`, `GEMINI.md`), 그리고 Markdown이 아닌 모든 파일. 포크를 비공개로 유지할 수 있습니다.
 - **문서 본문 — CC BY-SA 4.0** ([LICENSE-docs](LICENSE-docs)). `docs/`(`docs/i18n/` 포함), `README*.md`, `DISCLAIMER*.md`, `notes/` 등. 출처를 표시하면 재사용할 수 있지만 파생 문서도 같은 라이선스를 따릅니다.
-- 서드파티 도구와 서드파티 MCP의 권리는 각 업스트림에 남습니다. 이 저장소는 그들의 코드나 바이너리를 재배포하지 않습니다. 자세한 내용은 [DISCLAIMER.md](DISCLAIMER.md).
+- 서드파티 도구와 서드파티 MCP의 권리는 각 업스트림에 남습니다. 검토한 소스 패치는 원래 라이선스 표시를 유지합니다. 별도로 허용된 소스 자산은 공개 목록에 기록하며 도구 바이너리는 공식 출처에서 받습니다. 자세한 내용은 [DISCLAIMER.md](DISCLAIMER.md).

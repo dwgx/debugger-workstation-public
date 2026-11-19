@@ -1,0 +1,168 @@
+{
+  "schema_version": "run-receipt.2",
+  "run_id": "r2-demo-run-good",
+  "attempt_id": "attempt-20261112-001",
+  "parent_attempt_id": null,
+  "profile_id": "public-core",
+  "profile_digest": "sha256:25b0e4e84e8e5582de986dec738a19e7f3e00dd33bdbaf6c389b72b70e81cf10",
+  "source": {
+    "repo": "dwgx/debugger-workstation-public (demo fixture)",
+    "commit": "cead322",
+    "dirty": false,
+    "manifest_sha256": "sha256:5b55a2c39970ae8871ccd41022a86970c913e3a962492c0d4cb5170a916762ea",
+    "patch_sha256": null
+  },
+  "package": {
+    "kind": "clean-checkout",
+    "identity": "demo-fixture-v2",
+    "sha256": "sha256:1f14ea2fdbbef64939ed8313287ef7074e9a0a1e9e13be01f17588f46a710b03"
+  },
+  "subject": {
+    "input_type": "synthetic-text-fixture",
+    "content_sha256": "sha256:e0ea9ed3f37820bf43664dd53f6259a443dfd5086a564257310cd2060810f876",
+    "size_bytes": 56,
+    "fixture_id": "demo-probe-output",
+    "fixture_version": "2",
+    "locator": "fixture (demo, no private path)"
+  },
+  "runtime": {
+    "os": "windows",
+    "arch": "x64",
+    "shell": "bash",
+    "interpreter": "python 3.14.7",
+    "backend": "none-static-demo",
+    "frontend_client": null
+  },
+  "session": null,
+  "test_case_id": "V-02",
+  "capability_ids": [
+    "native.static.demo"
+  ],
+  "oracle": {
+    "anchor_path": "oracle/public-core-demo.anchor.mutated.json",
+    "anchor_sha256": "sha256:5c284effb03966de2faa8902a0a624c197014153642c4e900e998cf035f0e83d",
+    "version": "public-core-demo-oracle-2",
+    "assertion_ids": [
+      "A-IMPORTS",
+      "A-ENTRYPOINT",
+      "A-IMPORTS-FAKE"
+    ],
+    "covers": [
+      "semantic facts",
+      "negative polarity"
+    ],
+    "independence": "DEMO: the anchor was frozen before the fixture was written; it is not an independent measurement of any real tool."
+  },
+  "invocation": {
+    "command": "demo-fixture",
+    "args": [],
+    "cwd": "evidence/profile-receipts",
+    "env_keys": [],
+    "authorization_ref": "round-2 demo (no product run)",
+    "redacted": true
+  },
+  "execution": {
+    "started_utc": "2026-11-12T00:00:00Z",
+    "finished_utc": "2026-11-12T00:00:09Z",
+    "expected_steps": [
+      "prepare",
+      "invoke-backend",
+      "collect",
+      "evaluate",
+      "cleanup",
+      "publish"
+    ],
+    "completed_steps": [
+      "prepare",
+      "invoke-backend",
+      "collect",
+      "evaluate",
+      "cleanup",
+      "publish"
+    ],
+    "observed_via": "runner",
+    "observed_exit": 1,
+    "expected_exit": 1,
+    "timeout_s": 120,
+    "cancelled": false,
+    "cleanup": "converged",
+    "terminal_state": "exited",
+    "backend_executed": true
+  },
+  "checks": [
+    {
+      "id": "I-01",
+      "status": "passed",
+      "artifact": "attempts/attempt-20261112-001/probe-output.txt",
+      "source_status": null,
+      "observed": {}
+    },
+    {
+      "id": "E-01",
+      "status": "passed",
+      "artifact": null,
+      "source_status": null,
+      "observed": {}
+    },
+    {
+      "id": "E-02",
+      "status": "passed",
+      "artifact": null,
+      "source_status": null,
+      "observed": {}
+    },
+    {
+      "id": "S-01",
+      "status": "passed",
+      "artifact": "attempts/attempt-20261112-001/probe-output.txt",
+      "source_status": null,
+      "observed": {
+        "parser": "probe-output-text@1"
+      }
+    },
+    {
+      "id": "N-01",
+      "status": "passed",
+      "artifact": "attempts/attempt-20261112-001/probe-output.txt",
+      "source_status": null,
+      "observed": {
+        "parser": "probe-output-text@1"
+      }
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "attempts/attempt-20261112-001/probe-output.txt",
+      "sha256": "sha256:e0ea9ed3f37820bf43664dd53f6259a443dfd5086a564257310cd2060810f876",
+      "size_bytes": 56,
+      "media_type": "text/plain",
+      "purpose": "probe output",
+      "attempt_id": "attempt-20261112-001",
+      "reused": false,
+      "mtime_utc": "2026-11-12T00:00:00Z"
+    }
+  ],
+  "result": {
+    "verdict": "pass",
+    "reason": "all frozen required checks passed",
+    "native_status": null,
+    "required_check_ids": [
+      "I-01",
+      "E-01",
+      "E-02",
+      "S-01",
+      "N-01"
+    ]
+  },
+  "limitations": [
+    "DEMO fixture, not a product acceptance receipt",
+    "facts are parsed from artifact bytes by probe-output-text@1; the bytes are still synthetic",
+    "no real runner, backend, or harness was executed"
+  ],
+  "next_step": {
+    "command": "python -X utf8 -B scripts/verify-profile.py --product --schema schemas/run-receipt.v2.json --receipt evidence/profile-receipts/<fixture>.json --oracle evidence/profile-receipts/oracle/<anchor>.json",
+    "prerequisites": [
+      "python 3.9+ stdlib only"
+    ]
+  }
+}

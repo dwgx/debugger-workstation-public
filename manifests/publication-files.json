@@ -1,0 +1,4242 @@
+{
+  "schema": "workstation-publication-files/v1",
+  "reviewed_date": "2026-11-19",
+  "policy": "Explicit source allowlist. Additions require review; source bytes are bound when a bundle is built from a commit.",
+  "files": [
+    {
+      "path": ".agent/HANDOFF.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/RECOVERY-STATION.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/atomic-artifacts.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a1/REPORT.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_fake/fakepe.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_iso2/badjson/mission1/artifact.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_iso2/chainnotlist/mission1/artifact.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_iso2/chainnull/mission1/artifact.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_iso2/emptyfile/mission1/artifact.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_iso2/jsondictnull/mission1/artifact.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_iso2/jsonlist/mission1/artifact.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_isolate/badjson/artifact.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_isolate/chainnull/artifact.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_isolate/emptyfile/artifact.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_isolate/jsondictnull/artifact.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_isolate/jsonlist/artifact.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_missions/hidden4/artifact.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_missions/hidden5/artifact.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_missions/m1/artifact.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_missions/m1/artifact.json.broken",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_missions/m2/artifact.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_missions/m3/artifact.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_planted_wiki/a-false-backtick.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_planted_wiki/b-true-backtick.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_planted_wiki/c-false-plain-prose.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_planted_wiki/d-false-bold.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_planted_wiki/e-rows-not-caps.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_planted_wiki/f-4digit.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/_scratch_planted_wiki/g-paren.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/a2/report.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/audit/w2/w2-reverse-agent-workflow.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/clone-freshness.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/detail-2026-10-02-deep-review.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/exit-conventions.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/mission-untested-mechanisms.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/probe-coverage.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/reports/docs-numbers-2026-10-02.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/reports/observed-verify-2026-10-02.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/success-when.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/tool-blinds.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/tools-manifest.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".agent/verify/cap24-verification.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".cursor/rules/debugger-workstation.mdc",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".gitattributes",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/bug_report.yml",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/config.yml",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/tool_request.yml",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".github/PULL_REQUEST_TEMPLATE.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".github/copilot-instructions.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".gitignore",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": ".nojekyll",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "AGENTS.ja.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "AGENTS.ko.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "AGENTS.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "AGENTS.zh-CN.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "CLAUDE.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "CODE_OF_CONDUCT.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "DISCLAIMER.ja.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "DISCLAIMER.ko.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "DISCLAIMER.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "DISCLAIMER.zh-CN.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "GEMINI.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "LICENSE",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "LICENSE-docs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "OWNER.example.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "README.ja.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "README.ko.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "README.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "README.zh-CN.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "RELEASE.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "SECURITY.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crackme-corpus/README.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crackme-corpus/challenges/c01-stringobf/solve.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crackme-corpus/challenges/c01-stringobf/src/c01_stringobf.c",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crackme-corpus/challenges/c02-cff-dispatch/solve.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crackme-corpus/challenges/c02-cff-dispatch/src/c02_cff.c",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crackme-corpus/challenges/c03-antidebug/solve.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crackme-corpus/challenges/c03-antidebug/src/c03_antidebug.c",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crackme-corpus/challenges/c04-dotnet-obfuscation/solve.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crackme-corpus/challenges/c04-dotnet-obfuscation/src/c04.csproj",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crackme-corpus/challenges/c04-dotnet-obfuscation/src/c04_obfuscated.cs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crackme-corpus/challenges/c05-binary-format/solve.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crackme-corpus/challenges/c05-binary-format/src/c05_blob.c",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crackme-corpus/tools/build-c.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crackme-corpus/tools/dbg-presence.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crackme-corpus/tools/labkit.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crackme-corpus/tools/loop.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crackme-corpus/tools/solve-one.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crypto-lab/.gitignore",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crypto-lab/README.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crypto-lab/lab/jose.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crypto-lab/lab/keys.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crypto-lab/lab/server.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crypto-lab/package-lock.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crypto-lab/package.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crypto-lab/requirements.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crypto-lab/tools/analyze.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crypto-lab/tools/cases.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crypto-lab/tools/loop.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crypto-lab/tools/negative-gate.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crypto-lab/tools/oracle-node.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "crypto-lab/tools/oracle.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/AGENT_EVOLUTION.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/AI_ENTRY.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/AI_ENTRY.zh-CN.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/AI_USAGE_GUIDE.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/BOOTSTRAP.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/CACHE.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/CURRENT-CLI-PROFILE.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/CURRENT-CLOSEOUT.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/DISTRIBUTION_NOTES.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/EVAL.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/EXPERT_PLAYBOOK.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/I18N.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/INDEX.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/MAINTAIN.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/MISSION-SUCCESS-CONTRACTS.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/PUBLICATION.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "docs/ROUTER_DESCRIPTORS.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/SMARTCLI.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/STATUS.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/TOOLS_INDEX.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/TOOL_LAB.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "authored reproducible tool lab guide and explicitly scoped execution observations, reviewed 2026-11-19"
+    },
+    {
+      "path": "docs/TOOL_LAB_COVERAGE.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "authored portable APKTool fixture runner and mechanically projected bounded backend coverage, reviewed 2026-11-19"
+    },
+    {
+      "path": "docs/TOOL_SMOKE.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "authored station tool readiness source and documentation, reviewed 2026-11-19"
+    },
+    {
+      "path": "docs/WORKSTATION_RULES.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/extensions/INDEX.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/history/2026-11-11-pages-claim.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/i18n/ja/AI_USAGE_GUIDE.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/i18n/ja/CACHE.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/i18n/ja/I18N.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/i18n/ja/MAINTAIN.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/i18n/ko/AI_USAGE_GUIDE.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/i18n/ko/CACHE.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/i18n/ko/I18N.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/i18n/ko/MAINTAIN.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/i18n/zh-CN/AI_USAGE_GUIDE.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/i18n/zh-CN/CACHE.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/i18n/zh-CN/I18N.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/i18n/zh-CN/MAINTAIN.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/research/2026-10-04-two-tree-and-dead-code.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/research/README.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/research/WORKER-REPORT-LOSS.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/research/agent-craft-principles.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/research/binary-mcp-map.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/research/composition-plan.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/research/cost-matrix.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/research/curriculum.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/research/dynamic-pairings.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/research/ecosystem-2026-10-02.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/research/ghidra-capability-spec.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/research/ida-mcp-source-study.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/research/knowledge-corpus.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/research/mobile-js-skill-map.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/research/orchestration-design.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/research/pairing-two-decompilers.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/research/review-2026-10-02.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/research/workers/w1-agentworkflow.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/research/workers/w1-composition.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/research/workers/w1-debugpairing.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/research/workers/w1-gateredteam.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/research/workers/w1-retoolchain.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/research/workers/w1-revskills.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/research/workers/w1-toolperf.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/site/.nojekyll",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "docs/site/index.html",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/atomic-artifacts.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probe-coverage.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/crypto.jose.parse.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/crypto.jose.parse.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/dynamic.win.frida.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/dynamic.win.frida.intercept.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/dynamic.win.frida.intercept.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/dynamic.win.frida.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/forensics.memory.artefact.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/forensics.memory.artefact.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/fuzz.differential.parse.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/fuzz.differential.parse.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/managed.il.decompile.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/managed.il.decompile.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/mobile.apk.static.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/mobile.apk.static.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.behaviour.capa.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.behaviour.capa.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.crosscompare.ghidra.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.crosscompare.ghidra.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.disasm.capstone.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.disasm.capstone.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.function.match.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.function.match.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.ghidra.decompile.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.ghidra.decompile.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.ida.decompile.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.ida.decompile.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.ida.list_functions.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.ida.list_functions.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.il2cpp.symbols.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.il2cpp.symbols.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.pe.authenticode.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.pe.authenticode.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.pe.container.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.pe.container.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.pe.hardening.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.pe.hardening.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.pe.packer.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.pe.packer.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.signature.certverify.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.signature.certverify.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.yara.triage.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/native.yara.triage.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/net.pcap.analyse.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/net.pcap.analyse.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/net.pcap.selfparse.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/net.pcap.selfparse.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/ops.skill.security.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/ops.skill.security.lane127-drift.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/ops.skill.security.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/re.corpus.solve.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/re.corpus.solve.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/web.js.cdp.control.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/probes/web.js.cdp.probe.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/profile-receipts/README.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/profile-receipts/attempts/attempt-20261112-001/probe-output.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/profile-receipts/attempts/attempt-20261112-101/failure.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/profile-receipts/attempts/attempt-20261112-102/probe-output.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/profile-receipts/good-pass.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/profile-receipts/good-pass/artifacts/probe-output.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/profile-receipts/oracle-public-core-demo.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/profile-receipts/oracle/public-core-demo-retry.anchor.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/profile-receipts/oracle/public-core-demo.anchor.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/profile-receipts/oracle/public-core-demo.anchor.mutated.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/profile-receipts/retry-preserves-failure.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/profile-receipts/retry-preserves-failure/artifacts/attempt-1-failure.log",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/profile-receipts/retry-preserves-failure/artifacts/attempt-2-output.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/profile-receipts/touch-only-stale.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/profile-receipts/touch-only-stale/artifacts/probe-output.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/profile-receipts/v2-adv-all-kinds-replaced.json",
+      "license": "MIT",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "evidence/profile-receipts/v2-adv-bool-as-int.json",
+      "license": "MIT",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "evidence/profile-receipts/v2-adv-deleted-parent-pointer.json",
+      "license": "MIT",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "evidence/profile-receipts/v2-adv-dirty-no-patch.json",
+      "license": "MIT",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "evidence/profile-receipts/v2-adv-duplicate-bad-first.json",
+      "license": "MIT",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "evidence/profile-receipts/v2-adv-duplicate-bad-last.json",
+      "license": "MIT",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "evidence/profile-receipts/v2-adv-fake-semantic-negative.json",
+      "license": "MIT",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "evidence/profile-receipts/v2-adv-not-run-cancelled.json",
+      "license": "MIT",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "evidence/profile-receipts/v2-adv-oracle-changed-old-digest.json",
+      "license": "MIT",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "evidence/profile-receipts/v2-adv-wrong-attempt-artifact.json",
+      "license": "MIT",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "evidence/profile-receipts/v2-good-pass.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "evidence/profile-receipts/v2-retry-preserves-failure.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "forensics-lab/.gitignore",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "forensics-lab/README.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "forensics-lab/lab/mkimage.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "forensics-lab/lab/payload/build.bat",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "forensics-lab/lab/payload/d12payload.c",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "forensics-lab/lab/spec.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "forensics-lab/tools/analyze.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "forensics-lab/tools/correlate.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "forensics-lab/tools/loop.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "forensics-lab/tools/negative-gate.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "forensics-lab/tools/triage.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "frontage-verify.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "fuzz-lab/.gitignore",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "fuzz-lab/README.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "fuzz-lab/lab/corpus.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "fuzz-lab/lab/driver.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "fuzz-lab/lab/mutate.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "fuzz-lab/lab/pcap-reader.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "fuzz-lab/lab/rng.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "fuzz-lab/lab/targets.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "fuzz-lab/lab/triage.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "fuzz-lab/lab/worker.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "fuzz-lab/tools/loop.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "fuzz-lab/tools/negative-gate.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "fuzz-lab/tools/parse-target.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "fuzz-lab/tools/regressions.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "fuzz-lab/tools/replay.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "headless-lab/README.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "headless-lab/native/core.c",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "headless-lab/tools/authenticode.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "headless-lab/tools/authenticode_control.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "headless-lab/tools/build.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "headless-lab/tools/frida_gate_control.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "headless-lab/tools/jose_expect_control.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "headless-lab/tools/match-functions.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "headless-lab/tools/match_functions_control.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "headless-lab/tools/negative-gate.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "headless-lab/tools/skill_security_control.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "headless-lab/tools/triage-packer.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "index.html",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "local.json.example",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "locales.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/IL-READING.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/README.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/samples/m01-string-encryption/Program.cs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/samples/m01-string-encryption/README.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/samples/m01-string-encryption/m01.csproj",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/samples/m02-control-flow/Program.cs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/samples/m02-control-flow/README.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/samples/m02-control-flow/m02.csproj",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/samples/m03-resource-payload/Program.cs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/samples/m03-resource-payload/README.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/samples/m03-resource-payload/m03.csproj",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/samples/m03-resource-payload/payload.b64",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/samples/m04-binary-struct/Program.cs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/samples/m04-binary-struct/README.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/samples/m04-binary-struct/m04.csproj",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/samples/m05-pinvoke-bridge/Program.cs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/samples/m05-pinvoke-bridge/README.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/samples/m05-pinvoke-bridge/m05.csproj",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/samples/m05-pinvoke-bridge/native/labnative.c",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/tools/build.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/tools/clrlib.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/tools/decompile-assembly.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/tools/loop.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/tools/solve-m01.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/tools/solve-m02.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/tools/solve-m03.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/tools/solve-m04.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "managed-lab/tools/solve-m05.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "manifests/capabilities.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "manifests/download-recipes.json",
+      "license": "MIT",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "manifests/installation-closure.v1.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "manifests/mcp-backends.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "manifests/publication-files.json",
+      "license": "MIT",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "manifests/publication.json",
+      "license": "MIT",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "manifests/source-releases/yaraflux-a4deb318d85c.json",
+      "license": "MIT",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "manifests/success-contracts.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "manifests/tools.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/.mcp.json.template",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/bin/7zip-mcp.cmd",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/bin/apktool-mcp.cmd",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/bin/apktool.cmd",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/bin/cheatengine-mcp.cmd",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/bin/debugger-router-mcp.cmd",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/bin/dnspy-mcp.cmd",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/bin/frida-mcp.cmd",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/bin/ghidra-mcp.cmd",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/bin/ida-pro-mcp.cmd",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/bin/ilspy-mcp.cmd",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/bin/imhex-mcp.cmd",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/bin/jadx-mcp.cmd",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/bin/mobsf-mcp.cmd",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/bin/radare2-mcp.cmd",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/bin/rea-mcp.cmd",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/bin/reclass-mcp.cmd",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/bin/reqable-mcp-local.cmd",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/bin/virustotal-mcp.cmd",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/bin/volatility3-mcp.cmd",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/bin/wireshark-mcp.cmd",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/bin/x64dbg-mcp.cmd",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/bin/yaraflux-http.cmd",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/bin/yaraflux-mcp.cmd",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/client-mcp.json.template",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/codex-mcp-config.example.toml",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/debugger-router/constraints-windows-py314.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/debugger-router/requirements.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/debugger-router/server.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mcp/rea-ida-registration.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/.gitignore",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/README.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/frida/hooks/01-okhttp-certificate-pinner.js",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/frida/hooks/02-anti-instrumentation-detector.js",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/frida/hooks/03-jni-native-boundary.js",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/frida/lib/frida-emulator.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/frida/lib/logic.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/AndroidManifest.xml",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/app/com/lab/mobilelab/ApiClient.java",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/app/com/lab/mobilelab/BootReceiver.java",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/app/com/lab/mobilelab/DebugActivity.java",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/app/com/lab/mobilelab/Endpoints.java",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/app/com/lab/mobilelab/IntegrityGuard.java",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/app/com/lab/mobilelab/MainActivity.java",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/app/com/lab/mobilelab/NativePinConfig.java",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/app/com/lab/mobilelab/PinningTrustManager.java",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/app/com/lab/mobilelab/SessionProvider.java",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/app/com/lab/mobilelab/SessionService.java",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/build/build-apk.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/build/check-so.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/build/make-so.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/build/zip.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/native/mobilelab.c",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/res/values/strings.xml",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/res/xml/network_security_config.xml",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/stubs/android/content/Context.java",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/stubs/android/content/pm/PackageManager.java",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/stubs/android/os/Build.java",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/stubs/android/os/Debug.java",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/stubs/android/os/Process.java",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/stubs/android/util/Log.java",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/stubs/okhttp3/CertificatePinner.java",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/lab/stubs/okhttp3/OkHttpClient.java",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/pinning.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/tools/analyze.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/tools/apktool_refusal_control.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/tools/frida-selftest-lib.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/tools/frida-selftest.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/tools/indicators.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/tools/loop.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "mobile-lab/tools/oracle-elf.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "native-lab/README.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "native-lab/tools/capa_probe.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "native-lab/tools/cert_verify.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "native-lab/tools/decompile.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "native-lab/tools/disasm.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "native-lab/tools/frida_runtime_facts.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "native-lab/tools/frida_spawn_gate.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "native-lab/tools/hardening_probe.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "native-lab/tools/ida-client.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "native-lab/tools/list-funcs.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "native-lab/tools/list-tools.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "native-lab/tools/loop.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "native-lab/tools/measure_instruments.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "native-lab/tools/negative-gate.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "native-lab/tools/pe_probe.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "net-reverse/README.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "net-reverse/lab/echo-server.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "net-reverse/lab/gen-pcaps.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "net-reverse/lab/pcap-writer.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "net-reverse/lab/questions.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "net-reverse/lab/tshark.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "net-reverse/tools/intercept.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "net-reverse/tools/loop.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "net-reverse/tools/negative-gate.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "net-reverse/tools/pcap-lab.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "net-reverse/tools/pcap_reader.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "net-reverse/tools/replay.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "net-reverse/tools/trustcheck.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-09-01-github-api-use-gh.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-09-01-windows-inplace-bootstrap.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-09-08-download-dry-run-isolation.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-09-19-vrc-dcc-retired.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-09-20-agent-cli.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-09-20-arsenal-complete-2026-09-20.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-09-20-mcp-pin-lt2.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-09-20-smoke-upgrade.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-09-30-crypto-lab.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-09-30-fuzz-lab.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-09-30-managed-native-depth.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-09-30-mobile-lab.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-09-30-web-reverse-lab.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-10-11-wb-signup-gate-is-server-side.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-10-12-assert-probes-red-step-is-a-skill-md-parse-limit.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-10-12-il2cpp-probe-no-target-parameter.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-10-12-il2cpp-probe-target-and-availability.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-10-12-rea-and-ida-session-lessons.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-10-12-verify-sweep-intermittent-flaky.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-10-13-dxgkrnl-gpu-pv-null-offset-root-cause.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-10-13-outbound-numbers-must-be-re-derived.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-10-14-trustcheck-baseline-drift-libwdi.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-10-15-delta-rule.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-10-15-dyld-symtab-via-ipsw.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-10-15-electron-desktop-artifacts-signatures.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-10-15-ghidra-go-symbols-and-space-paths.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-10-15-lzvn-no-magic-and-deepmap2-residual.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-10-15-re-toolkit.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-10-15-subagent-backend-refusals-retry.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-10-16-devin-payload-members-and-pak-misalignment.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-10-16-mac-sleep-wol.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/2026-10-17-eac206-patch-feasibility.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/INDEX.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/re-methods-20261015.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "notes/verify-all-2026-10-14.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "out/mission-q-h1exe.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "patches/apktool-mcp-server-0.1.0-explicit-errors/LICENSE.upstream",
+      "license": "Apache-2.0 (upstream license and downstream notice retained)",
+      "provenance": "reviewed Apache-2.0 APKTool MCP explicit-error correction and predecessor stdio source closure, 2026-11-19"
+    },
+    {
+      "path": "patches/apktool-mcp-server-0.1.0-explicit-errors/NOTICE.downstream.txt",
+      "license": "Apache-2.0 (upstream license and downstream notice retained)",
+      "provenance": "reviewed Apache-2.0 APKTool MCP explicit-error correction and predecessor stdio source closure, 2026-11-19"
+    },
+    {
+      "path": "patches/apktool-mcp-server-0.1.0-explicit-errors/README.md",
+      "license": "Apache-2.0 (upstream license and downstream notice retained)",
+      "provenance": "reviewed Apache-2.0 APKTool MCP explicit-error correction and predecessor stdio source closure, 2026-11-19"
+    },
+    {
+      "path": "patches/apktool-mcp-server-0.1.0-explicit-errors/manifest.json",
+      "license": "Apache-2.0 (upstream license and downstream notice retained)",
+      "provenance": "reviewed Apache-2.0 APKTool MCP explicit-error correction and predecessor stdio source closure, 2026-11-19"
+    },
+    {
+      "path": "patches/apktool-mcp-server-0.1.0-explicit-errors/test_error_results.py",
+      "license": "Apache-2.0 (upstream license and downstream notice retained)",
+      "provenance": "reviewed Apache-2.0 APKTool MCP explicit-error correction and predecessor stdio source closure, 2026-11-19"
+    },
+    {
+      "path": "patches/apktool-mcp-server-0.1.0-explicit-errors/upstream-source.patch",
+      "license": "Apache-2.0 (upstream license and downstream notice retained)",
+      "provenance": "reviewed Apache-2.0 APKTool MCP explicit-error correction and predecessor stdio source closure, 2026-11-19"
+    },
+    {
+      "path": "patches/mcp-wireshark-0.5.0-errors/LICENSE.upstream",
+      "license": "MIT (upstream notices retained)",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "patches/mcp-wireshark-0.5.0-errors/README.md",
+      "license": "MIT (upstream notices retained)",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "patches/mcp-wireshark-0.5.0-errors/error-results.patch",
+      "license": "MIT (upstream notices retained)",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "patches/mcp-wireshark-0.5.0-errors/manifest.json",
+      "license": "MIT (upstream notices retained)",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "patches/mcp-wireshark-0.5.0-handler-errors/LICENSE-UPSTREAM.txt",
+      "license": "MIT (upstream notices retained)",
+      "provenance": "reviewed mcp-wireshark 0.5.0 downstream handler-error source patch, 2026-11-19"
+    },
+    {
+      "path": "patches/mcp-wireshark-0.5.0-handler-errors/PATCH.diff",
+      "license": "MIT (upstream notices retained)",
+      "provenance": "reviewed mcp-wireshark 0.5.0 downstream handler-error source patch, 2026-11-19"
+    },
+    {
+      "path": "patches/mcp-wireshark-0.5.0-handler-errors/SOURCE-PROVENANCE.md",
+      "license": "MIT (upstream notices retained)",
+      "provenance": "reviewed mcp-wireshark 0.5.0 downstream handler-error source patch, 2026-11-19"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/LEDGER.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/MASTER-INDEX.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/OPEN-QUESTIONS.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/PACKAGE-MANIFEST.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/QUESTION-TREE.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/README.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/RELEASE-GATE-STATUS.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/ROLLBACK.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/SATURATION.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/SYNTHESIS.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/checkpoints/round-0000.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/checkpoints/round-0001.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/checkpoints/round-0002.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/checkpoints/round-0003.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/checkpoints/round-0004.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/checkpoints/round-0005.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/checkpoints/round-0006.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/learning-kit/BRIDGE.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/learning-kit/CHANGELOG.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/learning-kit/EXCLUDE-LOG.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/learning-kit/INCLUDE-MANIFEST.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/learning-kit/KB-TO-BEHAVIOUR.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/learning-kit/LICENSE-NOTE.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/learning-kit/PUBLIC-FACTS.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/learning-kit/QA-GATES.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/learning-kit/README.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/learning-kit/RECEIPT-SCHEMA.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/learning-kit/SKILL.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/learning-kit/check.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/learning-kit/examples/fixture-alpha.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/learning-kit/examples/fixture-alpha.txt.sha256",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/learning-kit/examples/fixture-beta.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/learning-kit/examples/fixture-beta.txt.sha256",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/learning-kit/tools.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/research/Q1/REPORT.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/research/Q1/claims.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/research/Q1/sources.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/research/Q2/REPORT.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/research/Q2/claims.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/research/Q2/sources.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/research/Q3/REPORT.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/research/Q3/claims.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/research/Q3/sources.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/research/Q4/REPORT.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/research/Q4/claims.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/research/Q4/sources.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/research/Q5/REPORT.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/research/Q5/claims.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/research/Q5/sources.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/research/Q6/REPORT.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/research/Q6/claims.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/research/Q6/sources.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/research/Q7/REPORT.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/research/Q7/claims.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/research/Q7/sources.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/research/Q8/REPORT.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/research/Q8/claims.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/research/Q8/sources.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/results.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q1-completeness/COMPLETENESS.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q1-completeness/verify.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/MEASUREMENTS.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/PRODUCT-TREE-INTEGRITY.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/PROMOTIONS.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/REPORT.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/SCRIPT-PROBES.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/build.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/finalize.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/fixtures/README.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/fixtures/syn-negative.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/fixtures/syn-negative.json.sha256",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/fixtures/syn-positive.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/fixtures/syn-positive.json.sha256",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/NEG-arsenal-doctrine-check.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/NEG-arsenal-two-tree-check.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/NEG-assert-probes-selftest.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/NEG-check-requires-tools.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/NEG-gate.ps1.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/NEG-mission.ps1.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/NEG-owner-attest.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/NEG-reachability-report.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/NEG-registry-verify.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/NEG-scan-unread-keys.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/NEG-sync-wiki-figures-selftest.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/NEG-sync-wiki-figures.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/NEG-verify-all.ps1.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/NEG-verify-atomic-artifacts.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/NEG-verify-clone-freshness.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/NEG-verify-doc-facts-selftest.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/NEG-verify-tools-manifest.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/PROBE-arsenal-doctrine-check.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/PROBE-arsenal-two-tree-check.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/PROBE-assert-probes-selftest.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/PROBE-check-requires-tools.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/PROBE-check_backend_consistency.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/PROBE-doc-facts.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/PROBE-eval-agent-contract.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/PROBE-gate.ps1.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/PROBE-maintenance-doctor.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/PROBE-mission.ps1.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/PROBE-owner-attest.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/PROBE-reachability-report.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/PROBE-registry-verify.py-count.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/PROBE-registry-verify.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/PROBE-scan-unread-keys.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/PROBE-sync-wiki-figures-selftest.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/PROBE-sync-wiki-figures.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/PROBE-verify-all.ps1.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/PROBE-verify-atomic-artifacts.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/PROBE-verify-clone-freshness.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/PROBE-verify-doc-facts-selftest.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/PROBE-verify-loop-arg-guards.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/PROBE-verify-probe-coverage.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/PROBE-verify-tools-manifest.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/claim_TR_S-check-requires-tools.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/claim_TR_S-gate.ps1.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/claim_TR_S-mission.ps1.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/claim_TR_S-owner-attest.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/claim_TR_S-reachability-report.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/receipts/claim_TR_S-verify-tools-manifest.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q2-scripts/verify.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q3-missing/MISSING-RECHECK.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q3-missing/PROMOTIONS.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q3-missing/REPORT.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q3-missing/verify.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q4-wrappers/CLASSIFY.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q4-wrappers/PROMOTIONS.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q4-wrappers/REPORT.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q4-wrappers/receipt_tools/dump_wrappers.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q4-wrappers/receipt_tools/find_targets.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q4-wrappers/receipt_tools/scan_wrappers.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q4-wrappers/receipts/LOCAL-BACKEND-CONSISTENCY.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q4-wrappers/receipts/LOCAL-TARGET-PATH-FIND.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q4-wrappers/receipts/LOCAL-WRAPPER-CHECKSUM-SCAN.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q4-wrappers/receipts/LOCAL-WRAPPER-TEXT-DUMP.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q4-wrappers/verify.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/ABSORBABLE.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/NEW_BEHAVIOUR_GATE.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/PROMOTIONS.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/RECEIPT-BINDINGS.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/REPORT.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/absorb_check.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/build_artifacts.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/fixtures/README.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/fixtures/c07-layers.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/fixtures/c07-layers.json.sha256",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/fixtures/c08-copypair.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/fixtures/c08-copypair.json.sha256",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/fixtures/c10-roles.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/fixtures/c10-roles.json.sha256",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/fixtures/gate1-envelope.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/fixtures/gate1-envelope.json.sha256",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/fixtures/gate3-cases.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/fixtures/gate3-cases.json.sha256",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/receipts/BU-ROOT-C07.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/receipts/BU-ROOT-C08.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/receipts/BU-ROOT-C10.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/receipts/RR-GATE-1.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/receipts/RR-GATE-3.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/receipts/SM",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q5-absorption/verify.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q6-audit/AUDIT.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q6-audit/REPORT.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q6-audit/measure.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q6-audit/receipts/q1-rerun.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q6-audit/receipts/q3-rerun.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q6-audit/receipts/q4-rerun.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q6-audit/receipts/q5-rerun.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q6-audit/rerun_driver.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q6-audit/verify.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q7-metric/METRIC-LEDGER.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q7-metric/REPORT.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q7-metric/verify.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q8-release-gate/RELEASE-GATE.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q8-release-gate/REPORT.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "releases/2026-11-11-full-library/slices/q8-release-gate/verify.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "schemas/run-receipt.v1.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "schemas/run-receipt.v2.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "schemas/run-receipt.v3.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/agent-cli.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/arsenal-doctrine-check.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/arsenal-two-tree-check.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/arsenal_mcp_server.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/assert-no-stray-args.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/assert-probes-selftest.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/assert-probes.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/bootstrap.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/ce-agent.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/check-requires-tools.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/check_backend_consistency.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/crackme-corpus.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/crypto-lab.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/dnspy-console.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/doc-facts.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/download-tools.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/emulation-probe.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/eval-agent-contract.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/fetch-official.py",
+      "license": "MIT",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "scripts/floss-agent.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/forensics-lab.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/freeze-pcap-plan.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/fuzz-lab.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/gate.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/ghidra-failopen-regress.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/ghidra-failopen.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/ghidra-headless.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/ghidra/DiffPrograms.java",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/ghidra/EmulateDecode.java",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/ghidra/ExportDecompile.java",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/ghidra/FunctionHashes.java",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/ghidra/HeadlessMcpHttp.java",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/ida-cli.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/ida/export_decompiled.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/il2cpp-probe.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/installation-closure.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/intel-agent.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/jadx-decompile.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/maintenance-doctor.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/mcp-probe.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/mission-success-contract.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/mission.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/mobile-lab.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/mobsf-agent.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/native-lab.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/owner-attest.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/probe_artifact.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/probe_artifact.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/probe_artifact.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/probe_wrapper.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/probes/dynamic_win_frida.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/probes/dynamic_win_frida_intercept.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/probes/ops_skill_security.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/publication.py",
+      "license": "MIT",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "scripts/reachability-report.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/registry-verify.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/requires-tools-volatility-fixtures.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/resolve-locale.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/restore-from-cache.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/runner_evidence.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/scan-unread-keys.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/smoke-all.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/smoke-mcp.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/smoke-tools.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/smoke-tools.py",
+      "license": "MIT",
+      "provenance": "authored station tool readiness source and documentation, reviewed 2026-11-19"
+    },
+    {
+      "path": "scripts/smoke_mcp.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/sync-wiki-figures-selftest.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/sync-wiki-figures.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/tool_lab/README.md",
+      "license": "MIT",
+      "provenance": "authored bounded tool laboratory source and controlled regression tests, reviewed 2026-11-19"
+    },
+    {
+      "path": "scripts/tool_lab/catalog.py",
+      "license": "MIT",
+      "provenance": "authored bounded tool laboratory source and controlled regression tests, reviewed 2026-11-19"
+    },
+    {
+      "path": "scripts/tool_lab/common.py",
+      "license": "MIT",
+      "provenance": "authored bounded tool laboratory source and controlled regression tests, reviewed 2026-11-19"
+    },
+    {
+      "path": "scripts/tool_lab/coverage.py",
+      "license": "MIT",
+      "provenance": "authored bounded tool laboratory source and controlled regression tests, reviewed 2026-11-19"
+    },
+    {
+      "path": "scripts/tool_lab/fixtures.py",
+      "license": "MIT",
+      "provenance": "authored bounded tool laboratory source and controlled regression tests, reviewed 2026-11-19"
+    },
+    {
+      "path": "scripts/tool_lab/lab_session.py",
+      "license": "MIT",
+      "provenance": "authored bounded tool laboratory source and controlled regression tests, reviewed 2026-11-19"
+    },
+    {
+      "path": "scripts/tool_lab/offline_acceptance.py",
+      "license": "MIT",
+      "provenance": "authored bounded tool laboratory source and controlled regression tests, reviewed 2026-11-19"
+    },
+    {
+      "path": "scripts/tool_lab/offline_fixtures.py",
+      "license": "MIT",
+      "provenance": "authored bounded tool laboratory source and controlled regression tests, reviewed 2026-11-19"
+    },
+    {
+      "path": "scripts/tool_lab/patches/IDENTITIES.json",
+      "license": "MIT",
+      "provenance": "reviewed Frida/Reqable source-context corrections and provenance, 2026-11-19"
+    },
+    {
+      "path": "scripts/tool_lab/patches/README.md",
+      "license": "MIT",
+      "provenance": "reviewed Frida/Reqable source-context corrections and provenance, 2026-11-19"
+    },
+    {
+      "path": "scripts/tool_lab/patches/frida.LICENSE.txt",
+      "license": "MIT (upstream notices retained)",
+      "provenance": "reviewed Frida/Reqable source-context corrections and provenance, 2026-11-19"
+    },
+    {
+      "path": "scripts/tool_lab/patches/frida.patch",
+      "license": "MIT (upstream notices retained)",
+      "provenance": "reviewed Frida/Reqable source-context corrections and provenance, 2026-11-19"
+    },
+    {
+      "path": "scripts/tool_lab/patches/reqable.LICENSE.txt",
+      "license": "MIT (upstream notices retained)",
+      "provenance": "reviewed Frida/Reqable source-context corrections and provenance, 2026-11-19"
+    },
+    {
+      "path": "scripts/tool_lab/patches/reqable.patch",
+      "license": "MIT (upstream notices retained)",
+      "provenance": "reviewed Frida/Reqable source-context corrections and provenance, 2026-11-19"
+    },
+    {
+      "path": "scripts/tool_lab/raw_mcp.py",
+      "license": "MIT",
+      "provenance": "authored bounded tool laboratory source and controlled regression tests, reviewed 2026-11-19"
+    },
+    {
+      "path": "scripts/tool_lab/run_apktool.py",
+      "license": "MIT",
+      "provenance": "authored portable APKTool fixture runner and mechanically projected bounded backend coverage, reviewed 2026-11-19"
+    },
+    {
+      "path": "scripts/tool_lab/run_dnspy_nop.py",
+      "license": "MIT",
+      "provenance": "authored bounded tool laboratory source and controlled regression tests, reviewed 2026-11-19"
+    },
+    {
+      "path": "scripts/tool_lab/run_frida.py",
+      "license": "MIT",
+      "provenance": "authored bounded tool laboratory source and controlled regression tests, reviewed 2026-11-19"
+    },
+    {
+      "path": "scripts/tool_lab/run_ida.py",
+      "license": "MIT",
+      "provenance": "authored bounded tool laboratory source and controlled regression tests, reviewed 2026-11-19"
+    },
+    {
+      "path": "scripts/tool_lab/run_reqable.py",
+      "license": "MIT",
+      "provenance": "authored bounded tool laboratory source and controlled regression tests, reviewed 2026-11-19"
+    },
+    {
+      "path": "scripts/tool_lab/run_volatility.py",
+      "license": "MIT",
+      "provenance": "authored bounded tool laboratory source and controlled regression tests, reviewed 2026-11-19"
+    },
+    {
+      "path": "scripts/verify-all.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/verify-atomic-artifacts.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/verify-clone-freshness.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/verify-doc-facts-selftest.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/verify-loop-arg-guards.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/verify-probe-coverage.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/verify-profile.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/verify-tools-manifest.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "scripts/web-reverse-lab.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/2026-11-11/CUSTOMIZATION-NOTES.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/2026-11-11/portable-core/AGENTS.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/2026-11-11/portable-core/FIX-KB/COMMUNITY.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/2026-11-11/portable-core/FIX-KB/OFFICIAL.tsv",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/2026-11-11/portable-core/LICENSE",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/2026-11-11/portable-core/README.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/2026-11-11/portable-core/README.zh-CN.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/2026-11-11/portable-core/SELF-DEPLOY.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/2026-11-11/portable-core/SELF-REPAIR.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/2026-11-11/portable-core/SKILL.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/2026-11-11/portable-core/references/FIX-KB.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/2026-11-11/portable-core/references/INSTALL.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/2026-11-11/portable-core/references/PRIOR-WAVE.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/2026-11-11/portable-core/references/VERIFY.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/2026-11-11/portable-core/references/frozen/legacy-verify-2026-11-11.py.txt",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/2026-11-11/portable-core/scripts/verify.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/2026-11-11/portable-core/tests/entry_checks.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/2026-11-11/portable-core/tests/package_contract.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/2026-11-11/portable-core/tests/verify.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/2026-11-11/portable-core/verify.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/2026-11-11/restore-evidence/REPORT.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/2026-11-11/station-routers/debugger-review/SKILL.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/2026-11-11/station-routers/debugger-workstation/SKILL.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/debugger-review/SKILL.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "skills/debugger-workstation/SKILL.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "source-releases/yaraflux/LICENSE.upstream",
+      "license": "MIT (ThreatFlux)",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "source-releases/yaraflux/PRESERVATION-NOTICE.txt",
+      "license": "MIT (ThreatFlux)",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "source-releases/yaraflux/README.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "templates/AFTER_ACTION.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "templates/INIT_QUESTIONNAIRE.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "templates/i18n/ja/INIT_QUESTIONNAIRE.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "templates/i18n/ko/INIT_QUESTIONNAIRE.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "templates/i18n/zh-CN/INIT_QUESTIONNAIRE.md",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "tests/forensics_output/output_contract.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "tests/installation_closure/test_driver.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "tests/make_restore_cache_fixtures.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "tests/mission_contract/contract_probe.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "tests/mission_contract/fixtures.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "tests/mission_contract/mission_wiring_probe.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "tests/pcap_reader/packet_contract.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "tests/publication_regress.py",
+      "license": "MIT",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "tests/resource_cleanup/README.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "tests/resource_cleanup/mocks/cdp.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "tests/resource_cleanup/mocks/chrome.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "tests/resource_cleanup/mocks/frida.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "tests/resource_cleanup/run.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "tests/restore-from-cache.cleanup.regress.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "tests/restore-from-cache.regress.ps1",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "tests/router_acceptance/README.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "tests/router_acceptance/acceptance_harness.py",
+      "license": "MIT",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "tests/router_acceptance/fake_backend.py",
+      "license": "MIT",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "tests/router_acceptance/old_server.py",
+      "license": "MIT",
+      "provenance": "reviewed publication increment 2026-11-19"
+    },
+    {
+      "path": "tests/router_descriptor/descriptor_probe.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "tests/router_descriptor/fixture_backend.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "tests/router_wire/wire_backend.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "tests/router_wire/wire_probe.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "tests/runner_evidence/fixture_cli.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "tests/runner_evidence/test_runner_evidence.py",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "tests/test_smoke_tools.py",
+      "license": "MIT",
+      "provenance": "authored station tool readiness source and documentation, reviewed 2026-11-19"
+    },
+    {
+      "path": "tests/test_tool_lab_core.py",
+      "license": "MIT",
+      "provenance": "authored bounded tool laboratory source and controlled regression tests, reviewed 2026-11-19"
+    },
+    {
+      "path": "tests/test_tool_lab_offline_oracles.py",
+      "license": "MIT",
+      "provenance": "authored bounded tool laboratory source and controlled regression tests, reviewed 2026-11-19"
+    },
+    {
+      "path": "web-reverse/README.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/antibot.md",
+      "license": "CC-BY-SA-4.0",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/lab/pages/fingerprint.html",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/lab/pages/index.html",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/lab/pages/obf.html",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/lab/pages/plain.html",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/lab/pages/sha256-pure.js",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/lab/server.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/static/deobf.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/static/gen-obf.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/static/lib/astgrep.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/static/lib/sandbox.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/static/lib/triage.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/static/package-lock.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/static/package.json",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/static/rename.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/static/selftest.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/static/sg.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/tools/capture.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/tools/cdp-nodes.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/tools/cdp.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/tools/chrome.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/tools/fingerprint.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/tools/loop.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/tools/loop2.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/tools/negative-gate.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/tools/recover.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "web-reverse/tools/replay.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "yara-lab/.gitignore",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "yara-lab/tools/negative-gate.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    },
+    {
+      "path": "yara-lab/tools/probe.mjs",
+      "license": "MIT",
+      "provenance": "published baseline 32b25ca06deab5598411f1bd27b78541dd12f704"
+    }
+  ]
+}

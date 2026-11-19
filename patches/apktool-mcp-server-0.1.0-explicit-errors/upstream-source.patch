@@ -1,0 +1,699 @@
+--- a/apktool_mcp_server.py
++++ b/apktool_mcp_server.py
+@@ -15,9 +15,11 @@
+ import argparse
+ import json
+ import time
++import sys
+ import xml.etree.ElementTree as ET
+ from typing import List, Union, Dict, Optional, Callable, Any
+ from fastmcp import FastMCP
++from fastmcp.exceptions import ToolError
+ 
+ # Set up logging configuration
+ logger = logging.getLogger()
+@@ -208,6 +210,11 @@
+             
+         return {"valid": True}
+ 
++# Modified 2026-11-19: preserve explicit tool failures in the MCP error envelope.
++def _tool_error(details: Dict[str, Any]) -> ToolError:
++    """Keep the existing error payload without classifying successful tool data."""
++    return ToolError(json.dumps(details, ensure_ascii=False))
++
+ # Enhanced command runner with better error handling
+ def run_command(command: List[str], timeout: int = DEFAULT_TIMEOUT, cwd: Optional[str] = None) -> Dict[str, Union[str, int, bool]]:
+     """Enhanced command runner with comprehensive error handling"""
+@@ -315,11 +322,11 @@
+         
+     except Exception as e:
+         logger.error(f"Health check error: {str(e)}")
+-        return {
++        raise _tool_error({
+             "server_status": "error",
+             "error": str(e),
+             "timestamp": time.time()
+-        }
++        })
+ 
+ # Enhanced MCP Tools with validation and better error handling
+ 
+@@ -349,10 +356,10 @@
+     # Input validation
+     path_validation = ValidationUtils.validate_path(apk_path, must_exist=True)
+     if not path_validation["valid"]:
+-        return {"success": False, "error": path_validation["error"]}
++        raise _tool_error({"success": False, "error": path_validation["error"]})
+     
+     if not apk_path.lower().endswith(('.apk', '.xapk')):
+-        return {"success": False, "error": "File must have .apk or .xapk extension"}
++        raise _tool_error({"success": False, "error": "File must have .apk or .xapk extension"})
+     
+     # Determine output directory
+     if output_dir is None:
+@@ -362,7 +369,7 @@
+     # Validate output_dir is within WORKSPACE_DIR to prevent path traversal (CWE-22)
+     workspace_validation = ValidationUtils.validate_workspace_path(output_dir, WORKSPACE_DIR)
+     if not workspace_validation["valid"]:
+-        return {"success": False, "error": workspace_validation["error"]}
++        raise _tool_error({"success": False, "error": workspace_validation["error"]})
+     
+     # Build command
+     command = ["apktool", "d", apk_path, "-o", output_dir]
+@@ -390,6 +397,9 @@
+         else:
+             result["warning"] = "Decode reported success but output directory not found"
+     
++    # run_command declares failures explicitly; health reports retain their own semantics.
++    if not result["success"]:
++        raise _tool_error(result)
+     return result
+ 
+ @mcp.tool()
+@@ -416,25 +426,25 @@
+     # Input validation
+     path_validation = ValidationUtils.validate_path(project_dir, must_exist=True)
+     if not path_validation["valid"]:
+-        return {"success": False, "error": path_validation["error"]}
++        raise _tool_error({"success": False, "error": path_validation["error"]})
+     
+     # Validate project_dir is within WORKSPACE_DIR to prevent path traversal (CWE-22)
+     workspace_validation = ValidationUtils.validate_workspace_path(project_dir, WORKSPACE_DIR)
+     if not workspace_validation["valid"]:
+-        return {"success": False, "error": workspace_validation["error"]}
++        raise _tool_error({"success": False, "error": workspace_validation["error"]})
+     
+     if not os.path.isdir(project_dir):
+-        return {"success": False, "error": f"Project path is not a directory: {project_dir}"}
++        raise _tool_error({"success": False, "error": f"Project path is not a directory: {project_dir}"})
+     
+     # Check for required files
+     apktool_yml = os.path.join(project_dir, "apktool.yml")
+     manifest_xml = os.path.join(project_dir, "AndroidManifest.xml")
+     
+     if not os.path.exists(apktool_yml):
+-        return {"success": False, "error": "apktool.yml not found. Is this a valid APKTool project?"}
++        raise _tool_error({"success": False, "error": "apktool.yml not found. Is this a valid APKTool project?"})
+     
+     if not os.path.exists(manifest_xml):
+-        return {"success": False, "error": "AndroidManifest.xml not found. Is this a valid APKTool project?"}
++        raise _tool_error({"success": False, "error": "AndroidManifest.xml not found. Is this a valid APKTool project?"})
+     
+     # Build command
+     command = ["apktool", "b", project_dir]
+@@ -446,7 +456,7 @@
+         # Validate output_apk is within WORKSPACE_DIR to prevent path traversal (CWE-22)
+         workspace_validation = ValidationUtils.validate_workspace_path(output_apk, WORKSPACE_DIR)
+         if not workspace_validation["valid"]:
+-            return {"success": False, "error": workspace_validation["error"]}
++            raise _tool_error({"success": False, "error": workspace_validation["error"]})
+         command.extend(["-o", output_apk])
+     
+     result = run_command(command, timeout=timeout)
+@@ -462,6 +472,9 @@
+         else:
+             result["warning"] = f"Build succeeded but APK not found at expected path: {output_apk}"
+     
++    # run_command declares failures explicitly; health reports retain their own semantics.
++    if not result["success"]:
++        raise _tool_error(result)
+     return result
+ 
+ @mcp.tool()
+@@ -478,20 +491,20 @@
+     # Input validation
+     path_validation = ValidationUtils.validate_path(project_dir, must_exist=True)
+     if not path_validation["valid"]:
+-        return {"success": False, "error": path_validation["error"]}
++        raise _tool_error({"success": False, "error": path_validation["error"]})
+     
+     # Validate project_dir is within WORKSPACE_DIR to prevent path traversal (CWE-22)
+     workspace_validation = ValidationUtils.validate_workspace_path(project_dir, WORKSPACE_DIR)
+     if not workspace_validation["valid"]:
+-        return {"success": False, "error": workspace_validation["error"]}
++        raise _tool_error({"success": False, "error": workspace_validation["error"]})
+     
+     manifest_path = os.path.join(project_dir, "AndroidManifest.xml")
+     if not os.path.exists(manifest_path):
+-        return {
++        raise _tool_error({
+             "success": False,
+             "error": f"AndroidManifest.xml not found in {project_dir}",
+             "expected_path": manifest_path
+-        }
++        })
+     
+     try:
+         with open(manifest_path, 'r', encoding="utf-8") as f:
+@@ -509,11 +522,11 @@
+         
+     except Exception as e:
+         logger.error(f"Error reading manifest: {str(e)}")
+-        return {
++        raise _tool_error({
+             "success": False,
+             "error": f"Failed to read AndroidManifest.xml: {str(e)}",
+             "path": manifest_path
+-        }
++        })
+ 
+ @mcp.tool()
+ async def get_apktool_yml(project_dir: str) -> Dict:
+@@ -529,20 +542,20 @@
+     # Input validation
+     path_validation = ValidationUtils.validate_path(project_dir, must_exist=True)
+     if not path_validation["valid"]:
+-        return {"success": False, "error": path_validation["error"]}
++        raise _tool_error({"success": False, "error": path_validation["error"]})
+     
+     # Validate project_dir is within WORKSPACE_DIR to prevent path traversal (CWE-22)
+     workspace_validation = ValidationUtils.validate_workspace_path(project_dir, WORKSPACE_DIR)
+     if not workspace_validation["valid"]:
+-        return {"success": False, "error": workspace_validation["error"]}
++        raise _tool_error({"success": False, "error": workspace_validation["error"]})
+     
+     yml_path = os.path.join(project_dir, "apktool.yml")
+     if not os.path.exists(yml_path):
+-        return {
++        raise _tool_error({
+             "success": False,
+             "error": f"apktool.yml not found in {project_dir}",
+             "expected_path": yml_path
+-        }
++        })
+     
+     try:
+         with open(yml_path, 'r', encoding="utf-8") as f:
+@@ -560,11 +573,11 @@
+         
+     except Exception as e:
+         logger.error(f"Error reading apktool.yml: {str(e)}")
+-        return {
++        raise _tool_error({
+             "success": False,
+             "error": f"Failed to read apktool.yml: {str(e)}",
+             "path": yml_path
+-        }
++        })
+ 
+ @mcp.tool()
+ async def list_smali_directories(project_dir: str) -> Dict:
+@@ -580,12 +593,12 @@
+     # Input validation
+     path_validation = ValidationUtils.validate_path(project_dir, must_exist=True)
+     if not path_validation["valid"]:
+-        return {"success": False, "error": path_validation["error"]}
++        raise _tool_error({"success": False, "error": path_validation["error"]})
+     
+     # Validate project_dir is within WORKSPACE_DIR to prevent path traversal (CWE-22)
+     workspace_validation = ValidationUtils.validate_workspace_path(project_dir, WORKSPACE_DIR)
+     if not workspace_validation["valid"]:
+-        return {"success": False, "error": workspace_validation["error"]}
++        raise _tool_error({"success": False, "error": workspace_validation["error"]})
+     
+     try:
+         smali_dirs = []
+@@ -615,10 +628,10 @@
+         
+     except Exception as e:
+         logger.error(f"Error listing smali directories: {str(e)}")
+-        return {
++        raise _tool_error({
+             "success": False,
+             "error": f"Failed to list smali directories: {str(e)}"
+-        }
++        })
+ 
+ @mcp.tool()
+ async def list_smali_files(
+@@ -644,12 +657,12 @@
+     # Input validation
+     path_validation = ValidationUtils.validate_path(project_dir, must_exist=True)
+     if not path_validation["valid"]:
+-        return {"success": False, "error": path_validation["error"]}
++        raise _tool_error({"success": False, "error": path_validation["error"]})
+     
+     # Validate project_dir is within WORKSPACE_DIR to prevent path traversal (CWE-22)
+     workspace_validation = ValidationUtils.validate_workspace_path(project_dir, WORKSPACE_DIR)
+     if not workspace_validation["valid"]:
+-        return {"success": False, "error": workspace_validation["error"]}
++        raise _tool_error({"success": False, "error": workspace_validation["error"]})
+     
+     smali_path = os.path.join(project_dir, smali_dir)
+     
+@@ -657,7 +670,7 @@
+     real_smali_path = os.path.realpath(smali_path)
+     real_project_dir = os.path.realpath(project_dir)
+     if not real_smali_path.startswith(real_project_dir + os.sep):
+-        return {"success": False, "error": "smali_dir must not contain path traversal components"}
++        raise _tool_error({"success": False, "error": "smali_dir must not contain path traversal components"})
+     if not os.path.exists(smali_path):
+         # Get available smali directories
+         try:
+@@ -666,11 +679,11 @@
+         except Exception:
+             smali_dirs = []
+         
+-        return {
++        raise _tool_error({
+             "success": False,
+             "error": f"Smali directory not found: {smali_path}",
+             "available_dirs": smali_dirs
+-        }
++        })
+     
+     try:
+         smali_files = []
+@@ -680,15 +693,15 @@
+         if package_prefix:
+             # Validate package name format
+             if not package_prefix.replace('.', '').replace('_', '').replace('$', '').isalnum():
+-                return {"success": False, "error": "Invalid package prefix format"}
++                raise _tool_error({"success": False, "error": "Invalid package prefix format"})
+             
+             package_path = os.path.join(smali_path, package_prefix.replace('.', os.path.sep))
+             if not os.path.exists(package_path):
+-                return {
++                raise _tool_error({
+                     "success": False,
+                     "error": f"Package not found: {package_prefix}",
+                     "expected_path": package_path
+-                }
++                })
+             search_root = package_path
+         
+         # Recursively find all .smali files
+@@ -726,12 +739,14 @@
+         
+         return paginated_result
+         
++    except ToolError:
++        raise
+     except Exception as e:
+         logger.error(f"Error listing smali files: {str(e)}")
+-        return {
++        raise _tool_error({
+             "success": False,
+             "error": f"Failed to list smali files: {str(e)}"
+-        }
++        })
+ 
+ @mcp.tool()
+ async def get_smali_file(project_dir: str, class_name: str) -> Dict:
+@@ -748,16 +763,16 @@
+     # Input validation
+     path_validation = ValidationUtils.validate_path(project_dir, must_exist=True)
+     if not path_validation["valid"]:
+-        return {"success": False, "error": path_validation["error"]}
++        raise _tool_error({"success": False, "error": path_validation["error"]})
+     
+     # Validate project_dir is within WORKSPACE_DIR to prevent path traversal (CWE-22)
+     workspace_validation = ValidationUtils.validate_workspace_path(project_dir, WORKSPACE_DIR)
+     if not workspace_validation["valid"]:
+-        return {"success": False, "error": workspace_validation["error"]}
++        raise _tool_error({"success": False, "error": workspace_validation["error"]})
+     
+     class_validation = ValidationUtils.validate_class_name(class_name)
+     if not class_validation["valid"]:
+-        return {"success": False, "error": class_validation["error"]}
++        raise _tool_error({"success": False, "error": class_validation["error"]})
+     
+     try:
+         # Look for the class in all smali directories
+@@ -785,18 +800,20 @@
+                     "encoding": "utf-8"
+                 }
+         
+-        return {
++        raise _tool_error({
+             "success": False,
+             "error": f"Smali file not found for class: {class_name}",
+             "searched_dirs": smali_dirs
+-        }
+-        
++        })
++        
++    except ToolError:
++        raise
+     except Exception as e:
+         logger.error(f"Error getting smali file: {str(e)}")
+-        return {
++        raise _tool_error({
+             "success": False,
+             "error": f"Failed to get smali file: {str(e)}"
+-        }
++        })
+ 
+ @mcp.tool()
+ async def modify_smali_file(
+@@ -820,16 +837,16 @@
+     # Input validation
+     path_validation = ValidationUtils.validate_path(project_dir, must_exist=True)
+     if not path_validation["valid"]:
+-        return {"success": False, "error": path_validation["error"]}
++        raise _tool_error({"success": False, "error": path_validation["error"]})
+     
+     # Validate project_dir is within WORKSPACE_DIR to prevent path traversal (CWE-22)
+     workspace_validation = ValidationUtils.validate_workspace_path(project_dir, WORKSPACE_DIR)
+     if not workspace_validation["valid"]:
+-        return {"success": False, "error": workspace_validation["error"]}
++        raise _tool_error({"success": False, "error": workspace_validation["error"]})
+     
+     class_validation = ValidationUtils.validate_class_name(class_name)
+     if not class_validation["valid"]:
+-        return {"success": False, "error": class_validation["error"]}
++        raise _tool_error({"success": False, "error": class_validation["error"]})
+      
+     try:
+         # Find the smali file
+@@ -849,11 +866,11 @@
+                 break
+         
+         if not file_path:
+-            return {
++            raise _tool_error({
+                 "success": False,
+                 "error": f"Smali file not found for class: {class_name}",
+                 "searched_dirs": smali_dirs
+-            }
++            })
+         
+         # Get original content size
+         original_size = os.path.getsize(file_path)
+@@ -879,12 +896,14 @@
+             "backup_created": backup_path is not None
+         }
+         
++    except ToolError:
++        raise
+     except Exception as e:
+         logger.error(f"Error modifying smali file: {str(e)}")
+-        return {
++        raise _tool_error({
+             "success": False,
+             "error": f"Failed to modify smali file: {str(e)}"
+-        }
++        })
+ 
+ @mcp.tool()
+ async def list_resources(
+@@ -908,19 +927,19 @@
+     # Input validation
+     path_validation = ValidationUtils.validate_path(project_dir, must_exist=True)
+     if not path_validation["valid"]:
+-        return {"success": False, "error": path_validation["error"]}
++        raise _tool_error({"success": False, "error": path_validation["error"]})
+     
+     # Validate project_dir is within WORKSPACE_DIR to prevent path traversal (CWE-22)
+     workspace_validation = ValidationUtils.validate_workspace_path(project_dir, WORKSPACE_DIR)
+     if not workspace_validation["valid"]:
+-        return {"success": False, "error": workspace_validation["error"]}
++        raise _tool_error({"success": False, "error": workspace_validation["error"]})
+     
+     res_path = os.path.join(project_dir, "res")
+     if not os.path.exists(res_path):
+-        return {
++        raise _tool_error({
+             "success": False,
+             "error": f"Resources directory not found: {res_path}"
+-        }
++        })
+     
+     try:
+         if resource_type:
+@@ -933,11 +952,11 @@
+                     if os.path.isdir(os.path.join(res_path, d))
+                 ]
+                 
+-                return {
++                raise _tool_error({
+                     "success": False,
+                     "error": f"Resource type directory not found: {resource_type}",
+                     "available_types": resource_types
+-                }
++                })
+             
+             resources = []
+             for item in os.listdir(type_path):
+@@ -1020,12 +1039,14 @@
+             
+             return paginated_result
+         
++    except ToolError:
++        raise
+     except Exception as e:
+         logger.error(f"Error listing resources: {str(e)}")
+-        return {
++        raise _tool_error({
+             "success": False,
+             "error": f"Failed to list resources: {str(e)}"
+-        }
++        })
+ 
+ @mcp.tool()
+ async def get_resource_file(project_dir: str, resource_type: str, resource_name: str) -> Dict:
+@@ -1043,15 +1064,15 @@
+     # Input validation
+     path_validation = ValidationUtils.validate_path(project_dir, must_exist=True)
+     if not path_validation["valid"]:
+-        return {"success": False, "error": path_validation["error"]}
++        raise _tool_error({"success": False, "error": path_validation["error"]})
+     
+     # Validate project_dir is within WORKSPACE_DIR to prevent path traversal (CWE-22)
+     workspace_validation = ValidationUtils.validate_workspace_path(project_dir, WORKSPACE_DIR)
+     if not workspace_validation["valid"]:
+-        return {"success": False, "error": workspace_validation["error"]}
++        raise _tool_error({"success": False, "error": workspace_validation["error"]})
+     
+     if not resource_type or not resource_name:
+-        return {"success": False, "error": "Resource type and name are required"}
++        raise _tool_error({"success": False, "error": "Resource type and name are required"})
+     
+     resource_path = os.path.join(project_dir, "res", resource_type, resource_name)
+     
+@@ -1060,13 +1081,13 @@
+     real_resource_path = os.path.realpath(resource_path)
+     real_project_dir = os.path.realpath(project_dir)
+     if not real_resource_path.startswith(real_project_dir + os.sep):
+-        return {"success": False, "error": "Path traversal detected in resource_type or resource_name"}
++        raise _tool_error({"success": False, "error": "Path traversal detected in resource_type or resource_name"})
+     if not os.path.exists(resource_path):
+-        return {
++        raise _tool_error({
+             "success": False,
+             "error": f"Resource file not found: {resource_path}",
+             "expected_path": resource_path
+-        }
++        })
+     
+     try:
+         file_size = os.path.getsize(resource_path)
+@@ -1097,7 +1118,7 @@
+             return result
+         else:
+             # Binary file
+-            return {
++            raise _tool_error({
+                 "success": False,
+                 "error": "This appears to be a binary resource file and cannot be read as text",
+                 "path": resource_path,
+@@ -1106,14 +1127,16 @@
+                 "resource_name": resource_name,
+                 "is_binary": True,
+                 "is_text": False
+-            }
+-        
++            })
++        
++    except ToolError:
++        raise
+     except Exception as e:
+         logger.error(f"Error getting resource file: {str(e)}")
+-        return {
++        raise _tool_error({
+             "success": False,
+             "error": f"Failed to get resource file: {str(e)}"
+-        }
++        })
+ 
+ @mcp.tool()
+ async def modify_resource_file(
+@@ -1139,15 +1162,15 @@
+     # Input validation
+     path_validation = ValidationUtils.validate_path(project_dir, must_exist=True)
+     if not path_validation["valid"]:
+-        return {"success": False, "error": path_validation["error"]}
++        raise _tool_error({"success": False, "error": path_validation["error"]})
+     
+     # Validate project_dir is within WORKSPACE_DIR to prevent path traversal (CWE-22)
+     workspace_validation = ValidationUtils.validate_workspace_path(project_dir, WORKSPACE_DIR)
+     if not workspace_validation["valid"]:
+-        return {"success": False, "error": workspace_validation["error"]}
++        raise _tool_error({"success": False, "error": workspace_validation["error"]})
+     
+     if not resource_type or not resource_name:
+-        return {"success": False, "error": "Resource type and name are required"}
++        raise _tool_error({"success": False, "error": "Resource type and name are required"})
+     
+     resource_path = os.path.join(project_dir, "res", resource_type, resource_name)
+     
+@@ -1156,13 +1179,13 @@
+     real_resource_path = os.path.realpath(resource_path)
+     real_project_dir = os.path.realpath(project_dir)
+     if not real_resource_path.startswith(real_project_dir + os.sep):
+-        return {"success": False, "error": "Path traversal detected in resource_type or resource_name"}
++        raise _tool_error({"success": False, "error": "Path traversal detected in resource_type or resource_name"})
+     if not os.path.exists(resource_path):
+-        return {
++        raise _tool_error({
+             "success": False,
+             "error": f"Resource file not found: {resource_path}",
+             "expected_path": resource_path
+-        }
++        })
+     
+     try:
+         # Get original file info
+@@ -1194,10 +1217,10 @@
+         
+     except Exception as e:
+         logger.error(f"Error modifying resource file: {str(e)}")
+-        return {
++        raise _tool_error({
+             "success": False,
+             "error": f"Failed to modify resource file: {str(e)}"
+-        }
++        })
+ 
+ @mcp.tool()
+ async def search_in_files(
+@@ -1227,19 +1250,19 @@
+     # Input validation
+     path_validation = ValidationUtils.validate_path(project_dir, must_exist=True)
+     if not path_validation["valid"]:
+-        return {"success": False, "error": path_validation["error"]}
++        raise _tool_error({"success": False, "error": path_validation["error"]})
+     
+     # Validate project_dir is within WORKSPACE_DIR to prevent path traversal (CWE-22)
+     workspace_validation = ValidationUtils.validate_workspace_path(project_dir, WORKSPACE_DIR)
+     if not workspace_validation["valid"]:
+-        return {"success": False, "error": workspace_validation["error"]}
++        raise _tool_error({"success": False, "error": workspace_validation["error"]})
+     
+     pattern_validation = ValidationUtils.validate_search_pattern(search_pattern)
+     if not pattern_validation["valid"]:
+-        return {"success": False, "error": pattern_validation["error"]}
++        raise _tool_error({"success": False, "error": pattern_validation["error"]})
+     
+     if not file_extensions or not isinstance(file_extensions, list):
+-        return {"success": False, "error": "File extensions must be a non-empty list"}
++        raise _tool_error({"success": False, "error": "File extensions must be a non-empty list"})
+     
+     try:
+         results = []
+@@ -1340,10 +1363,10 @@
+         
+     except Exception as e:
+         logger.error(f"Error searching in files: {str(e)}")
+-        return {
++        raise _tool_error({
+             "success": False,
+             "error": f"Failed to search in files: {str(e)}"
+-        }
++        })
+ 
+ @mcp.tool()
+ async def clean_project(project_dir: str, backup: bool = True) -> Dict:
+@@ -1360,12 +1383,12 @@
+     # Input validation
+     path_validation = ValidationUtils.validate_path(project_dir, must_exist=True)
+     if not path_validation["valid"]:
+-        return {"success": False, "error": path_validation["error"]}
++        raise _tool_error({"success": False, "error": path_validation["error"]})
+     
+     # Validate project_dir is within WORKSPACE_DIR to prevent path traversal (CWE-22)
+     workspace_validation = ValidationUtils.validate_workspace_path(project_dir, WORKSPACE_DIR)
+     if not workspace_validation["valid"]:
+-        return {"success": False, "error": workspace_validation["error"]}
++        raise _tool_error({"success": False, "error": workspace_validation["error"]})
+     
+     try:
+         dirs_to_clean = ["build", "dist", "temp"]
+@@ -1446,10 +1469,10 @@
+         
+     except Exception as e:
+         logger.error(f"Error cleaning project: {str(e)}")
+-        return {
++        raise _tool_error({
+             "success": False,
+             "error": f"Failed to clean project: {str(e)}"
+-        }
++        })
+ 
+ @mcp.tool()
+ async def analyze_project_structure(project_dir: str) -> Dict:
+@@ -1465,12 +1488,12 @@
+     # Input validation
+     path_validation = ValidationUtils.validate_path(project_dir, must_exist=True)
+     if not path_validation["valid"]:
+-        return {"success": False, "error": path_validation["error"]}
++        raise _tool_error({"success": False, "error": path_validation["error"]})
+     
+     # Validate project_dir is within WORKSPACE_DIR to prevent path traversal (CWE-22)
+     workspace_validation = ValidationUtils.validate_workspace_path(project_dir, WORKSPACE_DIR)
+     if not workspace_validation["valid"]:
+-        return {"success": False, "error": workspace_validation["error"]}
++        raise _tool_error({"success": False, "error": workspace_validation["error"]})
+     
+     try:
+         analysis = {
+@@ -1663,10 +1686,10 @@
+         
+     except Exception as e:
+         logger.error(f"Error analyzing project structure: {str(e)}")
+-        return {
++        raise _tool_error({
+             "success": False,
+             "error": f"Failed to analyze project structure: {str(e)}"
+-        }
++        })
+ 
+ @mcp.tool()
+ async def get_workspace_info() -> Dict:
+@@ -1687,11 +1710,11 @@
+         }
+         
+         if not os.path.exists(WORKSPACE_DIR):
+-            return {
++            raise _tool_error({
+                 "success": False,
+                 "error": f"Workspace directory does not exist: {WORKSPACE_DIR}",
+                 "workspace_info": workspace_info
+-            }
++            })
+         
+         # Get disk usage information
+         try:
+@@ -1779,14 +1802,20 @@
+             "workspace_info": workspace_info
+         }
+         
++    except ToolError:
++        raise
+     except Exception as e:
+         logger.error(f"Error getting workspace info: {str(e)}")
+-        return {
++        raise _tool_error({
+             "success": False,
+             "error": f"Failed to get workspace info: {str(e)}"
+-        }
++        })
+ 
+ def main():
++    def print(*args, **kwargs):
++        kwargs.setdefault("file", sys.stderr)
++        return __import__("builtins").print(*args, **kwargs)
++
+     print("=" * 80)
+     print("APKTool MCP Server")
+     print("By ZinjaCoder (https://github.com/zinja-coder)")

@@ -50,7 +50,9 @@
     "templates",
     "schemas",
     "evidence/profile-receipts",
-    "releases/2026-11-11-full-library"
+    "releases/2026-11-11-full-library",
+    "patches",
+    "source-releases"
   ],
   "required_files": [
     "scripts/bootstrap.ps1",
@@ -166,6 +168,7 @@
     "The nine .agent files are existing station-router reading dependencies. They retain their dated snapshot content; docs/CURRENT-CLI-PROFILE.md owns the current bounded handoff.",
     "No private OWNER.md/local.json, source .venv, third-party MCP checkout, raw sample, or global client configuration is part of this copy list.",
     "Root tests/runner_evidence and tests/installation_closure are test assets, not installation dependencies. Portable-core in-package tests remain part of that established package contract.",
-    "Mission Selftest loads tests/mission_contract/fixtures.ps1 and evaluates its explicit synthetic inputs through the installed module. contract_probe.ps1 and mission_wiring_probe.py are standalone semantic and orchestration verifiers; these narrowly copied files are explicit installation dependencies, not live provider evidence."
+    "Mission Selftest loads tests/mission_contract/fixtures.ps1 and evaluates its explicit synthetic inputs through the installed module. contract_probe.ps1 and mission_wiring_probe.py are standalone semantic and orchestration verifiers; these narrowly copied files are explicit installation dependencies, not live provider evidence.",
+    "Reviewed source patches and their license notices are copied with the docs that reference them; the public layout also copies preserved-source notices. These text assets are not third-party tool binaries."
   ]
 }

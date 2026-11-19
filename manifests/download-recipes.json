@@ -1,0 +1,499 @@
+{
+  "schema": "workstation-download-recipes/v1",
+  "reviewed_date": "2026-11-19",
+  "description": "Pinned acquisition candidates, not a station upgrade plan. Downloads never execute or install. Planned release assets cannot be fetched until publication is confirmed.",
+  "recipes": [
+    {
+      "id": "assetripper-assetripper-2.0.0",
+      "source_id": "tool:AssetRipper/AssetRipper",
+      "version": "2.0.0",
+      "mode": "download-only",
+      "status": "official-release-metadata-verified",
+      "allowed_hosts": [
+        "github.com",
+        "release-assets.githubusercontent.com",
+        "objects.githubusercontent.com"
+      ],
+      "files": [
+        {
+          "name": "AssetRipper_win_x64.zip",
+          "url": "https://github.com/AssetRipper/AssetRipper/releases/download/2.0.0/AssetRipper_win_x64.zip",
+          "sha256": "9a7ef0e7c5c3ea5b90b4e6d855e2d98d5f7ec8c3f9e26fccbc194c6a7b01baf7",
+          "bytes": 44439367,
+          "digest_source": "https://api.github.com/repos/AssetRipper/AssetRipper/releases/latest"
+        }
+      ],
+      "runtime_acceptance": "Not established by this recipe. See current closeout and the selected demo."
+    },
+    {
+      "id": "ip7z-7zip-26.06",
+      "source_id": "tool:ip7z/7zip",
+      "version": "26.06",
+      "mode": "download-only",
+      "status": "official-release-metadata-verified",
+      "allowed_hosts": [
+        "github.com",
+        "release-assets.githubusercontent.com",
+        "objects.githubusercontent.com"
+      ],
+      "files": [
+        {
+          "name": "7zr.exe",
+          "url": "https://github.com/ip7z/7zip/releases/download/26.06/7zr.exe",
+          "sha256": "e80db2dad715a6c5adabe292d31ed54e11f4e9b99ca349827b50573b175891bc",
+          "bytes": 600064,
+          "digest_source": "https://api.github.com/repos/ip7z/7zip/releases/latest"
+        },
+        {
+          "name": "7z2606-x64.exe",
+          "url": "https://github.com/ip7z/7zip/releases/download/26.06/7z2606-x64.exe",
+          "sha256": "9b697f65ecc2d9b0152f5ee96d72dde522a7827690349d9307935dacf40f42ec",
+          "bytes": 1659704,
+          "digest_source": "https://api.github.com/repos/ip7z/7zip/releases/latest"
+        }
+      ],
+      "runtime_acceptance": "Not established by this recipe. See current closeout and the selected demo."
+    },
+    {
+      "id": "hasherezade-pe-bear-v0.7.2",
+      "source_id": "tool:hasherezade/pe-bear",
+      "version": "v0.7.2",
+      "mode": "download-only",
+      "status": "official-release-metadata-verified",
+      "allowed_hosts": [
+        "github.com",
+        "release-assets.githubusercontent.com",
+        "objects.githubusercontent.com"
+      ],
+      "files": [
+        {
+          "name": "PE-bear_0.7.2_qt6_x64_win_vs22.zip",
+          "url": "https://github.com/hasherezade/pe-bear/releases/download/v0.7.2/PE-bear_0.7.2_qt6_x64_win_vs22.zip",
+          "sha256": "d2b995b213d0e6b3910a863c12fdb842722ce47387e65fc8e711ee9013d0876e",
+          "bytes": 12050685,
+          "digest_source": "https://api.github.com/repos/hasherezade/pe-bear/releases/latest"
+        }
+      ],
+      "runtime_acceptance": "Not established by this recipe. See current closeout and the selected demo."
+    },
+    {
+      "id": "werwolv-imhex-v1.38.1",
+      "source_id": "tool:WerWolv/ImHex",
+      "version": "v1.38.1",
+      "mode": "download-only",
+      "status": "official-release-metadata-verified",
+      "allowed_hosts": [
+        "github.com",
+        "release-assets.githubusercontent.com",
+        "objects.githubusercontent.com"
+      ],
+      "files": [
+        {
+          "name": "imhex-1.38.1-Windows-Portable-x86_64.zip",
+          "url": "https://github.com/WerWolv/ImHex/releases/download/v1.38.1/imhex-1.38.1-Windows-Portable-x86_64.zip",
+          "sha256": "32520e57712894bc8304c4b01553223e7dda25852326184f99dfd72a09a80187",
+          "bytes": 66578670,
+          "digest_source": "https://api.github.com/repos/WerWolv/ImHex/releases/latest"
+        }
+      ],
+      "runtime_acceptance": "Not established by this recipe. See current closeout and the selected demo."
+    },
+    {
+      "id": "horsicq-die-engine-4.0.0",
+      "source_id": "tool:horsicq/DIE-engine",
+      "version": "4.0.0",
+      "mode": "download-only",
+      "status": "official-release-metadata-verified",
+      "allowed_hosts": [
+        "github.com",
+        "release-assets.githubusercontent.com",
+        "objects.githubusercontent.com"
+      ],
+      "files": [
+        {
+          "name": "die_win64_4.0.0.zip",
+          "url": "https://github.com/horsicq/DIE-engine/releases/download/4.0.0/die_win64_4.0.0.zip",
+          "sha256": "522a649e795123ab89bb7963e3b7c0b492af5a1ece8052f1dee04f3d5cd58593",
+          "bytes": 31415455,
+          "digest_source": "https://api.github.com/repos/horsicq/DIE-engine/releases/latest"
+        }
+      ],
+      "runtime_acceptance": "Not established by this recipe. See current closeout and the selected demo."
+    },
+    {
+      "id": "mandiant-capa-v10.0.0",
+      "source_id": "tool:mandiant/capa",
+      "version": "v10.0.0",
+      "mode": "download-only",
+      "status": "official-release-metadata-verified",
+      "allowed_hosts": [
+        "github.com",
+        "release-assets.githubusercontent.com",
+        "objects.githubusercontent.com"
+      ],
+      "files": [
+        {
+          "name": "capa-v10.0.0-windows.zip",
+          "url": "https://github.com/mandiant/capa/releases/download/v10.0.0/capa-v10.0.0-windows.zip",
+          "sha256": "8712991044321dbb2a5b0d60f7a5327a50c9c30a295e7ddb5c1088cb17fb59df",
+          "bytes": 36108928,
+          "digest_source": "https://api.github.com/repos/mandiant/capa/releases/latest"
+        }
+      ],
+      "runtime_acceptance": "Not established by this recipe. See current closeout and the selected demo."
+    },
+    {
+      "id": "mandiant-flare-floss-v3.2.0",
+      "source_id": "tool:mandiant/flare-floss",
+      "version": "v3.2.0",
+      "mode": "download-only",
+      "status": "official-release-metadata-verified",
+      "allowed_hosts": [
+        "github.com",
+        "release-assets.githubusercontent.com",
+        "objects.githubusercontent.com"
+      ],
+      "files": [
+        {
+          "name": "floss-v3.2.0-windows.zip",
+          "url": "https://github.com/mandiant/flare-floss/releases/download/v3.2.0/floss-v3.2.0-windows.zip",
+          "sha256": "c0c73bb99d043fedd8e913038b65d1591fd6308cd938d8a91df87b733b369af5",
+          "bytes": 33134130,
+          "digest_source": "https://api.github.com/repos/mandiant/flare-floss/releases/latest"
+        }
+      ],
+      "runtime_acceptance": "Not established by this recipe. See current closeout and the selected demo."
+    },
+    {
+      "id": "virustotal-yara-x-v1.23.0",
+      "source_id": "tool:VirusTotal/yara-x",
+      "version": "v1.23.0",
+      "mode": "download-only",
+      "status": "official-release-metadata-verified",
+      "allowed_hosts": [
+        "github.com",
+        "release-assets.githubusercontent.com",
+        "objects.githubusercontent.com"
+      ],
+      "files": [
+        {
+          "name": "yara-x-v1.23.0-x86_64-pc-windows-msvc.zip",
+          "url": "https://github.com/VirusTotal/yara-x/releases/download/v1.23.0/yara-x-v1.23.0-x86_64-pc-windows-msvc.zip",
+          "sha256": "b72fd2001c0902981afe9b86ffb152412d904db94e2da9fa626f622b8c5b6a79",
+          "bytes": 9090347,
+          "digest_source": "https://api.github.com/repos/VirusTotal/yara-x/releases/latest"
+        }
+      ],
+      "runtime_acceptance": "Not established by this recipe. See current closeout and the selected demo."
+    },
+    {
+      "id": "icsharpcode-ilspy-v11.2",
+      "source_id": "tool:icsharpcode/ILSpy",
+      "version": "v11.2",
+      "mode": "download-only",
+      "status": "official-release-metadata-verified",
+      "allowed_hosts": [
+        "github.com",
+        "release-assets.githubusercontent.com",
+        "objects.githubusercontent.com"
+      ],
+      "files": [
+        {
+          "name": "ILSpy_windows_selfcontained_11.2.0.10050-x64.zip",
+          "url": "https://github.com/icsharpcode/ILSpy/releases/download/v11.2/ILSpy_windows_selfcontained_11.2.0.10050-x64.zip",
+          "sha256": "c30cda0e5a22435df5013eeffa515594abf144e2d06c9bb5ddcc9fccdefd69c8",
+          "bytes": 55088438,
+          "digest_source": "https://api.github.com/repos/icsharpcode/ILSpy/releases/latest"
+        }
+      ],
+      "runtime_acceptance": "Not established by this recipe. See current closeout and the selected demo."
+    },
+    {
+      "id": "dnspyex-dnspy-v6.6.0",
+      "source_id": "tool:dnSpyEx/dnSpy",
+      "version": "v6.6.0",
+      "mode": "download-only",
+      "status": "official-release-metadata-verified",
+      "allowed_hosts": [
+        "github.com",
+        "release-assets.githubusercontent.com",
+        "objects.githubusercontent.com"
+      ],
+      "files": [
+        {
+          "name": "dnSpy-net-win64.zip",
+          "url": "https://github.com/dnSpyEx/dnSpy/releases/download/v6.6.0/dnSpy-net-win64.zip",
+          "sha256": "8ed48f165dc355e869f3a0037ad4f9216147f995a5ae0258b296eeef1f73aab0",
+          "bytes": 99558585,
+          "digest_source": "https://api.github.com/repos/dnSpyEx/dnSpy/releases/latest"
+        }
+      ],
+      "runtime_acceptance": "Not established by this recipe. See current closeout and the selected demo."
+    },
+    {
+      "id": "radareorg-radare2-6.2.6",
+      "source_id": "tool:radareorg/radare2",
+      "version": "6.2.6",
+      "mode": "download-only",
+      "status": "official-release-metadata-verified",
+      "allowed_hosts": [
+        "github.com",
+        "release-assets.githubusercontent.com",
+        "objects.githubusercontent.com"
+      ],
+      "files": [
+        {
+          "name": "radare2-6.2.6-w64.zip",
+          "url": "https://github.com/radareorg/radare2/releases/download/6.2.6/radare2-6.2.6-w64.zip",
+          "sha256": "c648e354dd584b14ba31d0244feb338c7506eb5b55b8cb4f09b06ee0507de54f",
+          "bytes": 13966774,
+          "digest_source": "https://api.github.com/repos/radareorg/radare2/releases/latest"
+        }
+      ],
+      "runtime_acceptance": "Not established by this recipe. See current closeout and the selected demo."
+    },
+    {
+      "id": "x64dbg-x64dbg-2026.05.27",
+      "source_id": "tool:x64dbg/x64dbg",
+      "version": "2026.05.27",
+      "mode": "download-only",
+      "status": "official-release-metadata-verified",
+      "allowed_hosts": [
+        "github.com",
+        "release-assets.githubusercontent.com",
+        "objects.githubusercontent.com"
+      ],
+      "files": [
+        {
+          "name": "snapshot_2026-05-27_12-11.zip",
+          "url": "https://github.com/x64dbg/x64dbg/releases/download/2026.05.27/snapshot_2026-05-27_12-11.zip",
+          "sha256": "d41966dfc5b435a372798245300ca0ab7bb8e48bdbf48512c6fb20fcca427697",
+          "bytes": 31526833,
+          "digest_source": "https://api.github.com/repos/x64dbg/x64dbg/releases/latest"
+        }
+      ],
+      "runtime_acceptance": "Not established by this recipe. See current closeout and the selected demo."
+    },
+    {
+      "id": "skylot-jadx-v1.5.7",
+      "source_id": "tool:skylot/jadx",
+      "version": "v1.5.7",
+      "mode": "download-only",
+      "status": "official-release-metadata-verified",
+      "allowed_hosts": [
+        "github.com",
+        "release-assets.githubusercontent.com",
+        "objects.githubusercontent.com"
+      ],
+      "files": [
+        {
+          "name": "jadx-gui-1.5.7-with-jre-win.zip",
+          "url": "https://github.com/skylot/jadx/releases/download/v1.5.7/jadx-gui-1.5.7-with-jre-win.zip",
+          "sha256": "feb4da024d3555b6f03cb03001352f87593b0b4f45e55ae4df939e558c6ffb63",
+          "bytes": 101293022,
+          "digest_source": "https://api.github.com/repos/skylot/jadx/releases/latest"
+        }
+      ],
+      "runtime_acceptance": "Not established by this recipe. See current closeout and the selected demo."
+    },
+    {
+      "id": "ibotpeaches-apktool-v3.0.3",
+      "source_id": "tool:iBotPeaches/Apktool",
+      "version": "v3.0.3",
+      "mode": "download-only",
+      "status": "official-release-metadata-verified",
+      "allowed_hosts": [
+        "github.com",
+        "release-assets.githubusercontent.com",
+        "objects.githubusercontent.com"
+      ],
+      "files": [
+        {
+          "name": "apktool_3.0.3.jar",
+          "url": "https://github.com/iBotPeaches/Apktool/releases/download/v3.0.3/apktool_3.0.3.jar",
+          "sha256": "dbf930b076c6b9be08d57c449cacefc3bdd6b71ebd59b3066fc0e1f5b14f9423",
+          "bytes": 15478013,
+          "digest_source": "https://api.github.com/repos/iBotPeaches/Apktool/releases/latest"
+        }
+      ],
+      "runtime_acceptance": "Not established by this recipe. See current closeout and the selected demo."
+    },
+    {
+      "id": "reqable-reqable-app-3.3.13",
+      "source_id": "tool:reqable/reqable-app",
+      "version": "3.3.13",
+      "mode": "download-only",
+      "status": "official-release-metadata-verified",
+      "allowed_hosts": [
+        "github.com",
+        "release-assets.githubusercontent.com",
+        "objects.githubusercontent.com"
+      ],
+      "files": [
+        {
+          "name": "reqable-app-windows-x86_64.zip",
+          "url": "https://github.com/reqable/reqable-app/releases/download/3.3.13/reqable-app-windows-x86_64.zip",
+          "sha256": "e5b9c719d08e5f23a06a285e118d5605bd3a8c039c30c176ef12eac135c01122",
+          "bytes": 42300923,
+          "digest_source": "https://api.github.com/repos/reqable/reqable-app/releases/latest"
+        }
+      ],
+      "runtime_acceptance": "Not established by this recipe. See current closeout and the selected demo."
+    },
+    {
+      "id": "mandiant-goresym-v3.4.1",
+      "source_id": "tool:mandiant/GoReSym",
+      "version": "v3.4.1",
+      "mode": "download-only",
+      "status": "official-release-metadata-verified",
+      "allowed_hosts": [
+        "github.com",
+        "release-assets.githubusercontent.com",
+        "objects.githubusercontent.com"
+      ],
+      "files": [
+        {
+          "name": "GoReSym-windows.zip",
+          "url": "https://github.com/mandiant/GoReSym/releases/download/v3.4.1/GoReSym-windows.zip",
+          "sha256": "c051f182412197d834bd3cbd91424831b7aadb85dfe6548603873672560a8dea",
+          "bytes": 3524565,
+          "digest_source": "https://api.github.com/repos/mandiant/GoReSym/releases/latest"
+        }
+      ],
+      "runtime_acceptance": "Not established by this recipe. See current closeout and the selected demo."
+    },
+    {
+      "id": "pyinstxtractor-pyinstxtractor-ng-2026.07.03",
+      "source_id": "tool:pyinstxtractor/pyinstxtractor-ng",
+      "version": "2026.07.03",
+      "mode": "download-only",
+      "status": "official-release-metadata-verified",
+      "allowed_hosts": [
+        "github.com",
+        "release-assets.githubusercontent.com",
+        "objects.githubusercontent.com"
+      ],
+      "files": [
+        {
+          "name": "pyinstxtractor-ng.exe",
+          "url": "https://github.com/pyinstxtractor/pyinstxtractor-ng/releases/download/2026.07.03/pyinstxtractor-ng.exe",
+          "sha256": "5edd80c8a2d90ade243a82716faa6952c401226bce1414aa0c0e59d592060a6c",
+          "bytes": 7948254,
+          "digest_source": "https://api.github.com/repos/pyinstxtractor/pyinstxtractor-ng/releases/latest"
+        }
+      ],
+      "runtime_acceptance": "Not established by this recipe. See current closeout and the selected demo."
+    },
+    {
+      "id": "upx-upx-v5.3.0",
+      "source_id": "tool:upx/upx",
+      "version": "v5.3.0",
+      "mode": "download-only",
+      "status": "official-release-metadata-verified",
+      "allowed_hosts": [
+        "github.com",
+        "release-assets.githubusercontent.com",
+        "objects.githubusercontent.com"
+      ],
+      "files": [
+        {
+          "name": "upx-5.3.0-win64.zip",
+          "url": "https://github.com/upx/upx/releases/download/v5.3.0/upx-5.3.0-win64.zip",
+          "sha256": "d127996c76615e431be810e9c8d2910dbe3dd400600c5c0c50276fc5a17a9705",
+          "bytes": 687595,
+          "digest_source": "https://api.github.com/repos/upx/upx/releases/latest"
+        }
+      ],
+      "runtime_acceptance": "Not established by this recipe. See current closeout and the selected demo."
+    },
+    {
+      "id": "nationalsecurityagency-ghidra-ghidra-12.2-build",
+      "source_id": "tool:NationalSecurityAgency/ghidra",
+      "version": "Ghidra_12.2_build",
+      "mode": "download-only",
+      "status": "official-release-metadata-verified",
+      "allowed_hosts": [
+        "github.com",
+        "release-assets.githubusercontent.com",
+        "objects.githubusercontent.com"
+      ],
+      "files": [
+        {
+          "name": "ghidra_12.2_PUBLIC_20261016.zip",
+          "url": "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_12.2_build/ghidra_12.2_PUBLIC_20261016.zip",
+          "sha256": "2c2cd776db3c1f6a097ba418922378ac3649cadd5e844a6f5f088ae628a7be67",
+          "bytes": 569712708,
+          "digest_source": "https://api.github.com/repos/NationalSecurityAgency/ghidra/releases/latest"
+        }
+      ],
+      "runtime_acceptance": "Not established by this recipe. See current closeout and the selected demo."
+    },
+    {
+      "id": "volatilityfoundation-volatility3-v2.28.2",
+      "source_id": "tool:volatilityfoundation/volatility3",
+      "version": "v2.28.2",
+      "mode": "download-only",
+      "status": "official-release-metadata-verified",
+      "allowed_hosts": [
+        "github.com",
+        "release-assets.githubusercontent.com",
+        "objects.githubusercontent.com"
+      ],
+      "files": [
+        {
+          "name": "volatility3-win-exes-2.28.2.zip",
+          "url": "https://github.com/volatilityfoundation/volatility3/releases/download/v2.28.2/volatility3-win-exes-2.28.2.zip",
+          "sha256": "7ccd2394589bf15d88fb20b242157b93771bce26c0b3aafbba8f2c168a337fa5",
+          "bytes": 43727508,
+          "digest_source": "https://api.github.com/repos/volatilityfoundation/volatility3/releases/latest"
+        }
+      ],
+      "runtime_acceptance": "Not established by this recipe. See current closeout and the selected demo."
+    },
+    {
+      "id": "7zip-extra-26.06",
+      "source_id": "tool:ip7z/7zip",
+      "version": "26.06",
+      "mode": "download-only",
+      "status": "official-release-metadata-verified",
+      "allowed_hosts": [
+        "github.com",
+        "release-assets.githubusercontent.com",
+        "objects.githubusercontent.com"
+      ],
+      "files": [
+        {
+          "name": "7z2606-extra.7z",
+          "url": "https://github.com/ip7z/7zip/releases/download/26.06/7z2606-extra.7z",
+          "sha256": "396c180f12d2247c24b0b1fcd482c6fc2a2700f61211ffede1061dd971f5e104",
+          "bytes": 1758340,
+          "digest_source": "https://api.github.com/repos/ip7z/7zip/releases/latest"
+        }
+      ],
+      "runtime_acceptance": "Not tested by this publication lane."
+    },
+    {
+      "id": "yaraflux-preserved-a4deb318d85c",
+      "source_id": "backend:ThreatFlux/YaraFlux",
+      "version": "1.0.17-preserved",
+      "mode": "download-only",
+      "status": "published-preservation-asset-verified",
+      "allowed_hosts": [
+        "github.com",
+        "release-assets.githubusercontent.com",
+        "objects.githubusercontent.com"
+      ],
+      "files": [
+        {
+          "name": "YaraFlux-source-a4deb318d85c.zip",
+          "url": "https://github.com/dwgx/debugger-workstation-public/releases/download/yaraflux-source-a4deb318d85c/YaraFlux-source-a4deb318d85c.zip",
+          "sha256": "61892545dfd874825a3575114906243bb8124e2d93c5e67fcc6394f3a9f3067a",
+          "bytes": 1255549,
+          "digest_source": "https://api.github.com/repos/dwgx/debugger-workstation-public/releases/assets/768251413"
+        }
+      ],
+      "runtime_acceptance": "Preserved source bytes and Python ASTs checked; service/runtime compatibility is separate.",
+      "publication_verified_utc": "2026-11-19T15:42:50.273987+00:00"
+    }
+  ]
+}

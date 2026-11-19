@@ -1,0 +1,51 @@
+{
+  "schema": "apktool-mcp-error-patch/1",
+  "package": "apktool-mcp-server",
+  "package_version": "0.1.0",
+  "upstream": "https://github.com/zinja-coder/apktool-mcp-server.git",
+  "upstream_revision": "12bb33134af905923a0a58643dcc35fd694ad6f6",
+  "license": "Apache-2.0",
+  "license_file": "LICENSE.upstream",
+  "license_sha256": "1eb85fc97224598dad1852b5d6483bbcf0aa8608790dcc657a5a2a761ae9c8c6",
+  "downstream_notice": "NOTICE.downstream.txt",
+  "upstream_notice_present": false,
+  "patch": "upstream-source.patch",
+  "patch_sha256": "af899921c918e1630792118a0b6d45628c12d0b13544e903cbb13699e4c8464b",
+  "file": {
+    "path": "apktool_mcp_server.py",
+    "public_before_lf_sha256": "9b209c30e76a4a9f1f81c085d7d8c259fd77570f1daabe373278bfbcc46bccae",
+    "observed_baseline_crlf_sha256": "18fe4473628db1df62ed37c46a0343f790df6cf1d8ffb65426dff27a659d7382",
+    "observed_baseline_lf_sha256": "f1bf94af62b1116b375cd6a71519cca5d3939bf64e63124be9e84d0bfe20c69a",
+    "after_lf_sha256": "2fda1eb5a3b984aa289a210dc557c08e9fbce1864ceee93e757dee926fef7811",
+    "after_crlf_sha256": "d219721f6efb461bb825d62d5a0d95acd25921e82be1819160e7b41bb5d40c4e"
+  },
+  "structural_scope": {
+    "explicit_error_returns": 69,
+    "command_failure_boundaries": 2,
+    "passthrough_guards": 6,
+    "restore_changed_ast_to_baseline_exact": true,
+    "prior_local_stdio_lines_retained": 5
+  },
+  "validation": {
+    "fastmcp": "2.12.4",
+    "mcp": "1.29.1",
+    "pydantic": "2.13.4",
+    "transport": "real SDK in-memory MCP",
+    "paired_cases": 42,
+    "negative_cases": 29,
+    "success_envelopes_identical": 13,
+    "tool_catalog_identical": 16,
+    "fixture_bytes_unchanged": true,
+    "public_patch_apply_check": 0,
+    "public_patch_actual_apply": 0,
+    "public_patch_postimage_exact": true
+  },
+  "not_claimed": [
+    "Original wrapper acceptance before adoption",
+    "Exhaustive execution of all 69 error branches",
+    "Actual APKTool or Java execution",
+    "Startup stdout acceptance from these in-memory tests",
+    "Global environment change",
+    "Other SDK versions"
+  ]
+}

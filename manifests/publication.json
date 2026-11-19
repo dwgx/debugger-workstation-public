@@ -1,0 +1,4925 @@
+{
+  "schema": "workstation-publication/v1",
+  "reviewed_date": "2026-11-19",
+  "public_repository": "https://github.com/dwgx/debugger-workstation-public",
+  "baseline_revision": "32b25ca06deab5598411f1bd27b78541dd12f704",
+  "expected_counts": {
+    "tools": 63,
+    "backends": 20
+  },
+  "scope": "Source distribution, official acquisition metadata and explicit exclusions. Inventory coverage is not runtime acceptance.",
+  "sources": [
+    {
+      "id": "backend:ElonJask/reqable-mcp",
+      "url": "https://github.com/ElonJask/reqable-mcp",
+      "revision": "5e2ace7e9cd714c47a7958f82a451a6ff8126bb3",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "MIT",
+        "url": "https://raw.githubusercontent.com/ElonJask/reqable-mcp/5e2ace7e9cd714c47a7958f82a451a6ff8126bb3/LICENSE",
+        "sha256": "0f2e5051905b050a4a5806c8ae6eb71b202c9c2cdf1e4521f9f2d07fcdf9905e"
+      }
+    },
+    {
+      "id": "backend:Kirandawadi/volatility3-mcp",
+      "url": "https://github.com/Kirandawadi/volatility3-mcp",
+      "revision": "edc50f35005032c940bf6260ca791dab700eaabc",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "not-established",
+        "expression": "not-established",
+        "url": null,
+        "sha256": null
+      }
+    },
+    {
+      "id": "backend:LaurieWired/GhidraMCP",
+      "url": "https://github.com/LaurieWired/GhidraMCP",
+      "revision": "1e980252087b2479a21b9ca6d82d5829538651a7",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "Apache-2.0",
+        "url": "https://raw.githubusercontent.com/LaurieWired/GhidraMCP/1e980252087b2479a21b9ca6d82d5829538651a7/LICENSE",
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+      }
+    },
+    {
+      "id": "backend:MobSF/Mobile-Security-Framework-MobSF",
+      "url": "https://github.com/MobSF/Mobile-Security-Framework-MobSF",
+      "revision": "fa87c37892b264cf76bed8c358cc2d5d5323c8c2",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "GPL-3.0",
+        "url": "https://raw.githubusercontent.com/MobSF/Mobile-Security-Framework-MobSF/fa87c37892b264cf76bed8c358cc2d5d5323c8c2/LICENSE",
+        "sha256": "8f4ef73fa17c16c04fbf16cf2041db022b0c141609127285536dab67c25debdd"
+      }
+    },
+    {
+      "id": "backend:NateWeav/ReClass.NET-MCP",
+      "url": "https://github.com/NateWeav/ReClass.NET-MCP",
+      "revision": "96917c353ffb6d368d4ca3697a4fcdf2290af878",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "not-established",
+        "expression": "not-established",
+        "url": null,
+        "sha256": null
+      }
+    },
+    {
+      "id": "backend:NationalSecurityAgency/ghidra",
+      "url": "https://github.com/NationalSecurityAgency/ghidra",
+      "revision": "66b3412bdf679197c43858fabf7c3ea2f833bc31",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "Apache-2.0",
+        "url": "https://raw.githubusercontent.com/NationalSecurityAgency/ghidra/66b3412bdf679197c43858fabf7c3ea2f833bc31/LICENSE",
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+      }
+    },
+    {
+      "id": "backend:ReClassNET/ReClass.NET",
+      "url": "https://github.com/ReClassNET/ReClass.NET",
+      "revision": "a02fcb9bd669c8f81facd3ee9ad57cdcbf2cc0e1",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "MIT",
+        "url": "https://raw.githubusercontent.com/ReClassNET/ReClass.NET/a02fcb9bd669c8f81facd3ee9ad57cdcbf2cc0e1/LICENSE",
+        "sha256": "a446f219aabe3667850444bbd5f11b7e931889b4d5dbf3bc074fe00f25f1124c"
+      }
+    },
+    {
+      "id": "backend:ThreatFlux/YaraFlux",
+      "url": "https://github.com/ThreatFlux/YaraFlux",
+      "revision": "a4deb318d85cd2febe8b87695008444ee294dee7",
+      "license": {
+        "status": "preserved-git-license",
+        "expression": "MIT",
+        "url": "source-releases/yaraflux/LICENSE.upstream",
+        "sha256": "6640cd91be1596395264bf0968e46fd44d292713a6c90adc38a7b3525c977746"
+      },
+      "note": "Public origin returned 404. Existing shallow Git checkout preserves an MIT-licensed source revision; current remote ancestry is unknown."
+    },
+    {
+      "id": "backend:WerWolv/ImHex",
+      "url": "https://github.com/WerWolv/ImHex",
+      "revision": "a761d24e41b269dd2bce18f5218accfabac4684a",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "GPL-2.0",
+        "url": "https://raw.githubusercontent.com/WerWolv/ImHex/a761d24e41b269dd2bce18f5218accfabac4684a/LICENSE",
+        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+      }
+    },
+    {
+      "id": "backend:bivex/ILSpy-Mcp",
+      "url": "https://github.com/bivex/ILSpy-Mcp",
+      "revision": "58b01c118dd08e85e8205c8b3a49d63e68282ef3",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "MIT",
+        "url": "https://raw.githubusercontent.com/bivex/ILSpy-Mcp/58b01c118dd08e85e8205c8b3a49d63e68282ef3/LICENSE",
+        "sha256": "ae3828c5923f92421de2db64682020ddea5c4d050a2dd737a8c9a6fce3d8e2ca"
+      }
+    },
+    {
+      "id": "backend:dariushoule/x64dbg-automate",
+      "url": "https://github.com/dariushoule/x64dbg-automate",
+      "revision": "76421a901499fb22846127b0cba6b7c4de0ab850",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "MIT",
+        "url": "https://raw.githubusercontent.com/dariushoule/x64dbg-automate/76421a901499fb22846127b0cba6b7c4de0ab850/LICENSE",
+        "sha256": "702d8fc90dec0f401b4d61ccef413e760ec6e68449c508145ec282b6c721eb34"
+      }
+    },
+    {
+      "id": "backend:dariushoule/x64dbg-automate-pyclient",
+      "url": "https://github.com/dariushoule/x64dbg-automate-pyclient",
+      "revision": "8807ff70509b1e6d785abbf9ee1e442c403b64bf",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "MIT",
+        "url": "https://raw.githubusercontent.com/dariushoule/x64dbg-automate-pyclient/8807ff70509b1e6d785abbf9ee1e442c403b64bf/LICENSE",
+        "sha256": "0ebc344a3721f30618d1aa8523eb19505f257da6feff2bc5e2ec8ff40ae77c42"
+      }
+    },
+    {
+      "id": "backend:dnSpyEx/dnSpy",
+      "url": "https://github.com/dnSpyEx/dnSpy",
+      "revision": "bb09d2c54718e0f73d01d2e1085ddb8772aee555",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "GPL-3.0",
+        "url": "https://raw.githubusercontent.com/dnSpyEx/dnSpy/bb09d2c54718e0f73d01d2e1085ddb8772aee555/LICENSE.txt",
+        "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+      }
+    },
+    {
+      "id": "backend:dnakov/frida-mcp",
+      "url": "https://github.com/dnakov/frida-mcp",
+      "revision": "f8003c7de69ca8fc13a019f0c9b6abcc61b1717c",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "MIT",
+        "url": "https://raw.githubusercontent.com/dnakov/frida-mcp/f8003c7de69ca8fc13a019f0c9b6abcc61b1717c/LICENSE",
+        "sha256": "8bc976075fb7dfba10c866b6300fce75df682a83da74318baf79ecf14735c666"
+      }
+    },
+    {
+      "id": "backend:frida/frida",
+      "url": "https://github.com/frida/frida",
+      "revision": "cd728af8066451ce7756b1c30fa9f1c0e535a678",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "wxWindows Library Licence 3.1",
+        "url": "https://raw.githubusercontent.com/frida/frida/cd728af8066451ce7756b1c30fa9f1c0e535a678/COPYING",
+        "sha256": "5ea1544b51a28bc823b03159190d4108f9fb4f4ef912389f5137c6d295e175b2"
+      }
+    },
+    {
+      "id": "backend:frida/frida-tools",
+      "url": "https://github.com/frida/frida-tools",
+      "revision": "2e4c1a549b998a296763696222643a3742362b7d",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "wxWindows Library Licence 3.1",
+        "url": "https://raw.githubusercontent.com/frida/frida-tools/2e4c1a549b998a296763696222643a3742362b7d/COPYING",
+        "sha256": "5ea1544b51a28bc823b03159190d4108f9fb4f4ef912389f5137c6d295e175b2"
+      }
+    },
+    {
+      "id": "backend:iBotPeaches/Apktool",
+      "url": "https://github.com/iBotPeaches/Apktool",
+      "revision": "fbaeb4779d7aaed2c3097cd496de2bc9150ab869",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "Apache-2.0",
+        "url": "https://raw.githubusercontent.com/iBotPeaches/Apktool/fbaeb4779d7aaed2c3097cd496de2bc9150ab869/LICENSE.md",
+        "sha256": "c49c53fdc79e1143a1892eb7333b595eecdbe40623e72be325267db28cb72114"
+      }
+    },
+    {
+      "id": "backend:icsharpcode/ILSpy",
+      "url": "https://github.com/icsharpcode/ILSpy",
+      "revision": "5b2699936d2f19f631f37dac27380bc9ce1d7d6a",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "MIT",
+        "url": "https://raw.githubusercontent.com/icsharpcode/ILSpy/5b2699936d2f19f631f37dac27380bc9ce1d7d6a/LICENSE",
+        "sha256": "5527fe802347740da8ec2b510cffa4d22939c7f0773ae342a85a2e2b64e4a34b"
+      }
+    },
+    {
+      "id": "backend:jmpnop/imhexMCP",
+      "url": "https://github.com/jmpnop/imhexMCP",
+      "revision": "c9ceb7f791e5e9233c555a1fc3770b4403d08dcf",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "GPL-2.0-or-later (declared in abridged LICENSE file; states it follows ImHex GPL-2.0)",
+        "url": "https://raw.githubusercontent.com/jmpnop/imhexMCP/c9ceb7f791e5e9233c555a1fc3770b4403d08dcf/LICENSE",
+        "sha256": "4a032160e94c7f3aae87e64d042217377a513fd539be18ca843aaa2da0eff9b1"
+      }
+    },
+    {
+      "id": "backend:khuynh22/mcp-wireshark",
+      "url": "https://github.com/khuynh22/mcp-wireshark",
+      "revision": "3694fceaa2d3ba7ad5c0f5a46fcb6c5b271b9a10",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "MIT",
+        "url": "https://raw.githubusercontent.com/khuynh22/mcp-wireshark/3694fceaa2d3ba7ad5c0f5a46fcb6c5b271b9a10/LICENSE",
+        "sha256": "af60f12af9a576ee94a0eb61bb97e2cea6c7f8dd546aef2650c7b1d47b868ffc"
+      }
+    },
+    {
+      "id": "backend:miscusi-peek/cheatengine-mcp-bridge",
+      "url": "https://github.com/miscusi-peek/cheatengine-mcp-bridge",
+      "revision": "6bd7ce90479250a9b4b75e7944df9c105ecb2572",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "MIT",
+        "url": "https://raw.githubusercontent.com/miscusi-peek/cheatengine-mcp-bridge/6bd7ce90479250a9b4b75e7944df9c105ecb2572/LICENSE",
+        "sha256": "542399b024084a1ec229ec8fd67519f43192ebfe99fca8cbf7165667e348a76f"
+      }
+    },
+    {
+      "id": "backend:morluto/rea",
+      "url": "https://github.com/morluto/rea",
+      "revision": "3fdda4e1a125126ce650fb20fd46a545e04af3f7",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "MIT",
+        "url": "https://raw.githubusercontent.com/morluto/rea/3fdda4e1a125126ce650fb20fd46a545e04af3f7/LICENSE",
+        "sha256": "798f9e4d18e49b30bf2f12696c8ced73dc4e1413da375a333d01281543a1ea8b"
+      }
+    },
+    {
+      "id": "backend:mrexodia/ida-pro-mcp",
+      "url": "https://github.com/mrexodia/ida-pro-mcp",
+      "revision": "13e480cb1198f923154b63669e8cb2faee5deaea",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "MIT",
+        "url": "https://raw.githubusercontent.com/mrexodia/ida-pro-mcp/13e480cb1198f923154b63669e8cb2faee5deaea/LICENSE",
+        "sha256": "ee7e7d1886c4a567ba3b7a0d88abaaac57e7bfeee4402a24872effa78a2b6b6e"
+      }
+    },
+    {
+      "id": "backend:pullkitsan/mobsf-mcp-server",
+      "url": "https://github.com/pullkitsan/mobsf-mcp-server",
+      "revision": "aa3ecb2df12beb3020ca75ddbf3f9b1c42a13b01",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "MIT",
+        "url": "https://raw.githubusercontent.com/pullkitsan/mobsf-mcp-server/aa3ecb2df12beb3020ca75ddbf3f9b1c42a13b01/LICENSE",
+        "sha256": "60ba1de8d6d52b6fb9f6ef484b8c7b246a6844257d21c75c3c263b7ef0ed3cbf"
+      }
+    },
+    {
+      "id": "backend:radareorg/radare2",
+      "url": "https://github.com/radareorg/radare2",
+      "revision": "f810d18dd0610e9fc989c759430b701e542cb846",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "LGPL-3.0 with separately licensed bundled plugins",
+        "url": "https://raw.githubusercontent.com/radareorg/radare2/f810d18dd0610e9fc989c759430b701e542cb846/COPYING.md",
+        "sha256": "c4154ac363318953bc18c8faf4b41dad3457ee51475d63e708db7b41570ffa79",
+        "note": "COPYING.md describes mixed plugin/dependency licenses; build-level SBOM is needed before binary redistribution."
+      }
+    },
+    {
+      "id": "backend:radareorg/radare2-mcp",
+      "url": "https://github.com/radareorg/radare2-mcp",
+      "revision": "082efcd48c51bd49043c0e0c9bd3ea219a3b85ff",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "MIT",
+        "url": "https://raw.githubusercontent.com/radareorg/radare2-mcp/082efcd48c51bd49043c0e0c9bd3ea219a3b85ff/LICENSE",
+        "sha256": "8b8d93c65f907b0631e980ce58e13d28843db7fa12af7b915035765c52a901fe"
+      }
+    },
+    {
+      "id": "backend:skylot/jadx",
+      "url": "https://github.com/skylot/jadx",
+      "revision": "94cb318f6ce7ee28203dff18d9cfb7d93638bbf7",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "Apache-2.0",
+        "url": "https://raw.githubusercontent.com/skylot/jadx/94cb318f6ce7ee28203dff18d9cfb7d93638bbf7/LICENSE",
+        "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1"
+      }
+    },
+    {
+      "id": "backend:soufianetahiri/dnspy-mcp",
+      "url": "https://github.com/soufianetahiri/dnspy-mcp",
+      "revision": "9deae6d49bc0016fe50dfe685aead898cdc61c8d",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "not-established",
+        "expression": "not-established",
+        "url": null,
+        "sha256": null
+      }
+    },
+    {
+      "id": "backend:volatilityfoundation/volatility3",
+      "url": "https://github.com/volatilityfoundation/volatility3",
+      "revision": "77ff0b1932d77527f850c8ced01d85805ea7bf97",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "Volatility Software License 1.0",
+        "url": "https://raw.githubusercontent.com/volatilityfoundation/volatility3/77ff0b1932d77527f850c8ced01d85805ea7bf97/LICENSE.txt",
+        "sha256": "6e905a859f6d5ebf23d4b7cdfb8ac425c4ec5dd02b3b274901a967f3e452eb37",
+        "note": "Custom copyleft explicitly includes wrappers designed to execute Volatility and parse its results."
+      }
+    },
+    {
+      "id": "backend:w0h1v/mcp-virustotal",
+      "url": "https://github.com/w0h1v/mcp-virustotal",
+      "revision": "e17d9dbe7c0375debd2cd923392c262ec954984e",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "MIT",
+        "url": "https://raw.githubusercontent.com/w0h1v/mcp-virustotal/e17d9dbe7c0375debd2cd923392c262ec954984e/LICENSE",
+        "sha256": "f05d5c0ea00e44c4a24a09a4a41e26e117883577f6b86f2182ad5045c4431f6d"
+      }
+    },
+    {
+      "id": "backend:wireshark/wireshark",
+      "url": "https://github.com/wireshark/wireshark",
+      "revision": "5a6c2638b405b778dc45011f02133b0aba8b5df9",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "GPL-2.0",
+        "url": "https://raw.githubusercontent.com/wireshark/wireshark/5a6c2638b405b778dc45011f02133b0aba8b5df9/COPYING",
+        "sha256": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6"
+      }
+    },
+    {
+      "id": "backend:x64dbg/x64dbg",
+      "url": "https://github.com/x64dbg/x64dbg",
+      "revision": "d3c12dbe92e61bc741c69c1621e668cb4413ac08",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "Modified GPL-3.0 text",
+        "url": "https://raw.githubusercontent.com/x64dbg/x64dbg/d3c12dbe92e61bc741c69c1621e668cb4413ac08/LICENSE",
+        "sha256": "1791b618e0aab8312274d6d229e692a680cc633676cd7f87e189f79097951f92",
+        "note": "Upstream LICENSE explicitly identifies modifications; use the original text, not a substituted stock SPDX license."
+      }
+    },
+    {
+      "id": "backend:zinja-coder/apktool-mcp-server",
+      "url": "https://github.com/zinja-coder/apktool-mcp-server",
+      "revision": "12bb33134af905923a0a58643dcc35fd694ad6f6",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "Apache-2.0",
+        "url": "https://raw.githubusercontent.com/zinja-coder/apktool-mcp-server/12bb33134af905923a0a58643dcc35fd694ad6f6/LICENSE",
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+      }
+    },
+    {
+      "id": "backend:zinja-coder/jadx-ai-mcp",
+      "url": "https://github.com/zinja-coder/jadx-ai-mcp",
+      "revision": "9f4fce6f49902e95c62479c02d985d1eb0b3cbe1",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "Apache-2.0",
+        "url": "https://raw.githubusercontent.com/zinja-coder/jadx-ai-mcp/9f4fce6f49902e95c62479c02d985d1eb0b3cbe1/LICENSE",
+        "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1"
+      }
+    },
+    {
+      "id": "backend:zinja-coder/jadx-mcp-server",
+      "url": "https://github.com/zinja-coder/jadx-mcp-server",
+      "revision": "a8e5b7de4f7d7f9ef0ccea9d063631133105bd34",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "Apache-2.0",
+        "url": "https://raw.githubusercontent.com/zinja-coder/jadx-mcp-server/a8e5b7de4f7d7f9ef0ccea9d063631133105bd34/LICENSE",
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+      }
+    },
+    {
+      "id": "backend:zv-louis/mcp7zop",
+      "url": "https://github.com/zv-louis/mcp7zop",
+      "revision": "4856990e884e7c5a1d1cd353a3d7de3c234b6a3c",
+      "observed_date": "2026-11-19",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "MIT",
+        "url": "https://raw.githubusercontent.com/zv-louis/mcp7zop/4856990e884e7c5a1d1cd353a3d7de3c234b6a3c/LICENSE",
+        "sha256": "c49f3aaa6b92193d0bfd3839b8f062ddb6f679a2926634be1851172389a2cb16"
+      }
+    },
+    {
+      "id": "cheatengine-host",
+      "url": "https://www.cheatengine.org/",
+      "license": {
+        "status": "not-established",
+        "expression": "Repository-wide license not established",
+        "url": "https://api.github.com/repos/cheat-engine/cheat-engine/license",
+        "sha256": null,
+        "note": "Manual official acquisition only; keep auto_update=false. A missing top-level license is recorded as an evidence limit, not proof that no license exists anywhere."
+      },
+      "observed_date": "2026-11-19"
+    },
+    {
+      "id": "cryptography",
+      "url": "https://pypi.org/project/cryptography/",
+      "license": {
+        "status": "official-registry-metadata",
+        "expression": "Apache-2.0 OR BSD-3-Clause",
+        "url": "https://pypi.org/pypi/cryptography/json",
+        "sha256": "32975256deff83cfe92bfcb93233debf77ddc6e8222b2227dec5f45094173d66"
+      },
+      "version_observed": "50.0.2",
+      "note": "Registry license metadata is not a substitute for notices in the actual downloaded package."
+    },
+    {
+      "id": "ida-host",
+      "url": "https://hex-rays.com/ida-pro",
+      "license": {
+        "status": "official-terms",
+        "expression": "Commercial Hex-Rays license",
+        "url": "https://hex-rays.com/ida-pro",
+        "sha256": "0b4e071a5916ff4042a787678f99cda3c208e9163cd8652ded16f9464c64c179",
+        "note": "Owner-supplied licensed installation only. No IDA download, installer, license file or activation secret is included."
+      },
+      "observed_date": "2026-11-19"
+    },
+    {
+      "id": "ilspycmd",
+      "url": "https://www.nuget.org/packages/ilspycmd",
+      "license": {
+        "status": "verified-upstream-license",
+        "expression": "MIT",
+        "url": "https://github.com/icsharpcode/ILSpy/blob/c86190ef4e24f3137c13a9275316042842d2fada/LICENSE"
+      },
+      "version_observed": "11.2.0.10050",
+      "metadata_url": "https://api.nuget.org/v3-flatcontainer/ilspycmd/index.json",
+      "metadata_sha256": "9f3922d8fc819a80568b0b78c1d3edff0d24fa34c959966a9b6af83e3278b709"
+    },
+    {
+      "id": "jsonwebtoken",
+      "url": "https://www.npmjs.com/package/jsonwebtoken",
+      "license": {
+        "status": "official-registry-metadata",
+        "expression": "MIT",
+        "url": "https://registry.npmjs.org/jsonwebtoken/9.0.3",
+        "sha256": "00394a99c2d18b58e7f90b7e32e521788b7290a0fc88a53154617ce08dc50923"
+      },
+      "version_observed": "9.0.3",
+      "note": "Registry license metadata is not a substitute for notices in the actual downloaded package."
+    },
+    {
+      "id": "msvc",
+      "url": "https://visualstudio.microsoft.com/downloads/",
+      "license": {
+        "status": "official-terms",
+        "expression": "Microsoft Visual Studio license terms",
+        "url": "https://visualstudio.microsoft.com/license-terms/",
+        "sha256": "45083d9256fdd5972b68de43bb07d7997a94121c7f975a0a397bbea594c04029",
+        "note": "User selects an applicable licensed edition and installs the C++ workload; the build toolchain is not redistributed."
+      },
+      "observed_date": "2026-11-19"
+    },
+    {
+      "id": "npcap",
+      "url": "https://npcap.com/dist/",
+      "license": {
+        "status": "official-terms",
+        "expression": "Npcap license / OEM redistribution license",
+        "url": "https://npcap.com/oem/redist.html",
+        "sha256": "c28d293d9b82543b426423d5d99d8c56f1913ed32db5b696ac0eccd6e181b3b4",
+        "note": "Free/demo redistribution is normally not granted. Never silently install the driver; local capture prerequisites are separate from offline PCAP analysis."
+      },
+      "observed_date": "2026-11-19"
+    },
+    {
+      "id": "pyjwt",
+      "url": "https://pypi.org/project/PyJWT/",
+      "license": {
+        "status": "official-registry-metadata",
+        "expression": "MIT",
+        "url": "https://pypi.org/pypi/PyJWT/json",
+        "sha256": "f27b70fef1d687acbb556d995f87431a32e6c231b711d4325b7877314a7f3227"
+      },
+      "version_observed": "2.15.1",
+      "note": "Registry license metadata is not a substitute for notices in the actual downloaded package."
+    },
+    {
+      "id": "station",
+      "url": "https://github.com/dwgx/debugger-workstation-public",
+      "license": {
+        "status": "repository-license",
+        "expression": "MIT for code/configuration/skills; CC-BY-SA-4.0 for documentation prose",
+        "files": [
+          "LICENSE",
+          "LICENSE-docs"
+        ]
+      },
+      "distribution": "Source included by the reviewed publication-files.json allowlist."
+    },
+    {
+      "id": "sysinternals",
+      "url": "https://learn.microsoft.com/sysinternals/downloads/sysinternals-suite",
+      "license": {
+        "status": "official-terms",
+        "expression": "Microsoft Sysinternals EULA",
+        "url": "https://learn.microsoft.com/en-us/sysinternals/license-terms",
+        "sha256": "46031d69a3ae53bd5e70b984d6ceb4a59ae2738222da6953f743f9bb647f71b5",
+        "note": "Terms permit local use but prohibit publishing the software for others to copy. Official download link only."
+      },
+      "observed_date": "2026-11-19"
+    },
+    {
+      "id": "systeminformer",
+      "url": "https://github.com/winsiderss/systeminformer",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "MIT",
+        "url": "https://github.com/winsiderss/systeminformer/blob/master/LICENSE.txt",
+        "sha256": "e2a4557d2c4e70276b0ddaa31f35e2ce075281dac7e60ac07ca32c7cf58c1820"
+      },
+      "release": {
+        "tag": "v4.0.26241.138",
+        "url": "https://github.com/winsiderss/systeminformer/releases/tag/v4.0.26241.138",
+        "published_at": "2026-08-29T01:54:13Z"
+      }
+    },
+    {
+      "id": "tool:AssetRipper/AssetRipper",
+      "url": "https://github.com/AssetRipper/AssetRipper",
+      "revision": "1ac666f47d8e9dedf96afb0b914c70d7656151ea",
+      "observed_utc": "2026-11-19T14:45:10.750103+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "GPL-3.0",
+        "url": "https://github.com/AssetRipper/AssetRipper/blob/1ac666f47d8e9dedf96afb0b914c70d7656151ea/LICENSE.md",
+        "sha256": "8b1ba204bb69a0ade2bfcf65ef294a920f6bb361b317dba43c7ef29d96332b9b"
+      },
+      "release": {
+        "tag": "2.0.0",
+        "url": "https://github.com/AssetRipper/AssetRipper/releases/tag/2.0.0",
+        "published_at": "2026-08-24T19:29:27Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/AssetRipper/AssetRipper",
+          "exit": 0,
+          "response_sha256": "23ba268f578690a80e4aef64bb9e90ae05ce92ce6dd136e094f1918e38ee7bc2"
+        },
+        {
+          "url": "https://api.github.com/repos/AssetRipper/AssetRipper/releases/latest",
+          "exit": 0,
+          "response_sha256": "9d3ef6daeff4fde620d125a2951805c304ff3dda55b7801c8decd634ea924842"
+        },
+        {
+          "url": "https://api.github.com/repos/AssetRipper/AssetRipper/commits/2.0.0",
+          "exit": 0,
+          "response_sha256": "b85b15362587f80eae797dbb4463bcd519c3015c4103fcb4affdca24aeb1adc7"
+        },
+        {
+          "url": "https://api.github.com/repos/AssetRipper/AssetRipper/license?ref=1ac666f47d8e9dedf96afb0b914c70d7656151ea",
+          "exit": 0,
+          "response_sha256": "0798a960c73bf2c25ef322a037820efb2e4b4a0e0232cad328061d0705411ca1"
+        }
+      ]
+    },
+    {
+      "id": "tool:Bioruebe/UniExtract2",
+      "url": "https://github.com/Bioruebe/UniExtract2",
+      "revision": "9719ac988421e48276420e2f33e09087cfbacf8d",
+      "observed_utc": "2026-11-19T14:45:09.496318+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "GPL-2.0",
+        "url": "https://github.com/Bioruebe/UniExtract2/blob/9719ac988421e48276420e2f33e09087cfbacf8d/LICENSE",
+        "sha256": "a45d0bb572ed792ed34627a72621834b3ba92aab6e2cc4e04301dee7a728d753"
+      },
+      "release": {},
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/Bioruebe/UniExtract2",
+          "exit": 0,
+          "response_sha256": "8ffec5a4ab820a4e914601a98001a923f57b7c25d28bf987712cc454ac93665c"
+        },
+        {
+          "url": "https://api.github.com/repos/Bioruebe/UniExtract2/releases/latest",
+          "exit": 1,
+          "response_sha256": "d9e37600354c1839f6b22cebde497e9d14750d2401a06c9a51b1619baf991613"
+        },
+        {
+          "url": "https://api.github.com/repos/Bioruebe/UniExtract2/commits/master",
+          "exit": 0,
+          "response_sha256": "cac3c989451886ec5068deab4a389cc3604636fa38c787fbb841cb5fd37850d9"
+        },
+        {
+          "url": "https://api.github.com/repos/Bioruebe/UniExtract2/license?ref=9719ac988421e48276420e2f33e09087cfbacf8d",
+          "exit": 0,
+          "response_sha256": "c10792ac902036c6812f556eecd5f187bb5f63f4a2e068181fbc0e5e086aadbb"
+        }
+      ]
+    },
+    {
+      "id": "tool:MobSF/Mobile-Security-Framework-MobSF",
+      "url": "https://github.com/MobSF/Mobile-Security-Framework-MobSF",
+      "revision": "fa87c37892b264cf76bed8c358cc2d5d5323c8c2",
+      "observed_utc": "2026-11-19T14:45:06.256135+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "GPL-3.0",
+        "url": "https://github.com/MobSF/Mobile-Security-Framework-MobSF/blob/fa87c37892b264cf76bed8c358cc2d5d5323c8c2/LICENSE",
+        "sha256": "8f4ef73fa17c16c04fbf16cf2041db022b0c141609127285536dab67c25debdd"
+      },
+      "release": {
+        "tag": "v4.6.9",
+        "url": "https://github.com/MobSF/Mobile-Security-Framework-MobSF/releases/tag/v4.6.9",
+        "published_at": "2026-11-18T17:27:09Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/MobSF/Mobile-Security-Framework-MobSF",
+          "exit": 0,
+          "response_sha256": "2a1af47949841d06059cce9f8c3557624dd107d9e68846a85e9933cf07f64b49"
+        },
+        {
+          "url": "https://api.github.com/repos/MobSF/Mobile-Security-Framework-MobSF/releases/latest",
+          "exit": 0,
+          "response_sha256": "329996c1a9c7d6ac7ceb9230be2dfb3046543933782edbd640a821f5a2aaf174"
+        },
+        {
+          "url": "https://api.github.com/repos/MobSF/Mobile-Security-Framework-MobSF/commits/v4.6.9",
+          "exit": 0,
+          "response_sha256": "955f2a3460f0eed11e8a5de451037335a94a0f159a946e16689d2f1ec86bed73"
+        },
+        {
+          "url": "https://api.github.com/repos/MobSF/Mobile-Security-Framework-MobSF/license?ref=fa87c37892b264cf76bed8c358cc2d5d5323c8c2",
+          "exit": 0,
+          "response_sha256": "80e908c917e243ea14e00fc8fc4cc7ede0165fe072125da7f761c21bd58392a3"
+        }
+      ]
+    },
+    {
+      "id": "tool:NVIDIA/skillspector",
+      "url": "https://github.com/NVIDIA/SkillSpector",
+      "revision": "e2674da339b0bddc6e565d059c0577c6d9cd25da",
+      "observed_utc": "2026-11-19T14:45:15.828159+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "Apache-2.0",
+        "url": "https://github.com/NVIDIA/SkillSpector/blob/e2674da339b0bddc6e565d059c0577c6d9cd25da/LICENSE",
+        "sha256": "9f8785b47596b2993a17a3fa8d747ae63126a2c5e80a9e77195a907273d71839"
+      },
+      "release": {
+        "tag": "v2.13.6",
+        "url": "https://github.com/NVIDIA/SkillSpector/releases/tag/v2.13.6",
+        "published_at": "2026-11-16T21:16:12Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/NVIDIA/skillspector",
+          "exit": 0,
+          "response_sha256": "962226538026192a9b89651385582f0898123bd21c7cc9fde6f241c3cf80a70d"
+        },
+        {
+          "url": "https://api.github.com/repos/NVIDIA/skillspector/releases/latest",
+          "exit": 0,
+          "response_sha256": "bdb8851dacafd4cdc1491c9e63047673fcb3b464807a42bb5b7fec41a1cf6466"
+        },
+        {
+          "url": "https://api.github.com/repos/NVIDIA/skillspector/commits/v2.13.6",
+          "exit": 0,
+          "response_sha256": "74e351174117c446624cd09c0f0914509a47c9c9a72a01abcca3ee89a3e4db77"
+        },
+        {
+          "url": "https://api.github.com/repos/NVIDIA/skillspector/license?ref=e2674da339b0bddc6e565d059c0577c6d9cd25da",
+          "exit": 0,
+          "response_sha256": "7711f034b4ed2b2ee1787107a6e6fdcc43fcb073c88e89a7a13cf6e76f238c8b"
+        }
+      ]
+    },
+    {
+      "id": "tool:NationalSecurityAgency/ghidra",
+      "url": "https://github.com/NationalSecurityAgency/ghidra",
+      "revision": "8ca9077040cc43cd790babcfccf19475622a3e9a",
+      "observed_utc": "2026-11-19T14:44:51.503896+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "Apache-2.0",
+        "url": "https://github.com/NationalSecurityAgency/ghidra/blob/8ca9077040cc43cd790babcfccf19475622a3e9a/LICENSE",
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+      },
+      "release": {
+        "tag": "Ghidra_12.2_build",
+        "url": "https://github.com/NationalSecurityAgency/ghidra/releases/tag/Ghidra_12.2_build",
+        "published_at": "2026-10-22T08:31:12Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/NationalSecurityAgency/ghidra",
+          "exit": 0,
+          "response_sha256": "f134b1c4970690ee0767a936f6e534c48e677915cc448fb19ab4c53c253d88b3"
+        },
+        {
+          "url": "https://api.github.com/repos/NationalSecurityAgency/ghidra/releases/latest",
+          "exit": 0,
+          "response_sha256": "4f3656eefccb673a5b252bb88614994a8494e10d338f1cb98ddddc4fcc4950b7"
+        },
+        {
+          "url": "https://api.github.com/repos/NationalSecurityAgency/ghidra/commits/Ghidra_12.2_build",
+          "exit": 0,
+          "response_sha256": "b10881db420bc8f8a428cc6c50bbec8d70f38ee5f9ec95d803cdb9a726fc41c3"
+        },
+        {
+          "url": "https://api.github.com/repos/NationalSecurityAgency/ghidra/license?ref=8ca9077040cc43cd790babcfccf19475622a3e9a",
+          "exit": 0,
+          "response_sha256": "c0a905b4ac6756e456f23e0b832c3cf8d5ebb5af50a801d3d9fe0ee82f78f2f0"
+        }
+      ]
+    },
+    {
+      "id": "tool:Perfare/Il2CppDumper",
+      "url": "https://github.com/Perfare/Il2CppDumper",
+      "revision": "8a521b9c180cf13499253f0818cbc729dca767cb",
+      "observed_utc": "2026-11-19T14:45:11.241452+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "MIT",
+        "url": "https://github.com/Perfare/Il2CppDumper/blob/8a521b9c180cf13499253f0818cbc729dca767cb/LICENSE",
+        "sha256": "373bd2ed813eaa8245d1290138985c6fb025d588db254602720697455ae36c6c"
+      },
+      "release": {
+        "tag": "v6.7.46",
+        "url": "https://github.com/Perfare/Il2CppDumper/releases/tag/v6.7.46",
+        "published_at": "2024-07-06T14:39:31Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/Perfare/Il2CppDumper",
+          "exit": 0,
+          "response_sha256": "fa10fd4b404132682fda01c675788e5ea9bc7ae316c26b3ef75f2c9c73c4f961"
+        },
+        {
+          "url": "https://api.github.com/repos/Perfare/Il2CppDumper/releases/latest",
+          "exit": 0,
+          "response_sha256": "bef6eacf85a1572eaee020cad87433f0f28de8aa600343ee357e0b7bcb27749a"
+        },
+        {
+          "url": "https://api.github.com/repos/Perfare/Il2CppDumper/commits/v6.7.46",
+          "exit": 0,
+          "response_sha256": "eedbe38ec455530776b81355fd0ec5af53307c346cc5ad61f494a001a9c01169"
+        },
+        {
+          "url": "https://api.github.com/repos/Perfare/Il2CppDumper/license?ref=8a521b9c180cf13499253f0818cbc729dca767cb",
+          "exit": 0,
+          "response_sha256": "b765ac5f0d762c3ec54e735675015632c76649065755c714ea2d70075e1a42c2"
+        }
+      ]
+    },
+    {
+      "id": "tool:ReClassNET/ReClass.NET",
+      "url": "https://github.com/ReClassNET/ReClass.NET",
+      "revision": "e6a5c29930def61373d1fcbda7358bf4d9ba996a",
+      "observed_utc": "2026-11-19T14:44:59.564455+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "MIT",
+        "url": "https://github.com/ReClassNET/ReClass.NET/blob/e6a5c29930def61373d1fcbda7358bf4d9ba996a/LICENSE",
+        "sha256": "a446f219aabe3667850444bbd5f11b7e931889b4d5dbf3bc074fe00f25f1124c"
+      },
+      "release": {
+        "tag": "v1.2",
+        "url": "https://github.com/ReClassNET/ReClass.NET/releases/tag/v1.2",
+        "published_at": "2019-04-15T20:43:42Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/ReClassNET/ReClass.NET",
+          "exit": 0,
+          "response_sha256": "6a95534228bc9a35c9d085a511b2615effeece055fe5614e31a04bb9737e96a3"
+        },
+        {
+          "url": "https://api.github.com/repos/ReClassNET/ReClass.NET/releases/latest",
+          "exit": 0,
+          "response_sha256": "df6c99ac93059fafb9eb91cbd4ac46685be5757f706a91c3e86391d29583dc3f"
+        },
+        {
+          "url": "https://api.github.com/repos/ReClassNET/ReClass.NET/commits/v1.2",
+          "exit": 0,
+          "response_sha256": "6bfa9f74f49b1144e769aafb79f1f909928a528a455b41b29d82fa3d8c5f8108"
+        },
+        {
+          "url": "https://api.github.com/repos/ReClassNET/ReClass.NET/license?ref=e6a5c29930def61373d1fcbda7358bf4d9ba996a",
+          "exit": 0,
+          "response_sha256": "afcbb9749383a883a6c04953d6cfa70fcfa378f9a3f8406073a6269858e238ef"
+        }
+      ]
+    },
+    {
+      "id": "tool:VirusTotal/yara-x",
+      "url": "https://github.com/VirusTotal/yara-x",
+      "revision": "afe4585b12f56c698794dc80b3d28ddb87b56c0a",
+      "observed_utc": "2026-11-19T14:44:57.021748+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "BSD-3-Clause",
+        "url": "https://github.com/VirusTotal/yara-x/blob/afe4585b12f56c698794dc80b3d28ddb87b56c0a/LICENSE",
+        "sha256": "fdf05444c9178e662fa28810d94a1fa6ec32d7be798241c98094213317265880"
+      },
+      "release": {
+        "tag": "v1.23.0",
+        "url": "https://github.com/VirusTotal/yara-x/releases/tag/v1.23.0",
+        "published_at": "2026-11-05T12:56:21Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/VirusTotal/yara-x",
+          "exit": 0,
+          "response_sha256": "5298f709e1b04a617bd89f480732f288010db13fe536b05009ab3d6b7b3b0744"
+        },
+        {
+          "url": "https://api.github.com/repos/VirusTotal/yara-x/releases/latest",
+          "exit": 0,
+          "response_sha256": "2aa5ed42cd7f9fc262e0ec1599e303128beeeef0ee42c3452a0ee81ec4aabc53"
+        },
+        {
+          "url": "https://api.github.com/repos/VirusTotal/yara-x/commits/v1.23.0",
+          "exit": 0,
+          "response_sha256": "dc673b7c8e2efacd301c4970698962b6716a87dc30566a49177fd9b11b7d59e6"
+        },
+        {
+          "url": "https://api.github.com/repos/VirusTotal/yara-x/license?ref=afe4585b12f56c698794dc80b3d28ddb87b56c0a",
+          "exit": 0,
+          "response_sha256": "a49823ba7f5e59f8f30e1949840ef1b7ea53187ea49a1aa8663e62eb82689af7"
+        }
+      ]
+    },
+    {
+      "id": "tool:WerWolv/ImHex",
+      "url": "https://github.com/WerWolv/ImHex",
+      "revision": "76cf8771158012095d3b3ed58cc93c27ccfac7df",
+      "observed_utc": "2026-11-19T14:44:53.854858+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "GPL-2.0",
+        "url": "https://github.com/WerWolv/ImHex/blob/76cf8771158012095d3b3ed58cc93c27ccfac7df/LICENSE",
+        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+      },
+      "release": {
+        "tag": "v1.38.1",
+        "url": "https://github.com/WerWolv/ImHex/releases/tag/v1.38.1",
+        "published_at": "2025-12-21T18:57:18Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/WerWolv/ImHex",
+          "exit": 0,
+          "response_sha256": "6f9694b2adc0862a78a1d92b8a15652b8f3a16a5cfb83879b5d562fc4b6a1232"
+        },
+        {
+          "url": "https://api.github.com/repos/WerWolv/ImHex/releases/latest",
+          "exit": 0,
+          "response_sha256": "cf311c4115e8e9b6019c97ea1669dec83fb8f291fc5401cf21fa0013d206591f"
+        },
+        {
+          "url": "https://api.github.com/repos/WerWolv/ImHex/commits/v1.38.1",
+          "exit": 0,
+          "response_sha256": "036dc506eb401567330db528d6f7c218325bfcffc3d75d9893a9a824b695a014"
+        },
+        {
+          "url": "https://api.github.com/repos/WerWolv/ImHex/license?ref=76cf8771158012095d3b3ed58cc93c27ccfac7df",
+          "exit": 0,
+          "response_sha256": "fd8d7ab4e2e279fd1acbfb5c43b12dae4c13f97a097c5706297a13728c76fc55"
+        }
+      ]
+    },
+    {
+      "id": "tool:dnSpyEx/dnSpy",
+      "url": "https://github.com/dnSpyEx/dnSpy",
+      "revision": "e2bada24b1c63683f41bdc0ae2b0119c686ce88a",
+      "observed_utc": "2026-11-19T14:44:59.449636+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "GPL-3.0",
+        "url": "https://github.com/dnSpyEx/dnSpy/blob/e2bada24b1c63683f41bdc0ae2b0119c686ce88a/LICENSE.txt",
+        "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+      },
+      "release": {
+        "tag": "v6.6.0",
+        "url": "https://github.com/dnSpyEx/dnSpy/releases/tag/v6.6.0",
+        "published_at": "2026-06-20T17:07:02Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/dnSpyEx/dnSpy",
+          "exit": 0,
+          "response_sha256": "88c2255b61de900c40fe5a1c7211c71996077ceeb9cef9ac586cf6f4c918990a"
+        },
+        {
+          "url": "https://api.github.com/repos/dnSpyEx/dnSpy/releases/latest",
+          "exit": 0,
+          "response_sha256": "b721590b18a12227aa06851cfac8d11c80716a68d822594250b0327e4d5e0fd6"
+        },
+        {
+          "url": "https://api.github.com/repos/dnSpyEx/dnSpy/commits/v6.6.0",
+          "exit": 0,
+          "response_sha256": "a129ab861319d792f6c413271f26735b0833be9445fd148a809072d3fb80b2a5"
+        },
+        {
+          "url": "https://api.github.com/repos/dnSpyEx/dnSpy/license?ref=e2bada24b1c63683f41bdc0ae2b0119c686ce88a",
+          "exit": 0,
+          "response_sha256": "830a7dffc51958cd709e003392ad38a81aeb1fcb62ff8f5b6d9582cfc512b2ac"
+        }
+      ]
+    },
+    {
+      "id": "tool:guidedhacking/GuidedHacking-Injector",
+      "url": "https://github.com/guidedhacking/GuidedHacking-Injector",
+      "revision": "e7c4a6acaf2df8baa5499457330a82b936fc7346",
+      "observed_utc": "2026-11-19T14:45:03.978480+00:00",
+      "license": {
+        "status": "not-established",
+        "expression": "Not established",
+        "url": null,
+        "sha256": null,
+        "note": "No repository-wide license file was found in the reviewed release tree or README; no upstream code/binaries are mirrored."
+      },
+      "release": {
+        "tag": "4.8",
+        "url": "https://github.com/guidedhacking/GuidedHacking-Injector/releases/tag/4.8",
+        "published_at": "2023-02-23T15:36:42Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/guidedhacking/GuidedHacking-Injector",
+          "exit": 0,
+          "response_sha256": "80e328c64d1cb4b85a3e4afdd95d838e3dee7ad31119f44b1da440aa6ae968e0"
+        },
+        {
+          "url": "https://api.github.com/repos/guidedhacking/GuidedHacking-Injector/releases/latest",
+          "exit": 0,
+          "response_sha256": "7980e97855a26a1538b1eb2458c128043f00ae7b3245d6cca52d5af19a0b3ded"
+        },
+        {
+          "url": "https://api.github.com/repos/guidedhacking/GuidedHacking-Injector/commits/4.8",
+          "exit": 0,
+          "response_sha256": "7c1b8a509b466e5a9172080ae0e25d89cb74d35a4e44bffc1572c49cae4ca389"
+        },
+        {
+          "url": "https://api.github.com/repos/guidedhacking/GuidedHacking-Injector/license?ref=e7c4a6acaf2df8baa5499457330a82b936fc7346",
+          "exit": 1,
+          "response_sha256": "6c0109c2ac75f1f264b61da6aff1737f7bc7eac254e6396710ff81a4139f32b1"
+        }
+      ]
+    },
+    {
+      "id": "tool:hasherezade/pe-bear",
+      "url": "https://github.com/hasherezade/pe-bear",
+      "revision": "c8eb8327c47d88e01e7dec7bdb8bee582519cd86",
+      "observed_utc": "2026-11-19T14:44:51.506019+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "GPL-2.0",
+        "url": "https://github.com/hasherezade/pe-bear/blob/c8eb8327c47d88e01e7dec7bdb8bee582519cd86/LICENSE",
+        "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+      },
+      "release": {
+        "tag": "v0.7.2",
+        "url": "https://github.com/hasherezade/pe-bear/releases/tag/v0.7.2",
+        "published_at": "2026-06-05T20:23:57Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/hasherezade/pe-bear",
+          "exit": 0,
+          "response_sha256": "f3fe37a26669ac5a9ff5d56076bf329a4d49e39c5cecd999418b699aa1eb2979"
+        },
+        {
+          "url": "https://api.github.com/repos/hasherezade/pe-bear/releases/latest",
+          "exit": 0,
+          "response_sha256": "f1a3d734d05989644049a3542daedf5af2767660f9520a801f6009b545c95dff"
+        },
+        {
+          "url": "https://api.github.com/repos/hasherezade/pe-bear/commits/v0.7.2",
+          "exit": 0,
+          "response_sha256": "dc6a490d5150e8260e598cf2a89d3b7fab81fff049c36d4473df845cc5abde17"
+        },
+        {
+          "url": "https://api.github.com/repos/hasherezade/pe-bear/license?ref=c8eb8327c47d88e01e7dec7bdb8bee582519cd86",
+          "exit": 0,
+          "response_sha256": "15a8bb6121671d3c522d69d9f59d5c5c8a167e13c655743d773f8122f015057a"
+        }
+      ]
+    },
+    {
+      "id": "tool:horsicq/DIE-engine",
+      "url": "https://github.com/horsicq/DIE-engine",
+      "revision": "ebb9ff70788c70cb805fee844dec9e6deb890ae8",
+      "observed_utc": "2026-11-19T14:44:54.174728+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "MIT",
+        "url": "https://github.com/horsicq/DIE-engine/blob/ebb9ff70788c70cb805fee844dec9e6deb890ae8/LICENSE",
+        "sha256": "be0fe2d727cd0a754fb0b2fdc579ead8f19ef575840b4daef221be201701eaad"
+      },
+      "release": {
+        "tag": "4.0.0",
+        "url": "https://github.com/horsicq/DIE-engine/releases/tag/4.0.0",
+        "published_at": "2026-11-05T05:53:29Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/horsicq/DIE-engine",
+          "exit": 0,
+          "response_sha256": "c36374bb3cf47a10b98b521464bcd1543b8927084995962de5901976b0868383"
+        },
+        {
+          "url": "https://api.github.com/repos/horsicq/DIE-engine/releases/latest",
+          "exit": 0,
+          "response_sha256": "7a0644b40e3c973a3d1cf73af6a77f55cd150b08d3568a0566d7d01cc394a538"
+        },
+        {
+          "url": "https://api.github.com/repos/horsicq/DIE-engine/commits/4.0.0",
+          "exit": 0,
+          "response_sha256": "8dcba3ddc08649c18776e86493bd6d71ed13c2d175c47482179f90645a285b4c"
+        },
+        {
+          "url": "https://api.github.com/repos/horsicq/DIE-engine/license?ref=ebb9ff70788c70cb805fee844dec9e6deb890ae8",
+          "exit": 0,
+          "response_sha256": "6bfc505ac9c7aa81c6316b9b63aeeda16624356288beb46d6d0cbe42c7172f14"
+        }
+      ]
+    },
+    {
+      "id": "tool:iBotPeaches/Apktool",
+      "url": "https://github.com/iBotPeaches/Apktool",
+      "revision": "18b5e99cb56ff9451e8aa55b065dcf5bbd616975",
+      "observed_utc": "2026-11-19T14:45:06.190086+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "Apache-2.0",
+        "url": "https://github.com/iBotPeaches/Apktool/blob/18b5e99cb56ff9451e8aa55b065dcf5bbd616975/LICENSE.md",
+        "sha256": "c49c53fdc79e1143a1892eb7333b595eecdbe40623e72be325267db28cb72114"
+      },
+      "release": {
+        "tag": "v3.0.3",
+        "url": "https://github.com/iBotPeaches/Apktool/releases/tag/v3.0.3",
+        "published_at": "2026-07-20T10:37:54Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/iBotPeaches/Apktool",
+          "exit": 0,
+          "response_sha256": "df2cab055c79919b1bc2690a181b8d1b4a9c6e7058da0f985668b202214ce290"
+        },
+        {
+          "url": "https://api.github.com/repos/iBotPeaches/Apktool/releases/latest",
+          "exit": 0,
+          "response_sha256": "4498b2cce2ee406459ca54aa56f41cd180f7133ba2f1d5444ba2c55f3dd5d8ea"
+        },
+        {
+          "url": "https://api.github.com/repos/iBotPeaches/Apktool/commits/v3.0.3",
+          "exit": 0,
+          "response_sha256": "7e64bb38633d697386155878ad504b6df6179984cae2d5f79446e49917a6a3fc"
+        },
+        {
+          "url": "https://api.github.com/repos/iBotPeaches/Apktool/license?ref=18b5e99cb56ff9451e8aa55b065dcf5bbd616975",
+          "exit": 0,
+          "response_sha256": "fc13ae54f7da360bd23687d4c66c61bae396d3436c05b0a3290557de7472fc0e"
+        }
+      ]
+    },
+    {
+      "id": "tool:icsharpcode/ILSpy",
+      "url": "https://github.com/icsharpcode/ILSpy",
+      "revision": "c86190ef4e24f3137c13a9275316042842d2fada",
+      "observed_utc": "2026-11-19T14:44:58.778763+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "MIT",
+        "url": "https://github.com/icsharpcode/ILSpy/blob/c86190ef4e24f3137c13a9275316042842d2fada/LICENSE",
+        "sha256": "5527fe802347740da8ec2b510cffa4d22939c7f0773ae342a85a2e2b64e4a34b"
+      },
+      "release": {
+        "tag": "v11.2",
+        "url": "https://github.com/icsharpcode/ILSpy/releases/tag/v11.2",
+        "published_at": "2026-10-27T07:18:13Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/icsharpcode/ILSpy",
+          "exit": 0,
+          "response_sha256": "d409df393ec597c1088d8960609db59a2bc45930885ff1155c04e2bdab08e4b5"
+        },
+        {
+          "url": "https://api.github.com/repos/icsharpcode/ILSpy/releases/latest",
+          "exit": 0,
+          "response_sha256": "3b4f3a4ddc980829b16d5f2299d4b0c268c4623763de73ea4ba64788e5710ed1"
+        },
+        {
+          "url": "https://api.github.com/repos/icsharpcode/ILSpy/commits/v11.2",
+          "exit": 0,
+          "response_sha256": "7e1b98f9279b41d8ccd4fe0c5f17dae0f882d909136e81907e1269a2afb61c26"
+        },
+        {
+          "url": "https://api.github.com/repos/icsharpcode/ILSpy/license?ref=c86190ef4e24f3137c13a9275316042842d2fada",
+          "exit": 0,
+          "response_sha256": "4747a3fda097f4f241bfa00e50db57dfa48073a22b15b425aced5c684720f292"
+        }
+      ]
+    },
+    {
+      "id": "tool:ip7z/7zip",
+      "url": "https://github.com/ip7z/7zip",
+      "revision": "d3296e39e1f1f92c7b41c0c3848e65640428d42d",
+      "observed_utc": "2026-11-19T14:45:09.164678+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "LGPL-2.1-or-later with BSD components and unRAR restrictions",
+        "url": "https://raw.githubusercontent.com/ip7z/7zip/d3296e39e1f1f92c7b41c0c3848e65640428d42d/DOC/License.txt",
+        "sha256": "dac8389b6bc39339537bc351772106afe7951cb242cdf03e855b67c3a683deb1",
+        "note": "Preserve the exact release DOC/License.txt; a GPL-style shorthand does not cover all files."
+      },
+      "release": {
+        "tag": "26.06",
+        "url": "https://github.com/ip7z/7zip/releases/tag/26.06",
+        "published_at": "2026-11-07T11:45:33Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/ip7z/7zip",
+          "exit": 0,
+          "response_sha256": "e3092569c9651059872ab1fde04ef7639c13b5e9adf52138abe4881771976cd7"
+        },
+        {
+          "url": "https://api.github.com/repos/ip7z/7zip/releases/latest",
+          "exit": 0,
+          "response_sha256": "6f7fb5f984cc74b4619a67cb2464cb7eb3d63554018091e0309be2415b496529"
+        },
+        {
+          "url": "https://api.github.com/repos/ip7z/7zip/commits/26.06",
+          "exit": 0,
+          "response_sha256": "10cc254a2b90c5ec2e0079c7dcb124089a168bfe58cd394bb6995afa5217c757"
+        },
+        {
+          "url": "https://api.github.com/repos/ip7z/7zip/license?ref=d3296e39e1f1f92c7b41c0c3848e65640428d42d",
+          "exit": 1,
+          "response_sha256": "6c0109c2ac75f1f264b61da6aff1737f7bc7eac254e6396710ff81a4139f32b1"
+        }
+      ]
+    },
+    {
+      "id": "tool:mandiant/GoReSym",
+      "url": "https://github.com/mandiant/GoReSym",
+      "revision": "722897e0a80da0a06c00c5e40591a253a551f04e",
+      "observed_utc": "2026-11-19T14:45:11.775079+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "MIT",
+        "url": "https://github.com/mandiant/GoReSym/blob/722897e0a80da0a06c00c5e40591a253a551f04e/LICENSE",
+        "sha256": "d7341d45c966aa10eba9d7f31bedb95db370acaf928fcaafdaa51ad29a0217b0"
+      },
+      "release": {
+        "tag": "v3.4.1",
+        "url": "https://github.com/mandiant/GoReSym/releases/tag/v3.4.1",
+        "published_at": "2026-09-14T17:08:29Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/mandiant/GoReSym",
+          "exit": 0,
+          "response_sha256": "1d4f2cdb0c787e53a94d4b3fcf95764a195d28d4723cbf4255c177c6fd3d0368"
+        },
+        {
+          "url": "https://api.github.com/repos/mandiant/GoReSym/releases/latest",
+          "exit": 0,
+          "response_sha256": "35af9e06f60a784fa72b6125561e80b5f6ad2ffa4b4ffd8e26bafe56f9200156"
+        },
+        {
+          "url": "https://api.github.com/repos/mandiant/GoReSym/commits/v3.4.1",
+          "exit": 0,
+          "response_sha256": "81a2d340422f82f435939a353da941f5642c34d65d7195144e78ce901c47602d"
+        },
+        {
+          "url": "https://api.github.com/repos/mandiant/GoReSym/license?ref=722897e0a80da0a06c00c5e40591a253a551f04e",
+          "exit": 0,
+          "response_sha256": "68e8848b6861f1905b1524b815b3222472209ed5721ba717e56980052a559092"
+        }
+      ]
+    },
+    {
+      "id": "tool:mandiant/capa",
+      "url": "https://github.com/mandiant/capa",
+      "revision": "85813ebc5b99ccdbe43147e46796d0bd6700f30a",
+      "observed_utc": "2026-11-19T14:44:55.865293+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "Apache-2.0",
+        "url": "https://github.com/mandiant/capa/blob/85813ebc5b99ccdbe43147e46796d0bd6700f30a/LICENSE.txt",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      },
+      "release": {
+        "tag": "v10.0.0",
+        "url": "https://github.com/mandiant/capa/releases/tag/v10.0.0",
+        "published_at": "2026-10-16T14:03:38Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/mandiant/capa",
+          "exit": 0,
+          "response_sha256": "23de4eaf8739afe2fffa52c41c48391120bf769c3626aa4cb360209283c2e4e6"
+        },
+        {
+          "url": "https://api.github.com/repos/mandiant/capa/releases/latest",
+          "exit": 0,
+          "response_sha256": "c7f613929b779fe063d8ef40e9632281eb6e1ec965e97c78aa8a586dc91f1b2e"
+        },
+        {
+          "url": "https://api.github.com/repos/mandiant/capa/commits/v10.0.0",
+          "exit": 0,
+          "response_sha256": "f765cfa227af2164a2bb3e12c0b08f0640c5c71651e345d2b1e6a01b395bed40"
+        },
+        {
+          "url": "https://api.github.com/repos/mandiant/capa/license?ref=85813ebc5b99ccdbe43147e46796d0bd6700f30a",
+          "exit": 0,
+          "response_sha256": "62544d8cdbe49794174145ab9d018131eaec8822ebe16a1e69e50a96e20f03ec"
+        }
+      ]
+    },
+    {
+      "id": "tool:mandiant/flare-floss",
+      "url": "https://github.com/mandiant/flare-floss",
+      "revision": "69e8ea21ca78deb2418abb68f86c838d1d2672c7",
+      "observed_utc": "2026-11-19T14:44:56.451822+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "Apache-2.0",
+        "url": "https://github.com/mandiant/flare-floss/blob/69e8ea21ca78deb2418abb68f86c838d1d2672c7/LICENSE.txt",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      },
+      "release": {
+        "tag": "v3.2.0",
+        "url": "https://github.com/mandiant/flare-floss/releases/tag/v3.2.0",
+        "published_at": "2026-10-16T10:51:32Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/mandiant/flare-floss",
+          "exit": 0,
+          "response_sha256": "9006210513e1ef199e99863b11eaa5f15cfaf1a96f671a2222255c1fba095e20"
+        },
+        {
+          "url": "https://api.github.com/repos/mandiant/flare-floss/releases/latest",
+          "exit": 0,
+          "response_sha256": "7bbd8d49a195ccd411d6ace709f7976a8d29401ae5d6cc2b98480638cf697779"
+        },
+        {
+          "url": "https://api.github.com/repos/mandiant/flare-floss/commits/v3.2.0",
+          "exit": 0,
+          "response_sha256": "bcdeaa84005e37643571f83754764d6879c6ed13056685b0ad096d1476a0165b"
+        },
+        {
+          "url": "https://api.github.com/repos/mandiant/flare-floss/license?ref=69e8ea21ca78deb2418abb68f86c838d1d2672c7",
+          "exit": 0,
+          "response_sha256": "b34afcadb21f9b6ace3c5fe01f18494420e1991663478d19ef2760bc2f0bd25c"
+        }
+      ]
+    },
+    {
+      "id": "tool:mrexodia/ida-pro-mcp",
+      "url": "https://github.com/mrexodia/ida-pro-mcp",
+      "revision": "27722e929052757f4baf074776904effdb23c012",
+      "observed_utc": "2026-11-19T14:44:51.506047+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "MIT",
+        "url": "https://github.com/mrexodia/ida-pro-mcp/blob/27722e929052757f4baf074776904effdb23c012/LICENSE",
+        "sha256": "ee7e7d1886c4a567ba3b7a0d88abaaac57e7bfeee4402a24872effa78a2b6b6e"
+      },
+      "release": {
+        "tag": "1.4.0",
+        "url": "https://github.com/mrexodia/ida-pro-mcp/releases/tag/1.4.0",
+        "published_at": "2025-10-06T13:28:26Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/mrexodia/ida-pro-mcp",
+          "exit": 0,
+          "response_sha256": "330c9052122003192731cf652a94fc003a38bece00de4cc09b6c00de815cdcbd"
+        },
+        {
+          "url": "https://api.github.com/repos/mrexodia/ida-pro-mcp/releases/latest",
+          "exit": 0,
+          "response_sha256": "becdacf4196373f5b31912787bfc074130aa1a63a1bc67d32c73fe84bd0f91d9"
+        },
+        {
+          "url": "https://api.github.com/repos/mrexodia/ida-pro-mcp/commits/1.4.0",
+          "exit": 0,
+          "response_sha256": "979baa155ebbda62f4aa82ec9285323d82f91f2e5e186f651d815c133877470f"
+        },
+        {
+          "url": "https://api.github.com/repos/mrexodia/ida-pro-mcp/license?ref=27722e929052757f4baf074776904effdb23c012",
+          "exit": 0,
+          "response_sha256": "7d6202265ff3943ce47d00f8a4abadadbb3850557ce0e97b5c0f267761f29e6f"
+        }
+      ]
+    },
+    {
+      "id": "tool:pyinstxtractor/pyinstxtractor-ng",
+      "url": "https://github.com/pyinstxtractor/pyinstxtractor-ng",
+      "revision": "60fcd65d3e3dc4f29d93527a9fb509ca751abb83",
+      "observed_utc": "2026-11-19T14:45:13.250648+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "GPL-3.0",
+        "url": "https://github.com/pyinstxtractor/pyinstxtractor-ng/blob/60fcd65d3e3dc4f29d93527a9fb509ca751abb83/LICENSE",
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+      },
+      "release": {
+        "tag": "2026.07.03",
+        "url": "https://github.com/pyinstxtractor/pyinstxtractor-ng/releases/tag/2026.07.03",
+        "published_at": "2026-07-03T10:20:11Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/pyinstxtractor/pyinstxtractor-ng",
+          "exit": 0,
+          "response_sha256": "aedc17c8bdc7e798919c89df5e94f6395cf5b58e44ecdecd75042d6ad595111d"
+        },
+        {
+          "url": "https://api.github.com/repos/pyinstxtractor/pyinstxtractor-ng/releases/latest",
+          "exit": 0,
+          "response_sha256": "3807e8827aaf472a7e576068d1e6feb9f52b394113533c369720adb087bac02a"
+        },
+        {
+          "url": "https://api.github.com/repos/pyinstxtractor/pyinstxtractor-ng/commits/2026.07.03",
+          "exit": 0,
+          "response_sha256": "8e27aa3bdc2afd7aa003f67410d05bab84b380bea74808aeb47418489a8da8e9"
+        },
+        {
+          "url": "https://api.github.com/repos/pyinstxtractor/pyinstxtractor-ng/license?ref=60fcd65d3e3dc4f29d93527a9fb509ca751abb83",
+          "exit": 0,
+          "response_sha256": "17ea118a2cceaec6b5118348c846caa32797b738ee6db30e3d2261cad6802182"
+        }
+      ]
+    },
+    {
+      "id": "tool:radareorg/radare2",
+      "url": "https://github.com/radareorg/radare2",
+      "revision": "06a7c9d35468676cc3fe6ea299885cf53aa8ad9b",
+      "observed_utc": "2026-11-19T14:45:01.451607+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "LGPL-3.0 with separately licensed bundled plugins",
+        "url": "https://github.com/radareorg/radare2/blob/06a7c9d35468676cc3fe6ea299885cf53aa8ad9b/COPYING.md",
+        "sha256": "c4154ac363318953bc18c8faf4b41dad3457ee51475d63e708db7b41570ffa79",
+        "note": "COPYING.md describes mixed plugin/dependency licenses; build-level SBOM is needed before binary redistribution."
+      },
+      "release": {
+        "tag": "6.2.6",
+        "url": "https://github.com/radareorg/radare2/releases/tag/6.2.6",
+        "published_at": "2026-11-05T18:32:14Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/radareorg/radare2",
+          "exit": 0,
+          "response_sha256": "c3302a59d58dd63507fa1d5ec6a8ef58bc9a1b5b314d550f71d429e00bf4de8e"
+        },
+        {
+          "url": "https://api.github.com/repos/radareorg/radare2/releases/latest",
+          "exit": 0,
+          "response_sha256": "cacd1dbfe8dfbb3e1496d411f0905b2d1e644acfa32050ef78d7540e363efadf"
+        },
+        {
+          "url": "https://api.github.com/repos/radareorg/radare2/commits/6.2.6",
+          "exit": 0,
+          "response_sha256": "4b07ba3f1b5d0d87e2f86dd80fdcdca0da03ba87d888a7484d9a1e64a3e073f2"
+        },
+        {
+          "url": "https://api.github.com/repos/radareorg/radare2/license?ref=06a7c9d35468676cc3fe6ea299885cf53aa8ad9b",
+          "exit": 0,
+          "response_sha256": "295fd72a55bfebd1fec8ac92222d137a92855beed9d7387dda037fe4ffbe771f"
+        }
+      ]
+    },
+    {
+      "id": "tool:reqable/reqable-app",
+      "url": "https://github.com/reqable/reqable-app",
+      "revision": "42724fecced1c62dae93dac6fdeec9dc665df066",
+      "observed_utc": "2026-11-19T14:45:08.608193+00:00",
+      "license": {
+        "status": "official-terms",
+        "expression": "Proprietary Reqable License Agreement",
+        "url": "https://reqable.com/en-US/policy/",
+        "sha256": "60586aae5d077eaaffc7cde2070ae248a6067d7ac54be0c2c4af910ba0f27050",
+        "note": "Terms prohibit publication on an unauthorized channel. This project supplies only an official acquisition recipe."
+      },
+      "release": {
+        "tag": "3.3.13",
+        "url": "https://github.com/reqable/reqable-app/releases/tag/3.3.13",
+        "published_at": "2026-11-18T10:56:07Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/reqable/reqable-app",
+          "exit": 0,
+          "response_sha256": "683e1e6a2285c20330c869e88e19cd1a20ccac354e150e7ba02ff38395387523"
+        },
+        {
+          "url": "https://api.github.com/repos/reqable/reqable-app/releases/latest",
+          "exit": 0,
+          "response_sha256": "3fdad4ceac17c55ae12d10631f9f2cd8ae97cdadb12d4f1eaa671d8e23909a8c"
+        },
+        {
+          "url": "https://api.github.com/repos/reqable/reqable-app/commits/3.3.13",
+          "exit": 0,
+          "response_sha256": "593351cdd63384ba29d21472989a960f20fce59e79f4def6a3c5e1864f70d526"
+        },
+        {
+          "url": "https://api.github.com/repos/reqable/reqable-app/license?ref=42724fecced1c62dae93dac6fdeec9dc665df066",
+          "exit": 1,
+          "response_sha256": "6c0109c2ac75f1f264b61da6aff1737f7bc7eac254e6396710ff81a4139f32b1"
+        }
+      ]
+    },
+    {
+      "id": "tool:sensepost/objection",
+      "url": "https://github.com/sensepost/objection",
+      "revision": "2da035afe8620a6c81d1908c984c35ddedd11271",
+      "observed_utc": "2026-11-19T14:45:06.861642+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "GPL-3.0",
+        "url": "https://github.com/sensepost/objection/blob/2da035afe8620a6c81d1908c984c35ddedd11271/LICENSE",
+        "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+      },
+      "release": {
+        "tag": "1.12.5",
+        "url": "https://github.com/sensepost/objection/releases/tag/1.12.5",
+        "published_at": "2026-06-02T09:35:54Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/sensepost/objection",
+          "exit": 0,
+          "response_sha256": "d7764e4f90ffd209245845306d22d73787c065d70ba77d9c57a103312ad91149"
+        },
+        {
+          "url": "https://api.github.com/repos/sensepost/objection/releases/latest",
+          "exit": 0,
+          "response_sha256": "dd92a276ad8bde60bfdf871c2732f0eb83fa7a33544273327d59e8f1303a98ae"
+        },
+        {
+          "url": "https://api.github.com/repos/sensepost/objection/commits/1.12.5",
+          "exit": 0,
+          "response_sha256": "a525bc825131d9c45765cf679c5cf02b977717e627fb4544fcf16ba2f52f4c0c"
+        },
+        {
+          "url": "https://api.github.com/repos/sensepost/objection/license?ref=2da035afe8620a6c81d1908c984c35ddedd11271",
+          "exit": 0,
+          "response_sha256": "e31185bc42fc2809dd69e75df234b5f7e2918034647129feeaf33e6ba8df9485"
+        }
+      ]
+    },
+    {
+      "id": "tool:skylot/jadx",
+      "url": "https://github.com/skylot/jadx",
+      "revision": "c1ef5019bb62f7d490149a53619918a23a59178e",
+      "observed_utc": "2026-11-19T14:45:04.323348+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "Apache-2.0",
+        "url": "https://github.com/skylot/jadx/blob/c1ef5019bb62f7d490149a53619918a23a59178e/LICENSE",
+        "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1"
+      },
+      "release": {
+        "tag": "v1.5.7",
+        "url": "https://github.com/skylot/jadx/releases/tag/v1.5.7",
+        "published_at": "2026-11-18T20:44:35Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/skylot/jadx",
+          "exit": 0,
+          "response_sha256": "c020ab5365c9305df6868f4a8860c0dc4ab7fe34eb8849da4706ab2b7cbe51b3"
+        },
+        {
+          "url": "https://api.github.com/repos/skylot/jadx/releases/latest",
+          "exit": 0,
+          "response_sha256": "efad04abe3a307938060a09184c3f5da6f465cbfda67fcd6f35c3c250038be7f"
+        },
+        {
+          "url": "https://api.github.com/repos/skylot/jadx/commits/v1.5.7",
+          "exit": 0,
+          "response_sha256": "ac6df6c131d7774c6ed27a0a8a987931efff63b295c28c7ae3289ea00d67d8d2"
+        },
+        {
+          "url": "https://api.github.com/repos/skylot/jadx/license?ref=c1ef5019bb62f7d490149a53619918a23a59178e",
+          "exit": 0,
+          "response_sha256": "814e96e1ac5bdda8dba5e4fb4d75276928a8b876b063d92fc1d7b5b6bb8dc2af"
+        }
+      ]
+    },
+    {
+      "id": "tool:upx/upx",
+      "url": "https://github.com/upx/upx",
+      "revision": "7c7bea44146c7ad6e17cb2d0bb9566805b44a91a",
+      "observed_utc": "2026-11-19T14:45:13.690518+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "GPL-2.0-or-later with the upstream compressed-executable exception",
+        "url": "https://github.com/upx/upx/blob/7c7bea44146c7ad6e17cb2d0bb9566805b44a91a/LICENSE",
+        "sha256": "905d4a66d5324e154d976bbf88829d4d9263815a2b97cc40954f06d4a23c28eb",
+        "note": "The exception is conditional on unmodified UPX/stub; preserve both LICENSE and COPYING."
+      },
+      "release": {
+        "tag": "v5.3.0",
+        "url": "https://github.com/upx/upx/releases/tag/v5.3.0",
+        "published_at": "2026-10-28T15:17:13Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/upx/upx",
+          "exit": 0,
+          "response_sha256": "ddc8824c4debe8af3a8354c23cc327c7087bec4b4faab37dc617a3cd64331368"
+        },
+        {
+          "url": "https://api.github.com/repos/upx/upx/releases/latest",
+          "exit": 0,
+          "response_sha256": "c73aaf7d4532d647ddce53ef3fea2fdfe17d1a53634826ee69becc5df3132ce2"
+        },
+        {
+          "url": "https://api.github.com/repos/upx/upx/commits/v5.3.0",
+          "exit": 0,
+          "response_sha256": "68a35ccd6858a18506b4f8af2b168f57c9d0238590eafb5d15ff65c511a947bc"
+        },
+        {
+          "url": "https://api.github.com/repos/upx/upx/license?ref=7c7bea44146c7ad6e17cb2d0bb9566805b44a91a",
+          "exit": 0,
+          "response_sha256": "57dc9ab5b3e3b812811be5058954256cadae2d7a410946a1e32c43b2e30babc6"
+        }
+      ]
+    },
+    {
+      "id": "tool:volatilityfoundation/volatility3",
+      "url": "https://github.com/volatilityfoundation/volatility3",
+      "revision": "881e970121c16f0932fb9d16fbd5fb258cbcbf75",
+      "observed_utc": "2026-11-19T14:45:14.337881+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "Volatility Software License 1.0",
+        "url": "https://github.com/volatilityfoundation/volatility3/blob/881e970121c16f0932fb9d16fbd5fb258cbcbf75/LICENSE.txt",
+        "sha256": "6e905a859f6d5ebf23d4b7cdfb8ac425c4ec5dd02b3b274901a967f3e452eb37",
+        "note": "Custom copyleft explicitly includes wrappers designed to execute Volatility and parse its results."
+      },
+      "release": {
+        "tag": "v2.28.2",
+        "url": "https://github.com/volatilityfoundation/volatility3/releases/tag/v2.28.2",
+        "published_at": "2026-09-17T19:47:09Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/volatilityfoundation/volatility3",
+          "exit": 0,
+          "response_sha256": "4a6777008e0715bfaa551ec337252148ba4b43aee72b6898734626f5115635e1"
+        },
+        {
+          "url": "https://api.github.com/repos/volatilityfoundation/volatility3/releases/latest",
+          "exit": 0,
+          "response_sha256": "0bae3f9c968fc40f56fd4f6a4a31d898bbe3ba7f5c2d9a785afa7f3c105b7ff8"
+        },
+        {
+          "url": "https://api.github.com/repos/volatilityfoundation/volatility3/commits/v2.28.2",
+          "exit": 0,
+          "response_sha256": "1c8a12f235e51f663c23899024a950b661a754da915a3346d991d52b8b6852d8"
+        },
+        {
+          "url": "https://api.github.com/repos/volatilityfoundation/volatility3/license?ref=881e970121c16f0932fb9d16fbd5fb258cbcbf75",
+          "exit": 0,
+          "response_sha256": "3b79a8555b430e1dab04202d5b63ccd4f2499026258842e824135178a311d3f5"
+        }
+      ]
+    },
+    {
+      "id": "tool:x64dbg/ScyllaHide",
+      "url": "https://github.com/x64dbg/ScyllaHide",
+      "revision": "a727ac39e16185d49d528a48c34d4c2c66774af3",
+      "observed_utc": "2026-11-19T14:45:02.978906+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "GPL-3.0",
+        "url": "https://github.com/x64dbg/ScyllaHide/blob/a727ac39e16185d49d528a48c34d4c2c66774af3/LICENSE",
+        "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+      },
+      "release": {
+        "tag": "v1.4",
+        "url": "https://github.com/x64dbg/ScyllaHide/releases/tag/v1.4",
+        "published_at": "2023-03-24T13:58:17Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/x64dbg/ScyllaHide",
+          "exit": 0,
+          "response_sha256": "724b390cce05fbf049512962abea279b1f391ca17d03f3e7f222ceb0d709fff3"
+        },
+        {
+          "url": "https://api.github.com/repos/x64dbg/ScyllaHide/releases/latest",
+          "exit": 0,
+          "response_sha256": "e67792b17e7e72434cafe9aedc01fe73bbb3a4e4cf7aa1d56bbb474e92c6a0c6"
+        },
+        {
+          "url": "https://api.github.com/repos/x64dbg/ScyllaHide/commits/v1.4",
+          "exit": 0,
+          "response_sha256": "be2da78aeedf3980c6006ff8aa4ee77d76ef6dc3390994951662decb907e1f8d"
+        },
+        {
+          "url": "https://api.github.com/repos/x64dbg/ScyllaHide/license?ref=a727ac39e16185d49d528a48c34d4c2c66774af3",
+          "exit": 0,
+          "response_sha256": "d32a99acabd7713b3ec68b064fa646e24b730f635856cb72a0b4cf38a0b247ba"
+        }
+      ]
+    },
+    {
+      "id": "tool:x64dbg/x64dbg",
+      "url": "https://github.com/x64dbg/x64dbg",
+      "revision": "9c8ca1cae0b6d56cc44f31fddcb10e3b02ffbb87",
+      "observed_utc": "2026-11-19T14:45:02.006564+00:00",
+      "license": {
+        "status": "verified-license-file",
+        "expression": "Modified GPL-3.0 text",
+        "url": "https://github.com/x64dbg/x64dbg/blob/9c8ca1cae0b6d56cc44f31fddcb10e3b02ffbb87/LICENSE",
+        "sha256": "1791b618e0aab8312274d6d229e692a680cc633676cd7f87e189f79097951f92",
+        "note": "Upstream LICENSE explicitly identifies modifications; use the original text, not a substituted stock SPDX license."
+      },
+      "release": {
+        "tag": "2026.05.27",
+        "url": "https://github.com/x64dbg/x64dbg/releases/tag/2026.05.27",
+        "published_at": "2026-05-27T13:04:55Z"
+      },
+      "metadata_evidence": [
+        {
+          "url": "https://api.github.com/repos/x64dbg/x64dbg",
+          "exit": 0,
+          "response_sha256": "f0c37b0dc3161a085c675bc4f943800bae53d3b126a7dfa9e69d26ce9737b228"
+        },
+        {
+          "url": "https://api.github.com/repos/x64dbg/x64dbg/releases/latest",
+          "exit": 0,
+          "response_sha256": "99816eb748a5a36dfab8d9cfafe46c33652ca3993200cac46d12894a4828d78c"
+        },
+        {
+          "url": "https://api.github.com/repos/x64dbg/x64dbg/commits/2026.05.27",
+          "exit": 0,
+          "response_sha256": "20b55c662d6237e0e01bc4d9db4f114da44819ffa336d0b0fef6f06545f65f2d"
+        },
+        {
+          "url": "https://api.github.com/repos/x64dbg/x64dbg/license?ref=9c8ca1cae0b6d56cc44f31fddcb10e3b02ffbb87",
+          "exit": 0,
+          "response_sha256": "16cc23483f667ebb3461d415e6ddcc9e5e3b4889d3d7474790e757e00bac4e93"
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "name": "Ghidra",
+      "category": "static-reversing",
+      "declared_version": "12.1.3",
+      "source_ids": [
+        "tool:NationalSecurityAgency/ghidra"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "Java",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "download_recipe": "nationalsecurityagency-ghidra-ghidra-12.2-build"
+      },
+      "upstream_release_observed": "Ghidra_12.2_build",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "New release/major-version behavior may affect provider APIs, output schemas or runtime requirements; preserve the current pin until its focused compatibility gates pass."
+      }
+    },
+    {
+      "name": "IDA Pro",
+      "category": "static-reversing",
+      "declared_version": "9.2",
+      "source_ids": [
+        "ida-host"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "owner-supplied-or-manual",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "note": "No automated acquisition/execution for this host prerequisite."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "ida-pro-mcp (idalib)",
+      "category": "static-reversing",
+      "declared_version": "2.0.0",
+      "source_ids": [
+        "tool:mrexodia/ida-pro-mcp"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "upstream_instructions": "https://github.com/mrexodia/ida-pro-mcp",
+        "limitation": "No executable hash-pinned binary recipe in this release; follow the official instructions and verify the selected artifact."
+      },
+      "upstream_release_observed": "1.4.0",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Installed 2.0.0 label differs from GitHub/PyPI release channels. Do not downgrade to the older registry release on the basis of version listing alone."
+      }
+    },
+    {
+      "name": "PE-bear",
+      "category": "static-reversing",
+      "declared_version": "0.7.2",
+      "source_ids": [
+        "tool:hasherezade/pe-bear"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "download_recipe": "hasherezade-pe-bear-v0.7.2"
+      },
+      "upstream_release_observed": "v0.7.2",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "ImHex",
+      "category": "static-reversing",
+      "declared_version": "1.38.1",
+      "source_ids": [
+        "tool:WerWolv/ImHex"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "download_recipe": "werwolv-imhex-v1.38.1"
+      },
+      "upstream_release_observed": "v1.38.1",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "Detect It Easy",
+      "category": "static-reversing",
+      "declared_version": "3.21",
+      "source_ids": [
+        "tool:horsicq/DIE-engine"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "download_recipe": "horsicq-die-engine-4.0.0"
+      },
+      "upstream_release_observed": "4.0.0",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "New release/major-version behavior may affect provider APIs, output schemas or runtime requirements; preserve the current pin until its focused compatibility gates pass."
+      }
+    },
+    {
+      "name": "capa",
+      "category": "static-reversing",
+      "declared_version": "9.4.0",
+      "source_ids": [
+        "tool:mandiant/capa"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "download_recipe": "mandiant-capa-v10.0.0"
+      },
+      "upstream_release_observed": "v10.0.0",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "New release/major-version behavior may affect provider APIs, output schemas or runtime requirements; preserve the current pin until its focused compatibility gates pass."
+      }
+    },
+    {
+      "name": "FLOSS",
+      "category": "static-reversing",
+      "declared_version": "3.1.1",
+      "source_ids": [
+        "tool:mandiant/flare-floss"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "download_recipe": "mandiant-flare-floss-v3.2.0"
+      },
+      "upstream_release_observed": "v3.2.0",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "YARA-X",
+      "category": "static-reversing",
+      "declared_version": "1.20.0",
+      "source_ids": [
+        "tool:VirusTotal/yara-x"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "download_recipe": "virustotal-yara-x-v1.23.0"
+      },
+      "upstream_release_observed": "v1.23.0",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "ILSpy",
+      "category": "static-reversing",
+      "declared_version": "11.0.0.9375",
+      "source_ids": [
+        "tool:icsharpcode/ILSpy"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "download_recipe": "icsharpcode-ilspy-v11.2"
+      },
+      "upstream_release_observed": "v11.2",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "New release/major-version behavior may affect provider APIs, output schemas or runtime requirements; preserve the current pin until its focused compatibility gates pass."
+      }
+    },
+    {
+      "name": "ilspycmd",
+      "category": "static-reversing",
+      "declared_version": "11.0.0.9375",
+      "source_ids": [
+        "ilspycmd"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "commands": [
+          "dotnet tool install ilspycmd --version 11.0.0.9375 --tool-path <NEW_TOOL_DIR>"
+        ]
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "dnSpyEx",
+      "category": "static-reversing",
+      "declared_version": "6.6.0",
+      "source_ids": [
+        "tool:dnSpyEx/dnSpy"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "download_recipe": "dnspyex-dnspy-v6.6.0"
+      },
+      "upstream_release_observed": "v6.6.0",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "ReClass.NET",
+      "category": "static-reversing",
+      "declared_version": "1.2",
+      "source_ids": [
+        "tool:ReClassNET/ReClass.NET"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "upstream_instructions": "https://github.com/ReClassNET/ReClass.NET/releases",
+        "limitation": "No executable hash-pinned binary recipe in this release; follow the official instructions and verify the selected artifact."
+      },
+      "upstream_release_observed": "v1.2",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "radare2",
+      "category": "static-reversing",
+      "declared_version": "6.2.2",
+      "source_ids": [
+        "tool:radareorg/radare2"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "download_recipe": "radareorg-radare2-6.2.6"
+      },
+      "upstream_release_observed": "6.2.6",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "rabin2",
+      "category": "static-reversing",
+      "declared_version": "6.2.2",
+      "source_ids": [
+        "tool:radareorg/radare2"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "download_recipe": "radareorg-radare2-6.2.6"
+      },
+      "upstream_release_observed": "6.2.6",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "x64dbg",
+      "category": "debuggers",
+      "declared_version": "snapshot",
+      "source_ids": [
+        "tool:x64dbg/x64dbg"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "download_recipe": "x64dbg-x64dbg-2026.05.27"
+      },
+      "upstream_release_observed": "2026.05.27",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "ScyllaHide",
+      "category": "debuggers",
+      "declared_version": "latest",
+      "source_ids": [
+        "tool:x64dbg/ScyllaHide"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "upstream_instructions": "https://github.com/x64dbg/ScyllaHide/releases",
+        "limitation": "No executable hash-pinned binary recipe in this release; follow the official instructions and verify the selected artifact."
+      },
+      "upstream_release_observed": "v1.4",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "GH Injector",
+      "category": "debuggers",
+      "declared_version": "4.8",
+      "source_ids": [
+        "tool:guidedhacking/GuidedHacking-Injector"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "upstream_instructions": "https://github.com/guidedhacking/GuidedHacking-Injector/releases",
+        "limitation": "No executable hash-pinned binary recipe in this release; follow the official instructions and verify the selected artifact."
+      },
+      "upstream_release_observed": "4.8",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "Cheat Engine",
+      "category": "debuggers",
+      "declared_version": "7.7",
+      "source_ids": [
+        "cheatengine-host"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "owner-supplied-or-manual",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "note": "No automated acquisition/execution for this host prerequisite."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "JADX",
+      "category": "mobile-android",
+      "declared_version": "1.5.6",
+      "source_ids": [
+        "tool:skylot/jadx"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "download_recipe": "skylot-jadx-v1.5.7"
+      },
+      "upstream_release_observed": "v1.5.7",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "Apktool",
+      "category": "mobile-android",
+      "declared_version": "3.0.3",
+      "source_ids": [
+        "tool:iBotPeaches/Apktool"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "Java",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "download_recipe": "ibotpeaches-apktool-v3.0.3"
+      },
+      "upstream_release_observed": "v3.0.3",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "MobSF",
+      "category": "mobile-android",
+      "declared_version": "latest",
+      "source_ids": [
+        "tool:MobSF/Mobile-Security-Framework-MobSF"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "upstream_instructions": "https://github.com/MobSF/Mobile-Security-Framework-MobSF",
+        "limitation": "No executable hash-pinned binary recipe in this release; follow the official instructions and verify the selected artifact."
+      },
+      "upstream_release_observed": "v4.6.9",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "objection",
+      "category": "mobile-android",
+      "declared_version": "1.12.5",
+      "source_ids": [
+        "tool:sensepost/objection"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "upstream_instructions": "https://github.com/sensepost/objection (pip)",
+        "limitation": "No executable hash-pinned binary recipe in this release; follow the official instructions and verify the selected artifact."
+      },
+      "upstream_release_observed": "1.12.5",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "Reqable",
+      "category": "network-http",
+      "declared_version": "3.2.23",
+      "source_ids": [
+        "tool:reqable/reqable-app"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "download_recipe": "reqable-reqable-app-3.3.13"
+      },
+      "upstream_release_observed": "3.3.13",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "Wireshark",
+      "category": "network-http",
+      "declared_version": "4.6.8-portable",
+      "source_ids": [
+        "backend:wireshark/wireshark"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "Npcap",
+      "category": "network-http",
+      "declared_version": "1.88",
+      "source_ids": [
+        "npcap"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "owner-supplied-or-manual",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "note": "No automated acquisition/execution for this host prerequisite."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "7-Zip full",
+      "category": "unpackers-game",
+      "declared_version": "26.02",
+      "source_ids": [
+        "tool:ip7z/7zip"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "download_recipe": "ip7z-7zip-26.06"
+      },
+      "upstream_release_observed": "26.06",
+      "upgrade": {
+        "decision": "reviewed-update-candidate",
+        "reason": "26.06 has a hash-pinned acquisition path. Full edition extraction and selected MCP demo are documented in BOOTSTRAP; no silent installer required."
+      }
+    },
+    {
+      "name": "7-Zip extra",
+      "category": "unpackers-game",
+      "declared_version": "26.02",
+      "source_ids": [
+        "tool:ip7z/7zip"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "download_recipe": "7zip-extra-26.06"
+      },
+      "upstream_release_observed": "26.06",
+      "upgrade": {
+        "decision": "reviewed-update-candidate",
+        "reason": "26.06 has a hash-pinned acquisition path. Full edition extraction and selected MCP demo are documented in BOOTSTRAP; no silent installer required."
+      }
+    },
+    {
+      "name": "Universal Extractor",
+      "category": "unpackers-game",
+      "declared_version": "RC3",
+      "source_ids": [
+        "tool:Bioruebe/UniExtract2"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "upstream_instructions": "https://github.com/Bioruebe/UniExtract2/releases",
+        "limitation": "No executable hash-pinned binary recipe in this release; follow the official instructions and verify the selected artifact."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "AssetRipper",
+      "category": "unpackers-game",
+      "declared_version": "2.0.0",
+      "source_ids": [
+        "tool:AssetRipper/AssetRipper"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "download_recipe": "assetripper-assetripper-2.0.0"
+      },
+      "upstream_release_observed": "2.0.0",
+      "upgrade": {
+        "decision": "restore-missing-entry-at-same-version",
+        "reason": "Official 2.0.0 archive restores the missing executable. Version/loopback HTTP smoke does not prove Unity conversion."
+      }
+    },
+    {
+      "name": "Il2CppDumper",
+      "category": "unpackers-game",
+      "declared_version": "6.7.46",
+      "source_ids": [
+        "tool:Perfare/Il2CppDumper"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "upstream_instructions": "https://github.com/Perfare/Il2CppDumper/releases",
+        "limitation": "No executable hash-pinned binary recipe in this release; follow the official instructions and verify the selected artifact."
+      },
+      "upstream_release_observed": "v6.7.46",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "GoReSym",
+      "category": "unpackers-game",
+      "declared_version": "latest",
+      "source_ids": [
+        "tool:mandiant/GoReSym"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "download_recipe": "mandiant-goresym-v3.4.1"
+      },
+      "upstream_release_observed": "v3.4.1",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "pyinstxtractor-ng",
+      "category": "unpackers-game",
+      "declared_version": "latest",
+      "source_ids": [
+        "tool:pyinstxtractor/pyinstxtractor-ng"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "download_recipe": "pyinstxtractor-pyinstxtractor-ng-2026.07.03"
+      },
+      "upstream_release_observed": "2026.07.03",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "UPX",
+      "category": "unpackers-game",
+      "declared_version": "5.2.1",
+      "source_ids": [
+        "tool:upx/upx"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "download_recipe": "upx-upx-v5.3.0"
+      },
+      "upstream_release_observed": "v5.3.0",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "Sysinternals Suite",
+      "category": "system-forensics",
+      "declared_version": "latest",
+      "source_ids": [
+        "sysinternals"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "System Informer",
+      "category": "system-forensics",
+      "declared_version": "latest",
+      "source_ids": [
+        "systeminformer"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "Volatility 3",
+      "category": "system-forensics",
+      "declared_version": "2.28.0",
+      "source_ids": [
+        "tool:volatilityfoundation/volatility3"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "Python",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "download_recipe": "volatilityfoundation-volatility3-v2.28.2"
+      },
+      "upstream_release_observed": "v2.28.2",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "web-reverse lab",
+      "category": "web-reverse",
+      "declared_version": "in-tree",
+      "source_ids": [
+        "station"
+      ],
+      "distribution": {
+        "code": "included-first-party-entry",
+        "binaries_included": false,
+        "reason": "Self-authored entry is included; third-party dependencies are regenerated separately."
+      },
+      "install": {
+        "method": "in-tree-source",
+        "requirements": "Node >= 22",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "web-reverse capture",
+      "category": "web-reverse",
+      "declared_version": "in-tree",
+      "source_ids": [
+        "station"
+      ],
+      "distribution": {
+        "code": "included-first-party-entry",
+        "binaries_included": false,
+        "reason": "Self-authored entry is included; third-party dependencies are regenerated separately."
+      },
+      "install": {
+        "method": "in-tree-source",
+        "requirements": "Node >= 22 (global WebSocket), Chrome; msedge.exe accepted as fallback",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "web-reverse recover",
+      "category": "web-reverse",
+      "declared_version": "in-tree",
+      "source_ids": [
+        "station"
+      ],
+      "distribution": {
+        "code": "included-first-party-entry",
+        "binaries_included": false,
+        "reason": "Self-authored entry is included; third-party dependencies are regenerated separately."
+      },
+      "install": {
+        "method": "in-tree-source",
+        "requirements": "Node >= 22",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "web-reverse replay",
+      "category": "web-reverse",
+      "declared_version": "in-tree",
+      "source_ids": [
+        "station"
+      ],
+      "distribution": {
+        "code": "included-first-party-entry",
+        "binaries_included": false,
+        "reason": "Self-authored entry is included; third-party dependencies are regenerated separately."
+      },
+      "install": {
+        "method": "in-tree-source",
+        "requirements": "Node >= 22",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "web-reverse fingerprint",
+      "category": "web-reverse",
+      "declared_version": "in-tree",
+      "source_ids": [
+        "station"
+      ],
+      "distribution": {
+        "code": "included-first-party-entry",
+        "binaries_included": false,
+        "reason": "Self-authored entry is included; third-party dependencies are regenerated separately."
+      },
+      "install": {
+        "method": "in-tree-source",
+        "requirements": "Node >= 22, Chrome; msedge.exe accepted as fallback",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "web-reverse loop",
+      "category": "web-reverse",
+      "declared_version": "in-tree",
+      "source_ids": [
+        "station"
+      ],
+      "distribution": {
+        "code": "included-first-party-entry",
+        "binaries_included": false,
+        "reason": "Self-authored entry is included; third-party dependencies are regenerated separately."
+      },
+      "install": {
+        "method": "in-tree-source",
+        "requirements": "Node >= 22, Chrome; msedge.exe accepted as fallback",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "crypto-lab target",
+      "category": "crypto-lab",
+      "declared_version": "in-tree",
+      "source_ids": [
+        "station"
+      ],
+      "distribution": {
+        "code": "included-first-party-entry",
+        "binaries_included": false,
+        "reason": "Self-authored entry is included; third-party dependencies are regenerated separately."
+      },
+      "install": {
+        "method": "in-tree-source",
+        "requirements": "Node >= 24",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "crypto-lab analyzer",
+      "category": "crypto-lab",
+      "declared_version": "in-tree",
+      "source_ids": [
+        "station"
+      ],
+      "distribution": {
+        "code": "included-first-party-entry",
+        "binaries_included": false,
+        "reason": "Self-authored entry is included; third-party dependencies are regenerated separately."
+      },
+      "install": {
+        "method": "in-tree-source",
+        "requirements": "Node >= 24",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "crypto-lab oracle (node)",
+      "category": "crypto-lab",
+      "declared_version": "9.0.3",
+      "source_ids": [
+        "station",
+        "jsonwebtoken"
+      ],
+      "distribution": {
+        "code": "included-first-party-entry",
+        "binaries_included": false,
+        "reason": "Self-authored entry is included; third-party dependencies are regenerated separately."
+      },
+      "install": {
+        "method": "in-tree-source",
+        "requirements": "Node >= 24",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "commands": [
+          "npm --prefix crypto-lab ci"
+        ]
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "crypto-lab oracle (python)",
+      "category": "crypto-lab",
+      "declared_version": "PyJWT 2.15.1 + cryptography 50.0.1",
+      "source_ids": [
+        "station",
+        "pyjwt",
+        "cryptography"
+      ],
+      "distribution": {
+        "code": "included-first-party-entry",
+        "binaries_included": false,
+        "reason": "Self-authored entry is included; third-party dependencies are regenerated separately."
+      },
+      "install": {
+        "method": "in-tree-source",
+        "requirements": "Python >= 3.10 (3.14.7 here)",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "commands": [
+          "python -m venv crypto-lab/.venv",
+          "crypto-lab/.venv/Scripts/python -m pip install -r crypto-lab/requirements.txt"
+        ]
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "crypto-lab loop",
+      "category": "crypto-lab",
+      "declared_version": "in-tree",
+      "source_ids": [
+        "station"
+      ],
+      "distribution": {
+        "code": "included-first-party-entry",
+        "binaries_included": false,
+        "reason": "Self-authored entry is included; third-party dependencies are regenerated separately."
+      },
+      "install": {
+        "method": "in-tree-source",
+        "requirements": "Node >= 24, both oracles",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "forensics-lab scenario",
+      "category": "forensics-lab",
+      "declared_version": "in-tree",
+      "source_ids": [
+        "station"
+      ],
+      "distribution": {
+        "code": "included-first-party-entry",
+        "binaries_included": false,
+        "reason": "Self-authored entry is included; third-party dependencies are regenerated separately."
+      },
+      "install": {
+        "method": "in-tree-source",
+        "requirements": "Node >= 22",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "forensics-lab payload",
+      "category": "forensics-lab",
+      "declared_version": "in-tree",
+      "source_ids": [
+        "station"
+      ],
+      "distribution": {
+        "code": "included-first-party-entry",
+        "binaries_included": false,
+        "reason": "Self-authored entry is included; third-party dependencies are regenerated separately."
+      },
+      "install": {
+        "method": "in-tree-source",
+        "requirements": "MSVC 2022 (optional)",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "forensics-lab generator",
+      "category": "forensics-lab",
+      "declared_version": "in-tree",
+      "source_ids": [
+        "station"
+      ],
+      "distribution": {
+        "code": "included-first-party-entry",
+        "binaries_included": false,
+        "reason": "Self-authored entry is included; third-party dependencies are regenerated separately."
+      },
+      "install": {
+        "method": "in-tree-source",
+        "requirements": "Node >= 22",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "forensics-lab triage",
+      "category": "forensics-lab",
+      "declared_version": "in-tree",
+      "source_ids": [
+        "station"
+      ],
+      "distribution": {
+        "code": "included-first-party-entry",
+        "binaries_included": false,
+        "reason": "Self-authored entry is included; third-party dependencies are regenerated separately."
+      },
+      "install": {
+        "method": "in-tree-source",
+        "requirements": "Node >= 22",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "forensics-lab analyzer",
+      "category": "forensics-lab",
+      "declared_version": "in-tree",
+      "source_ids": [
+        "station"
+      ],
+      "distribution": {
+        "code": "included-first-party-entry",
+        "binaries_included": false,
+        "reason": "Self-authored entry is included; third-party dependencies are regenerated separately."
+      },
+      "install": {
+        "method": "in-tree-source",
+        "requirements": "Node >= 22",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "forensics-lab correlate",
+      "category": "forensics-lab",
+      "declared_version": "in-tree",
+      "source_ids": [
+        "station"
+      ],
+      "distribution": {
+        "code": "included-first-party-entry",
+        "binaries_included": false,
+        "reason": "Self-authored entry is included; third-party dependencies are regenerated separately."
+      },
+      "install": {
+        "method": "in-tree-source",
+        "requirements": "Node >= 22, DieE, YARA-X, Volatility 3 (all in-tree)",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "forensics-lab loop",
+      "category": "forensics-lab",
+      "declared_version": "in-tree",
+      "source_ids": [
+        "station"
+      ],
+      "distribution": {
+        "code": "included-first-party-entry",
+        "binaries_included": false,
+        "reason": "Self-authored entry is included; third-party dependencies are regenerated separately."
+      },
+      "install": {
+        "method": "in-tree-source",
+        "requirements": "Node >= 22",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "fuzz-lab corpus",
+      "category": "fuzz-lab",
+      "declared_version": "in-tree",
+      "source_ids": [
+        "station"
+      ],
+      "distribution": {
+        "code": "included-first-party-entry",
+        "binaries_included": false,
+        "reason": "Self-authored entry is included; third-party dependencies are regenerated separately."
+      },
+      "install": {
+        "method": "in-tree-source",
+        "requirements": "Node >= 24",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "fuzz-lab mutator",
+      "category": "fuzz-lab",
+      "declared_version": "in-tree",
+      "source_ids": [
+        "station"
+      ],
+      "distribution": {
+        "code": "included-first-party-entry",
+        "binaries_included": false,
+        "reason": "Self-authored entry is included; third-party dependencies are regenerated separately."
+      },
+      "install": {
+        "method": "in-tree-source",
+        "requirements": "Node >= 24",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "fuzz-lab pcap reader",
+      "category": "fuzz-lab",
+      "declared_version": "in-tree",
+      "source_ids": [
+        "station"
+      ],
+      "distribution": {
+        "code": "included-first-party-entry",
+        "binaries_included": false,
+        "reason": "Self-authored entry is included; third-party dependencies are regenerated separately."
+      },
+      "install": {
+        "method": "in-tree-source",
+        "requirements": "Node >= 24",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "fuzz-lab driver",
+      "category": "fuzz-lab",
+      "declared_version": "in-tree",
+      "source_ids": [
+        "station"
+      ],
+      "distribution": {
+        "code": "included-first-party-entry",
+        "binaries_included": false,
+        "reason": "Self-authored entry is included; third-party dependencies are regenerated separately."
+      },
+      "install": {
+        "method": "in-tree-source",
+        "requirements": "Node >= 24",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "fuzz-lab triage",
+      "category": "fuzz-lab",
+      "declared_version": "in-tree",
+      "source_ids": [
+        "station"
+      ],
+      "distribution": {
+        "code": "included-first-party-entry",
+        "binaries_included": false,
+        "reason": "Self-authored entry is included; third-party dependencies are regenerated separately."
+      },
+      "install": {
+        "method": "in-tree-source",
+        "requirements": "Node >= 24",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "fuzz-lab loop",
+      "category": "fuzz-lab",
+      "declared_version": "in-tree",
+      "source_ids": [
+        "station"
+      ],
+      "distribution": {
+        "code": "included-first-party-entry",
+        "binaries_included": false,
+        "reason": "Self-authored entry is included; third-party dependencies are regenerated separately."
+      },
+      "install": {
+        "method": "in-tree-source",
+        "requirements": "Node >= 24",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "SkillSpector",
+      "category": "ops",
+      "declared_version": "2.12.0",
+      "source_ids": [
+        "tool:NVIDIA/skillspector"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "official-acquisition",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "commands": [
+          "uv tool install git+https://github.com/NVIDIA/skillspector.git@e2674da339b0bddc6e565d059c0577c6d9cd25da"
+        ],
+        "note": "Acquisition candidate only; auto_update=false remains in the station manifest.",
+        "upstream_instructions": "https://github.com/NVIDIA/skillspector",
+        "limitation": "No executable hash-pinned binary recipe in this release; follow the official instructions and verify the selected artifact."
+      },
+      "upstream_release_observed": "v2.13.6",
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    },
+    {
+      "name": "MSVC vcvars64",
+      "category": "build",
+      "declared_version": "2022",
+      "source_ids": [
+        "msvc"
+      ],
+      "distribution": {
+        "code": "official-recipe-only",
+        "binaries_included": false,
+        "reason": "Third-party payloads are acquired separately; source/terms are listed per source."
+      },
+      "install": {
+        "method": "owner-supplied-or-manual",
+        "requirements": "See the upstream release documentation.",
+        "entry_reference": "manifests/tools.json",
+        "documentation": "docs/BOOTSTRAP.md",
+        "runtime_acceptance": "Not established by publication inventory.",
+        "note": "No automated acquisition/execution for this host prerequisite."
+      },
+      "upstream_release_observed": null,
+      "upgrade": {
+        "decision": "retain-current-pin",
+        "reason": "Upstream availability is recorded separately; no unattended upgrade or compatibility claim."
+      }
+    }
+  ],
+  "backends": [
+    {
+      "id": "ghidra",
+      "source_ids": [
+        "backend:LaurieWired/GhidraMCP",
+        "backend:NationalSecurityAgency/ghidra"
+      ],
+      "distribution": {
+        "included": "first-party-wrapper-and-recipe",
+        "upstream_code_in_main_bundle": false,
+        "restriction": "Retain upstream notices and obligations when acquiring/building separately."
+      },
+      "install": {
+        "method": "selective-source-acquisition",
+        "source_acquisition": [
+          {
+            "source_id": "backend:LaurieWired/GhidraMCP",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/LaurieWired/GhidraMCP.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "1e980252087b2479a21b9ca6d82d5829538651a7"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "1e980252087b2479a21b9ca6d82d5829538651a7"
+          },
+          {
+            "source_id": "backend:NationalSecurityAgency/ghidra",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/NationalSecurityAgency/ghidra.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "66b3412bdf679197c43858fabf7c3ea2f833bc31"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "66b3412bdf679197c43858fabf7c3ea2f833bc31"
+          }
+        ],
+        "wrapper": "mcp/bin/ghidra-mcp.cmd",
+        "upstream_setup_required": true,
+        "runtime_requirements": [
+          "Ghidra 12.1.4 (current GhidraMCP README pins 12.1.4; inputs/tools.json has 12.1.3 - version drift)",
+          "Java 21 to build the GhidraMCP extension (README: extension gradle build)",
+          "Python 3.10-3.13 (bridge/PyGhidra) or uv",
+          "GHIDRA_INSTALL_DIR env for headless/PyGhidra mode"
+        ],
+        "recipe_status": "Source/licensing reviewed; full environment installation is not established by this inventory.",
+        "documentation": "docs/BOOTSTRAP.md"
+      }
+    },
+    {
+      "id": "ida",
+      "source_ids": [
+        "backend:mrexodia/ida-pro-mcp",
+        "ida-host"
+      ],
+      "distribution": {
+        "included": "first-party-wrapper-and-recipe",
+        "upstream_code_in_main_bundle": false,
+        "restriction": "Retain upstream notices and obligations when acquiring/building separately."
+      },
+      "install": {
+        "method": "selective-source-acquisition",
+        "source_acquisition": [
+          {
+            "source_id": "backend:mrexodia/ida-pro-mcp",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/mrexodia/ida-pro-mcp.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "13e480cb1198f923154b63669e8cb2faee5deaea"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "13e480cb1198f923154b63669e8cb2faee5deaea"
+          }
+        ],
+        "wrapper": "mcp/bin/ida-pro-mcp.cmd",
+        "upstream_setup_required": true,
+        "runtime_requirements": [
+          "Owner-supplied licensed IDA/idalib compatible with the selected upstream bridge version.",
+          "Do not replace the measured installed bridge with a different registry release without checking idalib entrypoint and host compatibility."
+        ],
+        "recipe_status": "Source/licensing reviewed; full environment installation is not established by this inventory.",
+        "documentation": "docs/BOOTSTRAP.md",
+        "note": "The existing wrapper prefers project-local idalib-mcp --stdio. Legacy machine fallback paths are not a portable installation recipe."
+      }
+    },
+    {
+      "id": "radare2",
+      "source_ids": [
+        "backend:radareorg/radare2-mcp",
+        "backend:radareorg/radare2"
+      ],
+      "distribution": {
+        "included": "first-party-wrapper-and-recipe",
+        "upstream_code_in_main_bundle": false,
+        "restriction": "Retain upstream notices and obligations when acquiring/building separately."
+      },
+      "install": {
+        "method": "selective-source-acquisition",
+        "source_acquisition": [
+          {
+            "source_id": "backend:radareorg/radare2-mcp",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/radareorg/radare2-mcp.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "082efcd48c51bd49043c0e0c9bd3ea219a3b85ff"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "082efcd48c51bd49043c0e0c9bd3ea219a3b85ff"
+          },
+          {
+            "source_id": "backend:radareorg/radare2",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/radareorg/radare2.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "f810d18dd0610e9fc989c759430b701e542cb846"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "f810d18dd0610e9fc989c759430b701e542cb846"
+          }
+        ],
+        "wrapper": "mcp/bin/radare2-mcp.cmd",
+        "upstream_setup_required": true,
+        "runtime_requirements": [
+          "radare2 installed (inputs pin 6.2.2-w64; wrapper prepends its bin to PATH)",
+          "r2mcp -X mode requires radare2 ABI 91+ (README)",
+          "r2pm (ships with radare2) for install/launch"
+        ],
+        "recipe_status": "Source/licensing reviewed; full environment installation is not established by this inventory.",
+        "documentation": "docs/BOOTSTRAP.md"
+      }
+    },
+    {
+      "id": "x64dbg",
+      "source_ids": [
+        "backend:dariushoule/x64dbg-automate",
+        "backend:dariushoule/x64dbg-automate-pyclient",
+        "backend:x64dbg/x64dbg"
+      ],
+      "distribution": {
+        "included": "first-party-wrapper-and-recipe",
+        "upstream_code_in_main_bundle": false,
+        "restriction": "Retain upstream notices and obligations when acquiring/building separately."
+      },
+      "install": {
+        "method": "selective-source-acquisition",
+        "source_acquisition": [
+          {
+            "source_id": "backend:dariushoule/x64dbg-automate",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/dariushoule/x64dbg-automate.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "76421a901499fb22846127b0cba6b7c4de0ab850"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "76421a901499fb22846127b0cba6b7c4de0ab850"
+          },
+          {
+            "source_id": "backend:dariushoule/x64dbg-automate-pyclient",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/dariushoule/x64dbg-automate-pyclient.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "8807ff70509b1e6d785abbf9ee1e442c403b64bf"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "8807ff70509b1e6d785abbf9ee1e442c403b64bf"
+          },
+          {
+            "source_id": "backend:x64dbg/x64dbg",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/x64dbg/x64dbg.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "d3c12dbe92e61bc741c69c1621e668cb4413ac08"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "d3c12dbe92e61bc741c69c1621e668cb4413ac08"
+          }
+        ],
+        "wrapper": "mcp/bin/x64dbg-mcp.cmd",
+        "upstream_setup_required": true,
+        "runtime_requirements": [
+          "Visual C++ Runtime Redistributable (installation docs step 1)",
+          "plugin .dp64/.dp32 extracted into x64dbg\\release\\x64\\plugins (and x32\\plugins)",
+          "Python >=3.10,<4.0 (PyPI x64dbg_automate)",
+          "pip install 'x64dbg_automate[mcp]' - mcp extra is required for the MCP entrypoint (old manifest note, matches PyPI extra layout)"
+        ],
+        "recipe_status": "Source/licensing reviewed; full environment installation is not established by this inventory.",
+        "documentation": "docs/BOOTSTRAP.md"
+      }
+    },
+    {
+      "id": "jadx",
+      "source_ids": [
+        "backend:zinja-coder/jadx-mcp-server",
+        "backend:zinja-coder/jadx-ai-mcp",
+        "backend:skylot/jadx"
+      ],
+      "distribution": {
+        "included": "first-party-wrapper-and-recipe",
+        "upstream_code_in_main_bundle": false,
+        "restriction": "Retain upstream notices and obligations when acquiring/building separately."
+      },
+      "install": {
+        "method": "selective-source-acquisition",
+        "source_acquisition": [
+          {
+            "source_id": "backend:zinja-coder/jadx-mcp-server",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/zinja-coder/jadx-mcp-server.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "a8e5b7de4f7d7f9ef0ccea9d063631133105bd34"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "a8e5b7de4f7d7f9ef0ccea9d063631133105bd34"
+          },
+          {
+            "source_id": "backend:zinja-coder/jadx-ai-mcp",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/zinja-coder/jadx-ai-mcp.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "9f4fce6f49902e95c62479c02d985d1eb0b3cbe1"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "9f4fce6f49902e95c62479c02d985d1eb0b3cbe1"
+          },
+          {
+            "source_id": "backend:skylot/jadx",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/skylot/jadx.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "94cb318f6ce7ee28203dff18d9cfb7d93638bbf7"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "94cb318f6ce7ee28203dff18d9cfb7d93638bbf7"
+          }
+        ],
+        "wrapper": "mcp/bin/jadx-mcp.cmd",
+        "upstream_setup_required": true,
+        "runtime_requirements": [
+          "Python 3.10+ (README badge)",
+          "jadx-gui 1.5.x with jadx-ai-mcp plugin loaded (plugin release v6.5.0 ships jadx-ai-mcp-<version>.jar)",
+          "Java runtime for jadx (bundled in jadx release)"
+        ],
+        "recipe_status": "Source/licensing reviewed; full environment installation is not established by this inventory.",
+        "documentation": "docs/BOOTSTRAP.md"
+      }
+    },
+    {
+      "id": "apktool",
+      "source_ids": [
+        "backend:zinja-coder/apktool-mcp-server",
+        "backend:iBotPeaches/Apktool"
+      ],
+      "distribution": {
+        "included": "first-party-wrapper-and-recipe",
+        "upstream_code_in_main_bundle": false,
+        "restriction": "Retain upstream notices and obligations when acquiring/building separately."
+      },
+      "install": {
+        "method": "selective-source-acquisition",
+        "source_acquisition": [
+          {
+            "source_id": "backend:zinja-coder/apktool-mcp-server",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/zinja-coder/apktool-mcp-server.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "12bb33134af905923a0a58643dcc35fd694ad6f6"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "12bb33134af905923a0a58643dcc35fd694ad6f6"
+          },
+          {
+            "source_id": "backend:iBotPeaches/Apktool",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/iBotPeaches/Apktool.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "fbaeb4779d7aaed2c3097cd496de2bc9150ab869"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "fbaeb4779d7aaed2c3097cd496de2bc9150ab869"
+          }
+        ],
+        "wrapper": "mcp/bin/apktool-mcp.cmd",
+        "upstream_setup_required": true,
+        "runtime_requirements": [
+          "Python 3.10+ (README badge)",
+          "apktool on PATH (wrapper prepends MCP/bin; apktool.bat + apktool.jar per apktool.org install docs)",
+          "Java runtime for apktool (per apktool.org docs) [INFERENCE from upstream install docs, not in fetched README excerpt]"
+        ],
+        "recipe_status": "Source/licensing reviewed; full environment installation is not established by this inventory.",
+        "documentation": "docs/BOOTSTRAP.md"
+      }
+    },
+    {
+      "id": "frida",
+      "source_ids": [
+        "backend:dnakov/frida-mcp",
+        "backend:frida/frida",
+        "backend:frida/frida-tools"
+      ],
+      "distribution": {
+        "included": "first-party-wrapper-and-recipe",
+        "upstream_code_in_main_bundle": false,
+        "restriction": "Retain upstream notices and obligations when acquiring/building separately."
+      },
+      "install": {
+        "method": "selective-source-acquisition",
+        "source_acquisition": [
+          {
+            "source_id": "backend:dnakov/frida-mcp",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/dnakov/frida-mcp.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "f8003c7de69ca8fc13a019f0c9b6abcc61b1717c"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "f8003c7de69ca8fc13a019f0c9b6abcc61b1717c"
+          },
+          {
+            "source_id": "backend:frida/frida",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/frida/frida.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "cd728af8066451ce7756b1c30fa9f1c0e535a678"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "cd728af8066451ce7756b1c30fa9f1c0e535a678"
+          },
+          {
+            "source_id": "backend:frida/frida-tools",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/frida/frida-tools.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "2e4c1a549b998a296763696222643a3742362b7d"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "2e4c1a549b998a296763696222643a3742362b7d"
+          }
+        ],
+        "wrapper": "mcp/bin/frida-mcp.cmd",
+        "upstream_setup_required": true,
+        "runtime_requirements": [
+          "Python 3.8+ (README); PyPI frida-mcp requires_python >=3.8",
+          "frida 16.0.0+ python packages (frida + frida-tools per README prerequisite)"
+        ],
+        "recipe_status": "Source/licensing reviewed; full environment installation is not established by this inventory.",
+        "documentation": "docs/BOOTSTRAP.md"
+      }
+    },
+    {
+      "id": "imhex",
+      "source_ids": [
+        "backend:jmpnop/imhexMCP",
+        "backend:WerWolv/ImHex"
+      ],
+      "distribution": {
+        "included": "first-party-wrapper-and-recipe",
+        "upstream_code_in_main_bundle": false,
+        "restriction": "Retain upstream notices and obligations when acquiring/building separately."
+      },
+      "install": {
+        "method": "selective-source-acquisition",
+        "source_acquisition": [
+          {
+            "source_id": "backend:jmpnop/imhexMCP",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/jmpnop/imhexMCP.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "c9ceb7f791e5e9233c555a1fc3770b4403d08dcf"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "c9ceb7f791e5e9233c555a1fc3770b4403d08dcf"
+          },
+          {
+            "source_id": "backend:WerWolv/ImHex",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/WerWolv/ImHex.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "a761d24e41b269dd2bce18f5218accfabac4684a"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "a761d24e41b269dd2bce18f5218accfabac4684a"
+          }
+        ],
+        "wrapper": "mcp/bin/imhex-mcp.cmd",
+        "upstream_setup_required": true,
+        "runtime_requirements": [
+          "Python 3.10+ (README; tested 3.10-3.14)",
+          "CMake 3.25+, C++ compiler (GCC 11+/Clang 14+) to build patched ImHex",
+          "ImHex built from source with the project's 10 patches (--recurse-submodules); enable Settings->General->Network Interface (localhost:31337)",
+          "README targets macOS/Linux; Windows build path not evidenced upstream"
+        ],
+        "recipe_status": "Source/licensing reviewed; full environment installation is not established by this inventory.",
+        "documentation": "docs/BOOTSTRAP.md",
+        "note": "The reviewed upstream recipe requires patched ImHex source and is primarily documented for macOS/Linux; Windows runtime compatibility is not established."
+      }
+    },
+    {
+      "id": "yaraflux",
+      "source_ids": [
+        "backend:ThreatFlux/YaraFlux"
+      ],
+      "distribution": {
+        "included": "first-party-wrapper-and-recipe",
+        "upstream_code_in_main_bundle": false,
+        "restriction": "Retain upstream notices and obligations when acquiring/building separately."
+      },
+      "install": {
+        "method": "preserved-source-release",
+        "source_acquisition": [],
+        "wrapper": "mcp/bin/yaraflux-mcp.cmd",
+        "upstream_setup_required": true,
+        "runtime_requirements": [
+          "Python >=3.13",
+          "Use the archived requirements-lock.txt in a fresh environment; mcp is constrained below 2.",
+          "Supply private JWT_SECRET_KEY and ADMIN_PASSWORD; use explicit loopback/local storage settings."
+        ],
+        "recipe_status": "Source archive built/verified; release publication is planned until the maintainer confirms the uploaded asset.",
+        "documentation": "docs/BOOTSTRAP.md",
+        "download_recipe": "yaraflux-preserved-a4deb318d85c"
+      }
+    },
+    {
+      "id": "mobsf",
+      "source_ids": [
+        "backend:pullkitsan/mobsf-mcp-server",
+        "backend:MobSF/Mobile-Security-Framework-MobSF"
+      ],
+      "distribution": {
+        "included": "first-party-wrapper-and-recipe",
+        "upstream_code_in_main_bundle": false,
+        "restriction": "Retain upstream notices and obligations when acquiring/building separately."
+      },
+      "install": {
+        "method": "selective-source-acquisition",
+        "source_acquisition": [
+          {
+            "source_id": "backend:pullkitsan/mobsf-mcp-server",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/pullkitsan/mobsf-mcp-server.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "aa3ecb2df12beb3020ca75ddbf3f9b1c42a13b01"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "aa3ecb2df12beb3020ca75ddbf3f9b1c42a13b01"
+          },
+          {
+            "source_id": "backend:MobSF/Mobile-Security-Framework-MobSF",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/MobSF/Mobile-Security-Framework-MobSF.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "fa87c37892b264cf76bed8c358cc2d5d5323c8c2"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "fa87c37892b264cf76bed8c358cc2d5d5323c8c2"
+          }
+        ],
+        "wrapper": "mcp/bin/mobsf-mcp.cmd",
+        "upstream_setup_required": true,
+        "runtime_requirements": [
+          "Node.js + npm (README prerequisite)",
+          "MobSF installed AND running (REST API, docker image opensecurity/mobile-security-framework-mobsf:latest on port 8000; README badge Python 3.12+)",
+          "MOBSF_API_KEY + MOBSF_URL via server .env (user-supplied secret; name only, never stored)"
+        ],
+        "recipe_status": "Source/licensing reviewed; full environment installation is not established by this inventory.",
+        "documentation": "docs/BOOTSTRAP.md"
+      }
+    },
+    {
+      "id": "ilspy",
+      "source_ids": [
+        "backend:bivex/ILSpy-Mcp",
+        "backend:icsharpcode/ILSpy"
+      ],
+      "distribution": {
+        "included": "first-party-wrapper-and-recipe",
+        "upstream_code_in_main_bundle": false,
+        "restriction": "Retain upstream notices and obligations when acquiring/building separately."
+      },
+      "install": {
+        "method": "selective-source-acquisition",
+        "source_acquisition": [
+          {
+            "source_id": "backend:bivex/ILSpy-Mcp",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/bivex/ILSpy-Mcp.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "58b01c118dd08e85e8205c8b3a49d63e68282ef3"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "58b01c118dd08e85e8205c8b3a49d63e68282ef3"
+          },
+          {
+            "source_id": "backend:icsharpcode/ILSpy",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/icsharpcode/ILSpy.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "5b2699936d2f19f631f37dac27380bc9ce1d7d6a"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "5b2699936d2f19f631f37dac27380bc9ce1d7d6a"
+          }
+        ],
+        "wrapper": "mcp/bin/ilspy-mcp.cmd",
+        "upstream_setup_required": true,
+        "runtime_requirements": [
+          ".NET 9.0 SDK or higher (README prerequisite)",
+          "dotnet runtime on PATH (wrapper supplies MCP\\Runtime\\dotnet)"
+        ],
+        "recipe_status": "Source/licensing reviewed; full environment installation is not established by this inventory.",
+        "documentation": "docs/BOOTSTRAP.md"
+      }
+    },
+    {
+      "id": "dnspy",
+      "source_ids": [
+        "backend:soufianetahiri/dnspy-mcp",
+        "backend:dnSpyEx/dnSpy"
+      ],
+      "distribution": {
+        "included": "first-party-wrapper-and-recipe",
+        "upstream_code_in_main_bundle": false,
+        "restriction": "No bridge redistribution license established"
+      },
+      "install": {
+        "method": "selective-source-acquisition",
+        "source_acquisition": [
+          {
+            "source_id": "backend:soufianetahiri/dnspy-mcp",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/soufianetahiri/dnspy-mcp.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "9deae6d49bc0016fe50dfe685aead898cdc61c8d"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "9deae6d49bc0016fe50dfe685aead898cdc61c8d"
+          },
+          {
+            "source_id": "backend:dnSpyEx/dnSpy",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/dnSpyEx/dnSpy.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "bb09d2c54718e0f73d01d2e1085ddb8772aee555"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "bb09d2c54718e0f73d01d2e1085ddb8772aee555"
+          }
+        ],
+        "wrapper": "mcp/bin/dnspy-mcp.cmd",
+        "upstream_setup_required": true,
+        "runtime_requirements": [
+          ".NET SDK to build/publish (version pinned via Directory.Build.props; not observed - limitation)",
+          "dnSpyEx 6.6.0 (inputs pin; upstream tag v6.6.0 confirmed) for the dnSpy-side workflows"
+        ],
+        "recipe_status": "Official source location is reachable, but redistribution rights for this bridge are not established. No bridge clone is included.",
+        "documentation": "docs/BOOTSTRAP.md"
+      }
+    },
+    {
+      "id": "wireshark",
+      "source_ids": [
+        "backend:khuynh22/mcp-wireshark",
+        "backend:wireshark/wireshark"
+      ],
+      "distribution": {
+        "included": "first-party-wrapper-and-recipe",
+        "upstream_code_in_main_bundle": false,
+        "restriction": "Retain upstream notices and obligations when acquiring/building separately."
+      },
+      "install": {
+        "method": "selective-source-acquisition",
+        "source_acquisition": [
+          {
+            "source_id": "backend:khuynh22/mcp-wireshark",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/khuynh22/mcp-wireshark.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "3694fceaa2d3ba7ad5c0f5a46fcb6c5b271b9a10"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "3694fceaa2d3ba7ad5c0f5a46fcb6c5b271b9a10"
+          },
+          {
+            "source_id": "backend:wireshark/wireshark",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/wireshark/wireshark.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "5a6c2638b405b778dc45011f02133b0aba8b5df9"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "5a6c2638b405b778dc45011f02133b0aba8b5df9"
+          }
+        ],
+        "wrapper": "mcp/bin/wireshark-mcp.cmd",
+        "upstream_setup_required": true,
+        "runtime_requirements": [
+          "Python 3.10+ (README badge)",
+          "Wireshark installed; tshark reachable on PATH (README prerequisite)",
+          "Npcap for live capture: manual/explicit install only (owner-supplied; never bundled)"
+        ],
+        "recipe_status": "Source/licensing reviewed; full environment installation is not established by this inventory.",
+        "documentation": "docs/BOOTSTRAP.md",
+        "note": "Upstream 0.5.1 is observed; the current station pin/0.5.0 reviewed error patch remains a separate tested configuration. Compare semantic failures before changing it. Offline PCAP parsing needs no new capture driver."
+      }
+    },
+    {
+      "id": "reqable",
+      "source_ids": [
+        "backend:ElonJask/reqable-mcp"
+      ],
+      "distribution": {
+        "included": "first-party-wrapper-and-recipe",
+        "upstream_code_in_main_bundle": false,
+        "restriction": "Retain upstream notices and obligations when acquiring/building separately."
+      },
+      "install": {
+        "method": "selective-source-acquisition",
+        "source_acquisition": [
+          {
+            "source_id": "backend:ElonJask/reqable-mcp",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/ElonJask/reqable-mcp.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "5e2ace7e9cd714c47a7958f82a451a6ff8126bb3"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "5e2ace7e9cd714c47a7958f82a451a6ff8126bb3"
+          }
+        ],
+        "wrapper": "mcp/bin/reqable-mcp-local.cmd",
+        "upstream_setup_required": true,
+        "runtime_requirements": [
+          "Python 3.10+ (README)",
+          "Reqable app installed and opened (README prerequisite)",
+          "REQABLE_DATA_DIR pointing at local capture data dir"
+        ],
+        "recipe_status": "Source/licensing reviewed; full environment installation is not established by this inventory.",
+        "documentation": "docs/BOOTSTRAP.md"
+      }
+    },
+    {
+      "id": "reclass",
+      "source_ids": [
+        "backend:NateWeav/ReClass.NET-MCP",
+        "backend:ReClassNET/ReClass.NET"
+      ],
+      "distribution": {
+        "included": "first-party-wrapper-and-recipe",
+        "upstream_code_in_main_bundle": false,
+        "restriction": "No bridge redistribution license established"
+      },
+      "install": {
+        "method": "selective-source-acquisition",
+        "source_acquisition": [
+          {
+            "source_id": "backend:NateWeav/ReClass.NET-MCP",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/NateWeav/ReClass.NET-MCP.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "96917c353ffb6d368d4ca3697a4fcdf2290af878"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "96917c353ffb6d368d4ca3697a4fcdf2290af878"
+          },
+          {
+            "source_id": "backend:ReClassNET/ReClass.NET",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/ReClassNET/ReClass.NET.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "a02fcb9bd669c8f81facd3ee9ad57cdcbf2cc0e1"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "a02fcb9bd669c8f81facd3ee9ad57cdcbf2cc0e1"
+          }
+        ],
+        "wrapper": "mcp/bin/reclass-mcp.cmd",
+        "upstream_setup_required": true,
+        "runtime_requirements": [
+          "ReClass.NET 1.2 (inputs pin; upstream tag v1.2 confirmed) with the plugin DLL loaded",
+          "Python 3.10+ for the server (README)",
+          ".NET Framework 4.7.2 build chain for the plugin (old manifest note; consistent with plugin DLL target)"
+        ],
+        "recipe_status": "Official source location is reachable, but redistribution rights for this bridge are not established. No bridge clone is included.",
+        "documentation": "docs/BOOTSTRAP.md"
+      }
+    },
+    {
+      "id": "sevenzip",
+      "source_ids": [
+        "backend:zv-louis/mcp7zop",
+        "tool:ip7z/7zip"
+      ],
+      "distribution": {
+        "included": "first-party-wrapper-and-recipe",
+        "upstream_code_in_main_bundle": false,
+        "restriction": "Retain upstream notices and obligations when acquiring/building separately."
+      },
+      "install": {
+        "method": "selective-source-acquisition",
+        "source_acquisition": [
+          {
+            "source_id": "backend:zv-louis/mcp7zop",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/zv-louis/mcp7zop.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "4856990e884e7c5a1d1cd353a3d7de3c234b6a3c"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "4856990e884e7c5a1d1cd353a3d7de3c234b6a3c"
+          }
+        ],
+        "wrapper": "mcp/bin/7zip-mcp.cmd",
+        "upstream_setup_required": true,
+        "runtime_requirements": [
+          "Python >=3.12 from the pinned pyproject.toml.",
+          "7z.exe available to the selected backend.",
+          "Keep backend and router virtual environments isolated."
+        ],
+        "recipe_status": "Selected clean-clone installation and real-model list/extract/corrupt-input demo documented in BOOTSTRAP.",
+        "documentation": "docs/BOOTSTRAP.md",
+        "download_recipe": "ip7z-7zip-26.06"
+      }
+    },
+    {
+      "id": "cheatengine",
+      "source_ids": [
+        "backend:miscusi-peek/cheatengine-mcp-bridge"
+      ],
+      "distribution": {
+        "included": "first-party-wrapper-and-recipe",
+        "upstream_code_in_main_bundle": false,
+        "restriction": "Retain upstream notices and obligations when acquiring/building separately."
+      },
+      "install": {
+        "method": "selective-source-acquisition",
+        "source_acquisition": [
+          {
+            "source_id": "backend:miscusi-peek/cheatengine-mcp-bridge",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/miscusi-peek/cheatengine-mcp-bridge.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "6bd7ce90479250a9b4b75e7944df9c105ecb2572"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "6bd7ce90479250a9b4b75e7944df9c105ecb2572"
+          }
+        ],
+        "wrapper": "mcp/bin/cheatengine-mcp.cmd",
+        "upstream_setup_required": true,
+        "runtime_requirements": [
+          "Cheat Engine installed (manual install from cheatengine.org; owner action)",
+          "Python + mcp + pywin32 (MCP_Server/requirements.txt)"
+        ],
+        "recipe_status": "Source/licensing reviewed; full environment installation is not established by this inventory.",
+        "documentation": "docs/BOOTSTRAP.md"
+      }
+    },
+    {
+      "id": "volatility3",
+      "source_ids": [
+        "backend:Kirandawadi/volatility3-mcp",
+        "backend:volatilityfoundation/volatility3"
+      ],
+      "distribution": {
+        "included": "first-party-wrapper-and-recipe",
+        "upstream_code_in_main_bundle": false,
+        "restriction": "No bridge redistribution license established"
+      },
+      "install": {
+        "method": "selective-source-acquisition",
+        "source_acquisition": [
+          {
+            "source_id": "backend:Kirandawadi/volatility3-mcp",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/Kirandawadi/volatility3-mcp.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "edc50f35005032c940bf6260ca791dab700eaabc"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "edc50f35005032c940bf6260ca791dab700eaabc"
+          },
+          {
+            "source_id": "backend:volatilityfoundation/volatility3",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/volatilityfoundation/volatility3.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "77ff0b1932d77527f850c8ced01d85805ea7bf97"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "77ff0b1932d77527f850c8ced01d85805ea7bf97"
+          }
+        ],
+        "wrapper": "mcp/bin/volatility3-mcp.cmd",
+        "upstream_setup_required": true,
+        "runtime_requirements": [
+          "Python venv; requirements.txt includes volatility3 (no separate install needed per old manifest note, consistent with repo layout)",
+          "memory image analyzed offline (no network acquisition)"
+        ],
+        "recipe_status": "Official source location is reachable, but redistribution rights for this bridge are not established. No bridge clone is included.",
+        "documentation": "docs/BOOTSTRAP.md"
+      }
+    },
+    {
+      "id": "virustotal",
+      "source_ids": [
+        "backend:w0h1v/mcp-virustotal"
+      ],
+      "distribution": {
+        "included": "first-party-wrapper-and-recipe",
+        "upstream_code_in_main_bundle": false,
+        "restriction": "Retain upstream notices and obligations when acquiring/building separately."
+      },
+      "install": {
+        "method": "selective-source-acquisition",
+        "source_acquisition": [
+          {
+            "source_id": "backend:w0h1v/mcp-virustotal",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/w0h1v/mcp-virustotal.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "e17d9dbe7c0375debd2cd923392c262ec954984e"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "e17d9dbe7c0375debd2cd923392c262ec954984e"
+          }
+        ],
+        "wrapper": "mcp/bin/virustotal-mcp.cmd",
+        "upstream_setup_required": true,
+        "runtime_requirements": [
+          "Node.js 20+ (README badge/requirements)",
+          "VIRUSTOTAL_API_KEY env (user supplies value)"
+        ],
+        "recipe_status": "Source/licensing reviewed; full environment installation is not established by this inventory.",
+        "documentation": "docs/BOOTSTRAP.md"
+      }
+    },
+    {
+      "id": "rea",
+      "source_ids": [
+        "backend:morluto/rea"
+      ],
+      "distribution": {
+        "included": "first-party-wrapper-and-recipe",
+        "upstream_code_in_main_bundle": false,
+        "restriction": "Retain upstream notices and obligations when acquiring/building separately."
+      },
+      "install": {
+        "method": "selective-source-acquisition",
+        "source_acquisition": [
+          {
+            "source_id": "backend:morluto/rea",
+            "argv_steps": [
+              [
+                "git",
+                "clone",
+                "--no-checkout",
+                "https://github.com/morluto/rea.git",
+                "<NEW_COMPONENT_DIR>"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "checkout",
+                "--detach",
+                "3fdda4e1a125126ce650fb20fd46a545e04af3f7"
+              ],
+              [
+                "git",
+                "-C",
+                "<NEW_COMPONENT_DIR>",
+                "rev-parse",
+                "HEAD"
+              ]
+            ],
+            "expected_revision": "3fdda4e1a125126ce650fb20fd46a545e04af3f7"
+          }
+        ],
+        "wrapper": "mcp/bin/rea-mcp.cmd",
+        "upstream_setup_required": true,
+        "runtime_requirements": [
+          "Node.js per engines ^22.19.0 || ^24.11.0 || >=26.0.0 (inputs note: box runs Node 24.21.0 - satisfies)",
+          "native-target analysis needs a Ghidra/IDA/Hopper provider (IDA owner-supplied); JS/.NET static analysis works standalone"
+        ],
+        "recipe_status": "Source/licensing reviewed; full environment installation is not established by this inventory.",
+        "documentation": "docs/BOOTSTRAP.md",
+        "package_commands": [
+          "npm view rea-agents@6.4.0 dist.integrity dist.shasum",
+          "npm install --prefix <NEW_COMPONENT_DIR> rea-agents@6.4.0"
+        ],
+        "note": "The supplied wrapper currently resolves the configured rea command. A project-local installation needs explicit wrapper/PATH configuration; this inventory does not rewrite user-global configuration."
+      }
+    }
+  ],
+  "exclusions": [
+    {
+      "class": "private-state",
+      "examples": [
+        "OWNER.md",
+        "local.json",
+        ".env",
+        "auth stores",
+        "conversation JSONL",
+        "private vault records"
+      ],
+      "reason": "Owner-specific records/configuration/credentials are not product source."
+    },
+    {
+      "class": "third-party-binaries",
+      "examples": [
+        "IDA",
+        "Npcap",
+        "Reqable",
+        "Sysinternals",
+        "MSVC",
+        "other installed tool payloads"
+      ],
+      "reason": "Acquire from original publishers; project source bundle does not redistribute installed payloads."
+    },
+    {
+      "class": "generated-environments",
+      "examples": [
+        ".venv",
+        "node_modules",
+        "compiled lab outputs",
+        "memory dumps",
+        "network captures"
+      ],
+      "reason": "Publish source/recipes/generators; runtime artifacts are regenerated locally."
+    },
+    {
+      "class": "unlicensed-bridge-source",
+      "examples": [
+        "soufianetahiri/dnspy-mcp",
+        "NateWeav/ReClass.NET-MCP",
+        "Kirandawadi/volatility3-mcp",
+        "malwarecakefactory/dnspy-mcp-extension"
+      ],
+      "reason": "No applicable bridge-wide redistribution license was established at the inspected commit. Volatility rules/LICENSE applies to rules only."
+    },
+    {
+      "class": "runtime-skill-mirrors",
+      "examples": [
+        ".omp/skills"
+      ],
+      "reason": "The three canonical dated Skill packages are already source-distributed; installed loader mirrors are machine state."
+    }
+  ],
+  "review_corrections": [
+    "YaraFlux public 404 is an acquisition failure, not loss of an existing MIT license. A preserved exact source archive is provided.",
+    "MobSF tools.json already points to the current organization; the worker proposal to change it was unnecessary.",
+    "Official GitHub latest release and newest tag are distinct observations; neither overwrites the installed station version.",
+    "mcp7zop Python>=3.12 follows pyproject.toml, correcting a looser README version statement."
+  ],
+  "known_update_candidates": [
+    "AssetRipper 2.0.0 missing-entry repair; not a version upgrade.",
+    "7-Zip 26.06 selective update after extraction/demo validation.",
+    "Other latest observations remain candidates requiring focused compatibility checks."
+  ]
+}

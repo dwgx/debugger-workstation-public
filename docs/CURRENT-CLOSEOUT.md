@@ -1,5 +1,51 @@
 # Current maintenance — 2026-11-19
 
+## Tool laboratory update — 2026-11-19 UTC / 2026-11-20 JST
+
+The [reproducible tool-lab guide](TOOL_LAB.md) is the current entry for this update.
+It adds a 63-entry tool inventory, twelve bounded CLI version probes, authored
+fixtures, raw MCP clients, failure-preserving coverage, provider patches and
+explicit source/download publication inventories.
+
+The final Wireshark / 7-Zip / REA original-wrapper run exercised 63 calls across
+35 methods, including 14 expected negative scenarios. All scenario checks,
+fixture identities and three owned cleanups passed. All three stdout readers
+stopped and retained no non-JSON-RPC output. The runtime catalogs declared 192
+methods: 31 passed, 3 partial, 1 explicitly blocked, 156 untested, 1 out of scope.
+A successful observation of a capability refusal does not make that method
+functionally accepted.
+
+Reqable exercised 17 methods / 20 calls; Frida 10 / 12 after the argument and
+stdio corrections; Volatility 3 / 4 for metadata and missing-file rejection only.
+The original Frida run had correct values but contaminated stdout and remains
+a strict transport failure. IDA used an owned headless session on a generated PE.
+The balanced dnSpy NOP fixture validates IL structure without executing its DLL.
+
+Wireshark now flags 27 additional existing error returns; its isolated unit/SDK
+suite passed 129 cases, with 28 of the same error regressions failing on the
+preimage. The actual wrapper run above is separate evidence. Reqable preserves
+an isolated data directory and rejects missing/malformed imports; the APK wrapper
+preserves an explicitly supplied project workspace. Source and imported packages
+were guarded and backed up before local repairs.
+
+The clean Skill journey used a fresh station, a real 7-Zip backend and a local OMP
+model. Its archive operations were checked against known bytes and closed Router
+sessions. A separate explicit skill-URI run verified all three canonical Skill
+loads and preserved the frozen source/global pins. This does not prove autonomous
+Skill selection or every external capability.
+
+The separately published [YaraFlux source preservation asset](https://github.com/dwgx/debugger-workstation-public/releases/tag/yaraflux-source-a4deb318d85c)
+was downloaded anonymously and checked against its byte digest and 116-file
+source manifest. This downstream preservation has no service-runtime verdict.
+Source publication and bounded lab acceptance do not change the historical
+whole-library release verdict.
+
+The [complete backend table](TOOL_LAB_COVERAGE.md) records 142 selected original-wrapper calls across 101 methods and 10 observed runtime catalogs (331 methods). It retains 90 PASS, 4 PARTIAL, 6 NEGATIVE_ONLY, 1 BLOCKED, 1 OUT_OF_SCOPE and 229 UNTESTED method rows. Ten other slots have 408 unique source-declared names, not observed runtime denominators. Evidence strengths differ: 87 calls include joined-reader/tail observations, 34 retain raw streams with legacy tail limits, and 21 HY4 observations retain parsed RPC objects only.
+
+The APK original wrapper now passes 5 positive metadata/version calls and 7 explicit missing-input refusals after the error-envelope repair. Project-local Skills were updated with exact preimage backups: 21 payloads match the private source package. A fresh GLM max job actually read all three canonical Skill URIs from the project installation; raw tool results and post-run hashes were independently checked. This is explicit loader acceptance for those bytes.
+
+The sections below retain the preceding maintenance wave and its dated receipts.
+
 This page separates the current source layer, dated execution evidence and pending
 acceptance. It is not a release receipt and does not replace historical verdicts
 under `releases/` or `evidence/`.
