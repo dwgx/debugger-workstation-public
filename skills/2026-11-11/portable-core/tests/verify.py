@@ -69,14 +69,19 @@ def main():
              "YES" if pc.row_problem(good.split(pc.TAB)) is None else "NO"))
     failed = [k for k, v in checks.items() if not v]
     structured = rep["failures"]
+    contract_failed = [name for name, ok in rep["checks"].items() if not ok]
+    contract_ok = pc.gate_accepts(rep)
     print("checks_run=%d checks_failed=%d structured_failures=%d"
           % (len(checks), len(failed), len(structured)))
+    print("contract_checks_run=%d contract_checks_failed=%d gate_accepts=%s"
+          % (len(rep["checks"]), len(contract_failed), "YES" if contract_ok else "NO"))
     if failed or structured:
         print("failed=" + ",".join(failed + structured))
-    # The 9 named checks are the 2026-11-11 denominator; the validator's structured
-    # failures (missing/empty required file, name identity, live path, stale SHA,
-    # FIX-KB row) gate the verdict too, so no defect can hide behind a green count.
-    verdict = "PASS" if not failed and not structured and neg_red else "FAIL"
+    if contract_failed:
+        print("contract_failed=" + ",".join(contract_failed))
+    # Preserve the 9 historical display checks; the shared production predicate
+    # decides acceptance, including failures that have no structured error code.
+    verdict = "PASS" if contract_ok and neg_red else "FAIL"
     print("VERDICT=%s" % verdict)
     return 0 if verdict == "PASS" else 1
 
