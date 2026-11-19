@@ -16,20 +16,47 @@ a project collision.
 
 ## OMP project copy (PowerShell)
 
-Run from the reviewed repository root. This installs into that project. For a
-different project, set `$project` to its known authorized root before the copy.
-An existing destination stops this first-install command: compare and back up the
-owned project copy before a scoped update instead of overwriting it blindly.
+Run from the reviewed repository or bootstrapped station root. The three packages
+are `portable-core`, `debugger-workstation` and `debugger-review`. The two routers
+need the station root; copying them does not install third-party tools. For a
+different authorized project, change `$project` before running the copy.
 
 ```powershell
-$source = (Resolve-Path 'skills/2026-11-11/portable-core').Path
-$project = (Get-Location).Path
-$target = Join-Path $project '.omp/skills/portable-core'
-if (Test-Path -LiteralPath $target) { throw 'Existing install: compare and back up before updating.' }
-New-Item -ItemType Directory -Force -Path (Split-Path $target) | Out-Null
-Copy-Item -LiteralPath $source -Destination $target -Recurse -ErrorAction Stop
+$sourceRoot = (Get-Location).Path
+$project = $sourceRoot
+$packages = [ordered]@{
+    'portable-core' = 'skills/2026-11-11/portable-core'
+    'debugger-workstation' = 'skills/2026-11-11/station-routers/debugger-workstation'
+    'debugger-review' = 'skills/2026-11-11/station-routers/debugger-review'
+}
+# Check every destination before creating any package.
+foreach ($name in $packages.Keys) {
+    if (-not (Test-Path -LiteralPath (Join-Path $sourceRoot ($packages[$name] + '/SKILL.md')))) { throw "Missing source: $name" }
+    if (Test-Path -LiteralPath (Join-Path $project ".omp/skills/$name")) { throw "Existing install: compare and back up $name before updating." }
+}
+New-Item -ItemType Directory -Force -Path (Join-Path $project '.omp/skills') | Out-Null
+foreach ($name in $packages.Keys) {
+    $source = Join-Path $sourceRoot $packages[$name]
+    $target = Join-Path $project ".omp/skills/$name"
+    Copy-Item -LiteralPath $source -Destination $target -Recurse -ErrorAction Stop
+    foreach ($file in Get-ChildItem -LiteralPath $source -File -Recurse) {
+        $relative = $file.FullName.Substring($source.Length).TrimStart('\', '/')
+        if ((Get-FileHash -LiteralPath $file.FullName).Hash -ne (Get-FileHash -LiteralPath (Join-Path $target $relative)).Hash) { throw "Copied bytes differ: $name/$relative" }
+    }
+}
 Set-Location -LiteralPath $project
 ```
+
+Use a clean release source to avoid copying generated caches. Keep the complete
+portable-core package. An existing destination stops the first-install recipe;
+updates need a reviewed comparison and a backup of that owned project copy.
+
+For a bootstrapped station, OMP can also use the generated router-only config.
+If `.omp/mcp.json` is absent, copy the station's `.mcp.json` there; otherwise merge
+the selected `debugger-router` entry into the existing project file after review.
+Ensure `mcp.enableProjectConfig` is enabled in this project's OMP settings. Inspect
+the live MCP catalog before a task: existing user or plugin servers may also be
+discovered. Do not copy the backend inventory or edit user-global configuration.
 
 Other harnesses: use their documented discovery directory and registration
 mechanism. The package does not assume a universal manifest or global skills path.
@@ -51,22 +78,27 @@ checks the skill format from its parent directory; it does not prove discovery.
 
 ## Check OMP's actual loader source
 
-From the same project root, with `$source` still set to the reviewed package:
+From the same project root, with `$sourceRoot` and `$packages` still set:
 ```powershell
 $catalog = omp skill list --json | ConvertFrom-Json
 if ($LASTEXITCODE -ne 0) { throw 'OMP catalog failed.' }
 $catalog.skills | Select-Object name, filePath, source
 $catalog.warnings
-$selected = @($catalog.skills | Where-Object { $_.name -eq 'portable-core' })
-$expected = (Resolve-Path '.omp/skills/portable-core/SKILL.md').Path
-if ($selected.Count -ne 1) { throw 'Expected one canonical portable-core entry.' }
-if ($selected[0].source -ne 'native:project' -or $selected[0].filePath -ne $expected) { throw 'Unexpected loader source.' }
-$reviewedHash = (Get-FileHash -LiteralPath (Join-Path $source 'SKILL.md') -Algorithm SHA256).Hash
-$installedHash = (Get-FileHash -LiteralPath $selected[0].filePath -Algorithm SHA256).Hash
-$reviewedHash; $installedHash
-if ($reviewedHash -ne $installedHash) { throw 'Loaded file differs from the reviewed source.' }
-omp read skill://portable-core
-if ($LASTEXITCODE -ne 0) { throw 'Canonical skill read failed.' }
+foreach ($name in $packages.Keys) {
+    $selected = @($catalog.skills | Where-Object { $_.name -eq $name })
+    $expected = (Resolve-Path ".omp/skills/$name/SKILL.md").Path
+    if ($selected.Count -ne 1) { throw "Expected one canonical $name entry." }
+    if ($selected[0].source -ne 'native:project' -or $selected[0].filePath -ne $expected) { throw "Unexpected loader source: $name" }
+    $source = Join-Path $sourceRoot $packages[$name]
+    $reviewedHash = (Get-FileHash -LiteralPath (Join-Path $source 'SKILL.md') -Algorithm SHA256).Hash
+    $installedHash = (Get-FileHash -LiteralPath $selected[0].filePath -Algorithm SHA256).Hash
+    "$name source=$reviewedHash installed=$installedHash"
+    if ($reviewedHash -ne $installedHash) { throw "Loaded file differs: $name" }
+    $readOutput = @(omp read "skill://$name")
+    if ($LASTEXITCODE -ne 0) { throw "Canonical read failed: $name" }
+    $readOutput
+    if ($readOutput.Count -eq 0 -or $readOutput[0] -ne "[Skill file: $expected]") { throw "Unexpected read header: $name" }
+}
 ```
 
 Acceptance requires all five target identity checks: one exact bare name,
@@ -76,8 +108,9 @@ Keep the displayed warnings, catalog, read output and hashes with the receipt.
 An older global copy exposed under a namespaced alias is diagnostic information;
 it does not by itself fail this project install. A wrong selected path or different
 bytes still fails the hard checks above; a mismatched read header fails acceptance.
-For a new shell, restore `$source` to the known reviewed package directory before
-comparison; do not compare the installed file only with itself.
+For a new shell, restore `$sourceRoot` and `$packages` from the copy recipe before
+comparison; do not compare an installed file only with itself. Start a new OMP
+session after changing installed bytes so the next model task sees that version.
 
 The 2026-11-19 synthetic controls showed why source identity matters: an alias-only
 copy could not serve `skill://portable-core`; two same-name, different-byte copies

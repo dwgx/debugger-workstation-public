@@ -30,6 +30,14 @@ jobs:
               except Exception as e:
                   ok=False; print('FAIL', f, e)
           sys.exit(0 if ok else 1)"
+      - name: Tool smoke semantic regressions
+        run: python -X utf8 -B -m unittest discover -s tests -p test_smoke_tools.py -v
+      - name: Tool laboratory semantic and lifecycle regressions
+        run: |
+          python -X utf8 -B -m unittest discover -s tests -p test_tool_lab_core.py -v
+          python -X utf8 -B -m unittest discover -s tests -p test_tool_lab_offline_oracles.py -v
+      - name: Explicit source publication and tampering regressions
+        run: python -X utf8 -B tests/publication_regress.py --repo . --output "$RUNNER_TEMP/publication-regress"
       - name: Compile-check router
         run: python -m py_compile mcp/debugger-router/server.py
       - name: Check backend wiring consistency
@@ -123,6 +131,18 @@ jobs:
           $ps51 = Join-Path $env:WINDIR 'System32/WindowsPowerShell/v1.0/powershell.exe'
           $ps7 = Join-Path $PSHOME 'pwsh.exe'
           python -X utf8 -B "$source/tests/installation_closure/test_driver.py" --source $source --release-zip $zip --output-root "$work/results" --shell "ps51=$ps51" --shell "ps7=$ps7"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Tool smoke process ownership and version semantics
+        shell: pwsh
+        run: |
+          python -X utf8 -B -m unittest discover -s tests -p test_smoke_tools.py -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Tool laboratory regressions on Windows
+        shell: pwsh
+        run: |
+          python -X utf8 -B -m unittest discover -s tests -p test_tool_lab_core.py -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -X utf8 -B -m unittest discover -s tests -p test_tool_lab_offline_oracles.py -v
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Cache freshness and staging ownership (PowerShell 5.1 and 7)
         shell: pwsh

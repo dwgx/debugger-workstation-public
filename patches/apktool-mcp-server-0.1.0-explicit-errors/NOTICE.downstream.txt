@@ -1,0 +1,18 @@
+Downstream modification notice — APKTool MCP explicit errors
+
+Original work: apktool-mcp-server
+Original project: https://github.com/zinja-coder/apktool-mcp-server
+Original module notice: Copyright (c) 2025 apktool mcp server developer(s)
+License: Apache License, Version 2.0; complete original terms in LICENSE.upstream.
+Reviewed upstream revision: 12bb33134af905923a0a58643dcc35fd694ad6f6.
+No root NOTICE file was present in the reviewed upstream work.
+
+Modified by the WorkStation maintainers on 2026-11-19:
+- Propagate existing explicit tool-operation failures through FastMCP ToolError,
+  retaining their JSON payload and all successful-return semantics.
+- Preserve the earlier five-line local startup-print-to-stderr correction.
+- Supply the controlled, parameterized MCP regression harness and provenance.
+
+This file is an authored downstream change notice, not a claim of upstream
+endorsement or an upstream release. No third-party executable, private sample,
+credential or original runtime transcript is included in this patch package.

@@ -1,0 +1,1044 @@
+diff --git a/src/mcp_wireshark/read_tools.py b/src/mcp_wireshark/read_tools.py
+index 42799fe..bee44ab 100644
+--- a/src/mcp_wireshark/read_tools.py
++++ b/src/mcp_wireshark/read_tools.py
+@@ -517,7 +517,9 @@ async def handle_check_installation(arguments: dict[str, Any] | None = None) ->
+     return [TextContent(type="text", text="\n".join(lines))]
+ 
+ 
+-async def handle_list_interfaces(arguments: dict[str, Any] | None = None) -> list[TextContent]:
++async def handle_list_interfaces(
++    arguments: dict[str, Any] | None = None,
++) -> list[TextContent] | CallToolResult:
+     """List interfaces visible to tshark -D."""
+     del arguments
+     try:
+@@ -530,10 +532,13 @@ async def handle_list_interfaces(arguments: dict[str, Any] | None = None) -> lis
+             )
+         ]
+     except Exception as e:
+-        return [TextContent(type="text", text=f"Error listing interfaces: {e}")]
++        return CallToolResult(
++            content=[TextContent(type="text", text=f"Error listing interfaces: {e}")],
++            isError=True,
++        )
+ 
+ 
+-async def handle_read_pcap(arguments: dict[str, Any]) -> list[TextContent]:
++async def handle_read_pcap(arguments: dict[str, Any]) -> list[TextContent] | CallToolResult:
+     """Read packets from a pcap file. Returns a 5-packet preview."""
+     file_path = arguments["file_path"]
+     packet_count = min(arguments.get("packet_count", 100), MAX_PACKET_COUNT)
+@@ -542,7 +547,10 @@ async def handle_read_pcap(arguments: dict[str, Any]) -> list[TextContent]:
+     try:
+         validated_path = validate_file_path(file_path)
+         if not validated_path.exists():
+-            return [TextContent(type="text", text=f"Error: File not found: {file_path}")]
++            return CallToolResult(
++                content=[TextContent(type="text", text=f"Error: File not found: {file_path}")],
++                isError=True,
++            )
+         file_path = str(validated_path)
+ 
+         if display_filter:
+@@ -584,12 +592,18 @@ async def handle_read_pcap(arguments: dict[str, Any]) -> list[TextContent]:
+         ]
+ 
+     except json.JSONDecodeError as e:
+-        return [TextContent(type="text", text=f"Error parsing packet data: {e}")]
++        return CallToolResult(
++            content=[TextContent(type="text", text=f"Error parsing packet data: {e}")],
++            isError=True,
++        )
+     except Exception as e:
+-        return [TextContent(type="text", text=f"Error reading pcap file: {e}")]
++        return CallToolResult(
++            content=[TextContent(type="text", text=f"Error reading pcap file: {e}")],
++            isError=True,
++        )
+ 
+ 
+-async def handle_display_filter(arguments: dict[str, Any]) -> list[TextContent]:
++async def handle_display_filter(arguments: dict[str, Any]) -> list[TextContent] | CallToolResult:
+     """Apply a display filter to a pcap file."""
+     file_path = arguments["file_path"]
+     filter_expr = arguments["filter"]
+@@ -598,7 +612,10 @@ async def handle_display_filter(arguments: dict[str, Any]) -> list[TextContent]:
+     try:
+         validated_path = validate_file_path(file_path)
+         if not validated_path.exists():
+-            return [TextContent(type="text", text=f"Error: File not found: {file_path}")]
++            return CallToolResult(
++                content=[TextContent(type="text", text=f"Error: File not found: {file_path}")],
++                isError=True,
++            )
+         file_path = str(validated_path)
+ 
+         filter_expr = validate_display_filter(filter_expr)
+@@ -633,17 +650,23 @@ async def handle_display_filter(arguments: dict[str, Any]) -> list[TextContent]:
+         ]
+ 
+     except Exception as e:
+-        return [TextContent(type="text", text=f"Error applying display filter: {e}")]
++        return CallToolResult(
++            content=[TextContent(type="text", text=f"Error applying display filter: {e}")],
++            isError=True,
++        )
+ 
+ 
+-async def handle_summarize_pcap(arguments: dict[str, Any]) -> list[TextContent]:
++async def handle_summarize_pcap(arguments: dict[str, Any]) -> list[TextContent] | CallToolResult:
+     """High-level pcap summary: I/O stats, proto hierarchy, top IP convs."""
+     file_path = arguments["file_path"]
+ 
+     try:
+         validated_path = validate_file_path(file_path)
+         if not validated_path.exists():
+-            return [TextContent(type="text", text=f"Error: File not found: {file_path}")]
++            return CallToolResult(
++                content=[TextContent(type="text", text=f"Error: File not found: {file_path}")],
++                isError=True,
++            )
+         file_path = str(validated_path)
+ 
+         frame_args = ["-r", file_path, "-q", "-z", "io,stat,0"]
+@@ -672,17 +695,23 @@ async def handle_summarize_pcap(arguments: dict[str, Any]) -> list[TextContent]:
+         return [TextContent(type="text", text="\n".join(sections))]
+ 
+     except Exception as e:
+-        return [TextContent(type="text", text=f"Error summarizing pcap: {e}")]
++        return CallToolResult(
++            content=[TextContent(type="text", text=f"Error summarizing pcap: {e}")],
++            isError=True,
++        )
+ 
+ 
+-async def handle_stats_by_proto(arguments: dict[str, Any]) -> list[TextContent]:
++async def handle_stats_by_proto(arguments: dict[str, Any]) -> list[TextContent] | CallToolResult:
+     """Protocol hierarchy statistics."""
+     file_path = arguments["file_path"]
+ 
+     try:
+         validated_path = validate_file_path(file_path)
+         if not validated_path.exists():
+-            return [TextContent(type="text", text=f"Error: File not found: {file_path}")]
++            return CallToolResult(
++                content=[TextContent(type="text", text=f"Error: File not found: {file_path}")],
++                isError=True,
++            )
+         file_path = str(validated_path)
+ 
+         args = ["-r", file_path, "-q", "-z", "io,phs"]
+@@ -696,10 +725,13 @@ async def handle_stats_by_proto(arguments: dict[str, Any]) -> list[TextContent]:
+         ]
+ 
+     except Exception as e:
+-        return [TextContent(type="text", text=f"Error generating statistics: {e}")]
++        return CallToolResult(
++            content=[TextContent(type="text", text=f"Error generating statistics: {e}")],
++            isError=True,
++        )
+ 
+ 
+-async def handle_follow_tcp(arguments: dict[str, Any]) -> list[TextContent]:
++async def handle_follow_tcp(arguments: dict[str, Any]) -> list[TextContent] | CallToolResult:
+     """Follow a TCP stream and return its ASCII payload."""
+     file_path = arguments["file_path"]
+     stream_id = arguments.get("stream_id", 0)
+@@ -707,7 +739,10 @@ async def handle_follow_tcp(arguments: dict[str, Any]) -> list[TextContent]:
+     try:
+         validated_path = validate_file_path(file_path)
+         if not validated_path.exists():
+-            return [TextContent(type="text", text=f"Error: File not found: {file_path}")]
++            return CallToolResult(
++                content=[TextContent(type="text", text=f"Error: File not found: {file_path}")],
++                isError=True,
++            )
+         file_path = str(validated_path)
+ 
+         args = ["-r", file_path, "-q", "-z", f"follow,tcp,ascii,{stream_id}"]
+@@ -723,10 +758,13 @@ async def handle_follow_tcp(arguments: dict[str, Any]) -> list[TextContent]:
+         return [TextContent(type="text", text=f"No data found for TCP stream {stream_id}")]
+ 
+     except Exception as e:
+-        return [TextContent(type="text", text=f"Error following TCP stream: {e}")]
++        return CallToolResult(
++            content=[TextContent(type="text", text=f"Error following TCP stream: {e}")],
++            isError=True,
++        )
+ 
+ 
+-async def handle_follow_udp(arguments: dict[str, Any]) -> list[TextContent]:
++async def handle_follow_udp(arguments: dict[str, Any]) -> list[TextContent] | CallToolResult:
+     """Follow a UDP stream and return its ASCII payload."""
+     file_path = arguments["file_path"]
+     stream_id = arguments.get("stream_id", 0)
+@@ -734,7 +772,10 @@ async def handle_follow_udp(arguments: dict[str, Any]) -> list[TextContent]:
+     try:
+         validated_path = validate_file_path(file_path)
+         if not validated_path.exists():
+-            return [TextContent(type="text", text=f"Error: File not found: {file_path}")]
++            return CallToolResult(
++                content=[TextContent(type="text", text=f"Error: File not found: {file_path}")],
++                isError=True,
++            )
+         file_path = str(validated_path)
+ 
+         args = ["-r", file_path, "-q", "-z", f"follow,udp,ascii,{stream_id}"]
+@@ -750,10 +791,13 @@ async def handle_follow_udp(arguments: dict[str, Any]) -> list[TextContent]:
+         return [TextContent(type="text", text=f"No data found for UDP stream {stream_id}")]
+ 
+     except Exception as e:
+-        return [TextContent(type="text", text=f"Error following UDP stream: {e}")]
++        return CallToolResult(
++            content=[TextContent(type="text", text=f"Error following UDP stream: {e}")],
++            isError=True,
++        )
+ 
+ 
+-async def handle_expert_info(arguments: dict[str, Any]) -> list[TextContent]:
++async def handle_expert_info(arguments: dict[str, Any]) -> list[TextContent] | CallToolResult:
+     """Run ``tshark -z expert,<severity>`` and return grouped findings."""
+     file_path = arguments["file_path"]
+     severity = arguments.get("severity", "warn")
+@@ -761,17 +805,23 @@ async def handle_expert_info(arguments: dict[str, Any]) -> list[TextContent]:
+     try:
+         validated_path = validate_file_path(file_path)
+         if not validated_path.exists():
+-            return [TextContent(type="text", text=f"Error: File not found: {file_path}")]
++            return CallToolResult(
++                content=[TextContent(type="text", text=f"Error: File not found: {file_path}")],
++                isError=True,
++            )
+         file_path = str(validated_path)
+ 
+         if severity not in {"chat", "note", "warn", "error"}:
+-            return [
+-                TextContent(
+-                    type="text",
+-                    text=f"Error: invalid severity {severity!r}. "
+-                    "Use 'chat', 'note', 'warn', or 'error'.",
+-                )
+-            ]
++            return CallToolResult(
++                content=[
++                    TextContent(
++                        type="text",
++                        text=f"Error: invalid severity {severity!r}. "
++                        "Use 'chat', 'note', 'warn', or 'error'.",
++                    )
++                ],
++                isError=True,
++            )
+ 
+         args = ["-r", file_path, "-q", "-z", f"expert,{severity}"]
+         output = await run_tshark(args, timeout=60)
+@@ -786,7 +836,10 @@ async def handle_expert_info(arguments: dict[str, Any]) -> list[TextContent]:
+         return [TextContent(type="text", text="No expert info entries found.")]
+ 
+     except Exception as e:
+-        return [TextContent(type="text", text=f"Error running expert analysis: {e}")]
++        return CallToolResult(
++            content=[TextContent(type="text", text=f"Error running expert analysis: {e}")],
++            isError=True,
++        )
+ 
+ 
+ def _decode_error(message: str) -> CallToolResult:
+@@ -877,7 +930,7 @@ async def handle_decode_protocol(arguments: dict[str, Any]) -> list[TextContent]
+         return _decode_error(f"Error decoding protocol: {e}")
+ 
+ 
+-async def handle_protocol_stats(arguments: dict[str, Any]) -> list[TextContent]:
++async def handle_protocol_stats(arguments: dict[str, Any]) -> list[TextContent] | CallToolResult:
+     """Run a whitelisted ``tshark -z`` aggregate-statistics variant."""
+     file_path = arguments["file_path"]
+     protocol = arguments.get("protocol", "")
+@@ -889,26 +942,35 @@ async def handle_protocol_stats(arguments: dict[str, Any]) -> list[TextContent]:
+     try:
+         validated_path = validate_file_path(file_path)
+         if not validated_path.exists():
+-            return [TextContent(type="text", text=f"Error: File not found: {file_path}")]
++            return CallToolResult(
++                content=[TextContent(type="text", text=f"Error: File not found: {file_path}")],
++                isError=True,
++            )
+         file_path = str(validated_path)
+ 
+         if not isinstance(protocol, str) or not isinstance(variant, str):
+-            return [
+-                TextContent(type="text", text="Error: 'protocol' and 'variant' must be strings.")
+-            ]
++            return CallToolResult(
++                content=[
++                    TextContent(type="text", text="Error: 'protocol' and 'variant' must be strings.")
++                ],
++                isError=True,
++            )
+ 
+         key = (protocol.strip().lower(), variant.strip().lower())
+         z_arg = STATS_VARIANTS.get(key)
+         if z_arg is None:
+-            return [
+-                TextContent(
+-                    type="text",
+-                    text=(
+-                        f"Error: unsupported (protocol, variant) pair "
+-                        f"({protocol!r}, {variant!r}). Supported: {_supported_stats()}."
+-                    ),
+-                )
+-            ]
++            return CallToolResult(
++                content=[
++                    TextContent(
++                        type="text",
++                        text=(
++                            f"Error: unsupported (protocol, variant) pair "
++                            f"({protocol!r}, {variant!r}). Supported: {_supported_stats()}."
++                        ),
++                    )
++                ],
++                isError=True,
++            )
+ 
+         args = ["-r", file_path, "-q", "-z", z_arg]
+         output = await run_tshark(args, timeout=60)
+@@ -936,10 +998,13 @@ async def handle_protocol_stats(arguments: dict[str, Any]) -> list[TextContent]:
+         ]
+ 
+     except Exception as e:
+-        return [TextContent(type="text", text=f"Error running stats: {e}")]
++        return CallToolResult(
++            content=[TextContent(type="text", text=f"Error running stats: {e}")],
++            isError=True,
++        )
+ 
+ 
+-async def handle_analyze_iec61850(arguments: dict[str, Any]) -> list[TextContent]:
++async def handle_analyze_iec61850(arguments: dict[str, Any]) -> list[TextContent] | CallToolResult:
+     """Analyze GOOSE/SV/MMS health and return a worst-first text report."""
+     file_path = arguments["file_path"]
+     protocol = str(arguments.get("protocol", "")).strip().lower()
+@@ -947,16 +1012,22 @@ async def handle_analyze_iec61850(arguments: dict[str, Any]) -> list[TextContent
+ 
+     try:
+         if protocol not in BASE_FILTERS:
+-            return [
+-                TextContent(
+-                    type="text",
+-                    text=f"Error: 'protocol' must be one of {', '.join(sorted(BASE_FILTERS))}.",
+-                )
+-            ]
++            return CallToolResult(
++                content=[
++                    TextContent(
++                        type="text",
++                        text=f"Error: 'protocol' must be one of {', '.join(sorted(BASE_FILTERS))}.",
++                    )
++                ],
++                isError=True,
++            )
+ 
+         validated_path = validate_file_path(file_path)
+         if not validated_path.exists():
+-            return [TextContent(type="text", text=f"Error: File not found: {file_path}")]
++            return CallToolResult(
++                content=[TextContent(type="text", text=f"Error: File not found: {file_path}")],
++                isError=True,
++            )
+         file_path = str(validated_path)
+ 
+         base_filter = BASE_FILTERS[protocol]
+@@ -987,7 +1058,10 @@ async def handle_analyze_iec61850(arguments: dict[str, Any]) -> list[TextContent
+         return [TextContent(type="text", text=format_report(protocol, file_path, report))]
+ 
+     except Exception as e:
+-        return [TextContent(type="text", text=f"Error analyzing IEC 61850 capture: {e}")]
++        return CallToolResult(
++            content=[TextContent(type="text", text=f"Error analyzing IEC 61850 capture: {e}")],
++            isError=True,
++        )
+ 
+ 
+ READ_HANDLERS = {
+diff --git a/src/mcp_wireshark/write_tools.py b/src/mcp_wireshark/write_tools.py
+index e64694e..c891261 100644
+--- a/src/mcp_wireshark/write_tools.py
++++ b/src/mcp_wireshark/write_tools.py
+@@ -11,7 +11,7 @@ import tempfile
+ from pathlib import Path
+ from typing import Any
+ 
+-from mcp.types import TextContent, Tool, ToolAnnotations
++from mcp.types import CallToolResult, TextContent, Tool, ToolAnnotations
+ 
+ from .utils import check_wireshark_installed, run_dumpcap, run_tshark
+ from .validation import (
+@@ -95,7 +95,7 @@ WRITE_TOOLS: list[Tool] = [
+ ]
+ 
+ 
+-async def handle_live_capture(arguments: dict[str, Any]) -> list[TextContent]:
++async def handle_live_capture(arguments: dict[str, Any]) -> list[TextContent] | CallToolResult:
+     """Capture live traffic from an interface."""
+     interface = arguments["interface"]
+     duration = min(arguments.get("duration", 10), MAX_DURATION_SECONDS)
+@@ -161,10 +161,13 @@ async def handle_live_capture(arguments: dict[str, Any]) -> list[TextContent]:
+     except Exception as e:
+         if temp_path:
+             Path(temp_path).unlink(missing_ok=True)
+-        return [TextContent(type="text", text=f"Error during live capture: {e}")]
++        return CallToolResult(
++            content=[TextContent(type="text", text=f"Error during live capture: {e}")],
++            isError=True,
++        )
+ 
+ 
+-async def handle_export_json(arguments: dict[str, Any]) -> list[TextContent]:
++async def handle_export_json(arguments: dict[str, Any]) -> list[TextContent] | CallToolResult:
+     """Export packets to a JSON file at the user-supplied path."""
+     file_path = arguments["file_path"]
+     output_path = arguments["output_path"]
+@@ -174,7 +177,10 @@ async def handle_export_json(arguments: dict[str, Any]) -> list[TextContent]:
+     try:
+         validated_path = validate_file_path(file_path)
+         if not validated_path.exists():
+-            return [TextContent(type="text", text=f"Error: File not found: {file_path}")]
++            return CallToolResult(
++                content=[TextContent(type="text", text=f"Error: File not found: {file_path}")],
++                isError=True,
++            )
+         file_path = str(validated_path)
+ 
+         if display_filter:
+@@ -209,7 +215,10 @@ async def handle_export_json(arguments: dict[str, Any]) -> list[TextContent]:
+         return [TextContent(type="text", text=f"No packets to export from {file_path}")]
+ 
+     except Exception as e:
+-        return [TextContent(type="text", text=f"Error exporting to JSON: {e}")]
++        return CallToolResult(
++            content=[TextContent(type="text", text=f"Error exporting to JSON: {e}")],
++            isError=True,
++        )
+ 
+ 
+ WRITE_HANDLERS = {
+diff --git a/tests/test_dissector_tools.py b/tests/test_dissector_tools.py
+index 096ae13..75dbea1 100644
+--- a/tests/test_dissector_tools.py
++++ b/tests/test_dissector_tools.py
+@@ -119,13 +119,17 @@ async def test_expert_info_invalid_severity(tmp_path: Path) -> None:
+     pcap.touch()
+ 
+     result = await handle_expert_info({"file_path": str(pcap), "severity": "bogus"})
+-    assert "invalid severity" in result[0].text.lower()
++    assert isinstance(result, CallToolResult)
++    assert result.isError is True
++    assert "invalid severity" in result.content[0].text.lower()
+ 
+ 
+ @pytest.mark.asyncio
+ async def test_expert_info_file_not_found() -> None:
+     result = await handle_expert_info({"file_path": "/nonexistent/file.pcap"})
+-    assert "not found" in result[0].text.lower() or "error" in result[0].text.lower()
++    assert isinstance(result, CallToolResult)
++    assert result.isError is True
++    assert "not found" in result.content[0].text.lower() or "error" in result.content[0].text.lower()
+ 
+ 
+ # --- decode_protocol --------------------------------------------------------
+@@ -333,7 +337,9 @@ async def test_protocol_stats_unsupported_pair(tmp_path: Path) -> None:
+     result = await handle_protocol_stats(
+         {"file_path": str(pcap), "protocol": "bogus", "variant": "thing"}
+     )
+-    assert "unsupported" in result[0].text.lower()
++    assert isinstance(result, CallToolResult)
++    assert result.isError is True
++    assert "unsupported" in result.content[0].text.lower()
+ 
+ 
+ @pytest.mark.asyncio
+diff --git a/tests/test_error_results.py b/tests/test_error_results.py
+index 8dfbdbb..6ac129b 100644
+--- a/tests/test_error_results.py
++++ b/tests/test_error_results.py
+@@ -1,13 +1,28 @@
+ """Regression tests for failure status across decode and low-level SDK routing."""
++import json
+ from pathlib import Path
+ from unittest.mock import AsyncMock, patch
+ 
+ import pytest
+ from mcp.types import CallToolRequest, CallToolRequestParams, CallToolResult, TextContent
+ 
++import mcp_wireshark
+ from mcp_wireshark import server
+-from mcp_wireshark.read_tools import handle_decode_protocol
++from mcp_wireshark.read_tools import (
++    handle_analyze_iec61850,
++    handle_decode_protocol,
++    handle_display_filter,
++    handle_expert_info,
++    handle_follow_tcp,
++    handle_follow_udp,
++    handle_list_interfaces,
++    handle_protocol_stats,
++    handle_read_pcap,
++    handle_stats_by_proto,
++    handle_summarize_pcap,
++)
+ from mcp_wireshark.utils import WiresharkNotFoundError
++from mcp_wireshark.write_tools import handle_export_json, handle_live_capture
+ 
+ 
+ async def routed(arguments: dict[str, object], name: str = "decode_protocol") -> CallToolResult:
+@@ -91,3 +106,468 @@ async def test_error_result_decode_validation(tmp_path: Path, changes: dict[str,
+     assert isinstance(response, CallToolResult)
+     assert response.isError is True
+     assert response.content[0].text.startswith("Error:")
++
++
++# ---------------------------------------------------------------------------
++# Confirmed 0.5.0 defects — semantic failures carried isError=False on the wire.
++# The three confirmed failures run directly and through the low-level MCP
++# CallToolRequest handler. Additional cases cover the other explicit branches.
++# Backend subprocess calls are mocked; this is not a stdio/wrapper test.
++# ---------------------------------------------------------------------------
++
++
++def _pcap(tmp_path: Path) -> Path:
++    pcap = tmp_path / "fixture.pcap"
++    pcap.touch()
++    return pcap
++
++
++def _fake_packets(n: int) -> str:
++    return json.dumps(
++        [
++            {"_index": "p", "_source": {"layers": {"frame": {"frame.number": str(i)}}}}
++            for i in range(1, n + 1)
++        ]
++    )
++
++
++@pytest.mark.asyncio
++async def test_read_pcap_corrupt_capture_is_error(tmp_path: Path) -> None:
++    """Regression: tshark failing on a corrupt capture must be isError=True."""
++    pcap = tmp_path / "corrupt.pcap"
++    pcap.write_bytes(b"not a real capture")
++    args = {"file_path": str(pcap)}
++    err = RuntimeError("tshark failed: The file appears to be broken")
++    with patch("mcp_wireshark.read_tools.run_tshark", AsyncMock(side_effect=err)):
++        direct = await handle_read_pcap(args)
++        wire = await routed(args, name="read_pcap")
++    assert isinstance(direct, CallToolResult)
++    assert direct.isError is True
++    assert direct.content[0].text == f"Error reading pcap file: {err}"
++    assert wire.isError is True
++    assert wire.content == direct.content
++
++
++@pytest.mark.asyncio
++async def test_read_pcap_unparsable_output_is_error(tmp_path: Path) -> None:
++    pcap = _pcap(tmp_path)
++    args = {"file_path": str(pcap)}
++    with patch(
++        "mcp_wireshark.read_tools.run_tshark",
++        AsyncMock(return_value="<html>tshark never emits this</html>"),
++    ):
++        direct = await handle_read_pcap(args)
++        wire = await routed(args, name="read_pcap")
++    assert isinstance(direct, CallToolResult)
++    assert direct.isError is True
++    assert direct.content[0].text.startswith("Error parsing packet data:")
++    assert wire.isError is True
++
++
++@pytest.mark.asyncio
++async def test_read_pcap_missing_file_is_error(tmp_path: Path) -> None:
++    args = {"file_path": str(tmp_path / "ghost.pcap")}
++    direct = await handle_read_pcap(args)
++    wire = await routed(args, name="read_pcap")
++    assert isinstance(direct, CallToolResult)
++    assert direct.isError is True
++    assert direct.content[0].text == f"Error: File not found: {tmp_path / 'ghost.pcap'}"
++    assert wire.isError is True
++
++
++@pytest.mark.asyncio
++async def test_display_filter_invalid_syntax_is_error(tmp_path: Path) -> None:
++    """Regression: tshark rejecting a malformed filter must be isError=True."""
++    pcap = _pcap(tmp_path)
++    args = {"file_path": str(pcap), "filter": "tcp.port === nonsense"}
++    err = RuntimeError("tshark failed: invalid display filter")
++    with patch("mcp_wireshark.read_tools.run_tshark", AsyncMock(side_effect=err)):
++        direct = await handle_display_filter(args)
++        wire = await routed(args, name="display_filter")
++    assert isinstance(direct, CallToolResult)
++    assert direct.isError is True
++    assert direct.content[0].text == f"Error applying display filter: {err}"
++    assert wire.isError is True
++
++
++@pytest.mark.asyncio
++async def test_display_filter_dangerous_characters_is_error(tmp_path: Path) -> None:
++    pcap = _pcap(tmp_path)
++    args = {"file_path": str(pcap), "filter": "tcp; rm -rf /"}
++    direct = await handle_display_filter(args)
++    assert isinstance(direct, CallToolResult)
++    assert direct.isError is True
++    assert "Invalid character in display filter" in direct.content[0].text
++
++
++@pytest.mark.asyncio
++async def test_export_json_missing_source_file_is_error(tmp_path: Path) -> None:
++    """Regression: missing source file must be isError=True (confirmed defect)."""
++    out = tmp_path / "out.json"
++    args = {
++        "file_path": str(tmp_path / "ghost.pcap"),
++        "output_path": str(out),
++    }
++    direct = await handle_export_json(args)
++    wire = await routed(args, name="export_json")
++    assert isinstance(direct, CallToolResult)
++    assert direct.isError is True
++    assert direct.content[0].text == f"Error: File not found: {tmp_path / 'ghost.pcap'}"
++    assert wire.isError is True
++    assert not out.exists(), "failed export must not create the output file"
++
++
++@pytest.mark.asyncio
++async def test_export_json_tshark_failure_is_error(tmp_path: Path) -> None:
++    pcap = _pcap(tmp_path)
++    out = tmp_path / "out.json"
++    args = {"file_path": str(pcap), "output_path": str(out)}
++    with patch(
++        "mcp_wireshark.write_tools.run_tshark",
++        AsyncMock(side_effect=RuntimeError("tshark failed: boom")),
++    ):
++        direct = await handle_export_json(args)
++    assert isinstance(direct, CallToolResult)
++    assert direct.isError is True
++    assert direct.content[0].text == "Error exporting to JSON: tshark failed: boom"
++    assert not out.exists(), "failed export must not create the output file"
++
++
++@pytest.mark.asyncio
++async def test_live_capture_failure_is_error(tmp_path: Path) -> None:
++    """Capture failures must be isError=True (all network/tshark calls mocked)."""
++    with (
++        patch(
++            "mcp_wireshark.write_tools.check_wireshark_installed",
++            return_value={"tshark": "t", "dumpcap": "d"},
++        ),
++        patch(
++            "mcp_wireshark.write_tools.run_dumpcap",
++            AsyncMock(side_effect=RuntimeError("dumpcap boom")),
++        ),
++    ):
++        direct = await handle_live_capture({"interface": "eth0", "duration": 1})
++    assert isinstance(direct, CallToolResult)
++    assert direct.isError is True
++    assert direct.content[0].text == "Error during live capture: dumpcap boom"
++
++
++# ---------------------------------------------------------------------------
++# Remaining converted branches, exercised directly against the handlers.
++# ---------------------------------------------------------------------------
++
++
++@pytest.mark.asyncio
++async def test_list_interfaces_failure_is_error() -> None:
++    with patch(
++        "mcp_wireshark.read_tools.run_tshark", AsyncMock(side_effect=RuntimeError("boom"))
++    ):
++        result = await handle_list_interfaces()
++    assert isinstance(result, CallToolResult)
++    assert result.isError is True
++    assert result.content[0].text == "Error listing interfaces: boom"
++
++
++@pytest.mark.asyncio
++async def test_summarize_pcap_failure_is_error(tmp_path: Path) -> None:
++    pcap = _pcap(tmp_path)
++    with patch(
++        "mcp_wireshark.read_tools.run_tshark", AsyncMock(side_effect=RuntimeError("boom"))
++    ):
++        result = await handle_summarize_pcap({"file_path": str(pcap)})
++    assert isinstance(result, CallToolResult)
++    assert result.isError is True
++    assert result.content[0].text == "Error summarizing pcap: boom"
++
++
++@pytest.mark.asyncio
++async def test_stats_by_proto_failure_is_error(tmp_path: Path) -> None:
++    pcap = _pcap(tmp_path)
++    with patch(
++        "mcp_wireshark.read_tools.run_tshark", AsyncMock(side_effect=RuntimeError("boom"))
++    ):
++        result = await handle_stats_by_proto({"file_path": str(pcap)})
++    assert isinstance(result, CallToolResult)
++    assert result.isError is True
++    assert result.content[0].text == "Error generating statistics: boom"
++
++
++@pytest.mark.asyncio
++async def test_follow_tcp_failure_is_error(tmp_path: Path) -> None:
++    pcap = _pcap(tmp_path)
++    with patch(
++        "mcp_wireshark.read_tools.run_tshark", AsyncMock(side_effect=RuntimeError("boom"))
++    ):
++        result = await handle_follow_tcp({"file_path": str(pcap), "stream_id": 2})
++    assert isinstance(result, CallToolResult)
++    assert result.isError is True
++    assert result.content[0].text == "Error following TCP stream: boom"
++
++
++@pytest.mark.asyncio
++async def test_follow_udp_failure_is_error(tmp_path: Path) -> None:
++    pcap = _pcap(tmp_path)
++    with patch(
++        "mcp_wireshark.read_tools.run_tshark", AsyncMock(side_effect=RuntimeError("boom"))
++    ):
++        result = await handle_follow_udp({"file_path": str(pcap), "stream_id": 4})
++    assert isinstance(result, CallToolResult)
++    assert result.isError is True
++    assert result.content[0].text == "Error following UDP stream: boom"
++
++
++@pytest.mark.asyncio
++async def test_expert_info_invalid_severity_is_error(tmp_path: Path) -> None:
++    pcap = _pcap(tmp_path)
++    result = await handle_expert_info({"file_path": str(pcap), "severity": "bogus"})
++    assert isinstance(result, CallToolResult)
++    assert result.isError is True
++    assert result.content[0].text == (
++        "Error: invalid severity 'bogus'. Use 'chat', 'note', 'warn', or 'error'."
++    )
++
++
++@pytest.mark.asyncio
++async def test_expert_info_failure_is_error(tmp_path: Path) -> None:
++    pcap = _pcap(tmp_path)
++    with patch(
++        "mcp_wireshark.read_tools.run_tshark", AsyncMock(side_effect=RuntimeError("boom"))
++    ):
++        result = await handle_expert_info({"file_path": str(pcap)})
++    assert isinstance(result, CallToolResult)
++    assert result.isError is True
++    assert result.content[0].text == "Error running expert analysis: boom"
++
++
++@pytest.mark.asyncio
++async def test_protocol_stats_unsupported_pair_is_error(tmp_path: Path) -> None:
++    pcap = _pcap(tmp_path)
++    result = await handle_protocol_stats(
++        {"file_path": str(pcap), "protocol": "bogus", "variant": "thing"}
++    )
++    assert isinstance(result, CallToolResult)
++    assert result.isError is True
++    text = result.content[0].text
++    assert text.startswith("Error: unsupported (protocol, variant) pair ('bogus', 'thing')")
++    assert "Supported:" in text
++
++
++@pytest.mark.asyncio
++async def test_protocol_stats_non_string_arguments_is_error(tmp_path: Path) -> None:
++    pcap = _pcap(tmp_path)
++    result = await handle_protocol_stats({"file_path": str(pcap), "protocol": 7, "variant": "phs"})
++    assert isinstance(result, CallToolResult)
++    assert result.isError is True
++    assert result.content[0].text == "Error: 'protocol' and 'variant' must be strings."
++
++
++@pytest.mark.asyncio
++async def test_protocol_stats_failure_is_error(tmp_path: Path) -> None:
++    pcap = _pcap(tmp_path)
++    with patch(
++        "mcp_wireshark.read_tools.run_tshark", AsyncMock(side_effect=RuntimeError("boom"))
++    ):
++        result = await handle_protocol_stats(
++            {"file_path": str(pcap), "protocol": "io", "variant": "phs"}
++        )
++    assert isinstance(result, CallToolResult)
++    assert result.isError is True
++    assert result.content[0].text == "Error running stats: boom"
++
++
++@pytest.mark.asyncio
++async def test_analyze_iec61850_bad_protocol_is_error(tmp_path: Path) -> None:
++    pcap = _pcap(tmp_path)
++    result = await handle_analyze_iec61850({"file_path": str(pcap), "protocol": "ftp"})
++    assert isinstance(result, CallToolResult)
++    assert result.isError is True
++    text = result.content[0].text
++    assert "must be one of" in text
++    assert "goose" in text and "mms" in text and "sv" in text
++
++
++@pytest.mark.asyncio
++async def test_analyze_iec61850_failure_is_error(tmp_path: Path) -> None:
++    pcap = _pcap(tmp_path)
++    with patch(
++        "mcp_wireshark.read_tools.run_tshark", AsyncMock(side_effect=RuntimeError("boom"))
++    ):
++        result = await handle_analyze_iec61850({"file_path": str(pcap), "protocol": "sv"})
++    assert isinstance(result, CallToolResult)
++    assert result.isError is True
++    assert result.content[0].text == "Error analyzing IEC 61850 capture: boom"
++
++
++# ---------------------------------------------------------------------------
++# Positive and empty results must stay successful (isError=False on the wire).
++# These pass against baseline AND candidate: conversion must not touch them.
++# ---------------------------------------------------------------------------
++
++
++@pytest.mark.asyncio
++async def test_read_pcap_success_stays_successful(tmp_path: Path) -> None:
++    pcap = _pcap(tmp_path)
++    args = {"file_path": str(pcap)}
++    with patch(
++        "mcp_wireshark.read_tools.run_tshark", AsyncMock(return_value=_fake_packets(2))
++    ):
++        direct = await handle_read_pcap(args)
++        wire = await routed(args, name="read_pcap")
++    assert isinstance(direct, list)
++    assert isinstance(direct[0], TextContent)
++    assert direct[0].text.startswith(f"Read 2 packet(s) from {pcap}")
++    assert wire.isError is False
++    assert wire.content == direct
++
++
++@pytest.mark.asyncio
++async def test_read_pcap_empty_result_stays_successful(tmp_path: Path) -> None:
++    pcap = _pcap(tmp_path)
++    args = {"file_path": str(pcap)}
++    with patch("mcp_wireshark.read_tools.run_tshark", AsyncMock(return_value="")):
++        direct = await handle_read_pcap(args)
++        wire = await routed(args, name="read_pcap")
++    assert isinstance(direct, list)
++    assert direct[0].text == f"No packets found in {pcap}"
++    assert wire.isError is False
++
++
++@pytest.mark.asyncio
++async def test_display_filter_no_match_stays_successful(tmp_path: Path) -> None:
++    pcap = _pcap(tmp_path)
++    args = {"file_path": str(pcap), "filter": "dns"}
++    with patch("mcp_wireshark.read_tools.run_tshark", AsyncMock(return_value="")):
++        direct = await handle_display_filter(args)
++        wire = await routed(args, name="display_filter")
++    assert isinstance(direct, list)
++    assert direct[0].text == "No packets found matching filter 'dns'"
++    assert wire.isError is False
++
++
++@pytest.mark.asyncio
++async def test_export_json_empty_result_stays_successful(tmp_path: Path) -> None:
++    pcap = _pcap(tmp_path)
++    out = tmp_path / "out.json"
++    args = {"file_path": str(pcap), "output_path": str(out)}
++    with patch("mcp_wireshark.write_tools.run_tshark", AsyncMock(return_value="")):
++        direct = await handle_export_json(args)
++        wire = await routed(args, name="export_json")
++    assert isinstance(direct, list)
++    assert direct[0].text == f"No packets to export from {pcap}"
++    assert out.exists()
++    assert wire.isError is False
++
++
++@pytest.mark.asyncio
++async def test_follow_tcp_empty_result_stays_successful(tmp_path: Path) -> None:
++    pcap = _pcap(tmp_path)
++    args = {"file_path": str(pcap), "stream_id": 3}
++    with patch("mcp_wireshark.read_tools.run_tshark", AsyncMock(return_value="")):
++        direct = await handle_follow_tcp(args)
++        wire = await routed(args, name="follow_tcp")
++    assert isinstance(direct, list)
++    assert direct[0].text == "No data found for TCP stream 3"
++    assert wire.isError is False
++
++
++@pytest.mark.asyncio
++async def test_expert_info_empty_result_stays_successful(tmp_path: Path) -> None:
++    pcap = _pcap(tmp_path)
++    args = {"file_path": str(pcap)}
++    with patch("mcp_wireshark.read_tools.run_tshark", AsyncMock(return_value="")):
++        direct = await handle_expert_info(args)
++        wire = await routed(args, name="expert_info")
++    assert isinstance(direct, list)
++    assert direct[0].text == "No expert info entries found."
++    assert wire.isError is False
++
++
++@pytest.mark.asyncio
++async def test_protocol_stats_empty_result_stays_successful(tmp_path: Path) -> None:
++    pcap = _pcap(tmp_path)
++    args = {"file_path": str(pcap), "protocol": "io", "variant": "phs"}
++    with patch("mcp_wireshark.read_tools.run_tshark", AsyncMock(return_value="")):
++        direct = await handle_protocol_stats(args)
++        wire = await routed(args, name="protocol_stats")
++    assert isinstance(direct, list)
++    assert direct[0].text.startswith("No statistics returned for io,phs on")
++    assert wire.isError is False
++
++
++@pytest.mark.asyncio
++async def test_analyze_iec61850_no_packets_stays_successful(tmp_path: Path) -> None:
++    pcap = _pcap(tmp_path)
++    args = {"file_path": str(pcap), "protocol": "sv"}
++    with patch("mcp_wireshark.read_tools.run_tshark", AsyncMock(return_value="")):
++        direct = await handle_analyze_iec61850(args)
++        wire = await routed(args, name="analyze_iec61850")
++    assert isinstance(direct, list)
++    assert direct[0].text.startswith("No SV packets found in")
++    assert wire.isError is False
++
++
++@pytest.mark.asyncio
++async def test_live_capture_empty_result_stays_successful() -> None:
++    with (
++        patch(
++            "mcp_wireshark.write_tools.check_wireshark_installed",
++            return_value={"tshark": "t", "dumpcap": "d"},
++        ),
++        patch("mcp_wireshark.write_tools.run_dumpcap", AsyncMock(return_value="")),
++        patch("mcp_wireshark.write_tools.run_tshark", AsyncMock(return_value="")),
++    ):
++        args = {"interface": "eth0", "duration": 3}
++        direct = await handle_live_capture(args)
++        wire = await routed(args, name="live_capture")
++    assert isinstance(direct, list)
++    assert direct[0].text == "No packets captured from interface 'eth0' in 3 seconds"
++    assert wire.isError is False
++    assert wire.content == direct
++
++
++def test_loaded_source_is_not_installed_copy() -> None:
++    """The suite must exercise tree-local source (PYTHONPATH), not the venv copy."""
++    pkg_dir = Path(mcp_wireshark.__file__).resolve().parent
++    assert "site-packages" not in str(pkg_dir).lower()
++    assert (pkg_dir / "read_tools.py").is_file()
++    assert (pkg_dir / "write_tools.py").is_file()
++
++
++@pytest.mark.asyncio
++@pytest.mark.parametrize(("name", "extra"), [
++    ("display_filter", {"filter": "dns"}),
++    ("summarize_pcap", {}),
++    ("stats_by_proto", {}),
++    ("follow_tcp", {"stream_id": 0}),
++    ("follow_udp", {"stream_id": 0}),
++    ("expert_info", {}),
++    ("protocol_stats", {"protocol": "io", "variant": "phs"}),
++    ("analyze_iec61850", {"protocol": "goose"}),
++])
++async def test_other_read_missing_file_is_error(
++    tmp_path: Path, name: str, extra: dict[str, object]
++) -> None:
++    missing = tmp_path / "missing.pcap"
++    args = {"file_path": str(missing), **extra}
++    with patch("mcp_wireshark.read_tools.run_tshark", AsyncMock()) as backend:
++        direct = await server.READ_HANDLERS[name](args)
++        wire = await routed(args, name=name)
++    backend.assert_not_awaited()
++    assert isinstance(direct, CallToolResult)
++    assert direct.isError is True
++    assert direct.content[0].text == f"Error: File not found: {missing}"
++    assert wire.isError is True
++    assert wire.content == direct.content
++
++
++@pytest.mark.asyncio
++async def test_follow_udp_empty_result_stays_successful(tmp_path: Path) -> None:
++    pcap = _pcap(tmp_path)
++    args = {"file_path": str(pcap), "stream_id": 3}
++    with patch("mcp_wireshark.read_tools.run_tshark", AsyncMock(return_value="")):
++        direct = await handle_follow_udp(args)
++        wire = await routed(args, name="follow_udp")
++    assert isinstance(direct, list)
++    assert direct[0].text == "No data found for UDP stream 3"
++    assert wire.isError is False
++    assert wire.content == direct
+diff --git a/tests/test_server.py b/tests/test_server.py
+index 91406b2..bafb482 100644
+--- a/tests/test_server.py
++++ b/tests/test_server.py
+@@ -5,7 +5,7 @@ from pathlib import Path
+ from unittest.mock import AsyncMock, patch
+ 
+ import pytest
+-from mcp.types import TextContent
++from mcp.types import CallToolResult, TextContent
+ 
+ from mcp_wireshark.read_tools import (
+     READ_HANDLERS,
+@@ -116,13 +116,16 @@ class TestSecurityConstants:
+ 
+ @pytest.mark.asyncio
+ async def test_list_interfaces() -> None:
+-    """Test listing network interfaces."""
+-    result = await handle_list_interfaces()
++    """Test a successful interface listing with a deterministic backend reply."""
++    listing = "1. fixture0 (controlled interface)\n"
++    with patch("mcp_wireshark.read_tools.run_tshark", AsyncMock(return_value=listing)):
++        result = await handle_list_interfaces()
+ 
+     assert isinstance(result, list)
+     assert len(result) > 0
+     assert isinstance(result[0], TextContent)
+     assert result[0].type == "text"
++    assert result[0].text == "Found 1 network interface(s):\n\n" + listing.strip()
+ 
+ 
+ @pytest.mark.asyncio
+@@ -130,10 +133,10 @@ async def test_read_pcap_nonexistent() -> None:
+     """Test reading from a nonexistent pcap file."""
+     result = await handle_read_pcap({"file_path": "/nonexistent/file.pcap", "packet_count": 10})
+ 
+-    assert isinstance(result, list)
+-    assert len(result) > 0
+-    assert isinstance(result[0], TextContent)
+-    assert "not found" in result[0].text.lower() or "error" in result[0].text.lower()
++    assert isinstance(result, CallToolResult)
++    assert result.isError is True
++    assert isinstance(result.content[0], TextContent)
++    assert "not found" in result.content[0].text.lower() or "error" in result.content[0].text.lower()
+ 
+ 
+ @pytest.mark.asyncio
+@@ -141,8 +144,9 @@ async def test_read_pcap_invalid_args() -> None:
+     """Test read_pcap with invalid arguments."""
+     result = await handle_read_pcap({"file_path": ""})
+ 
+-    assert isinstance(result, list)
+-    assert len(result) > 0
++    assert isinstance(result, CallToolResult)
++    assert result.isError is True
++    assert result.content
+ 
+ 
+ # Regression tests for the filter+count interaction bug fixed in 0.3.1.
+@@ -271,7 +275,9 @@ async def test_analyze_iec61850_rejects_bad_protocol(tmp_path: Path) -> None:
+     pcap = tmp_path / "t.pcap"
+     pcap.touch()
+     result = await handle_analyze_iec61850({"file_path": str(pcap), "protocol": "ftp"})
+-    text = result[0].text
++    assert isinstance(result, CallToolResult)
++    assert result.isError is True
++    text = result.content[0].text
+     assert "goose" in text
+     assert "must be" in text or "one of" in text
+ 
+@@ -279,7 +285,9 @@ async def test_analyze_iec61850_rejects_bad_protocol(tmp_path: Path) -> None:
+ @pytest.mark.asyncio
+ async def test_analyze_iec61850_file_not_found() -> None:
+     result = await handle_analyze_iec61850({"file_path": "/nope/x.pcap", "protocol": "goose"})
+-    assert "not found" in result[0].text.lower() or "error" in result[0].text.lower()
++    assert isinstance(result, CallToolResult)
++    assert result.isError is True
++    assert "not found" in result.content[0].text.lower() or "error" in result.content[0].text.lower()
+ 
+ 
+ @pytest.mark.asyncio

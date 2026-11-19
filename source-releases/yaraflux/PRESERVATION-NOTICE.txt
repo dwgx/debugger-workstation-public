@@ -1,0 +1,23 @@
+YaraFlux preserved source release
+
+Original project: https://github.com/ThreatFlux/YaraFlux
+Preserved Git revision: a4deb318d85cd2febe8b87695008444ee294dee7
+Version in pyproject.toml: 1.0.17
+Copyright (c) 2025 ThreatFlux. MIT license: see LICENSE (unmodified).
+
+The public origin returned HTTP 404 on 2026-11-19. This archive was recovered
+from an existing local Git checkout with that origin. The checkout is shallow;
+remote ancestry and current upstream availability are not independently proved.
+It is not a new upstream release. Included files are exact Git blobs at the
+recorded revision; local working-tree edits, configuration and tool environments
+were not copied. This notice and SOURCE-MANIFEST.json are added by the station
+maintainers. Consult the manifest for the explicit four excluded paths.
+
+Python >=3.13 is declared. Runtime dependencies are in pyproject.toml and the
+hash-pinned requirements-lock.txt. No dependency, executable, image, environment
+value, user sample, storage database or token is bundled. The .env.example uses
+upstream demonstration values; replace them with private values before use.
+Packaging and AST parsing do not establish service/runtime compatibility.
+Use a separate environment and the station's project-local wrapper; upstream
+README global-client examples are historical upstream instructions, not the
+station's recommended configuration.

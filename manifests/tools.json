@@ -422,22 +422,28 @@
       {
         "name": "crypto-lab oracle (node)",
         "version": "9.0.3",
-        "dir": "crypto-lab/node_modules/jsonwebtoken",
+        "dir": "crypto-lab",
         "entry": "tools/oracle-node.mjs",
         "official_source": "https://www.npmjs.com/package/jsonwebtoken (npm, isolated in crypto-lab/package.json)",
         "verify": false,
         "needs": "Node >= 24",
-        "note": "Independent implementation #1, used only to cross-check the analyzer. Not committed (crypto-lab/node_modules is gitignored); recreate with `npm install` inside crypto-lab/. Measured: it refuses `alg:none` under a pinned RS256 allowlist ('jwt signature is required') and refuses HS256 keyed on a PEM public key ('secretOrPublicKey must be a symmetric key when using HS256')."
+        "note": "The in-tree entry is tools/oracle-node.mjs, relative to crypto-lab/. Its independent jsonwebtoken dependency is not committed; recreate it with npm ci inside crypto-lab/. Dependency installation and an entry existing are separate checks.",
+        "dependency_paths": [
+          "crypto-lab/node_modules/jsonwebtoken"
+        ]
       },
       {
         "name": "crypto-lab oracle (python)",
         "version": "PyJWT 2.15.1 + cryptography 50.0.1",
-        "dir": "crypto-lab/.venv",
+        "dir": "crypto-lab",
         "entry": "tools/oracle.py",
         "official_source": "https://pypi.org/project/PyJWT/ and https://pypi.org/project/cryptography/ (pip, isolated in crypto-lab/.venv)",
         "verify": false,
         "needs": "Python >= 3.10 (3.14.7 here)",
-        "note": "Independent implementation #2, different lineage from jsonwebtoken. Not committed (.venv is gitignored); recreate with `python -m venv .venv && .venv/Scripts/python -m pip install -r crypto-lab/requirements.txt`. Measured: InvalidKeyError on HS256-with-a-public-key, and PyJWT requires an explicit algorithms allowlist."
+        "note": "The in-tree entry is tools/oracle.py, relative to crypto-lab/. Its independent PyJWT/cryptography environment is not committed. From the repository root: python -m venv crypto-lab/.venv; crypto-lab/.venv/Scripts/python -m pip install -r crypto-lab/requirements.txt. Dependency installation and an entry existing are separate checks.",
+        "dependency_paths": [
+          "crypto-lab/.venv"
+        ]
       },
       {
         "name": "crypto-lab loop",
@@ -602,11 +608,12 @@
       {
         "name": "SkillSpector",
         "version": "2.12.0",
-        "dir": "%USERPROFILE%\\.local\\bin\\skillspector.exe",
+        "dir": "%USERPROFILE%/.local/bin",
         "official_source": "https://github.com/NVIDIA/skillspector",
         "auto_update": false,
         "verify": true,
-        "note": "NVIDIA SkillSpector. Launched UNCONDITIONALLY by headless-lab/tools/skill_security_control.ps1:24 -- that command IS the ops.skill.security negative control, so a clone that cannot run it cannot run the registry at all, which is why this was a real gap and not a cosmetic one. Measured 2026-10-03 on this station: skillspector.exe --version prints 'SkillSpector v2.12.0'. NOT on PATH and NOT in the system Python: it comes from `uv tool install git+https://github.com/NVIDIA/skillspector.git`, which lands a self-contained venv plus this launcher, and the bare name `skillspector` does NOT resolve on PyPI. `dir` holds the whole path and there is deliberately no `entry`, following the idalib record above: a host-absolute path is not resolvable relative to the repo, so declaring an `entry` beside it would make every declared-location checker report it absent."
+        "note": "NVIDIA SkillSpector is installed by uv tool install git+https://github.com/NVIDIA/skillspector.git into an isolated tool environment. Expand environment variables in dir before resolving entry. The launcher is not assumed to be on PATH; version 2.12.0 is the last recorded local measurement, not a claim that it is the latest upstream release. auto_update remains false.",
+        "entry": "skillspector.exe"
       }
     ],
     "build": [

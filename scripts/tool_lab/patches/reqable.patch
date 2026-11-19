@@ -1,0 +1,34 @@
+--- a/src/reqable_mcp/server.py
++++ b/src/reqable_mcp/server.py
+@@ -152,9 +152,9 @@
+     """Import a HAR file (or line-delimited JSON entries) as fallback."""
+     path = Path(file_path).expanduser()
+     if not path.exists():
+-        return _json_response({"ok": False, "error": f"File not found: {path}"})
++        raise ValueError(f"File not found: {path}")
+     if not path.is_file():
+-        return _json_response({"ok": False, "error": f"Not a file: {path}"})
++        raise ValueError(f"Not a file: {path}")
+ 
+     try:
+         result = storage.import_har_file(
+@@ -164,7 +164,7 @@
+         return _json_response({"ok": True, "file": str(path), **result})
+     except Exception as exc:  # broad for robust tool UX
+         storage.add_event("error", "import_har failed", {"file": str(path), "error": str(exc)})
+-        return _json_response({"ok": False, "error": str(exc)})
++        raise ValueError(f"HAR import failed: {exc}") from exc
+ 
+ 
+ @mcp.tool()
+--- a/src/reqable_mcp/storage.py
++++ b/src/reqable_mcp/storage.py
+@@ -1128,6 +1128,8 @@
+                     continue
+                 if isinstance(item, dict):
+                     entries.append(item)
++            if not entries:
++                raise ValueError("No valid HAR or NDJSON entries found")
+             return self.ingest_payload(payload=entries, source="har_import")
+ 
+     def _query_rows(

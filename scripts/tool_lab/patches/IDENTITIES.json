@@ -1,0 +1,29 @@
+[
+  {
+    "provider": "reqable",
+    "source_relative_path": "src/reqable_mcp/server.py",
+    "before_physical_sha256": "08f9335f71987dc81d893452db0482054329a6fd3f962e51dc141ad999b15505",
+    "after_physical_sha256": "9d500fa889c18a7602ed700c6225d78d2805238754eba4c28b19cba5d1551d16",
+    "before_lf_sha256": "22df260c0b2f3fd158b8596209888d513a88bd7a4dcabf348fb9fafa99c5955a",
+    "after_lf_sha256": "693a469d60f604d9950e905276670694c815018ec8a5258bc50afe1a3917a4ce",
+    "license": "MIT"
+  },
+  {
+    "provider": "reqable",
+    "source_relative_path": "src/reqable_mcp/storage.py",
+    "before_physical_sha256": "72522a9729dbf9c0ecd0e1fad021f94e4291da5c8426689edd76ce55c1a0d492",
+    "after_physical_sha256": "be6275233eeffaa229ac9603da3e7d20b0395b19e6b0e5924c056d65e2ec72c5",
+    "before_lf_sha256": "71fed1b08dcc4fa69eebc3671f37c0e73e1155b25b845f690285712c759111aa",
+    "after_lf_sha256": "e6b1b5d956706924d0ee0bae442f26f41e1e89c2017a1b56def11db9c886309c",
+    "license": "MIT"
+  },
+  {
+    "provider": "frida",
+    "source_relative_path": "src/frida_mcp/cli.py",
+    "before_physical_sha256": "2d9393cdea14fe1b9f251ba33287429d233693514762058d004ca22df3fc924d",
+    "after_physical_sha256": "5b15a37dd700f788ef78f3324f5ab86fe51ea2781395be7abc223ec0ffd33552",
+    "before_lf_sha256": "006a28c620b222ee336dc9d7c704b0f1e9c69d3c408dce444349ab5d62c022d0",
+    "after_lf_sha256": "fe8f10beda18b73a584562b46d85e80295dbd8c43b7f1538b79f81658b42e5e5",
+    "license": "MIT"
+  }
+]

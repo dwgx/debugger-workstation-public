@@ -4,6 +4,8 @@
 [English](README.md) · **简体中文** · [日本語](README.ja.md) · [한국어](README.ko.md)
 <!-- I18N:END -->
 
+[Reproducible tool labs](docs/TOOL_LAB.md) · [Tool inventory and version probes](docs/TOOL_SMOKE.md) · [Public source releases](https://github.com/dwgx/debugger-workstation-public/releases)
+
 ## 从这里开始
 
 1. **先 clone**，再读 [`AGENTS.zh-CN.md`](AGENTS.zh-CN.md)（英文权威版 [`AGENTS.md`](AGENTS.md)）——AI 的权威契约：当前任务范围、MCP 边界与证据门。
@@ -95,7 +97,7 @@ powershell -File scripts\download-tools.ps1 -Apply
 
 - **代码与配置 — MIT**([LICENSE](LICENSE))。涵盖 `mcp/debugger-router`、`mcp/bin`、`scripts`、`manifests`、`skills`、`templates`、代理契约(`AGENTS*.md`、`CLAUDE.md`、`GEMINI.md`)以及所有非 Markdown 文件。fork 后可以闭源。
 - **文档散文 — CC BY-SA 4.0**([LICENSE-docs](LICENSE-docs))。涵盖 `docs/`(含 `docs/i18n/`)、`README*.md`、`DISCLAIMER*.md`、`notes/` 等散文。署名后可复用,但派生文档须沿用同一许可。
-- 第三方工具与第三方 MCP 的版权和许可归各上游所有,本仓库不再分发其代码或二进制。详见 [DISCLAIMER.zh-CN.md](DISCLAIMER.zh-CN.md)。
+- 第三方工具与第三方 MCP 的版权和许可归各上游所有,已审查的源码补丁保留原许可声明；单独许可的源码资产见公开分发清单，工具二进制仍从官方获取。详见 [DISCLAIMER.zh-CN.md](DISCLAIMER.zh-CN.md)。
 
 ## 贡献与安全
 

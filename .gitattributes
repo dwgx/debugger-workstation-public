@@ -55,3 +55,31 @@ patches/mcp-wireshark-0.5.0-errors/error-results.patch -text
 /evidence/profile-receipts/touch-only-stale/artifacts/probe-output.txt -text
 /evidence/profile-receipts/attempts/attempt-20261112-101/failure.log -text
 /evidence/profile-receipts/attempts/attempt-20261112-102/probe-output.txt -text
+
+# Published negative fixtures and frozen Router controls retain their original bytes.
+/evidence/profile-receipts/v2-adv-all-kinds-replaced.json -text
+/evidence/profile-receipts/v2-adv-bool-as-int.json -text
+/evidence/profile-receipts/v2-adv-deleted-parent-pointer.json -text
+/evidence/profile-receipts/v2-adv-dirty-no-patch.json -text
+/evidence/profile-receipts/v2-adv-duplicate-bad-first.json -text
+/evidence/profile-receipts/v2-adv-duplicate-bad-last.json -text
+/evidence/profile-receipts/v2-adv-fake-semantic-negative.json -text
+/evidence/profile-receipts/v2-adv-not-run-cancelled.json -text
+/evidence/profile-receipts/v2-adv-oracle-changed-old-digest.json -text
+/evidence/profile-receipts/v2-adv-wrong-attempt-artifact.json -text
+/tests/router_acceptance/acceptance_harness.py -text
+/tests/router_acceptance/fake_backend.py -text
+/tests/router_acceptance/old_server.py -text
+
+# The preserved-source verifier compares these upstream evidence bytes exactly.
+/manifests/source-releases/yaraflux-a4deb318d85c.json -text
+/source-releases/yaraflux/LICENSE.upstream -text
+/source-releases/yaraflux/PRESERVATION-NOTICE.txt -text
+
+# Preserve source patch identities and original license bytes.
+/patches/mcp-wireshark-0.5.0-handler-errors/PATCH.diff -text
+/patches/mcp-wireshark-0.5.0-handler-errors/LICENSE-UPSTREAM.txt -text
+/scripts/tool_lab/patches/frida.patch -text
+/scripts/tool_lab/patches/reqable.patch -text
+/patches/apktool-mcp-server-0.1.0-explicit-errors/upstream-source.patch -text
+/patches/apktool-mcp-server-0.1.0-explicit-errors/LICENSE.upstream -text

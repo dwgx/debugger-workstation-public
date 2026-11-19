@@ -1,0 +1,11 @@
+--- a/src/frida_mcp/cli.py
++++ b/src/frida_mcp/cli.py
+@@ -170,7 +170,7 @@
+         else:
+             device = frida.get_usb_device()
+             
+-        pid = device.spawn(program, args=args or [])
++        pid = device.spawn([program, *(args or [])], stdio="pipe")
+         
+         return {"pid": pid}
+     except Exception as e:

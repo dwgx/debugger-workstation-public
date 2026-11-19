@@ -4,6 +4,8 @@
 **English** · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md)
 <!-- I18N:END -->
 
+[Reproducible tool labs](docs/TOOL_LAB.md) · [Tool inventory and version probes](docs/TOOL_SMOKE.md) · [Public source releases](https://github.com/dwgx/debugger-workstation-public/releases)
+
 ## Start here
 
 1. **Clone**, then read [`AGENTS.md`](AGENTS.md) — the authoritative AI contract for current task scope, MCP boundaries and evidence gates.
@@ -200,7 +202,7 @@ Two licenses, split by what the file is:
 
 - **Code, configuration, and the agent contract — MIT** ([LICENSE](LICENSE)). Covers `mcp/debugger-router`, `mcp/bin`, `scripts`, `manifests`, `skills`, `templates`, `.github`, `AGENTS*.md` / `CLAUDE.md` / `GEMINI.md`, and every non-Markdown file. Fork it and close your fork — nothing here forces you to publish changes.
 - **Documentation prose — CC BY-SA 4.0** ([LICENSE-docs](LICENSE-docs)). Covers `docs/` (including `docs/i18n/`), `README*.md`, `DISCLAIMER*.md`, `notes/`, and the other prose Markdown. Reuse it with attribution; derivative docs stay under the same license.
-- Third-party tools and third-party MCPs remain under the copyright and license of their respective upstreams; this repo redistributes none of their code or binaries. See [DISCLAIMER.md](DISCLAIMER.md).
+- Third-party tools and third-party MCPs remain under the copyright and license of their respective upstreams; reviewed source-context patches retain their upstream notices. Selected licensed source assets are listed in the publication catalog; tool binaries are obtained from official sources. See [DISCLAIMER.md](DISCLAIMER.md).
 
 ## Contributing & security
 
