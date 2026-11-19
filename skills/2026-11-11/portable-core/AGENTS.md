@@ -1,10 +1,10 @@
 OWNER: parent (took over stalled PackageDesign slice) | package/AGENTS.md
-# AGENTS — harness pointer for debuggerstation-selfdeploy
+# AGENTS — harness pointer for portable-core
 
 When an AI is handed a debugger-station repo, or when a debugger skill / tool / env
 fails, read `SKILL.md` first, then `SELF-DEPLOY.md` (one-shot deploy) or
-`SELF-REPAIR.md` + `FIX-KB/*.tsv` (self-diagnosis). Run `tests/verify.py` before
-claiming anything works.
+`SELF-REPAIR.md` + `FIX-KB/*.tsv` (self-diagnosis). Run `tests/verify.py` and
+`tests/entry_checks.py` before claiming anything works.
 
 Boundaries (inherit machine hard floor): product trees READ-ONLY unless a scoped
 Worker is named; 4 PRIVATE repos never change visibility; no credential values /

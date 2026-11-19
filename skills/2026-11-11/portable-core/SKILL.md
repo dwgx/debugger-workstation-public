@@ -13,9 +13,13 @@ metadata:
 
 This skill is the **portable CORE**, not the station router. The 2 machine skills
 (`debugger-workstation`, `debugger-review`) are station-bound: their authoritative
-files live in `D:/Software/Tool/WorkStation/debugger/` (`.agent/*`, `manifests/*.json`,
+files live under the station's `debugger/` dir (`.agent/*`, `manifests/*.json`,
 `scripts/bootstrap.ps1`, MCP `debugger-router`). Revive those at the station via a
 scoped Worker; ship THIS package to any AI harness.
+
+**Canonical install name: `portable-core`.** Frontmatter `name` must equal the install
+dir name. `debuggerstation-selfdeploy` is the 2026-11-11 research-run alias — archived
+only; never an install target, never a live command argument.
 
 ## Trigger branches (one per branch, front-loaded, per writing-for-agents S7)
 - **Deploy** — AI is handed the repo → read `SELF-DEPLOY.md`, run ONE env self-check, ONE clone+verify.
@@ -34,7 +38,7 @@ scoped Worker; ship THIS package to any AI harness.
 ## Spec conformance (agentskills.io/specification, read 2026-11-11)
 - Frontmatter: `name` (1-64 lowercase/digits/hyphens, no `--`, equal to the install dir name), `description` (1-1024: what + when + NOT-for), `license: MIT`, `compatibility` (≤500 chars), `metadata` as a **string→string** map — `metadata.version` and `metadata.last-reviewed` are strings by spec, never an int or a bare date.
 - Progressive disclosure: frontmatter ~100 tokens → this body <5000 tokens / <500 lines → `references/` + `scripts/` loaded on demand; every reference from THIS file is one level deep.
-- Validate after install: `skills-ref validate ./debuggerstation-selfdeploy` (see `references/INSTALL.md`).
+- Validate after install: `skills-ref validate ./portable-core` (see `references/INSTALL.md`).
 
 ## Context pointers (all one level from this skill root)
 - `AGENTS.md` — harness pointer.
@@ -45,10 +49,16 @@ scoped Worker; ship THIS package to any AI harness.
 - `references/INSTALL.md` — install dir naming + `skills-ref validate`.
 - `references/PRIOR-WAVE.md` — earlier-wave artifacts, by pointer only.
 - `scripts/verify.py` — re-runnable verifier entry for harnesses that only load `scripts/`.
+- `tests/entry_checks.py` — install contract: the four fake-green counterexamples (missing `references/INSTALL.md`, dir name ≠ `name`, live absolute research path, stale publish SHA) on temp copies.
 - `README.md` / `README.zh-CN.md` — zh/en reciprocal intro.
 - `LICENSE` — MIT.
 
 ## Verify
+From the clone root (`repo_root` = the dir holding `skills/`):
 ```sh
-cd "F:/GENESIS-ARCHIVE/10-STORE/12-RESEARCH-RUNS/debuggerstation-skill-revival-ai-selfdeploy-20261111" && python -X utf8 package/verify.py
+python -X utf8 skills/2026-11-11/portable-core/verify.py
 ```
+Exit 0 + `VERDICT=PASS` is the package contract. The install contract is separate:
+`tests/entry_checks.py` runs the four fake-green counterexamples (missing
+`references/INSTALL.md`, dir name ≠ frontmatter `name`, live absolute research path,
+stale publish SHA) on temp copies. See `references/VERIFY.md`.

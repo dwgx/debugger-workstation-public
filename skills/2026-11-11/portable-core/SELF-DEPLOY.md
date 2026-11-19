@@ -8,24 +8,35 @@ OWNER: parent (took over stalled PackageDesign slice) | package/SELF-DEPLOY.md
 
 ## ONE env self-check command (READ-ONLY)
 ```sh
-python -X utf8 -c "import sys,subprocess as s; print('python='+sys.version.split()[0]); print('git='+s.check_output(['git','--version'],text=True).strip())" && C:/Program Files/Git/usr/bin/timeout.exe 60 git -C F:/GENESIS-ARCHIVE/10-STORE/12-RESEARCH-RUNS/build-weapon-library-20261110/_v4_public_probe rev-parse HEAD
+python -X utf8 -c "import sys,subprocess as s; print('python='+sys.version.split()[0]); print('git='+s.check_output(['git','--version'],text=True).strip())" && git -C . rev-parse HEAD
 ```
-Expected: `python=3.10+`, a `git version` line, HEAD `875cd108a7c9015b4c7501d9f9698183916042e7`.
+Expected: `python=3.10+`, a `git version` line, and the HEAD of the clone you are
+standing in. The SHA is printed, never pinned: a pinned SHA goes stale on the next
+commit and turns a green check into a lie.
 
 ## ONE copy-pasteable clone + verify command
 ```sh
-git clone --depth 1 https://github.com/dwgx/debugger-workstation-public.git _handoff_clone && git -C _handoff_clone rev-parse HEAD && python -X utf8 "F:/GENESIS-ARCHIVE/10-STORE/12-RESEARCH-RUNS/build-weapon-library-20261110/setukou-20261111/v5/publish/verify_publish.py"
+git clone --depth 1 https://github.com/dwgx/debugger-workstation-public.git _handoff_clone && git -C _handoff_clone rev-parse HEAD && python -X utf8 _handoff_clone/skills/2026-11-11/portable-core/verify.py
 ```
-Expected stdout tokens: `PUSHED_SHA=875cd108a7c9015b4c7501d9f9698183916042e7` / `VERDICT=PUBLISHED` (plus `MANIFEST_MATCH=YES`, `NO_FORBIDDEN_CONTENT=YES`, `PRIVATE_TREES_UNCHANGED=YES`, `ROLLBACK_WRITTEN=YES`).
+Expected stdout tokens: `VERDICT=PASS` with `checks_run=9 checks_failed=0`, plus the
+printed clone HEAD. Nothing here needs a research-archive path or a publish SHA:
+every path resolves from the clone you just made.
 
 ## Add the skill to your own harness
-Copy this `package/` dir into the harness skills dir (e.g. `~/.omp/agent/skills/debuggerstation-selfdeploy/`). `SKILL.md` `name` must match the package manifest name exactly (SmartCLI S18, 2026-11-11). Read `AGENTS.md` pointer. **No user-global `mcp-all`** (S1).
+Copy this dir into the harness skills dir as `portable-core`
+(e.g. `~/.omp/agent/skills/portable-core/`). The dir name MUST equal the frontmatter
+`name` (SmartCLI S18, 2026-11-11); `references/INSTALL.md` has the full rule. Read the
+`AGENTS.md` pointer. **No user-global `mcp-all`** (S1). Writing into a live harness
+config is the reader's decision — this package never does it for them.
 
 ## Run the tests
+From the clone root (`repo_root` = the dir holding `skills/`):
 ```sh
-cd "F:/GENESIS-ARCHIVE/10-STORE/12-RESEARCH-RUNS/debuggerstation-skill-revival-ai-selfdeploy-20261111/package" && python -X utf8 tests/verify.py
+python -X utf8 skills/2026-11-11/portable-core/tests/verify.py
+python -X utf8 skills/2026-11-11/portable-core/tests/entry_checks.py
 ```
-Exit 0 + `VERDICT=PASS` required; a negative control (empty `verify_command` FIX-KB row) must go RED.
+Exit 0 + `VERDICT=PASS` required from both. A negative control (empty `verify_command`
+FIX-KB row) must go RED, and a temp copy with `references/INSTALL.md` deleted must FAIL.
 
 ## What an AI MAY / MAY NOT do
 MAY: read repo + intros + `SATURATION.tsv` + `RELEASE-GATE-STATUS.md` + FIX-KB; re-run read-only verifiers; draft local reviewable files; cite dated sources.

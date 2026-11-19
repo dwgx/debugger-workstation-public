@@ -1,5 +1,5 @@
 OWNER: parent (took over stalled PackageDesign slice) | package/README.md
-# debuggerstation-selfdeploy — portable skill package
+# portable-core — portable skill package
 
 [English](README.md) · [简体中文](README.zh-CN.md)
 
@@ -16,13 +16,17 @@ One entry (`SKILL.md` → `SELF-DEPLOY.md`), one `tests/verify.py`, a `FIX-KB/` 
 
 ## 3-step AI handoff
 1. Read `SKILL.md`, then `SELF-DEPLOY.md` (`[NOT EXECUTED]` banner).
-2. Run ONE env self-check + ONE clone+verify; expect `PUSHED_SHA=875cd108… / VERDICT=PUBLISHED`.
-3. Run `tests/verify.py`; on failure use `SELF-REPAIR.md` + `FIX-KB/*.tsv`, dry-run first, re-test, rollback if exit≠0.
+2. Run ONE env self-check + ONE clone+verify; the clone HEAD is printed, never pinned — expect `VERDICT=PASS` from the verifier.
+3. Run `tests/verify.py`, then `tests/entry_checks.py` (install contract); on failure use `SELF-REPAIR.md` + `FIX-KB/*.tsv`, dry-run first, re-test, rollback if exit≠0.
 
 ## Status / licence
-`RELEASE_GATE=RED` (295/27/268). Dual licence intended MIT(code)/CC BY-SA 4.0(docs); remote currently `NOASSERTION` — a known gap, not a licence grant. Prior-wave assets by pointer: `public-repo-best-handoff-20261111/assets/{repo-topology.svg,claim-status.svg,ai-entry.mmd}`, `deploy/AGENT-ENTRY.md`, `i18n/README*.md`.
+`RELEASE_GATE=RED` (295/27/268). `LICENSE` in this package is the MIT text: code, configuration and the agent contract are MIT, and documentation prose in the repo is CC BY-SA 4.0 (`LICENSE-docs`). GitHub's repository metadata still reports `NOASSERTION` — that is metadata lag, not a different licence. Prior-wave assets are archived research-run provenance and are not shipped in this clone: `public-repo-best-handoff-20261111/assets/{repo-topology.svg,claim-status.svg,ai-entry.mmd}`, `deploy/AGENT-ENTRY.md`, `i18n/README*.md`.
+
+## Name
+Canonical install name is **`portable-core`** — frontmatter `name` must equal the install dir name. `debuggerstation-selfdeploy` is the 2026-11-11 research-run alias: archived only, never an install target, never a live command argument.
 
 ## Verify
+From the clone root (`repo_root` = the dir holding `skills/`):
 ```sh
-cd "F:/GENESIS-ARCHIVE/10-STORE/12-RESEARCH-RUNS/debuggerstation-skill-revival-ai-selfdeploy-20261111" && python -X utf8 package/verify.py
+python -X utf8 skills/2026-11-11/portable-core/verify.py
 ```

@@ -28,7 +28,7 @@ flowchart TD
 ```
 
 ## Symptom taxonomy (windows-agent-doctor S17, 2026-11-11)
-`shell` (bash vs PowerShell vs timeout.exe), `encoding` (`python -X utf8`, CJK TSV), `glob` (junction / path separators), `exit codes` (negation-regex false positives, P09), `tool freshness` (manifest + version + hash, S2 checklist 2).
+`shell` (bash vs PowerShell vs timeout.exe), `encoding` (`python -X utf8`, CJK TSV), `glob` (junction / path separators), `exit codes` (negation-regex false positives, P09), `transport` (`IncompleteRead(0 bytes read)` / upstream abort → same-name RESUME with incremental landing, never a twin re-dispatch), `tool freshness` (manifest + version + hash, S2 checklist 2).
 
 ## Official vs community
 - OFFICIAL.tsv: HEAD files / AGENTS.md / prior receipts / official README — `official-verified`.
