@@ -108,6 +108,27 @@ jobs:
           $ps7 = Join-Path $PSHOME 'pwsh.exe'
           python -X utf8 -B "$source/tests/installation_closure/test_driver.py" --source $source --release-zip $zip --output-root "$work/results" --shell "ps51=$ps51" --shell "ps7=$ps7"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Cache freshness and staging ownership (PowerShell 5.1 and 7)
+        shell: pwsh
+        run: |
+          $work = Join-Path $env:RUNNER_TEMP ('cache-restore-' + [guid]::NewGuid().ToString('N'))
+          New-Item -ItemType Directory -Path $work | Out-Null
+          $sevenzip = 'C:/Program Files/7-Zip/7z.exe'
+          python -X utf8 -B tests/make_restore_cache_fixtures.py --sevenzip $sevenzip --output "$work/fixtures"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Remove-Item Env:PSModulePath -ErrorAction SilentlyContinue
+          $shells = @(
+            (Join-Path $env:WINDIR 'System32/WindowsPowerShell/v1.0/powershell.exe'),
+            (Join-Path $PSHOME 'pwsh.exe')
+          )
+          $n = 0
+          foreach ($exe in $shells) {
+            $n++
+            & $exe -NoProfile -NonInteractive -File tests/restore-from-cache.regress.ps1 -ScriptPath scripts/restore-from-cache.ps1 -WorkDir "$work/shell-$n" -ArchivesDir "$work/fixtures/archives"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            & $exe -NoProfile -NonInteractive -File tests/restore-from-cache.cleanup.regress.ps1 -ScriptPath scripts/restore-from-cache.ps1 -WorkDir "$work/cleanup-$n"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
       - name: Resolve-locale hints
         shell: pwsh
         run: |
