@@ -1,4 +1,4 @@
-# Current closeout candidate — 2026-11-19
+# Current maintenance — 2026-11-19
 
 This page separates the current source layer, dated execution evidence and pending
 acceptance. It is not a release receipt and does not replace historical verdicts
@@ -39,8 +39,21 @@ Do not add or substitute these denominators.
 | 2026-11-19 MCP SDK comparison | Wire 6/6 and descriptors 33/33 in each of the two tested SDK environments, including 1.30 | Protocol/descriptor coverage; not all backend tools. |
 | 2026-11-19 original 7-Zip wrapper | Real positive and negative cases completed | Only the exercised wrapper/tool path. |
 | 2026-11-19 E02_01 | 17/17 on frozen skill inputs | Does not cover subsequent Skill edits or changed hashes. |
-| Current integration, clean archive | **PENDING final installation receipt** | Earlier 45/45 must not be copied forward as this result. |
+| 2026-11-19 clean archive at `9b69579` | 785 files; **45/45 PASS**, no FAIL/BLOCKED | Actual PowerShell 5.1 and 7. Layout/script closure with tools and Router venv skipped; this is not full runtime acceptance. |
 | Current edited skills in OMP 19 | Source/installed package checks, 22 copied payloads and three actual canonical reads passed on 2026-11-19 | Mechanical loader acceptance only; no new model call. Both unrelated global-alias warnings were retained. |
+
+The new archive SHA-256 is
+`c9ae0e6442e014f4320c6f739e72b35527c96b65f1c1eed30830047059ea1424`;
+its 45-case report SHA-256 is
+`8de4373fd5769d0732b40c9f765ff5d6210140f2ef66fd772aa69cb8e288c64f`.
+The first archive's 41/45 receipt remains retained. Seven hash-bound fixture
+paths now preserve their original bytes through Git checkout and archive;
+receipt digests and validators were unchanged.
+[CI run 44538403203](https://github.com/dwgx/debugger-workstation-public/actions/runs/44538403203)
+also passed all five jobs at that commit, including archive installation, cache
+regressions on both shells, and the 11-case mocked cleanup suite. CI retains
+bounded raw evidence artifacts for 14 days. Later documentation-only commits
+do not change which archive the above local receipt exercised.
 
 The [Wireshark error-status patch](../patches/mcp-wireshark-0.5.0-errors/README.md)
 also passed 19 selected unit cases and verification through the original live
