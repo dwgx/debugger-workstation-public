@@ -1,0 +1,303 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:debugger-workstation:run-receipt.v2",
+  "title": "Debugger Workstation run receipt v2 (product gate)",
+  "description": "Strict envelope for one execution attempt under the round-2 evidence contract. Every acceptance RULE lives outside this document, in the external profile/oracle anchor named by oracle.anchor_path; the receipt carries observations only. It cannot declare a check kind, an expected exit, a required set or an assertion: those are frozen in the anchor. Unknown MAJOR schema_version MUST NOT be interpreted as success. schema_version must match the schema identity ($id) actually used to validate. This schema references capabilities.v1 / probe-artifact@1 by id only; it does not replace them.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "attempt_id",
+    "parent_attempt_id",
+    "profile_id",
+    "profile_digest",
+    "source",
+    "package",
+    "subject",
+    "runtime",
+    "session",
+    "test_case_id",
+    "capability_ids",
+    "oracle",
+    "invocation",
+    "execution",
+    "checks",
+    "artifacts",
+    "result",
+    "limitations",
+    "next_step"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^run-receipt\\.(0|[1-9][0-9]*)$",
+      "description": "run-receipt.<major>. The verifier accepts only a major equal to the schema $id it was given; major 2 is the product gate."
+    },
+    "run_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,127}$" },
+    "attempt_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,127}$" },
+    "parent_attempt_id": {
+      "type": ["string", "null"],
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,127}$",
+      "description": "null on a first attempt. The value is not trusted: it must equal the parent recorded in the frozen anchor inventory for this attempt_id."
+    },
+    "profile_id": {
+      "type": "string",
+      "enum": ["public-core", "native-fixture", "web-fixture", "release-candidate"]
+    },
+    "profile_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "Must equal the digest of the profile definition frozen in the anchor (id/version/platforms/capabilities)."
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repo", "commit", "dirty", "manifest_sha256", "patch_sha256"],
+      "properties": {
+        "repo": { "type": "string", "minLength": 1 },
+        "commit": { "type": "string", "pattern": "^[0-9a-f]{7,40}$" },
+        "dirty": { "type": "boolean" },
+        "manifest_sha256": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "patch_sha256": {
+          "type": ["string", "null"],
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "description": "Non-null whenever dirty is true: HEAD alone is insufficient provenance."
+        }
+      },
+      "if": { "properties": { "dirty": { "const": true } }, "required": ["dirty"] },
+      "then": { "properties": { "patch_sha256": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" } } },
+      "else": { "properties": { "patch_sha256": { "type": "null" } } }
+    },
+    "package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "identity", "sha256"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["clean-checkout", "archive"] },
+        "identity": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input_type", "content_sha256", "size_bytes", "fixture_id", "fixture_version", "locator"],
+      "properties": {
+        "input_type": { "type": "string", "minLength": 1 },
+        "content_sha256": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "size_bytes": { "type": "integer", "minimum": 0 },
+        "fixture_id": { "type": "string", "minLength": 1 },
+        "fixture_version": { "type": "string", "minLength": 1 },
+        "locator": { "type": "string", "minLength": 1, "description": "Locator only; never content identity." }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["os", "arch", "shell", "interpreter", "backend", "frontend_client"],
+      "properties": {
+        "os": { "type": "string", "minLength": 1 },
+        "arch": { "type": "string", "minLength": 1 },
+        "shell": { "type": "string", "minLength": 1 },
+        "interpreter": { "type": "string", "minLength": 1 },
+        "backend": { "type": ["string", "null"] },
+        "frontend_client": { "type": ["string", "null"] }
+      }
+    },
+    "session": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["router_instance", "session_id", "generation", "backend", "readback_target_identity"],
+      "properties": {
+        "router_instance": { "type": "string", "minLength": 1 },
+        "session_id": { "type": "string", "minLength": 1 },
+        "generation": { "type": "integer", "minimum": 0 },
+        "backend": { "type": "string", "minLength": 1 },
+        "readback_target_identity": { "type": "string", "minLength": 1 }
+      }
+    },
+    "test_case_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{1,63}$" },
+    "capability_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$" },
+      "description": "Ids from capabilities.v1. Must equal the capabilities frozen in the anchor profile."
+    },
+    "oracle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["anchor_path", "anchor_sha256", "version", "assertion_ids", "covers", "independence"],
+      "properties": {
+        "anchor_path": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$",
+          "description": "Path to the external anchor file, relative to the export root. Component-checked."
+        },
+        "anchor_sha256": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "description": "Digest of the anchor FILE bytes. Recomputed from disk; the receipt cannot assert it."
+        },
+        "version": { "type": "string", "minLength": 1, "description": "Must equal anchor.oracle_version." },
+        "assertion_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Must equal the assertion ids frozen in the anchor."
+        },
+        "covers": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "independence": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stated independence limitation; the anchor MUST be fixed before the run."
+        }
+      }
+    },
+    "invocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command", "args", "cwd", "env_keys", "authorization_ref", "redacted"],
+      "properties": {
+        "command": { "type": "string", "minLength": 1 },
+        "args": { "type": "array", "items": { "type": "string" } },
+        "cwd": { "type": "string", "minLength": 1 },
+        "env_keys": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "authorization_ref": { "type": "string", "minLength": 1 },
+        "redacted": { "type": "boolean", "const": true, "description": "Secret values are never recorded." }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "started_utc",
+        "finished_utc",
+        "expected_steps",
+        "completed_steps",
+        "observed_via",
+        "observed_exit",
+        "expected_exit",
+        "timeout_s",
+        "cancelled",
+        "cleanup",
+        "terminal_state",
+        "backend_executed"
+      ],
+      "properties": {
+        "started_utc": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$" },
+        "finished_utc": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$" },
+        "expected_steps": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Must equal the frozen anchor execution_contract.required_steps; the receipt cannot restate the plan."
+        },
+        "completed_steps": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "observed_via": {
+          "type": "string",
+          "enum": ["runner", "subprocess", "request", "reused", "replayed", "historical_reported"]
+        },
+        "observed_exit": { "type": ["integer", "null"], "description": "bool is not an integer here." },
+        "expected_exit": { "type": "integer", "description": "Must equal the frozen anchor exit contract; may be nonzero. Never coerced to 0." },
+        "timeout_s": { "type": "integer", "minimum": 0 },
+        "cancelled": { "type": "boolean" },
+        "cleanup": { "type": "string", "enum": ["converged", "not_converged", "not_applicable"] },
+        "terminal_state": { "type": "string", "enum": ["exited", "timeout", "cancelled", "interrupted", "not_run"] },
+        "backend_executed": { "type": "boolean", "description": "false when only an evaluator or utime ran; must not earn an execution pass." }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "status", "artifact", "source_status", "observed"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{1,63}$" },
+          "status": {
+            "type": "string",
+            "enum": ["passed", "failed", "error", "not_run", "unsupported", "unknown", "interrupted", "blocked", "skipped"],
+            "description": "Declared status can only LOWER a recomputed pass, never raise one."
+          },
+          "artifact": { "type": ["string", "null"] },
+          "source_status": {
+            "type": ["string", "null"],
+            "description": "Native runner status preserved verbatim: DRIFT / PREREQ / TOOL-FAULT / FLAKY / SKIP / NOT RUN."
+          },
+          "observed": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "parser": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Versioned parser used to derive facts from the artifact bytes. Facts themselves are NOT accepted from the receipt."
+              }
+            },
+            "description": "Observation handle only. kind, expected and facts are not receipt-owned in v2."
+          }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256", "size_bytes", "media_type", "purpose", "attempt_id", "reused", "mtime_utc"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Relative to the export root; component-checked, never string-prefix matched. Current-attempt artifacts must live under attempts/<attempt_id>/."
+          },
+          "sha256": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+          "size_bytes": { "type": "integer", "minimum": 0 },
+          "media_type": { "type": "string", "minLength": 1 },
+          "purpose": { "type": "string", "minLength": 1 },
+          "attempt_id": { "type": "string", "minLength": 3, "description": "Producer attempt. Must exist in the frozen inventory; the current attempt for new bytes." },
+          "reused": { "type": "boolean", "description": "true only for preserved prior-attempt bytes that the frozen inventory records." },
+          "mtime_utc": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$" }
+        }
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verdict", "reason", "native_status", "required_check_ids"],
+      "properties": {
+        "verdict": {
+          "type": "string",
+          "enum": ["pass", "fail", "blocked", "not_run", "outcome_unknown", "incomplete"],
+          "description": "Declared verdict; it can only lower the recomputed verdict."
+        },
+        "reason": { "type": "string", "minLength": 1 },
+        "native_status": { "type": ["string", "null"] },
+        "required_check_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Must equal the frozen anchor required set. The denominator is the anchor's unique set, never what arrived."
+        }
+      }
+    },
+    "limitations": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "next_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command", "prerequisites"],
+      "properties": {
+        "command": { "type": "string", "minLength": 1 },
+        "prerequisites": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    }
+  }
+}

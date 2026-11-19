@@ -1,0 +1,1 @@
+probe ok: imports=[KERNEL32.dll] entrypoint=0x140001000

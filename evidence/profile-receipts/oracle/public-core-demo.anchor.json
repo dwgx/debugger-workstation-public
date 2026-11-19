@@ -1,0 +1,134 @@
+{
+  "anchor_version": "profile-oracle-anchor@1",
+  "oracle_version": "public-core-demo-oracle-2",
+  "frozen_at_utc": "2026-11-12T00:00:00Z",
+  "note": "Frozen profile/oracle anchor for the run-receipt.2 demo fixtures. Required ids, per-check kind/steps/exit contract, assertion payload and the run/attempt inventory live here, outside every receipt. DEMO ONLY: no real tool or backend was executed.",
+  "profile": {
+    "id": "public-core",
+    "version": "2.0.0",
+    "platforms": [
+      "windows-x64"
+    ],
+    "capabilities": [
+      "native.static.demo"
+    ]
+  },
+  "profile_digest": "sha256:25b0e4e84e8e5582de986dec738a19e7f3e00dd33bdbaf6c389b72b70e81cf10",
+  "required_layers": [
+    "integrity",
+    "execution",
+    "semantic",
+    "negative"
+  ],
+  "required_check_ids": [
+    "I-01",
+    "E-01",
+    "E-02",
+    "S-01",
+    "N-01"
+  ],
+  "parsers": {
+    "probe-output-text@1": {
+      "grammar": "^probe ok: imports=\\[(<dll>[, <dll>]*)\\] entrypoint=(0x[0-9a-f]{6,16})$",
+      "facts": {
+        "imports": "array<string>",
+        "entrypoint": "string"
+      }
+    }
+  },
+  "assertions": {
+    "A-IMPORTS": {
+      "imports": [
+        "KERNEL32.dll"
+      ]
+    },
+    "A-ENTRYPOINT": {
+      "entrypoint": "0x140001000"
+    },
+    "A-IMPORTS-FAKE": {
+      "imports": [
+        "KERNEL32.dll",
+        "FAKE.dll"
+      ]
+    }
+  },
+  "execution_contract": {
+    "required_steps": [
+      "prepare",
+      "invoke-backend",
+      "collect",
+      "evaluate",
+      "cleanup",
+      "publish"
+    ],
+    "expected_exit": 1,
+    "backend_executed": true,
+    "terminal_state": "exited",
+    "cancelled": false,
+    "cleanup": [
+      "converged",
+      "not_applicable"
+    ]
+  },
+  "checks": [
+    {
+      "id": "I-01",
+      "kind": "integrity",
+      "artifact_path": "attempts/attempt-20261112-001/probe-output.txt",
+      "artifact_sha256": "sha256:e0ea9ed3f37820bf43664dd53f6259a443dfd5086a564257310cd2060810f876",
+      "artifact_size_bytes": 56
+    },
+    {
+      "id": "E-01",
+      "kind": "execution",
+      "asserts": [
+        "steps"
+      ]
+    },
+    {
+      "id": "E-02",
+      "kind": "execution",
+      "asserts": [
+        "exit"
+      ]
+    },
+    {
+      "id": "S-01",
+      "kind": "semantic",
+      "artifact_path": "attempts/attempt-20261112-001/probe-output.txt",
+      "parser": "probe-output-text@1",
+      "assertion_ids": [
+        "A-IMPORTS",
+        "A-ENTRYPOINT"
+      ]
+    },
+    {
+      "id": "N-01",
+      "kind": "negative",
+      "artifact_path": "attempts/attempt-20261112-001/probe-output.txt",
+      "parser": "probe-output-text@1",
+      "assertion_ids": [
+        "A-IMPORTS-FAKE"
+      ],
+      "must_fail": [
+        "A-IMPORTS-FAKE"
+      ]
+    }
+  ],
+  "attempts": [
+    {
+      "attempt_id": "attempt-20261112-001",
+      "parent_attempt_id": null,
+      "outcome": "pass",
+      "artifacts": [
+        {
+          "path": "attempts/attempt-20261112-001/probe-output.txt",
+          "sha256": "sha256:e0ea9ed3f37820bf43664dd53f6259a443dfd5086a564257310cd2060810f876",
+          "size_bytes": 56
+        }
+      ]
+    }
+  ],
+  "selected_terminal_attempt": "attempt-20261112-001",
+  "self_sha256": "sha256:cc2cbddd4b4dc18b9d99537105f60b5841fe865098e0aa82901ca982451bedea"
+}
