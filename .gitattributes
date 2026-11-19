@@ -45,3 +45,13 @@ evidence/probes/*.log -text
 
 # Patches are distributed with byte identities in their manifest.
 patches/mcp-wireshark-0.5.0-errors/error-results.patch -text
+
+# Frozen profile fixture inputs are bound by receipt/oracle SHA-256.
+# Preserve their recorded bytes in checkout and git archive.
+/evidence/profile-receipts/oracle-public-core-demo.json -text
+/evidence/profile-receipts/oracle/public-core-demo-retry.anchor.json -text
+/evidence/profile-receipts/retry-preserves-failure/artifacts/attempt-1-failure.log -text
+/evidence/profile-receipts/retry-preserves-failure/artifacts/attempt-2-output.txt -text
+/evidence/profile-receipts/touch-only-stale/artifacts/probe-output.txt -text
+/evidence/profile-receipts/attempts/attempt-20261112-101/failure.log -text
+/evidence/profile-receipts/attempts/attempt-20261112-102/probe-output.txt -text

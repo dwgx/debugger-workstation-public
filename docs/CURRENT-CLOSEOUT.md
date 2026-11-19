@@ -50,6 +50,15 @@ These execution records belong to their dated audit evidence sets; this summary
 does not make private receipt paths public prerequisites. Record the source hash,
 command, environment and result with each final acceptance receipt.
 
+## Resource cleanup correction
+
+The CDP node collector now completes its owned browser/Chrome cleanup before
+emitting a process-terminating result. Frida runtime facts now covers partial
+staging/spawn/attach acquisition with the same cleanup guard. Eleven bounded
+mock lifecycle cases passed; the unchanged original wrappers failed seven of
+those cases. These are controlled resource-ownership tests, not live Chrome,
+Frida, arbitrary process attachment or sample-execution acceptance.
+
 ## Remaining boundaries
 
 - Full-product, public-core, release-candidate and publication acceptance remain

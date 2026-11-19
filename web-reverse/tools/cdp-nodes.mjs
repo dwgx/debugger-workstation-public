@@ -101,6 +101,7 @@ const NODES_EXPR = `(() => {
 
 let chrome = null;
 let browser = null;
+let result;
 try {
   chrome = await launchChrome({ headless: !has('--headed'), tag: 'cdp-nodes', url: 'about:blank', keepProfile: has('--keep-profile') });
   browser = await CDP.connect(chrome.wsUrl);
@@ -115,7 +116,7 @@ try {
 
   const seen = await evalInPage(browser, sessionId, NODES_EXPR);
   const nodes = (seen.nodes || []).slice(0, max);
-  emit({
+  result = {
     ok: true,
     exit: 0,
     url,
@@ -127,13 +128,15 @@ try {
     caveat: 'ONE observation of a LIVE page at one moment. `invalidates_on` says a navigation ' +
             'voids it, and nothing here says the page is stable or that the same bytes would be ' +
             'served to another client.'
-  }, 0);
+  };
 } catch (e) {
-  emit({ ok: false, exit: 2, error: String(e && e.message ? e.message : e), url }, 2);
+  result = { ok: false, exit: 2, error: String(e && e.message ? e.message : e), url };
 } finally {
-  try { if (browser) browser.close(); } catch { /* already gone */ }
+  try { if (browser) await browser.close(); } catch { /* already gone */ }
   try { if (chrome) await chrome.close(); } catch { /* already gone */ }
 }
+// Resource-owning paths must finish finally before emit terminates the process.
+emit(result, result.exit);
 
 function emit(obj, code) {
   process.stdout.write(`${JSON.stringify(obj)}\n`);

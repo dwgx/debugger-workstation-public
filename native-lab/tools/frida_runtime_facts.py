@@ -150,18 +150,25 @@ def main():
     # When --stage-dir is supplied the copy lives there and the caller owns the directory;
     # otherwise it is a fresh %TEMP% dir that this script removes on the way out.
     owned = a.stage_dir is None
-    stage_dir = tempfile.mkdtemp(prefix="fridafacts-") if owned else os.path.abspath(a.stage_dir)
-    os.makedirs(stage_dir, exist_ok=True)
-    staged = os.path.join(stage_dir, os.path.basename(target))
-    shutil.copy2(target, staged)
+    stage_dir = None
+    device = None
+    pid = None
+    session = None
 
     events = []
     result = {}
     done = threading.Event()
-    device = frida.get_local_device()
-    pid = device.spawn([staged])
-    session = device.attach(pid)
     try:
+        # Cover partial acquisition too: copy/spawn/attach may fail after the
+        # owned staging directory or suspended child already exists.
+        stage_dir = tempfile.mkdtemp(prefix="fridafacts-") if owned else os.path.abspath(a.stage_dir)
+        os.makedirs(stage_dir, exist_ok=True)
+        staged = os.path.join(stage_dir, os.path.basename(target))
+        shutil.copy2(target, staged)
+        device = frida.get_local_device()
+        pid = device.spawn([staged])
+        session = device.attach(pid)
+
         def on_message(message, data):
             if message.get("type") == "send":
                 payload = message["payload"]
@@ -212,12 +219,17 @@ def main():
         if export_err:
             result["export_error"] = export_err.get("message")
     finally:
-        for fn in (session.detach, lambda: device.kill(pid)):
+        cleanup = []
+        if session is not None:
+            cleanup.append(session.detach)
+        if device is not None and pid is not None:
+            cleanup.append(lambda: device.kill(pid))
+        for fn in cleanup:
             try:
                 fn()
             except Exception:
                 pass
-        if owned:
+        if owned and stage_dir is not None:
             shutil.rmtree(stage_dir, ignore_errors=True)
 
     write_json(result)

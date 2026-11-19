@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7.1.0
         with:
           python-version: "3.12"
       - name: Validate manifest JSON
@@ -36,6 +36,22 @@ jobs:
         run: python scripts/check_backend_consistency.py
       - name: Eval agent contract
         run: python scripts/eval-agent-contract.py
+      - name: Resource ownership and partial-acquisition cleanup
+        run: python -X utf8 -B tests/resource_cleanup/run.py --source "$GITHUB_WORKSPACE" --output "$RUNNER_TEMP/resource-cleanup" --node node
+      - name: Preserve resource-cleanup evidence
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: resource-cleanup-linux
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/resource-cleanup/INPUTS.json
+            ${{ runner.temp }}/resource-cleanup/RESULTS.json
+            ${{ runner.temp }}/resource-cleanup/runs/**/events.jsonl
+            ${{ runner.temp }}/resource-cleanup/runs/**/result.json
+            ${{ runner.temp }}/resource-cleanup/runs/**/stdout.txt
+            ${{ runner.temp }}/resource-cleanup/runs/**/stderr.txt
 
   guard-no-secrets-or-binaries:
     name: Guard against committed binaries/secrets
@@ -60,7 +76,7 @@ jobs:
           echo "No obvious secrets found."
 
   powershell-syntax:
-    name: PowerShell syntax (Windows)
+    name: Windows installation and cache
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7
@@ -82,7 +98,7 @@ jobs:
           $closure = Get-InstallationClosure -RepoRoot (Get-Location).Path -Mode CI
           $closure.Report | ConvertTo-Json -Depth 6
           if ($closure.Report.status -ne 'READY') { exit 1 }
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7.1.0
         with:
           python-version: "3.12"
       - name: Verify portable entry and counterexamples
@@ -129,6 +145,18 @@ jobs:
             & $exe -NoProfile -NonInteractive -File tests/restore-from-cache.cleanup.regress.ps1 -ScriptPath scripts/restore-from-cache.ps1 -WorkDir "$work/cleanup-$n"
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
+      - name: Preserve Windows regression evidence
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: windows-regression-evidence
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/installation-closure-*/results/report.json
+            ${{ runner.temp }}/installation-closure-*/results/*/logs/*.bin
+            ${{ runner.temp }}/cache-restore-*/**/*.json
+            ${{ runner.temp }}/cache-restore-*/**/*.txt
       - name: Resolve-locale hints
         shell: pwsh
         run: |
