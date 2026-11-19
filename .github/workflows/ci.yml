@@ -30,6 +30,10 @@ jobs:
               except Exception as e:
                   ok=False; print('FAIL', f, e)
           sys.exit(0 if ok else 1)"
+      - name: One-command product demo and adversarial command guards (Linux)
+        run: python -X utf8 -B -m unittest discover -s tests -p test_first_success.py -v
+      - name: Portable APK authored-oracle and isolation regressions (Linux)
+        run: python -X utf8 -B -m unittest discover -s tests -p test_apk_roundtrip.py -v
       - name: Tool smoke semantic regressions
         run: python -X utf8 -B -m unittest discover -s tests -p test_smoke_tools.py -v
       - name: Tool laboratory semantic and lifecycle regressions
@@ -132,10 +136,20 @@ jobs:
           $ps7 = Join-Path $PSHOME 'pwsh.exe'
           python -X utf8 -B "$source/tests/installation_closure/test_driver.py" --source $source --release-zip $zip --output-root "$work/results" --shell "ps51=$ps51" --shell "ps7=$ps7"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: One-command product demo and adversarial command guards (Windows)
+        shell: pwsh
+        run: |
+          python -X utf8 -B -m unittest discover -s tests -p test_first_success.py -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Tool smoke process ownership and version semantics
         shell: pwsh
         run: |
           python -X utf8 -B -m unittest discover -s tests -p test_smoke_tools.py -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Portable APK authored-oracle and isolation regressions (Windows)
+        shell: pwsh
+        run: |
+          python -X utf8 -B -m unittest discover -s tests -p test_apk_roundtrip.py -v
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Tool laboratory regressions on Windows
         shell: pwsh

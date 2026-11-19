@@ -6,6 +6,10 @@ patches and pinned download recipes. Start with a selected provider and retain i
 actual result. The tool inventory, method catalog, successful calls and whole
 product acceptance are separate measurements.
 
+Start with the [one-command, provider-free first success](FIRST-SUCCESS.md) before selecting a complex MCP backend. It runs an actual synthetic PCAP parser and verifies a six-check frozen plan without commercial tools or keys.
+
+The [APKTool original-wrapper build and decode roundtrip](APK_ROUNDTRIP.md) is a separate incremental positive fixture for the previously negative-only APK operations. Its new calls are not silently added to the 142-call historical snapshot.
+
 The [complete 20-backend coverage table](TOOL_LAB_COVERAGE.md) records every configured slot, its exact prerequisites and the different evidence strengths.
 
 ## Start from a clean checkout
