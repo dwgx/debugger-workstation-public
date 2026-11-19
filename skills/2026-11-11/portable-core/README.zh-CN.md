@@ -1,32 +1,28 @@
-OWNER: parent (took over stalled PackageDesign slice) | package/README.zh-CN.md
+OWNER: repository maintainers | portable-core/README.zh-CN.md
 # portable-core — 可移植 skill 包
 
 [English](README.md) · [简体中文](README.zh-CN.md)
 
-一份**本地可审阅的 skill 包**（没推、没装进任何产品树）。给「别人把 repo 发给 AI」时的白话入口。
+随仓库交付的 AI / 人工接手包：复用 clone 或 archive、装入项目 harness、验证包的完整性，
+并排查工具和环境故障。是否安装、是否发布分别需要实际回执，本介绍不预先宣称完成。
 
-## 是什么
-一个入口（`SKILL.md` → `SELF-DEPLOY.md`）、一个 `tests/verify.py`、一个官方+社区修复知识库 `FIX-KB/`、一个 `SELF-REPAIR.md` 自修流程。AI 可以把它加到自己 harness、跑测试、自己排查工具/环境毛病。
+## 开始
 
-## 不是什么
-- 不是 `vrc-dcc` / `vrc-review` / `vrc-world`，不写 VRC overlay（2026-09-19 已停用，硬禁令）。
-- 不是「全部能力可用」：`RELEASE_GATE=RED` / `COMPLETENESS_VERDICT=NOT_COMPLETE`，295 条声明 / 27 条 REAL / 268 个 blockers，包内严格可解析回执 0/27。未验证 ≠ 可用。
-- 不含凭据值 / 原始语料 / `.jsonl` / THINK / Hackerone KB 原文 / 私有树内容。
-- 不是远程部署：push / Pages / 改设置 / 改 visibility 全是 `[NOT EXECUTED]`。
+1. 读 `SKILL.md`，再按 `SELF-DEPLOY.md` 选择已有 clone、archive 或新 clone；不要为了旧清单重复克隆。
+2. 跑包级与入口检查。在本包目录执行：
 
-## AI 三步接手
-1. 读 `SKILL.md`，再读 `SELF-DEPLOY.md`（带 `[NOT EXECUTED]` 横幅）。
-2. 跑一条环境自检 + 一条 clone+verify；clone HEAD 只打印、不写死——期望验证器给出 `VERDICT=PASS`。
-3. 跑 `tests/verify.py`，再跑 `tests/entry_checks.py`（安装契约）；失败就查 `SELF-REPAIR.md` + `FIX-KB/*.tsv`，先 dry-run、再改、再测，exit≠0 就回滚。
-
-## 状态 / 许可
-`RELEASE_GATE=RED`（295/27/268）。包内 `LICENSE` 已提供 MIT 文本：代码、配置和 agent contract 采用 MIT；仓库文档正文采用 CC BY-SA 4.0（`LICENSE-docs`）。已记录的 GitHub 仓库元数据仍显示 `NOASSERTION`，这是元数据识别滞后，不是另一份许可。上一波的图/入口属研究归档来源，不在本 clone 内：`public-repo-best-handoff-20261111/assets/`、`deploy/AGENT-ENTRY.md`、`i18n/README*.md`。
-
-## 名称
-规范安装名是 **`portable-core`**——frontmatter `name` 必须等于安装目录名。`debuggerstation-selfdeploy` 是 2026-11-11 研究轮的别名：只归档，永远不是安装目标，也永远不进活命令。
-
-## Verify
-在 clone 根目录（`repo_root` = 含 `skills/` 的那层）跑：
 ```sh
-python -X utf8 skills/2026-11-11/portable-core/verify.py
+python -X utf8 -B verify.py
+python -X utf8 -B tests/entry_checks.py
 ```
+
+3. 按 `references/INSTALL.md` 复制完整的 `portable-core` 目录。核对 harness 实际源路径、
+   作用域及 SHA-256 与已审阅字节一致。失败时使用 `SELF-REPAIR.md` 与适用的、有日期的 FIX-KB 条目。
+
+包级 PASS 只说明包契约通过，不代表全部工作站工具可用。`SKILL.md` 保留 2026-11-11 的
+发布限制与已退役 VRC 家族边界；`references/VERIFY.md` 解释证据范围及历史输出。
+按 Owner 当前授权范围执行，不继承旧的指定 Worker 限制或其他维护者的个人授权，保留审批与技术门。
+
+支持的安装名是 **`portable-core`**。历史别名 `debuggerstation-selfdeploy` 不是安装目标。
+凭据、私有语料和私有树内容不进入公开产物。包内 `LICENSE` 提供 MIT 文本；仓库文档条款见
+根目录的 `LICENSE-docs`。

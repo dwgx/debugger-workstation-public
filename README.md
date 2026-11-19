@@ -6,26 +6,30 @@
 
 ## Start here
 
-1. **Clone**, then read [`AGENTS.md`](AGENTS.md) — the authoritative AI contract (ask-then-act, stop lines).
+1. **Clone**, then read [`AGENTS.md`](AGENTS.md) — the authoritative AI contract for current task scope, MCP boundaries and evidence gates.
 2. **Dry run only:** `pwsh scripts/bootstrap.ps1 -InstallRoot "D:\Tool\debugger"` — prints the plan, writes and downloads nothing.
 3. **2026-11-11 evidence release:** [`releases/2026-11-11-full-library/README.md`](releases/2026-11-11-full-library/README.md) and its [`RELEASE-GATE-STATUS.md`](releases/2026-11-11-full-library/RELEASE-GATE-STATUS.md) — `RELEASE_GATE=RED`, `COMPLETENESS_VERDICT=NOT_COMPLETE`, **268 blockers in that historical classification**; publishing does not change its verdict. Its 295 rows are inventory claims, not 295 runnable tools.
-4. **Skills:** [`skills/2026-11-11/`](skills/2026-11-11/) — portable core + station routers. The canonical skill name and install dir are **`portable-core`** (frontmatter `name` = dir name); `debuggerstation-selfdeploy` is an archived 2026-11-11 research-run alias, never an install target. Verify from this clone — no research directory needed: `python -X utf8 skills/2026-11-11/portable-core/verify.py` (install contract: `tests/entry_checks.py`).
+4. **Skills:** [`skills/2026-11-11/`](skills/2026-11-11/portable-core/README.md) — portable core + station routers. The canonical skill name and install dir are **`portable-core`** (frontmatter `name` = dir name); `debuggerstation-selfdeploy` is an archived 2026-11-11 research-run alias, never an install target. Verify from this clone — no research directory needed: `python -X utf8 skills/2026-11-11/portable-core/verify.py` (install contract: `tests/entry_checks.py`).
 5. **AI entry point:** [`docs/AI_ENTRY.md`](docs/AI_ENTRY.md) · what changed: [`CHANGELOG.md`](CHANGELOG.md) · releases: [`RELEASE.md`](RELEASE.md).
 
-6. **Current state:** single source — [docs/STATUS.md](docs/STATUS.md) (as_of 2026-11-12; includes Pages config, URL codes, CI and release counts).
+6. **Current closeout:** [docs/CURRENT-CLOSEOUT.md](docs/CURRENT-CLOSEOUT.md) separates current evidence from pending acceptance. [docs/STATUS.md](docs/STATUS.md) is the dated 2026-11-12 snapshot, including that day's Pages/CI observations.
 7. **Selected CLI profile:** [`docs/CURRENT-CLI-PROFILE.md`](docs/CURRENT-CLI-PROFILE.md) describes the candidate runner and bounded offline PCAP acceptance. Report it separately from package checks, real MCP-provider acceptance and whole-product release readiness.
 
 A **skeleton repository** for a portable reverse-engineering / security-analysis / debugging / unpacking / mobile-analysis / network-capture / system-inspection / MCP-automation workstation.
 
-Any agent (Claude / Codex / Gemini / Cursor / Copilot) or human can clone this repo and reconstruct, on their own machine, a tooling station that is **optimized for AI to drive** — following the docs and manifests here. This tree is a **reference skeleton**: the clone owner keeps their own tools and prompts (`OWNER.example.md` → gitignored `OWNER.md`). Agents may **self-maintain this clone** when the owner asks; stop lines cannot be waived in chat ([docs/MAINTAIN.md](docs/MAINTAIN.md)).
+Any agent (Claude / Codex / Gemini / Cursor / Copilot) or human can clone this repo and reconstruct, on their own machine, a tooling station that is **optimized for AI to drive** — following the docs and manifests here. This tree is a **reference skeleton**: the clone owner keeps their own tools and prompts (`OWNER.example.md` → gitignored `OWNER.md`). Agents may **self-maintain this clone** within the owner's current authorized scope; existing approvals and technical evidence gates remain in force ([AGENTS.md](AGENTS.md), [docs/MAINTAIN.md](docs/MAINTAIN.md)).
 
 After a job, agents score the slice (`skills/2026-11-11/station-routers/debugger-review`) and write `notes/` so the next session does not rediscover the same failure (Windows in-place `mcp`/`MCP`, Defender PUA, lazy MCP). See [docs/AGENT_EVOLUTION.md](docs/AGENT_EVOLUTION.md).
 
-> 📍 **Operating this station: start at [`.agent/HANDOFF.md`](.agent/HANDOFF.md).** It carries the
-> one rule everything else follows from, the four-command workflow, the capability table,
-> the traps in this repo's own tooling, and what is deliberately *not* claimed.
-> `.agent/RECOVERY-STATION.md` holds the measured detail behind it. Both are tracked on
-> purpose — they are the only artifacts that survive a lost machine.
+> **Operating this station:** read [current closeout](docs/CURRENT-CLOSEOUT.md), then
+> [the CLI profile](docs/CURRENT-CLI-PROFILE.md) for a selected run. The 2026-10-16
+> [handoff](.agent/HANDOFF.md) and 2026-09-30 recovery measurements are retained
+> history; check their commands against the current source before reusing them.
+
+For OMP skill installation, follow [INSTALL](skills/2026-11-11/portable-core/references/INSTALL.md):
+`omp skill list --json` and `omp read skill://portable-core` expose actual loading.
+Check the resolved project path and SHA-256 against the reviewed source; a matching
+name alone is insufficient.
 
 > ⚠️ **This repository ships no third-party tool binaries.** Tools are fetched from each official source via `manifests/` + `scripts/bootstrap.ps1`. See [DISCLAIMER.md](DISCLAIMER.md).
 
@@ -35,7 +39,7 @@ After a job, agents score the slice (`skills/2026-11-11/station-routers/debugger
 
 | Path | Contents |
 | --- | --- |
-| `AGENTS.md` | **Authoritative entry** for all AI agents — initialization handshake (ask-then-act), clone-owner overlay, MCP strategy, stop lines. Localized: `AGENTS.zh-CN.md` / `AGENTS.ja.md` / `AGENTS.ko.md`. See [docs/I18N.md](docs/I18N.md) and [docs/MAINTAIN.md](docs/MAINTAIN.md). |
+| `AGENTS.md` | **Authoritative entry** for all AI agents — initialization scope, clone-owner overlay, MCP strategy and evidence gates. Localized: `AGENTS.zh-CN.md` / `AGENTS.ja.md` / `AGENTS.ko.md`. See [docs/I18N.md](docs/I18N.md) and [docs/MAINTAIN.md](docs/MAINTAIN.md). |
 | `OWNER.example.md` | Template for gitignored `OWNER.md` — this clone's prompt pack. |
 | `docs/EVAL.md` | Static contract eval rubric (`scripts/eval-agent-contract.py`) |
 | `docs/BOOTSTRAP.md` | InstallRoot copy + project MCP (router-only vs inventory) |
@@ -76,7 +80,7 @@ powershell -File scripts\download-tools.ps1 -Apply
 ## What a fresh clone does not have
 
 Everything below was measured on 2026-10-03 against a pristine `git archive HEAD` export; current tracked-file
-counts live in [`docs/STATUS.md`](docs/STATUS.md) (as_of 2026-11-12) — not against this workstation, which has been built for a month.
+counts recorded later are in [`docs/STATUS.md`](docs/STATUS.md) (as_of 2026-11-12). Neither measurement describes a fresh export of the current integration.
 
 **That 2026-10-03 export contained 383 files and zero build products.** `.gitignore` excludes every `out/` directory, so
 `crackme-corpus/out/`, `managed-lab/out/` and `headless-lab/out/` are empty directories that do not
@@ -170,14 +174,14 @@ verdict as a finding.
 
 After cloning, resolve the UI locale ([docs/I18N.md](docs/I18N.md)) and **read the matching [AGENTS.md](AGENTS.md)** (`AGENTS.zh-CN.md` / `AGENTS.ja.md` / `AGENTS.ko.md`). Chat in that language. Git commits stay English.
 
-The key idea: when asked to set up the workstation, the AI **does not act immediately**. It explores (read-only), asks clarifying questions (install root, scope, which MCPs, whether to download binaries, AI client, system-level components), presents a plan, and only then — after your confirmation — runs `bootstrap.ps1`.
+For setup, the AI inspects the environment and presents the directories, selected MCPs, downloads and configuration it will change. It reuses the owner's supplied choices and authorization, asks only for material unresolved decisions, then runs `bootstrap.ps1` within that scope.
 
 Further reading:
 1. [AGENTS.md](AGENTS.md) — **authoritative entry**: handshake, MCP strategy, boundaries.
 2. [templates/INIT_QUESTIONNAIRE.md](templates/INIT_QUESTIONNAIRE.md) — the clarifying-questions checklist.
 3. [docs/AI_USAGE_GUIDE.md](docs/AI_USAGE_GUIDE.md) — reading order, what the AI may do on its own.
 4. [docs/WORKSTATION_RULES.md](docs/WORKSTATION_RULES.md) — full workstation rules, update/cleanup flow.
-5. [manifests/](manifests/) — tool & MCP manifests.
+5. [manifests/](manifests/tools.json) — tool & MCP manifests.
 6. [docs/extensions/INDEX.md](docs/extensions/INDEX.md) — extensions you can add.
 
 ## MCP strategy

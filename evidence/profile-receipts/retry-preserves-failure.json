@@ -1,0 +1,247 @@
+{
+  "schema_version": "run-receipt.1",
+  "run_id": "demo-run-retry",
+  "attempt_id": "attempt-002",
+  "parent_attempt_id": "attempt-001",
+  "profile_id": "public-core",
+  "profile_digest": "sha256:7264b8ecc9f09efa7fdc13622bf34d2c95f3a10ddae4cfedae31ca32522ac5d9",
+  "source": {
+    "repo": "dwgx/debugger-workstation-public (demo fixture)",
+    "commit": "cead322",
+    "dirty": false,
+    "manifest_sha256": "sha256:7264b8ecc9f09efa7fdc13622bf34d2c95f3a10ddae4cfedae31ca32522ac5d9",
+    "patch_sha256": null
+  },
+  "package": {
+    "kind": "clean-checkout",
+    "identity": "demo-fixture",
+    "sha256": "sha256:7264b8ecc9f09efa7fdc13622bf34d2c95f3a10ddae4cfedae31ca32522ac5d9"
+  },
+  "subject": {
+    "input_type": "synthetic-text-fixture",
+    "content_sha256": "sha256:e0ea9ed3f37820bf43664dd53f6259a443dfd5086a564257310cd2060810f876",
+    "size_bytes": 56,
+    "fixture_id": "demo-probe-output",
+    "fixture_version": "1",
+    "locator": "fixture (demo, no private path)"
+  },
+  "runtime": {
+    "os": "windows",
+    "arch": "x64",
+    "shell": "bash",
+    "interpreter": "python 3.14.7",
+    "backend": "none-static-demo",
+    "frontend_client": null
+  },
+  "session": null,
+  "test_case_id": "V-04",
+  "capability_ids": [
+    "native.static.demo"
+  ],
+  "oracle": {
+    "source": "oracle-public-core-demo.json",
+    "version": "demo-oracle-1",
+    "sha256": "sha256:7264b8ecc9f09efa7fdc13622bf34d2c95f3a10ddae4cfedae31ca32522ac5d9",
+    "assertion_ids": [
+      "S-01",
+      "N-01"
+    ],
+    "covers": [
+      "semantic facts",
+      "negative polarity"
+    ],
+    "independence": "DEMO: assertions fixed before fixture creation; not an independent measurement of any real tool"
+  },
+  "invocation": {
+    "command": "demo-fixture",
+    "args": [],
+    "cwd": "evidence/profile-receipts",
+    "env_keys": [],
+    "authorization_ref": "exec-pack demo (no product run)",
+    "redacted": true
+  },
+  "execution": {
+    "started_utc": "2026-11-11T11:00:00Z",
+    "finished_utc": "2026-11-11T11:00:11Z",
+    "expected_steps": [
+      "prepare",
+      "invoke-backend",
+      "collect",
+      "evaluate",
+      "cleanup",
+      "publish"
+    ],
+    "completed_steps": [
+      "prepare",
+      "invoke-backend",
+      "collect",
+      "evaluate",
+      "cleanup",
+      "publish"
+    ],
+    "observed_via": "runner",
+    "observed_exit": 1,
+    "expected_exit": 1,
+    "timeout_s": 120,
+    "cancelled": false,
+    "cleanup": "converged",
+    "terminal_state": "exited",
+    "backend_executed": true
+  },
+  "checks": [
+    {
+      "id": "I-01",
+      "kind": "integrity",
+      "expected": {
+        "artifact": "retry-preserves-failure/artifacts/attempt-2-output.txt",
+        "sha256": "sha256:e0ea9ed3f37820bf43664dd53f6259a443dfd5086a564257310cd2060810f876",
+        "size_bytes": 56
+      },
+      "observed": {},
+      "status": "passed",
+      "artifact": "retry-preserves-failure/artifacts/attempt-2-output.txt",
+      "source_status": null
+    },
+    {
+      "id": "E-01",
+      "kind": "execution",
+      "expected": {
+        "steps": [
+          "prepare",
+          "invoke-backend",
+          "collect",
+          "evaluate",
+          "cleanup",
+          "publish"
+        ],
+        "backend_executed": true
+      },
+      "observed": {
+        "completed_steps": [
+          "prepare",
+          "invoke-backend",
+          "collect",
+          "evaluate",
+          "cleanup",
+          "publish"
+        ],
+        "terminal_state": "exited",
+        "cleanup": "converged",
+        "backend_executed": true
+      },
+      "status": "passed",
+      "artifact": null,
+      "source_status": null
+    },
+    {
+      "id": "E-02",
+      "kind": "execution",
+      "expected": {
+        "expected_exit": 1
+      },
+      "observed": {
+        "observed_exit": 1,
+        "completed_steps": [
+          "prepare",
+          "invoke-backend",
+          "collect",
+          "evaluate",
+          "cleanup",
+          "publish"
+        ],
+        "terminal_state": "exited",
+        "backend_executed": true
+      },
+      "status": "passed",
+      "artifact": null,
+      "source_status": null
+    },
+    {
+      "id": "S-01",
+      "kind": "semantic",
+      "expected": {
+        "assertions": {
+          "imports": [
+            "KERNEL32.dll"
+          ]
+        }
+      },
+      "observed": {
+        "facts": {
+          "imports": [
+            "KERNEL32.dll"
+          ],
+          "entrypoint": "0x140001000"
+        }
+      },
+      "status": "passed",
+      "artifact": "retry-preserves-failure/artifacts/attempt-2-output.txt",
+      "source_status": null
+    },
+    {
+      "id": "N-01",
+      "kind": "negative",
+      "expected": {
+        "assertions": {
+          "imports": [
+            "KERNEL32.dll",
+            "FAKE.dll"
+          ]
+        }
+      },
+      "observed": {
+        "facts": {
+          "imports": [
+            "KERNEL32.dll"
+          ],
+          "entrypoint": "0x140001000"
+        }
+      },
+      "status": "passed",
+      "artifact": "retry-preserves-failure/artifacts/attempt-2-output.txt",
+      "source_status": null
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "retry-preserves-failure/artifacts/attempt-1-failure.log",
+      "sha256": "sha256:0ee2bd17dad78e746ea03362a4304dcc6c2202c0808d1a6f4c2893decce950c4",
+      "size_bytes": 57,
+      "media_type": "text/plain",
+      "purpose": "preserved parent failure bytes",
+      "attempt_id": "attempt-001",
+      "mtime_utc": "2026-11-11T14:44:44Z"
+    },
+    {
+      "path": "retry-preserves-failure/artifacts/attempt-2-output.txt",
+      "sha256": "sha256:e0ea9ed3f37820bf43664dd53f6259a443dfd5086a564257310cd2060810f876",
+      "size_bytes": 56,
+      "media_type": "text/plain",
+      "purpose": "retry attempt output",
+      "attempt_id": "attempt-002",
+      "mtime_utc": "2026-11-11T14:44:44Z"
+    }
+  ],
+  "result": {
+    "verdict": "pass",
+    "reason": "retry attempt passed; parent failure preserved unchanged",
+    "native_status": null,
+    "required_check_ids": [
+      "I-01",
+      "E-01",
+      "E-02",
+      "S-01",
+      "N-01"
+    ]
+  },
+  "limitations": [
+    "DEMO fixture, not a product acceptance receipt",
+    "semantic layer compares declared observed facts; deriving facts from artifact bytes is not implemented"
+  ],
+  "next_step": {
+    "command": "python -X utf8 -B scripts/verify-profile.py --schema schemas/run-receipt.v1.json --receipt evidence/profile-receipts/<fixture>.json --oracle evidence/profile-receipts/oracle-public-core-demo.json",
+    "prerequisites": [
+      "python 3.9+ stdlib only"
+    ]
+  }
+}

@@ -9,7 +9,7 @@
 | --- | --- |
 | [`AGENTS.zh-CN.md`](../AGENTS.zh-CN.md) | **中文权威入口**：初始化握手（先问后做）、克隆主人覆盖层、MCP 策略、红线。英文正文仍是 [`AGENTS.md`](../AGENTS.md)。 |
 | [`docs/i18n/zh-CN/AI_USAGE_GUIDE.md`](i18n/zh-CN/AI_USAGE_GUIDE.md) | 阅读顺序、AI 可自行决定的事、必须确认的事。 |
-| [`CLAUDE.md`](../CLAUDE.md) / [`GEMINI.md`](../GEMINI.md) / [`.github/copilot-instructions.md`](../.github/copilot-instructions.md) / [`.cursor/rules/`](../.cursor/rules/) | 各客户端入口，全部指回 `AGENTS.md`。 |
+| [`CLAUDE.md`](../CLAUDE.md) / [`GEMINI.md`](../GEMINI.md) / [`.github/copilot-instructions.md`](../.github/copilot-instructions.md) / [`.cursor/rules/`](../.cursor/rules/debugger-workstation.mdc) | 各客户端入口，全部指回 `AGENTS.md`。 |
 | [`templates/i18n/zh-CN/INIT_QUESTIONNAIRE.md`](../templates/i18n/zh-CN/INIT_QUESTIONNAIRE.md) | 驱动初始化的澄清问题清单。 |
 
 客户端入口只是指针，不是第二份契约。它们和 `AGENTS.md` 冲突时，以 `AGENTS.md` 为准。
@@ -19,7 +19,7 @@
 | 路径 | 内容 |
 | --- | --- |
 | [`skills/2026-11-11/portable-core/SKILL.md`](../skills/2026-11-11/portable-core/SKILL.md) | 便携核心技能：部署 / 加入 harness / 自测 / 自修 / 诊断。 |
-| [`skills/2026-11-11/station-routers/`](../skills/2026-11-11/station-routers/) | 站点路由（`debugger-workstation`、`debugger-review`）。它们取代旧版 [`skills/debugger-workstation/SKILL.md`](../skills/debugger-workstation/SKILL.md) 与 [`skills/debugger-review/SKILL.md`](../skills/debugger-review/SKILL.md)；旧文件保留，文件头标 `SUPERSEDED`。 |
+| [`skills/2026-11-11/station-routers/`](../skills/2026-11-11/station-routers/debugger-workstation/SKILL.md) | 站点路由（`debugger-workstation`、`debugger-review`）。它们取代旧版 [`skills/debugger-workstation/SKILL.md`](../skills/debugger-workstation/SKILL.md) 与 [`skills/debugger-review/SKILL.md`](../skills/debugger-review/SKILL.md)；旧文件保留，文件头标 `SUPERSEDED`。 |
 | [`releases/2026-11-11-full-library/README.md`](../releases/2026-11-11-full-library/README.md) | 已发布的证据 / 主张库。 |
 | [`releases/2026-11-11-full-library/RELEASE-GATE-STATUS.md`](../releases/2026-11-11-full-library/RELEASE-GATE-STATUS.md) | 历史发布闸门；保留原文，引用时带上日期与分母。 |
 

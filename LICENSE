@@ -27,8 +27,9 @@ LICENSE-docs. If a path could be read as both, this license wins: code,
 configuration and the agent contract stay MIT, so a fork may be closed.
 
 Third-party tools and third-party MCP servers keep the copyright and license
-of their respective upstreams; this repository redistributes none of their
-code or binaries. See DISCLAIMER.md.
+of their respective upstreams. Reviewed source patches under patches/ retain
+their upstream license notices; third-party tool binaries are not distributed
+here. See DISCLAIMER.md.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

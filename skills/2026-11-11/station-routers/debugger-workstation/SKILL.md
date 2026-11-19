@@ -1,34 +1,43 @@
 ---
 name: debugger-workstation
-description: 'Station-bound router for binary/APK/DLL/pcap/memory-dump reverse engineering in the WorkStation debugger tree: use it when unpacking, disassembling, triaging a memory dump or pcap, bootstrapping tools, or recovering a broken session at this station; not for readable source or live hosts. Routes the init handshake (AGENTS.md, OWNER.md, manifests, I18N questionnaire), high-risk drivers/Npcap/Defender/samples with consequences + rollback and never-silent-install, lazy MCP with debugger-router only and never a user-global mcp-all, tool downloads via bootstrap.ps1 dry-run then -Apply with manifest + version + hash, English commits, and the 2026-09-19 hard ban on the vrc-dcc/vrc-review/vrc-world family. Keywords: reverse engineering, RE, binary, APK, DLL, pcap, memory dump, IDA, idalib, Npcap, drivers, workstation, debugger-router, bootstrap, recovery, handshake.'
+description: Route reverse engineering, unpacking, binary/APK/pcap or memory triage, station bootstrap and session recovery through a configured debugger-workstation repository. Use when a task needs the station's tools, MCP router or mission evidence.
 license: MIT
-compatibility: 'Requires Python 3.10+, git, and PowerShell 7 (pwsh) for scripts/bootstrap.ps1 and download-tools.ps1; optional GitHub CLI (gh) for read-only issue lookup. IDA/id alib and Npcap are optional per task and are never installed silently. Runs against the station tree D:/Software/Tool/WorkStation/debugger on Windows x64.'
+compatibility: "A configured station repository and the tools needed by the selected task. Python 3.10+ for Python scripts; use each station script's documented PowerShell version on Windows. Git is needed for Git provenance, not for every review or archive check."
 metadata:
   version: "1"
-  last-reviewed: "2026-11-11"
+  last-reviewed: "2026-11-19"
   spec: "agentskills.io/specification"
-  owner: "RestoreWorkerB | D:/Software/Tool/WorkStation/debugger/skills/debugger-workstation/SKILL.md"
+  owner: "repository maintainers | station-routers/debugger-workstation"
 ---
-# debugger-workstation (station router)
+# debugger-workstation — station task router
 
-Authoritative files live in the station tree; this skill only routes. Read them before acting.
+Resolve the station repository from the current task or clone configuration: it
+contains `AGENTS.md`, `manifests/` and `mcp/`. A copied skill directory is not the
+station root. If that root is unknown, resolve it before running station commands.
+All paths below are relative to that repository.
 
-- Root contract: `<repo>/AGENTS.md` (+ locale variants).
-- Init: read `README.md`, `AGENTS.md`, gitignored `OWNER.md`, `manifests/*.json`, `docs/I18N.md`; ask the language/handshake questionnaire, then plan.
-- Recovery after a broken session: `.agent/RECOVERY-STATION.md`.
-- High risk (drivers / Npcap / Defender / samples): state consequences + rollback, then follow intent; never silent-install drivers.
-- MCP: default `debugger-router` only; never a user-global `mcp-all`; do not add a second IDA server if idalib exists.
-- Tools: use `scripts/bootstrap.ps1` (dry-run → `-Apply`) and `download-tools.ps1 -Apply`.
-- Git commits stay English; the contract changes in git, not chat (`docs/MAINTAIN.md`).
-- Closeout for a material job is dual-axis — artifact axis + evidence axis — run against `skills/debugger-review`.
+1. Read `AGENTS.md` (+ locale), local `OWNER.md` when present and
+   `docs/CURRENT-CLOSEOUT.md`. Current Owner decisions define this task's scope;
+   historical notes or personal authorizations do not expand or veto it.
+2. For setup, use `README.md`, the selected manifests and questionnaire to resolve
+   only unanswered choices. Use `scripts/bootstrap.ps1` dry-run before the
+   authorized `-Apply`; download only the selected tools.
+3. For a run, choose the current profile (`docs/CURRENT-CLI-PROFILE.md`), descriptors
+   and mission contracts. `.agent/HANDOFF.md` (2026-10-16) and
+   `.agent/RECOVERY-STATION.md` (2026-09-30) are historical recovery references.
+4. Default to `debugger-router`; preserve user-global MCP and do not add a second
+   IDA server when idalib already serves the task. Verify tool version/hash and
+   semantic output, not just availability or an exit-0 probe.
+5. Close material work with `skills/2026-11-11/station-routers/debugger-review/SKILL.md`.
+   Report implementation, actual tests, acceptance and publication separately.
 
-## Hard bans
+Keep root approval/nonce and evidence mechanisms. High-risk work needs stated
+consequences and rollback; never silently install drivers/Npcap or run untrusted
+samples on the host. The `vrc-dcc` / `vrc-review` / `vrc-world` family and overlays
+remain retired (2026-09-19). Report an unrun step as `[UNVERIFIED]`. Never weaken a
+valid check for PASS; a checker defect needs a counterexample and independent review.
 
-- `vrc-dcc` / `vrc-review` / `vrc-world` and their overlays are banned since 2026-09-19 (`AGENTS.md` + retired note). Never restore them, never re-add a VRC overlay.
-- Never install a driver, Npcap, or any kernel component silently; never run an untrusted sample on the host.
-- Never widen MCP beyond `debugger-router` into the user-global config.
-
-## Honesty gate
-
-- A RED check is reported RED. Never edit a check to make it green; fix the work or report the failure with its command and stderr.
-- Anything not actually run is marked `[UNVERIFIED]`.
+When installing this router, keep one active canonical copy and verify the
+harness's resolved source path and SHA-256 against reviewed bytes. The repository's
+`skills/2026-11-11/portable-core/references/INSTALL.md` demonstrates this for OMP;
+use this router's own canonical name and expected source path.

@@ -32,38 +32,67 @@ $z7 = @(
 ) | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
 if (-not $z7) { throw 'Need 7z.exe (install 7-Zip, or extract 7z2602-extra from the cache first).' }
 
-$unpack = Join-Path $InstallRoot '_cache-unpack'
-New-Item -ItemType Directory -Force -Path $unpack | Out-Null
-& $z7 x $ArchivePath "-o$unpack" -y
-if ($LASTEXITCODE -ne 0) { throw "7z extract failed: $LASTEXITCODE" }
-
-$stage = Join-Path $InstallRoot '_download-stage'
-New-Item -ItemType Directory -Force -Path $stage | Out-Null
-$stageSrc = Join-Path $unpack '_download-stage'
-if (Test-Path -LiteralPath $stageSrc) {
-    Copy-Item (Join-Path $stageSrc '*') $stage -Force
+# Only this invocation owns this fresh staging directory. Never reuse or purge
+# the legacy _cache-unpack: it may hold the input archive or another caller's data.
+function Remove-OwnedCacheStage([string]$Path) {
+    $item = Get-Item -LiteralPath $Path -Force
+    if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+        # Remove the link itself; do not traverse its target during cleanup.
+        if ($item.PSIsContainer) { [IO.Directory]::Delete($item.FullName) }
+        else { [IO.File]::Delete($item.FullName) }
+        return
+    }
+    if ($item.PSIsContainer) {
+        foreach ($child in @(Get-ChildItem -LiteralPath $Path -Force)) {
+            Remove-OwnedCacheStage -Path $child.FullName
+        }
+        [IO.Directory]::Delete($item.FullName)
+    } else {
+        Remove-Item -LiteralPath $item.FullName -Force
+    }
 }
 
-$ceSrc = Join-Path $unpack 'Cheat Engine'
-$ceDest = Join-Path $InstallRoot 'Debuggers\Cheat Engine'
-if (Test-Path -LiteralPath $ceSrc) {
-    New-Item -ItemType Directory -Force -Path $ceDest | Out-Null
-    Copy-Item (Join-Path $ceSrc '*') $ceDest -Recurse -Force
-}
+$unpack = Join-Path $InstallRoot ('_cache-unpack-' + [guid]::NewGuid().ToString('N'))
+$ownsUnpack = $false
+try {
+    # No -Force: a pre-existing path must not be adopted as this run's property.
+    New-Item -ItemType Directory -Path $unpack | Out-Null
+    $ownsUnpack = $true
+    & $z7 x $ArchivePath "-o$unpack" -y
+    if ($LASTEXITCODE -ne 0) { throw "7z extract failed: $LASTEXITCODE" }
 
-$npcap = Get-ChildItem $unpack -Recurse -Filter 'npcap-*.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
-if ($npcap) {
-    $dest = Join-Path $InstallRoot 'Network-HTTP\Npcap-installer'
-    New-Item -ItemType Directory -Force -Path $dest | Out-Null
-    Copy-Item $npcap.FullName $dest -Force
-    Write-Host "Npcap installer copied. Free Npcap is GUI-only (/S is OEM). Run: $($npcap.Name)"
-}
+    $stage = Join-Path $InstallRoot '_download-stage'
+    New-Item -ItemType Directory -Force -Path $stage | Out-Null
+    $stageSrc = Join-Path $unpack '_download-stage'
+    if (Test-Path -LiteralPath $stageSrc) {
+        Copy-Item (Join-Path $stageSrc '*') $stage -Force
+    }
 
-$ws = Get-ChildItem $unpack -Recurse -Filter 'WiresharkPortable*.paf.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
-if ($ws) {
-    $dest = Join-Path $InstallRoot 'Network-HTTP\Wireshark'
-    New-Item -ItemType Directory -Force -Path $dest | Out-Null
-    Copy-Item $ws.FullName $dest -Force
+    $ceSrc = Join-Path $unpack 'Cheat Engine'
+    $ceDest = Join-Path $InstallRoot 'Debuggers\Cheat Engine'
+    if (Test-Path -LiteralPath $ceSrc) {
+        New-Item -ItemType Directory -Force -Path $ceDest | Out-Null
+        Copy-Item (Join-Path $ceSrc '*') $ceDest -Recurse -Force
+    }
+
+    $npcap = Get-ChildItem $unpack -Recurse -Filter 'npcap-*.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($npcap) {
+        $dest = Join-Path $InstallRoot 'Network-HTTP\Npcap-installer'
+        New-Item -ItemType Directory -Force -Path $dest | Out-Null
+        Copy-Item $npcap.FullName $dest -Force
+        Write-Host "Npcap installer copied. Free Npcap is GUI-only (/S is OEM). Run: $($npcap.Name)"
+    }
+
+    $ws = Get-ChildItem $unpack -Recurse -Filter 'WiresharkPortable*.paf.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($ws) {
+        $dest = Join-Path $InstallRoot 'Network-HTTP\Wireshark'
+        New-Item -ItemType Directory -Force -Path $dest | Out-Null
+        Copy-Item $ws.FullName $dest -Force
+    }
+} finally {
+    if ($ownsUnpack -and (Test-Path -LiteralPath $unpack)) {
+        Remove-OwnedCacheStage -Path $unpack
+    }
 }
 
 Write-Host 'Next: powershell -File scripts\download-tools.ps1 -Apply  (expands zips into category dirs)'

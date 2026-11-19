@@ -1,38 +1,44 @@
 ---
 name: debugger-review
-description: 'Use after unpack/RE/boot/tool downloads, or when reviewing debugger work quality (评分/进化/收尾) before claiming done: read-only review of artifacts, evidence, exit conventions and handoff at this station. Checks that every claim maps to a concrete artifact path or command output with [UNVERIFIED] marked explicitly, that unpack/tool-download steps are reproducible via manifest + version + hash, that high-risk driver/Npcap/sample actions carry a rollback and a written consequence note, that exit/handoff and the board/digest reflect the true state, and that the report leads with the conclusion. Keeps RED gates RED and the 2026-09-19 vrc-dcc/vrc-review/vrc-world ban intact. Keywords: review, 收尾, 评分, 进化, done criteria, evidence, artifact, atomicity, probe coverage, exit conventions, handoff, rollback, reproducibility, UNVERIFIED, debugger.'
+description: Review a debugger-workstation task before closeout. Use to check artifacts, semantic test evidence, source identity, rollback and handoff after reverse engineering, bootstrap, tool changes or maintenance, with unverified claims made explicit.
 license: MIT
-compatibility: 'Requires Python 3.10+, git, and PowerShell 7 (pwsh) to run station scripts and re-check artifacts; optional GitHub CLI (gh) for read-only issue lookup. Review is read-only against the station tree D:/Software/Tool/WorkStation/debugger on Windows x64; it never installs tools, drivers or Npcap.'
+compatibility: "A configured station repository and readable task evidence. Use Python 3.10+ or the documented PowerShell version only when a targeted verification needs them. Review does not install tools or drivers or modify the artifact under review."
 metadata:
   version: "1"
-  last-reviewed: "2026-11-11"
+  last-reviewed: "2026-11-19"
   spec: "agentskills.io/specification"
-  owner: "RestoreWorkerB | D:/Software/Tool/WorkStation/debugger/skills/debugger-review/SKILL.md"
+  owner: "repository maintainers | station-routers/debugger-review"
 ---
-# debugger-review (station review router)
+# debugger-review — evidence and artifact review
 
-Read-only review of a debugger work item. Authoritative artifacts live in the station tree; read them before judging:
+Resolve the station repository from the task or clone configuration; do not infer
+it from an installed skill's location or the template author's machine. Paths
+below are repository-relative. Read `AGENTS.md` (+ locale), current Owner scope
+and `docs/CURRENT-CLOSEOUT.md` before judging. Current task decisions supersede
+stale notes while approval, nonce/ledger and technical evidence gates remain.
 
-- What "done" means: `.agent/success-when.md`
-- Artifact/atomicity rules: `.agent/atomic-artifacts.md`
-- Probe coverage: `.agent/probe-coverage.md`
-- Exit conventions: `.agent/exit-conventions.md`
-- Clones/tool freshness: `.agent/clone-freshness.md`, `.agent/tools-manifest.md`
-- Blinds (known blind spots): `.agent/tool-blinds.md`
-- Evolution / lessons: `docs/AGENT_EVOLUTION.md`
-- Current handoff: `.agent/HANDOFF.md`
+Use `docs/CURRENT-CLI-PROFILE.md`, `docs/ROUTER_DESCRIPTORS.md` and
+`docs/MISSION-SUCCESS-CONTRACTS.md` for the relevant execution path. Load only the
+needed `.agent/` references: `atomic-artifacts.md`, `success-when.md`,
+`exit-conventions.md`, `probe-coverage.md`, `clone-freshness.md`,
+`tools-manifest.md` or `tool-blinds.md`. The 2026-10-16 `.agent/HANDOFF.md` is
+historical context, not the current closeout authority.
 
-Checklist:
-1. Every claim maps to a concrete artifact path or command output; `[UNVERIFIED]` is explicit.
-2. Unpacked/tool-download steps are reproducible (manifest + version + hash), not just "it worked here".
-3. High-risk actions (drivers/Npcap/samples) have a rollback and a written consequence note.
-4. Exit/handoff updated; the next action is one line; board/digest reflects the true state.
-5. Report: conclusion first, evidence second, no praise; list remaining unknowns.
+Check both artifact and evidence:
 
-Never modify the artifact under review during the review pass.
+1. Map each claim to an artifact or command/result with source version/hash and
+   explicit `[UNVERIFIED]` gaps. Copy, package PASS, actual loader source and model
+   use are separate claims; a skill's name alone does not identify its bytes.
+2. For the changed behavior, inspect semantic output and a meaningful negative
+   control. Preserve applicable old evidence; repeat tests only for a concrete gap.
+3. Verify high-risk consequences, rollback and approval/nonce provenance. Never
+   silently install drivers/Npcap, run untrusted host samples or widen user-global MCP.
+4. Distinguish implemented, runtime-tested, independently accepted and published.
+   Lead the report with the conclusion, remaining limits and one useful next action;
+   persist a reusable lesson through `docs/AGENT_EVOLUTION.md` when warranted.
 
-## Gates that must not be softened
-
-- A RED gate stays RED: never edit a check to make it green; fix the work or report the failure with its command and stderr.
-- `vrc-dcc` / `vrc-review` / `vrc-world` and their overlays are banned since 2026-09-19; a review never accepts them as restored work.
-- Commits stay English; the contract changes in git, not chat (`docs/MAINTAIN.md`).
+Do not modify the reviewed artifact during this pass. Never weaken a valid check
+to obtain PASS; a suspected checker defect needs a reproducible counterexample
+and independent review. The `vrc-dcc` / `vrc-review` / `vrc-world` family and
+overlays remain retired (2026-09-19). Current Owner decisions do not bypass the
+underlying approval or evidence mechanisms.

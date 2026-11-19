@@ -1,0 +1,280 @@
+--- a/src/mcp_wireshark/read_tools.py
++++ b/src/mcp_wireshark/read_tools.py
+@@ -9,7 +9,7 @@
+ import json
+ from typing import Any
+ 
+-from mcp.types import TextContent, Tool, ToolAnnotations
++from mcp.types import CallToolResult, TextContent, Tool, ToolAnnotations
+ 
+ from .iec61850 import (
+     BASE_FILTERS,
+@@ -789,7 +789,12 @@
+         return [TextContent(type="text", text=f"Error running expert analysis: {e}")]
+ 
+ 
+-async def handle_decode_protocol(arguments: dict[str, Any]) -> list[TextContent]:
++def _decode_error(message: str) -> CallToolResult:
++    """Decode failures must not become successful text-only MCP responses."""
++    return CallToolResult(content=[TextContent(type="text", text=message)], isError=True)
++
++
++async def handle_decode_protocol(arguments: dict[str, Any]) -> list[TextContent] | CallToolResult:
+     """Extract per-packet protocol fields via ``tshark -T fields -e ...``."""
+     file_path = arguments["file_path"]
+     protocol = arguments["protocol"]
+@@ -800,11 +805,11 @@
+     try:
+         validated_path = validate_file_path(file_path)
+         if not validated_path.exists():
+-            return [TextContent(type="text", text=f"Error: File not found: {file_path}")]
++            return _decode_error(f"Error: File not found: {file_path}")
+         file_path = str(validated_path)
+ 
+         if not isinstance(protocol, str) or not protocol.strip():
+-            return [TextContent(type="text", text="Error: 'protocol' must be a non-empty string.")]
++            return _decode_error("Error: 'protocol' must be a non-empty string.")
+ 
+         base_filter, default_fields = _resolve_protocol(protocol)
+ 
+@@ -812,33 +817,23 @@
+         # to curated defaults; otherwise error out.
+         if user_fields is not None:
+             if not isinstance(user_fields, list) or not user_fields:
+-                return [
+-                    TextContent(
+-                        type="text",
+-                        text="Error: 'fields' must be a non-empty list when provided.",
+-                    )
+-                ]
++                return _decode_error("Error: 'fields' must be a non-empty list when provided.")
+             if len(user_fields) > 20:
+-                return [TextContent(type="text", text="Error: maximum 20 fields allowed.")]
++                return _decode_error("Error: maximum 20 fields allowed.")
+             fields: list[str] = []
+             for field in user_fields:
+                 if not isinstance(field, str) or not field.strip():
+-                    return [TextContent(type="text", text=f"Error: invalid field name: {field!r}")]
++                    return _decode_error(f"Error: invalid field name: {field!r}")
+                 validate_display_filter(field)
+                 fields.append(field.strip())
+         elif default_fields is not None:
+             fields = default_fields
+         else:
+-            return [
+-                TextContent(
+-                    type="text",
+-                    text=(
+-                        f"Error: protocol {protocol!r} has no curated defaults. "
+-                        "Pass an explicit 'fields' list. Known protocols with "
+-                        f"defaults: {_supported_protocols()}."
+-                    ),
+-                )
+-            ]
++            return _decode_error(
++                f"Error: protocol {protocol!r} has no curated defaults. "
++                "Pass an explicit 'fields' list. Known protocols with "
++                f"defaults: {_supported_protocols()}."
++            )
+ 
+         # base_filter is either a known internal string (PROTOCOL_BASE_FILTERS)
+         # or the user-supplied ``protocol`` token; either way validate it.
+@@ -879,7 +874,7 @@
+         ]
+ 
+     except Exception as e:
+-        return [TextContent(type="text", text=f"Error decoding protocol: {e}")]
++        return _decode_error(f"Error decoding protocol: {e}")
+ 
+ 
+ async def handle_protocol_stats(arguments: dict[str, Any]) -> list[TextContent]:
+--- a/src/mcp_wireshark/server.py
++++ b/src/mcp_wireshark/server.py
+@@ -3,7 +3,7 @@
+ from typing import Any
+ 
+ from mcp.server import Server
+-from mcp.types import TextContent, Tool
++from mcp.types import CallToolResult, TextContent, Tool
+ 
+ from .read_tools import READ_HANDLERS, READ_TOOLS
+ from .utils import WiresharkNotFoundError, check_wireshark_installed
+@@ -35,29 +35,29 @@
+ 
+ 
+ @app.call_tool()
+-async def call_tool(name: str, arguments: Any) -> list[TextContent]:
++async def call_tool(name: str, arguments: Any) -> list[TextContent] | CallToolResult:
+     """Route a tool call to the appropriate handler."""
+     try:
+         tools = check_wireshark_installed()
+         if not tools["tshark"]:
+-            return [
+-                TextContent(
+-                    type="text",
+-                    text="Error: tshark not found. Please install Wireshark/tshark.",
+-                )
+-            ]
++            return _tool_error("Error: tshark not found. Please install Wireshark/tshark.")
+ 
+         if name in READ_HANDLERS:
+             return await READ_HANDLERS[name](arguments)
+         if name in WRITE_HANDLERS:
+             return await WRITE_HANDLERS[name](arguments)
+ 
+-        return [TextContent(type="text", text=f"Unknown tool: {name}")]
++        return _tool_error(f"Unknown tool: {name}")
+ 
+     except WiresharkNotFoundError as e:
+-        return [TextContent(type="text", text=f"Error: {e}")]
++        return _tool_error(f"Error: {e}")
+     except Exception as e:
+-        return [TextContent(type="text", text=f"Error: {e}")]
++        return _tool_error(f"Error: {e}")
++
++
++def _tool_error(message: str) -> CallToolResult:
++    """Keep failure text while preserving failure status through the MCP SDK."""
++    return CallToolResult(content=[TextContent(type="text", text=message)], isError=True)
+ 
+ 
+ async def main() -> None:
+--- a/tests/test_dissector_tools.py
++++ b/tests/test_dissector_tools.py
+@@ -10,6 +10,7 @@
+ from unittest.mock import AsyncMock, patch
+ 
+ import pytest
++from mcp.types import CallToolResult
+ 
+ from mcp_wireshark.read_tools import (
+     PROTOCOL_DEFAULTS,
+@@ -208,7 +209,9 @@
+         {"file_path": str(pcap), "protocol": "http", "filter": "x; rm -rf /"}
+     )
+ 
+-    assert "error" in result[0].text.lower() or "invalid" in result[0].text.lower()
++    assert isinstance(result, CallToolResult)
++    assert result.isError is True
++    assert "error" in result.content[0].text.lower() or "invalid" in result.content[0].text.lower()
+ 
+ 
+ @pytest.mark.asyncio
+@@ -217,7 +220,9 @@
+     pcap.touch()
+ 
+     result = await handle_decode_protocol({"file_path": str(pcap), "protocol": "ftp"})
+-    assert "no curated defaults" in result[0].text.lower()
++    assert isinstance(result, CallToolResult)
++    assert result.isError is True
++    assert "no curated defaults" in result.content[0].text.lower()
+ 
+ 
+ @pytest.mark.asyncio
+@@ -257,7 +262,9 @@
+         }
+     )
+ 
+-    assert "maximum 20" in result[0].text.lower()
++    assert isinstance(result, CallToolResult)
++    assert result.isError is True
++    assert "maximum 20" in result.content[0].text.lower()
+ 
+ 
+ @pytest.mark.asyncio
+--- /dev/null
++++ b/tests/test_error_results.py
+@@ -0,0 +1,93 @@
++"""Regression tests for failure status across decode and low-level SDK routing."""
++from pathlib import Path
++from unittest.mock import AsyncMock, patch
++
++import pytest
++from mcp.types import CallToolRequest, CallToolRequestParams, CallToolResult, TextContent
++
++from mcp_wireshark import server
++from mcp_wireshark.read_tools import handle_decode_protocol
++from mcp_wireshark.utils import WiresharkNotFoundError
++
++
++async def routed(arguments: dict[str, object], name: str = "decode_protocol") -> CallToolResult:
++    request = CallToolRequest(
++        method="tools/call", params=CallToolRequestParams(name=name, arguments=arguments)
++    )
++    with patch("mcp_wireshark.server.check_wireshark_installed", return_value={"tshark": "fixture"}):
++        response = await server.app.request_handlers[CallToolRequest](request)
++    assert isinstance(response.root, CallToolResult)
++    return response.root
++
++
++@pytest.mark.asyncio
++async def test_error_result_positive_list_preserved(tmp_path: Path) -> None:
++    pcap = tmp_path / "fixture.pcap"
++    pcap.touch()
++    table = "frame.number\tdns.qry.name\n1\tError.example\n"
++    args = {"file_path": str(pcap), "protocol": "dns"}
++    with patch("mcp_wireshark.read_tools.run_tshark", AsyncMock(return_value=table)):
++        direct = await handle_decode_protocol(args)
++        wire = await routed(args)
++    assert isinstance(direct, list)
++    assert isinstance(direct[0], TextContent)
++    assert wire.isError is False
++    assert wire.content == direct
++    assert "Error.example" in wire.content[0].text
++
++
++@pytest.mark.asyncio
++async def test_error_result_decode_malformed(tmp_path: Path) -> None:
++    pcap = tmp_path / "bad.pcap"
++    pcap.write_bytes(b"not a capture")
++    args = {"file_path": str(pcap), "protocol": "dns"}
++    with patch("mcp_wireshark.read_tools.run_tshark", AsyncMock(side_effect=RuntimeError("bad capture"))):
++        response = await routed(args)
++    assert response.isError is True
++    assert response.content[0].text == "Error decoding protocol: bad capture"
++
++
++@pytest.mark.asyncio
++async def test_error_result_outer_runtime_error(tmp_path: Path) -> None:
++    pcap = tmp_path / "fixture.pcap"
++    pcap.touch()
++    with patch.dict(server.READ_HANDLERS, {"decode_protocol": AsyncMock(side_effect=RuntimeError("outer injected"))}):
++        response = await routed({"file_path": str(pcap), "protocol": "dns"})
++    assert response.isError is True
++    assert response.content[0].text == "Error: outer injected"
++
++
++@pytest.mark.asyncio
++async def test_error_result_outer_wireshark_missing(tmp_path: Path) -> None:
++    pcap = tmp_path / "fixture.pcap"
++    pcap.touch()
++    with patch.dict(server.READ_HANDLERS, {"decode_protocol": AsyncMock(side_effect=WiresharkNotFoundError("missing injected"))}):
++        response = await routed({"file_path": str(pcap), "protocol": "dns"})
++    assert response.isError is True
++    assert response.content[0].text == "Error: missing injected"
++
++
++@pytest.mark.asyncio
++async def test_error_result_tshark_missing_and_unknown_tool() -> None:
++    with patch("mcp_wireshark.server.check_wireshark_installed", return_value={"tshark": None}):
++        response = await server.call_tool("decode_protocol", {})
++    assert isinstance(response, CallToolResult)
++    assert response.isError is True
++    response = await routed({}, name="controlled_unknown_tool")
++    assert response.isError is True
++    assert response.content[0].text == "Unknown tool: controlled_unknown_tool"
++
++
++@pytest.mark.asyncio
++@pytest.mark.parametrize("changes", [
++    {"protocol": ""}, {"fields": []}, {"fields": "wrong type"},
++    {"fields": [""]}, {"file_path": "missing-owned.pcap"},
++])
++async def test_error_result_decode_validation(tmp_path: Path, changes: dict[str, object]) -> None:
++    pcap = tmp_path / "fixture.pcap"
++    pcap.touch()
++    args = {"file_path": str(pcap), "protocol": "dns", **changes}
++    response = await handle_decode_protocol(args)
++    assert isinstance(response, CallToolResult)
++    assert response.isError is True
++    assert response.content[0].text.startswith("Error:")

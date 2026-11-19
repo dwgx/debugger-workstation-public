@@ -1,0 +1,59 @@
+{
+  "oracle_version": "demo-oracle-1",
+  "profile_id": "public-core",
+  "frozen_at_utc": "2026-11-11T00:00:00Z",
+  "note": "DEMO oracle for the three fixture receipts only. Not a product acceptance oracle, not derived from any product run.",
+  "required_check_ids": [
+    "I-01",
+    "E-01",
+    "E-02",
+    "S-01",
+    "N-01"
+  ],
+  "frozen_attempt_ids": [
+    "attempt-001"
+  ],
+  "frozen_prior_artifacts": [
+    {
+      "path": "touch-only-stale/artifacts/probe-output.txt",
+      "sha256": "sha256:46e8d57a911603260decdb5977010342539c82aaacd934f62619d273efbd8416",
+      "size_bytes": 67,
+      "attempt_id": "attempt-001"
+    },
+    {
+      "path": "retry-preserves-failure/artifacts/attempt-1-failure.log",
+      "sha256": "sha256:0ee2bd17dad78e746ea03362a4304dcc6c2202c0808d1a6f4c2893decce950c4",
+      "size_bytes": 57,
+      "attempt_id": "attempt-001"
+    }
+  ],
+  "frozen_prior_attempts": [
+    {
+      "attempt_id": "attempt-001",
+      "outcome": "fail",
+      "artifacts": [
+        {
+          "path": "retry-preserves-failure/artifacts/attempt-1-failure.log",
+          "sha256": "sha256:0ee2bd17dad78e746ea03362a4304dcc6c2202c0808d1a6f4c2893decce950c4"
+        }
+      ]
+    }
+  ],
+  "checks": {
+    "S-01": {
+      "assertions": {
+        "imports": [
+          "KERNEL32.dll"
+        ]
+      }
+    },
+    "N-01": {
+      "assertions": {
+        "imports": [
+          "KERNEL32.dll",
+          "FAKE.dll"
+        ]
+      }
+    }
+  }
+}

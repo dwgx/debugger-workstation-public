@@ -6,18 +6,22 @@
 
 ## 从这里开始
 
-1. **先 clone**，再读 [`AGENTS.zh-CN.md`](AGENTS.zh-CN.md)（英文权威版 [`AGENTS.md`](AGENTS.md)）——AI 的权威契约：先问后做、红线。
+1. **先 clone**，再读 [`AGENTS.zh-CN.md`](AGENTS.zh-CN.md)（英文权威版 [`AGENTS.md`](AGENTS.md)）——AI 的权威契约：当前任务范围、MCP 边界与证据门。
 2. **只跑 dry-run：** `pwsh scripts/bootstrap.ps1 -InstallRoot "D:\Tool\debugger"`——只打印计划，不写盘、不下载。
 3. **2026-11-11 证据发布：** [`releases/2026-11-11-full-library/README.md`](releases/2026-11-11-full-library/README.md) 与 [`RELEASE-GATE-STATUS.md`](releases/2026-11-11-full-library/RELEASE-GATE-STATUS.md)——`RELEASE_GATE=RED`、`COMPLETENESS_VERDICT=NOT_COMPLETE`、**历史分类中的 268 个结构性阻塞**；发布不改变该结论。295 条是清单主张，不等于 295 个可运行工具。
-4. **技能包：** [`skills/2026-11-11/`](skills/2026-11-11/)——portable core + 站点路由。规范技能名与安装目录是 **`portable-core`**（frontmatter `name` = 目录名）；`debuggerstation-selfdeploy` 是 2026-11-11 研究轮的归档别名，永远不是安装目标。自检在当前 clone 内完成、不依赖研究目录：`python -X utf8 skills/2026-11-11/portable-core/verify.py`（安装契约：`tests/entry_checks.py`）。
+4. **技能包：** [`skills/2026-11-11/`](skills/2026-11-11/portable-core/README.md)——portable core + 站点路由。规范技能名与安装目录是 **`portable-core`**（frontmatter `name` = 目录名）；`debuggerstation-selfdeploy` 是 2026-11-11 研究轮的归档别名，永远不是安装目标。自检在当前 clone 内完成、不依赖研究目录：`python -X utf8 skills/2026-11-11/portable-core/verify.py`（安装契约：`tests/entry_checks.py`）。
 5. **AI 单一入口：** [`docs/AI_ENTRY.zh-CN.md`](docs/AI_ENTRY.zh-CN.md) · 改了什么：[`CHANGELOG.md`](CHANGELOG.md) · 发布页：[`RELEASE.md`](RELEASE.md)。
 
-6. **静态首页：** 仓库根的 [`index.html`](index.html) 是当前中英双语源码；[`docs/site/index.html`](docs/site/index.html) 保留为 2026-11-11 的历史首页快照。部署状态与实际站点 URL 须另外核验。
+6. **当前收口：** [`docs/CURRENT-CLOSEOUT.md`](docs/CURRENT-CLOSEOUT.md) 区分现有证据与待验收项；`docs/STATUS.md` 保留 2026-11-12 的状态快照。**静态首页：** 仓库根的 [`index.html`](index.html) 是当前中英双语源码；[`docs/site/index.html`](docs/site/index.html) 保留为 2026-11-11 的历史首页快照。部署状态与实际站点 URL 须另外核验。
 7. **有限 CLI 验收：** [`docs/CURRENT-CLI-PROFILE.md`](docs/CURRENT-CLI-PROFILE.md) 给出候选 runner 与离线 PCAP profile 的入口；它与包级检查、真实 MCP provider 验收、全产品发布分别报告。
+
+OMP 安装流程见 [INSTALL](skills/2026-11-11/portable-core/references/INSTALL.md)：
+用 `omp skill list --json` 和 `omp read skill://portable-core` 查看实际加载结果，核对项目内源路径、
+`source` 与审阅源文件的 SHA-256；名称相同并不足以证明加载的是正确副本。
 
 便携式逆向 / 安全分析 / 调试 / 解包 / 移动端分析 / 网络抓包 / 系统巡检 / MCP 自动化工作站的 **骨架仓库**。
 
-任何 AI agent(Claude / Codex / Gemini / Cursor / Copilot / Grok)或人类 clone 后,按 [docs/i18n/zh-CN/I18N.md](docs/i18n/zh-CN/I18N.md) 选定界面语言,走 [AGENTS.zh-CN.md](AGENTS.zh-CN.md) 握手,即可在自己机器上还原一个**可被 AI 最高效调用**的工具站。本树是**参考骨架**：主人保留自己的工具和提示词（`OWNER.example.md` → gitignore 的 `OWNER.md`）。主人要求时 agent 可以**改这个 clone**；聊天不能取消红线（[docs/i18n/zh-CN/MAINTAIN.md](docs/i18n/zh-CN/MAINTAIN.md)）。对话用中文；git 提交说明保持英文。
+任何 AI agent(Claude / Codex / Gemini / Cursor / Copilot / Grok)或人类 clone 后,按 [docs/i18n/zh-CN/I18N.md](docs/i18n/zh-CN/I18N.md) 选定界面语言,走 [AGENTS.zh-CN.md](AGENTS.zh-CN.md) 握手,即可在自己机器上还原一个**可被 AI 最高效调用**的工具站。本树是**参考骨架**：主人保留自己的工具和提示词（`OWNER.example.md` → gitignore 的 `OWNER.md`）。agent 可以在主人当前授权范围内**改这个 clone**，保留现有审批和技术证据门（[AGENTS.zh-CN.md](AGENTS.zh-CN.md)、[维护说明](docs/i18n/zh-CN/MAINTAIN.md)）。对话用中文；git 提交说明保持英文。
 
 > ⚠️ **本仓库不分发任何第三方工具二进制。** 工具靠 `manifests/` + `scripts/bootstrap.ps1` 从各官方源拉取。详见 [DISCLAIMER.zh-CN.md](DISCLAIMER.zh-CN.md)。
 
@@ -27,7 +31,7 @@
 
 | 路径 | 内容 |
 | --- | --- |
-| `AGENTS.zh-CN.md` | 中文权威入口:初始化握手(先问后做)、克隆主人覆盖层、MCP 策略、红线。见 [docs/i18n/zh-CN/I18N.md](docs/i18n/zh-CN/I18N.md) 与 [docs/i18n/zh-CN/MAINTAIN.md](docs/i18n/zh-CN/MAINTAIN.md)。 |
+| `AGENTS.zh-CN.md` | 中文权威入口:初始化范围、克隆主人覆盖层、MCP 策略与证据门。见 [docs/i18n/zh-CN/I18N.md](docs/i18n/zh-CN/I18N.md) 与 [docs/i18n/zh-CN/MAINTAIN.md](docs/i18n/zh-CN/MAINTAIN.md)。 |
 | `OWNER.example.md` | gitignore 的 `OWNER.md` 模板。 |
 | `docs/EVAL.md` | 静态合同测评（英文，像测试一样）。 |
 | `CLAUDE.md` / `GEMINI.md` / `.github/copilot-instructions.md` / `.cursor/rules/` | 各客户端入口,均指向 `AGENTS.md`。 |
@@ -67,7 +71,7 @@ powershell -File scripts\download-tools.ps1 -Apply
 
 任何 AI clone 本仓库后,**先按界面语言读 [AGENTS.zh-CN.md](AGENTS.zh-CN.md)**(英文正文仍是 [AGENTS.md](AGENTS.md))。各客户端入口:Claude→`CLAUDE.md`、Gemini→`GEMINI.md`、Cursor→`.cursor/rules/`、Copilot→`.github/copilot-instructions.md`。
 
-核心理念:当被要求搭建工作站时,AI **不会直接动手**。它先只读探索 → 提澄清问题(安装根目录、范围、哪些 MCP、是否下载二进制、AI 客户端、系统级组件)→ 给出计划 → 经你确认后才执行 `bootstrap.ps1`。
+搭建前先检查环境并说明将修改的目录、所选 MCP、下载和配置。复用主人已经提供的选项和授权，只询问重要未决项，然后在该范围内执行 `bootstrap.ps1`。
 
 延伸阅读:
 1. [AGENTS.zh-CN.md](AGENTS.zh-CN.md) — **中文权威入口**。
@@ -75,7 +79,7 @@ powershell -File scripts\download-tools.ps1 -Apply
 3. [docs/i18n/zh-CN/I18N.md](docs/i18n/zh-CN/I18N.md) — 语言与初始化。
 4. [docs/i18n/zh-CN/AI_USAGE_GUIDE.md](docs/i18n/zh-CN/AI_USAGE_GUIDE.md) — 阅读顺序。
 5. [docs/WORKSTATION_RULES.md](docs/WORKSTATION_RULES.md) — 部署后中文操作规则。
-6. [manifests/](manifests/) — 工具与 MCP 清单。
+6. [manifests/](manifests/tools.json) — 工具与 MCP 清单。
 
 ## MCP 策略
 
@@ -83,7 +87,7 @@ powershell -File scripts\download-tools.ps1 -Apply
 
 ## 安全姿态
 
-工具集含调试器、注入器、Hook、Frida、抓包、内存分析工具,可能触发杀软/EDR。执行高风险操作(安装驱动/服务/Npcap、修改注册表/Defender/启动项、在宿主机运行可疑样本)前,AI 会简要说明后果与回滚方式,用户确认后按意图执行——不会无声操作,也不会拒绝。面向安全测试、CTF、逆向工程、研究和教育用途。
+工具集含调试器、注入器、Hook、Frida、抓包、内存分析工具,可能触发杀软/EDR。执行高风险操作(安装驱动/服务/Npcap、修改注册表/Defender/启动项、在宿主机运行可疑样本)前,AI 会简要说明后果与回滚方式,在现有授权范围内按意图执行，保留审批、隔离环境与技术证据要求。面向安全测试、CTF、逆向工程、研究和教育用途。
 
 ## 许可
 

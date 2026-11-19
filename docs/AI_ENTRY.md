@@ -13,7 +13,7 @@ This page adds no rules of its own: it routes to the files that own them.
 | [`CLAUDE.md`](../CLAUDE.md) | Claude entry file — points to `AGENTS.md`. |
 | [`GEMINI.md`](../GEMINI.md) | Gemini entry file — points to `AGENTS.md`. |
 | [`.github/copilot-instructions.md`](../.github/copilot-instructions.md) | Copilot entry file — points to `AGENTS.md`. |
-| [`.cursor/rules/`](../.cursor/rules/) | Cursor rules — point to `AGENTS.md`. |
+| [`.cursor/rules/`](../.cursor/rules/debugger-workstation.mdc) | Cursor rules — point to `AGENTS.md`. |
 | [`templates/INIT_QUESTIONNAIRE.md`](../templates/INIT_QUESTIONNAIRE.md) | The clarifying questions that drive initialization. |
 
 Every per-client file is a pointer, not a second contract. When they disagree,
@@ -24,7 +24,7 @@ Every per-client file is a pointer, not a second contract. When they disagree,
 | Path | What it is |
 | --- | --- |
 | [`skills/2026-11-11/portable-core/SKILL.md`](../skills/2026-11-11/portable-core/SKILL.md) | Portable core skill: deploy / add-to-harness / test / self-repair / diagnose. |
-| [`skills/2026-11-11/station-routers/`](../skills/2026-11-11/station-routers/) | Station routers (`debugger-workstation`, `debugger-review`). They supersede the legacy [`skills/debugger-workstation/SKILL.md`](../skills/debugger-workstation/SKILL.md) and [`skills/debugger-review/SKILL.md`](../skills/debugger-review/SKILL.md), which stay in-tree marked `SUPERSEDED`. |
+| [`skills/2026-11-11/station-routers/`](../skills/2026-11-11/station-routers/debugger-workstation/SKILL.md) | Station routers (`debugger-workstation`, `debugger-review`). They supersede the legacy [`skills/debugger-workstation/SKILL.md`](../skills/debugger-workstation/SKILL.md) and [`skills/debugger-review/SKILL.md`](../skills/debugger-review/SKILL.md), which stay in-tree marked `SUPERSEDED`. |
 | [`releases/2026-11-11-full-library/README.md`](../releases/2026-11-11-full-library/README.md) | The evidence/claims library that was published. |
 | [`releases/2026-11-11-full-library/RELEASE-GATE-STATUS.md`](../releases/2026-11-11-full-library/RELEASE-GATE-STATUS.md) | The historical release verdict; preserve and cite it with its date and denominator. |
 

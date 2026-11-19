@@ -6,7 +6,7 @@ OWNER: parent (took over stalled PackageDesign slice) | package/SELF-REPAIR.md
 - **High-risk** (drivers / Npcap / Defender / samples): write consequence + rollback BEFORE acting; if no rollback, STOP.
 - **Every fix needs a verify command** with exit + stdout; a fix with no verify command is `[UNVERIFIED]` and must not be auto-applied (FIX-KB-DESIGN negative control).
 - **No credential output**, no raw corpora, no `.jsonl`, no THINK, no PRIVATE visibility change, no `vrc-dcc` restore.
-- **RED-gate honesty**: a repaired tool does NOT turn `RELEASE_GATE=GREEN`; 268 blockers / 0/27 strict receipts stand.
+- **RED-gate honesty**: a repaired tool does NOT turn `RELEASE_GATE=GREEN`; the dated counts and denominators (2026-11-11 wave) stand as recorded in `references/VERIFY.md`.
 
 ## Loop (one form: mermaid flow, no duplicate SVG)
 ```mermaid
@@ -28,7 +28,7 @@ flowchart TD
 ```
 
 ## Symptom taxonomy (windows-agent-doctor S17, 2026-11-11)
-`shell` (bash vs PowerShell vs timeout.exe), `encoding` (`python -X utf8`, CJK TSV), `glob` (junction / path separators), `exit codes` (negation-regex false positives, P09), `tool freshness` (manifest + version + hash, S2 checklist 2).
+`shell` (bash vs PowerShell vs timeout.exe), `encoding` (`python -X utf8`, CJK TSV), `glob` (junction / path separators), `exit codes` (negation-regex false positives, P09), `transport` (`IncompleteRead(0 bytes read)` / upstream abort → same-name RESUME with incremental landing, never a twin re-dispatch), `tool freshness` (manifest + version + hash, S2 checklist 2).
 
 ## Official vs community
 - OFFICIAL.tsv: HEAD files / AGENTS.md / prior receipts / official README — `official-verified`.

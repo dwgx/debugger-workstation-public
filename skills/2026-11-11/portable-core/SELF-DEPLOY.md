@@ -1,38 +1,63 @@
-OWNER: parent (took over stalled PackageDesign slice) | package/SELF-DEPLOY.md
-# [NOT EXECUTED] remote deploy — SELF-DEPLOY entry
+OWNER: repository maintainers | portable-core/SELF-DEPLOY.md
+# SELF-DEPLOY — start from the repository you have
 
-> **READ THIS FIRST when handed the repo.** Enabling Pages / pushing / changing
-> settings / committing is `[NOT EXECUTED]` in this skill package. It produces a
-> REVIEWABLE LOCAL PACKAGE + A PLAN ONLY (S10 prior wave). A remote action needs
-> one explicit Owner sentence + a scoped Worker.
+Use the current clone Owner's scope and root `AGENTS.md`. Reuse already granted
+authorization; an old named-worker or read-only assignment does not add a new
+permission gate. Technical approvals, nonce/ledger and evidence gates still apply.
 
-## ONE env self-check command (READ-ONLY)
+## 1. Check the local runtime
+
 ```sh
-python -X utf8 -c "import sys,subprocess as s; print('python='+sys.version.split()[0]); print('git='+s.check_output(['git','--version'],text=True).strip())" && C:/Program Files/Git/usr/bin/timeout.exe 60 git -C F:/GENESIS-ARCHIVE/10-STORE/12-RESEARCH-RUNS/build-weapon-library-20261110/_v4_public_probe rev-parse HEAD
+python -X utf8 -c "import sys; print('python='+sys.version.split()[0]); assert sys.version_info >= (3,10)"
 ```
-Expected: `python=3.10+`, a `git version` line, HEAD `875cd108a7c9015b4c7501d9f9698183916042e7`.
 
-## ONE copy-pasteable clone + verify command
+Choose one source route:
+
+- **Existing clone:** use it without cloning again. At its root, record
+  `git rev-parse HEAD` and `git status --short`; preserve existing dirty work.
+- **Extracted archive:** use the directory containing `AGENTS.md` and `skills/`.
+  No `.git` is expected. Record the supplied archive/source hash when available;
+  do not invent a commit or run a mandatory Git-HEAD probe.
+- **No local copy:** the following is for a shell supporting `&&` (Git Bash,
+  POSIX shell or PowerShell 7). The destination must not already exist:
+
 ```sh
-git clone --depth 1 https://github.com/dwgx/debugger-workstation-public.git _handoff_clone && git -C _handoff_clone rev-parse HEAD && python -X utf8 "F:/GENESIS-ARCHIVE/10-STORE/12-RESEARCH-RUNS/build-weapon-library-20261110/setukou-20261111/v5/publish/verify_publish.py"
+git clone --depth 1 https://github.com/dwgx/debugger-workstation-public.git _handoff_clone && git -C _handoff_clone rev-parse HEAD && python -X utf8 -B _handoff_clone/skills/2026-11-11/portable-core/verify.py
 ```
-Expected stdout tokens: `PUSHED_SHA=875cd108a7c9015b4c7501d9f9698183916042e7` / `VERDICT=PUBLISHED` (plus `MANIFEST_MATCH=YES`, `NO_FORBIDDEN_CONTENT=YES`, `PRIVATE_TREES_UNCHANGED=YES`, `ROLLBACK_WRITTEN=YES`).
 
-## Add the skill to your own harness
-Copy this `package/` dir into the harness skills dir (e.g. `~/.omp/agent/skills/debuggerstation-selfdeploy/`). `SKILL.md` `name` must match the package manifest name exactly (SmartCLI S18, 2026-11-11). Read `AGENTS.md` pointer. **No user-global `mcp-all`** (S1).
+Stop if cloning or verification fails. This command selects the remote revision
+available when it runs; record that revision instead of inheriting an older receipt.
 
-## Run the tests
+## 2. Verify the clone or archive
+
+From its root (for the new clone above, first `cd _handoff_clone`):
 ```sh
-cd "F:/GENESIS-ARCHIVE/10-STORE/12-RESEARCH-RUNS/debuggerstation-skill-revival-ai-selfdeploy-20261111/package" && python -X utf8 tests/verify.py
+python -X utf8 -B skills/2026-11-11/portable-core/verify.py
+python -X utf8 -B skills/2026-11-11/portable-core/tests/entry_checks.py
 ```
-Exit 0 + `VERDICT=PASS` required; a negative control (empty `verify_command` FIX-KB row) must go RED.
+Require exit 0 and `VERDICT=PASS` from both, using the denominators they print.
+Entry checks use disposable copies and include negative controls. A failed check
+must remain visible; package PASS does not prove every station capability works.
 
-## What an AI MAY / MAY NOT do
-MAY: read repo + intros + `SATURATION.tsv` + `RELEASE-GATE-STATUS.md` + FIX-KB; re-run read-only verifiers; draft local reviewable files; cite dated sources.
-MAY NOT: print/copy credential values (path only); change PRIVATE visibility; force push / history rewrite / `gh` write; restore `vrc-dcc` family; run untrusted binaries; touch raw corpora / `.jsonl` / THINK / Hackerone KB text; online exploitation / bounty targets / third-party penetration; write product trees without a named scoped Worker.
+## 3. Install and prove discovery
 
-## Rollback pointer
-`releases/2026-11-11-full-library/ROLLBACK.md` (append-only `git revert`, written + rehearsed, **NOT executed**). Any remote rollback needs a fresh Owner decision.
+Follow `references/INSTALL.md` for a project-scoped whole-package copy, checks run
+from the installed location, and actual OMP catalog/read commands. Verify the
+resolved source path and SHA-256 against this reviewed package. Copying a directory,
+passing the package validator and loading the skill are separate results.
 
-## Honest caveat
-`RELEASE_GATE=RED` / `COMPLETENESS_VERDICT=NOT_COMPLETE` / 295 claims, 27 REAL, 268 blockers. Strict in-package receipts = 0/27 (prior verifier D3). This repo ships evidence + claims, NOT "all capabilities work".
+For an already installed package, run `verify.py` and `tests/entry_checks.py` from
+that package directory; do not prepend the repository's `skills/2026-11-11/` path.
+
+## Repair, rollback and closeout
+
+Use `SELF-REPAIR.md` and a relevant dated FIX-KB row. Keep the preimage of the file
+you change, verify the result and roll back your own failed change without
+discarding unrelated work. Repository history/publication changes require the
+applicable Owner authorization; do not infer them from a historical quote.
+
+Keep credentials, raw corpora and private content out of public artifacts; do not
+change private visibility, install drivers silently, run untrusted samples on the
+host or widen user-global MCP. The dated release caveat and retired VRC family
+boundary are recorded in `SKILL.md`. Report package checks, harness loading,
+station runtime tests and remote publication separately, marking unrun steps.

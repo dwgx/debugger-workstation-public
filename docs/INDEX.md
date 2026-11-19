@@ -1,6 +1,6 @@
 # Repository index — classification, not deletion
 
-`as_of 2026-11-12`. Historical measurements below retain their original date and denominator. What lives where, and which files look like duplicates but are
+`Entry routes reviewed 2026-11-19`. Historical measurements below retain their original date and denominator. What lives where, and which files look like duplicates but are
 not. **Nothing was deleted to build this index**; overlapping files are kept because
 they answer different questions at different resolutions.
 
@@ -9,6 +9,7 @@ they answer different questions at different resolutions.
 - [`AI_ENTRY.md`](AI_ENTRY.md) / [`AI_ENTRY.zh-CN.md`](AI_ENTRY.zh-CN.md): contract, package checks and evidence scopes.
 - [`CURRENT-CLOSEOUT.md`](CURRENT-CLOSEOUT.md): current reviewed source, evidence boundaries, and interrupted-closeout re-entry.
 - [`CURRENT-CLI-PROFILE.md`](CURRENT-CLI-PROFILE.md): candidate strict runner and bounded offline PCAP profile.
+- Canonical station skills: [`debugger-workstation`](../skills/2026-11-11/station-routers/debugger-workstation/SKILL.md) and [`debugger-review`](../skills/2026-11-11/station-routers/debugger-review/SKILL.md). The portable package has its own [install and source-identity checks](../skills/2026-11-11/portable-core/references/INSTALL.md).
 - [`BOOTSTRAP.md`](BOOTSTRAP.md): router-only client entry, 20 backend definitions, and the distinct 24-component manifest denominator.
 - [`../index.html`](../index.html): current static front page source. `docs/site/index.html` is a frozen 2026-11-11 frontage snapshot retained for its historical verifier; it does not describe current deployment status.
 
@@ -16,8 +17,8 @@ they answer different questions at different resolutions.
 
 | File | Class | What it answers |
 | --- | --- | --- |
-| `HANDOFF.md` | operating entry | The one rule everything follows from, the four-command workflow, capability table, traps in this repo's own tooling, what is deliberately not claimed. |
-| `RECOVERY-STATION.md` | measured detail | The measurements behind `HANDOFF.md`; what to rebuild after a lost machine. |
+| `HANDOFF.md` | historical snapshot (2026-10-16) | Earlier workflow, capability table and tooling traps. Read current closeout first; verify old commands against current source. |
+| `RECOVERY-STATION.md` | historical measurements (2026-09-30) | Earlier recovery inventory; it is not a current installation receipt. |
 | `atomic-artifacts.md` | rule | Atomic-artifact integrity survey — how a truncated artifact is detected. |
 | `clone-freshness.md` | measured gap | What a fresh clone is missing (R3 / R5 / R6). |
 | `detail-2026-10-02-deep-review.md` | review detail | Deep review and expansion, 2026-10-02. |
@@ -80,7 +81,10 @@ Keep both:
 
 Both legacy files carry a `SUPERSEDED` line in their header. They are kept so old
 links and old clones do not break; the authoritative versions are in the 2026-11-11
-package.
+package. Install only one active canonical copy per skill in the selected harness
+scope; retain historical sources outside discovery directories. Verify actual
+loader source path and SHA-256, since the canonical name can resolve to an old
+directory when two copies declare the same name.
 
 ## Counts used above (2026-11-11 snapshot)
 
