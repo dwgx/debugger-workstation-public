@@ -75,6 +75,39 @@ jobs:
             if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
             Write-Host "$f parsed with no syntax errors."
           }
+      - name: Validate clean checkout installation closure
+        shell: pwsh
+        run: |
+          . ./scripts/installation-closure.ps1
+          $closure = Get-InstallationClosure -RepoRoot (Get-Location).Path -Mode CI
+          $closure.Report | ConvertTo-Json -Depth 6
+          if ($closure.Report.status -ne 'READY') { exit 1 }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify portable entry and counterexamples
+        shell: pwsh
+        run: |
+          python -X utf8 -B skills/2026-11-11/portable-core/verify.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -X utf8 -B skills/2026-11-11/portable-core/tests/entry_checks.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Install and reject incomplete clean archives (PowerShell 5.1 and 7)
+        shell: pwsh
+        run: |
+          $work = Join-Path $env:RUNNER_TEMP ('installation-closure-' + [guid]::NewGuid().ToString('N'))
+          New-Item -ItemType Directory -Path $work | Out-Null
+          $zip = Join-Path $work 'source.zip'
+          $source = Join-Path $work 'source'
+          git archive --format=zip --output=$zip HEAD
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Expand-Archive -LiteralPath $zip -DestinationPath $source
+          # This step's children must discover each shell's native modules.
+          Remove-Item Env:PSModulePath -ErrorAction SilentlyContinue
+          $ps51 = Join-Path $env:WINDIR 'System32/WindowsPowerShell/v1.0/powershell.exe'
+          $ps7 = Join-Path $PSHOME 'pwsh.exe'
+          python -X utf8 -B "$source/tests/installation_closure/test_driver.py" --source $source --release-zip $zip --output-root "$work/results" --shell "ps51=$ps51" --shell "ps7=$ps7"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Resolve-locale hints
         shell: pwsh
         run: |

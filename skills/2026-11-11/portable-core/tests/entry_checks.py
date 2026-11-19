@@ -69,7 +69,10 @@ def gate_summary(r):
             "verdict": "PASS" if "VERDICT=PASS" in out else "FAIL",
             "missing": missing,
             "traceback": "Traceback (most recent call last)" in (out + (r.stderr or "")),
-            "rows": int(m.group(1)) if m else -1}
+            "rows": int(m.group(1)) if m else -1,
+            "contract_failed": next((line.split("=", 1)[1].split(",")
+                                     for line in out.splitlines()
+                                     if line.startswith("contract_failed=")), [])}
 
 
 def frozen_legacy_exit(pkg):
@@ -101,6 +104,12 @@ def case_install_missing(dst):
 def case_license_missing(dst):
     (dst / "LICENSE").unlink()
     return {"gate": gate_summary(live_gate(dst)), "old_exit": frozen_legacy_exit(dst)}
+
+
+def case_license_invalid(dst):
+    # A nonempty file is not sufficient: all entry points must use the same gate.
+    (dst / "LICENSE").write_text("Fixture with no license declaration.\n", encoding="utf-8")
+    return {"gate": gate_summary(live_gate(dst)), "old_exit": None}
 
 
 def case_name_mismatch(dst):
@@ -172,6 +181,7 @@ def main():
         "clean": copy_case(case_clean),
         "install_missing": copy_case(case_install_missing),
         "license_missing": copy_case(case_license_missing),
+        "license_invalid": copy_case(case_license_invalid),
         "name_mismatch": copy_case(case_name_mismatch, "portable-core-renamed"),
         "live_path": copy_case(case_live_path),
         "old_sha": copy_case(case_old_sha),
@@ -191,6 +201,10 @@ def main():
         "fix_kb_contract": real["checks"]["fix_kb_contract"],
     }
     cases = {
+        "LICENSE_invalid_contract_red":
+            g["license_invalid"]["exit"] == 1
+            and not g["license_invalid"]["traceback"]
+            and "license_declared" in g["license_invalid"]["contract_failed"],
         "E01_install_missing_structured_red":
             g["install_missing"]["exit"] == 1
             and "references/INSTALL.md" in g["install_missing"]["missing"]
@@ -228,7 +242,7 @@ def main():
     checks = dict(pkg_checks)
     checks.update(cases)
 
-    print("as_of=%s (denominator 7 package assertions + 9 case results + 1 negative "
+    print("as_of=%s (denominator 7 package assertions + 10 case results + 1 negative "
           "control)" % AS_OF)
     print("canonical_name=%s dir_name=%s name_match_dir=%s"
           % (real["name"] or "(none)", ROOT.name,
@@ -279,6 +293,8 @@ def main():
              ",".join(g["license_missing"]["missing"]) or "-",
              "YES" if not g["license_missing"]["traceback"] else "NO",
              r["license_missing"]["old_exit"]))
+    print("case_LICENSE_invalid: gate_exit=%d contract_failed=%s"
+          % (g["license_invalid"]["exit"], ",".join(g["license_invalid"]["contract_failed"])))
     print("negative_control: missing-LICENSE-as-green rejected=%s "
           "legal-row-14-accepted=%s hardcoded-13-accepts-14=%s | NO_FILE_WRITTEN"
           % ("YES" if neg_license_green else "NO",
