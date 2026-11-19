@@ -1,5 +1,9 @@
-OWNER: Round2Entry (entry slice, 2026-11-12) | package/references/VERIFY.md
+OWNER: repository maintainers | portable-core/references/VERIFY.md
 # VERIFY — the acceptance checks for this skill package
+
+Run the current commands and record their actual denominators. The case list and
+raw output below are the **2026-11-12 snapshot**, not a fixed expected count for
+later revisions. Installed-copy commands are in `INSTALL.md`.
 
 ## What runs
 `tests/package_contract.py` is the **single production validator**. `verify.py`,
@@ -8,19 +12,19 @@ OWNER: Round2Entry (entry slice, 2026-11-12) | package/references/VERIFY.md
 package root from `__file__`, so the working directory does not matter.
 
 `tests/verify.py` prints the 9 named honesty checks from 2026-11-11 and also gates
-on the validator's structured failures, so a missing file can never hide behind a
-green count. `tests/entry_checks.py` is the install contract: it runs every case on
+on the same `gate_accepts()` result as the validator CLI, so failed structured
+checks cannot hide behind the historical display count. `tests/entry_checks.py` is the install contract: it runs every case on
 a TEMP COPY of the package (the source is never modified).
 
 ## Required closure (structured, not traceback)
-`REQUIRED_FILES` lists 19 files: `SKILL.md`, `AGENTS.md`, `SELF-DEPLOY.md`,
+`REQUIRED_FILES` is authoritative. The 2026-11-12 snapshot listed 19 files: `SKILL.md`, `AGENTS.md`, `SELF-DEPLOY.md`,
 `SELF-REPAIR.md`, `LICENSE`, both READMEs, `verify.py`, `scripts/verify.py`, the
 three `tests/*.py` validators, `references/{INSTALL,VERIFY,FIX-KB,PRIOR-WAVE}.md`,
 `references/frozen/legacy-verify-2026-11-11.py.txt`, and both `FIX-KB/*.tsv`.
 A missing or empty item prints `MISSING_REQUIRED=<path>` / `EMPTY_REQUIRED=<path>`
 and exits 1 — a diagnosis, never a `FileNotFoundError` traceback.
 
-## Install-contract cases (9)
+## Recorded install-contract cases (2026-11-12)
 1. `references/INSTALL.md` deleted → gate FAIL with `MISSING_REQUIRED=references/INSTALL.md`.
    The frozen 2026-11-11 verifier still exits 0 on the same copy: that is the dated
    proof of the old omission, kept as evidence — the live gate is not required to
@@ -40,8 +44,8 @@ and exits 1 — a diagnosis, never a `FileNotFoundError` traceback.
 ## Command (from the clone root)
 `repo_root` = the directory holding `skills/`.
 ```sh
-python -X utf8 skills/2026-11-11/portable-core/verify.py
-python -X utf8 skills/2026-11-11/portable-core/tests/entry_checks.py
+python -X utf8 -B skills/2026-11-11/portable-core/verify.py
+python -X utf8 -B skills/2026-11-11/portable-core/tests/entry_checks.py
 ```
 
 ## Measured output of `verify.py` (as_of 2026-11-12, 9 checks + 1 negative control)
@@ -57,9 +61,9 @@ checks_run=9 checks_failed=0 structured_failures=0
 VERDICT=PASS
 ```
 Exit code 0. `official=8/6` and `community=5/4` are row counts against minimums 6
-and 4 — never against a fixed total. `tests/entry_checks.py` prints its own
-denominator (7 package assertions + 9 cases + 1 negative control) and
-`VERDICT=PASS`.
+and 4 — never against a fixed total. The recorded entry-check run had 7 package
+assertions + 9 cases + 1 negative control. Current `tests/entry_checks.py` prints
+its own denominator; do not require this historical total.
 
 ## EOL rule
 Text files (`*.md`, `*.tsv`, `*.py`) are newline-normalised before comparison, so
@@ -68,12 +72,14 @@ Evidence logs are the exception: they are stored and hashed as their true bytes.
 
 ## How to read RED
 `VERDICT=FAIL` plus `failed=<names>` (and `failure=<CODE>` lines) names the broken
-check, exit code 1. A RED is never fixed by editing the checker: fix the artifact or
-record it as a blocker. The negative control must stay RED-capable — it feeds a bad
+check, exit code 1. Never weaken a valid check to obtain PASS: fix the artifact or
+record the blocker. A suspected checker defect needs a reproducible counterexample
+and independent review. The negative control must stay RED-capable — it feeds a bad
 row through the production row validator, so a dead validator shows up as `NO`.
 
 ## Honesty
-A PASS means "the package is internally consistent and installable under its
-canonical name", NOT "all capabilities work". `RELEASE_GATE=RED`,
-`COMPLETENESS_VERDICT=NOT_COMPLETE`, 268 blockers and the strict `0/27` in-package
-receipt count stand after a PASS.
+A PASS means the package contract passed under its canonical name. It does not
+prove harness discovery, model use or all station capabilities. The 2026-11-11
+inventory's `RELEASE_GATE=RED`, `COMPLETENESS_VERDICT=NOT_COMPLETE`, 268 blockers
+and strict `0/27` in-package receipts remain dated evidence; a later package PASS
+does not rewrite that release verdict or turn those numbers into current counts.

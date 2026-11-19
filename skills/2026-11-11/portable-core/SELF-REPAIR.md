@@ -6,7 +6,7 @@ OWNER: parent (took over stalled PackageDesign slice) | package/SELF-REPAIR.md
 - **High-risk** (drivers / Npcap / Defender / samples): write consequence + rollback BEFORE acting; if no rollback, STOP.
 - **Every fix needs a verify command** with exit + stdout; a fix with no verify command is `[UNVERIFIED]` and must not be auto-applied (FIX-KB-DESIGN negative control).
 - **No credential output**, no raw corpora, no `.jsonl`, no THINK, no PRIVATE visibility change, no `vrc-dcc` restore.
-- **RED-gate honesty**: a repaired tool does NOT turn `RELEASE_GATE=GREEN`; 268 blockers / 0/27 strict receipts stand.
+- **RED-gate honesty**: a repaired tool does NOT turn `RELEASE_GATE=GREEN`; the dated counts and denominators (2026-11-11 wave) stand as recorded in `references/VERIFY.md`.
 
 ## Loop (one form: mermaid flow, no duplicate SVG)
 ```mermaid

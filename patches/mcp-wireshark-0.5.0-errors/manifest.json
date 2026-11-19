@@ -1,0 +1,48 @@
+{
+  "format": 1,
+  "package": "mcp-wireshark",
+  "tested_package_version": "0.5.0",
+  "upstream": "https://github.com/khuynh22/mcp-wireshark.git",
+  "patch": "error-results.patch",
+  "patch_sha256": "1b38effcc3a948d1139b377233db86470c1c18ef42148dc8fc86073554554d0a",
+  "files": [
+    {
+      "path": "src/mcp_wireshark/server.py",
+      "before_sha256": "330aa6a0fc0cbf2ce87c5ab5663b250f7d308b6f4b111e496a53cf7339442a26",
+      "after_sha256": "aa9295d3f882555f11d62e2be8cbf561c40ed9167258885178f10ab9b0b3b708"
+    },
+    {
+      "path": "src/mcp_wireshark/read_tools.py",
+      "before_sha256": "069b3ca582667e569e5673d4b0666aec9713c58767100b081948854f0270ea08",
+      "after_sha256": "2297b82642480e13949c14b04fdbc3c2b0adf65e167b3dc0ef517381fad93548"
+    },
+    {
+      "path": "tests/test_dissector_tools.py",
+      "before_sha256": "c4e718b3c8082d228ad578ba764c500794d426c1a499028bb016ee4c8ca1a443",
+      "after_sha256": "fc9e94b2decd7efdb4e2f43d57a963e73873806a337bb3ffaee4873d47c0ba0a"
+    },
+    {
+      "path": "tests/test_error_results.py",
+      "before_sha256": null,
+      "after_sha256": "389beadcaeea812c129bb226ac25dd43bcc77c75cd6990b3769df114cdbfd43e"
+    }
+  ],
+  "scope": "decode_protocol errors and shared outer routing errors; positive content unchanged",
+  "environment": {
+    "python": "3.14.7 Windows x64",
+    "provider_mcp_sdk": "1.29.1"
+  },
+  "validation": {
+    "baseline_error_assertions_failed": 3,
+    "selected_unit_cases_passed": 19,
+    "candidate_stdio_calls": 3,
+    "candidate_stdio_checks_passed": 13,
+    "original_wrapper_after_apply_checks_passed": 8
+  },
+  "not_claimed": [
+    "all provider tools",
+    "all internal handler error branches",
+    "full upstream test suite",
+    "SDK 2 compatibility"
+  ]
+}

@@ -1,49 +1,63 @@
-OWNER: parent (took over stalled PackageDesign slice) | package/SELF-DEPLOY.md
-# [NOT EXECUTED] remote deploy — SELF-DEPLOY entry
+OWNER: repository maintainers | portable-core/SELF-DEPLOY.md
+# SELF-DEPLOY — start from the repository you have
 
-> **READ THIS FIRST when handed the repo.** Enabling Pages / pushing / changing
-> settings / committing is `[NOT EXECUTED]` in this skill package. It produces a
-> REVIEWABLE LOCAL PACKAGE + A PLAN ONLY (S10 prior wave). A remote action needs
-> one explicit Owner sentence + a scoped Worker.
+Use the current clone Owner's scope and root `AGENTS.md`. Reuse already granted
+authorization; an old named-worker or read-only assignment does not add a new
+permission gate. Technical approvals, nonce/ledger and evidence gates still apply.
 
-## ONE env self-check command (READ-ONLY)
+## 1. Check the local runtime
+
 ```sh
-python -X utf8 -c "import sys,subprocess as s; print('python='+sys.version.split()[0]); print('git='+s.check_output(['git','--version'],text=True).strip())" && git -C . rev-parse HEAD
+python -X utf8 -c "import sys; print('python='+sys.version.split()[0]); assert sys.version_info >= (3,10)"
 ```
-Expected: `python=3.10+`, a `git version` line, and the HEAD of the clone you are
-standing in. The SHA is printed, never pinned: a pinned SHA goes stale on the next
-commit and turns a green check into a lie.
 
-## ONE copy-pasteable clone + verify command
+Choose one source route:
+
+- **Existing clone:** use it without cloning again. At its root, record
+  `git rev-parse HEAD` and `git status --short`; preserve existing dirty work.
+- **Extracted archive:** use the directory containing `AGENTS.md` and `skills/`.
+  No `.git` is expected. Record the supplied archive/source hash when available;
+  do not invent a commit or run a mandatory Git-HEAD probe.
+- **No local copy:** the following is for a shell supporting `&&` (Git Bash,
+  POSIX shell or PowerShell 7). The destination must not already exist:
+
 ```sh
-git clone --depth 1 https://github.com/dwgx/debugger-workstation-public.git _handoff_clone && git -C _handoff_clone rev-parse HEAD && python -X utf8 _handoff_clone/skills/2026-11-11/portable-core/verify.py
+git clone --depth 1 https://github.com/dwgx/debugger-workstation-public.git _handoff_clone && git -C _handoff_clone rev-parse HEAD && python -X utf8 -B _handoff_clone/skills/2026-11-11/portable-core/verify.py
 ```
-Expected stdout tokens: `VERDICT=PASS` with `checks_run=9 checks_failed=0`, plus the
-printed clone HEAD. Nothing here needs a research-archive path or a publish SHA:
-every path resolves from the clone you just made.
 
-## Add the skill to your own harness
-Copy this dir into the harness skills dir as `portable-core`
-(e.g. `~/.omp/agent/skills/portable-core/`). The dir name MUST equal the frontmatter
-`name` (SmartCLI S18, 2026-11-11); `references/INSTALL.md` has the full rule. Read the
-`AGENTS.md` pointer. **No user-global `mcp-all`** (S1). Writing into a live harness
-config is the reader's decision — this package never does it for them.
+Stop if cloning or verification fails. This command selects the remote revision
+available when it runs; record that revision instead of inheriting an older receipt.
 
-## Run the tests
-From the clone root (`repo_root` = the dir holding `skills/`):
+## 2. Verify the clone or archive
+
+From its root (for the new clone above, first `cd _handoff_clone`):
 ```sh
-python -X utf8 skills/2026-11-11/portable-core/tests/verify.py
-python -X utf8 skills/2026-11-11/portable-core/tests/entry_checks.py
+python -X utf8 -B skills/2026-11-11/portable-core/verify.py
+python -X utf8 -B skills/2026-11-11/portable-core/tests/entry_checks.py
 ```
-Exit 0 + `VERDICT=PASS` required from both. A negative control (empty `verify_command`
-FIX-KB row) must go RED, and a temp copy with `references/INSTALL.md` deleted must FAIL.
+Require exit 0 and `VERDICT=PASS` from both, using the denominators they print.
+Entry checks use disposable copies and include negative controls. A failed check
+must remain visible; package PASS does not prove every station capability works.
 
-## What an AI MAY / MAY NOT do
-MAY: read repo + intros + `SATURATION.tsv` + `RELEASE-GATE-STATUS.md` + FIX-KB; re-run read-only verifiers; draft local reviewable files; cite dated sources.
-MAY NOT: print/copy credential values (path only); change PRIVATE visibility; force push / history rewrite / `gh` write; restore `vrc-dcc` family; run untrusted binaries; touch raw corpora / `.jsonl` / THINK / Hackerone KB text; online exploitation / bounty targets / third-party penetration; write product trees without a named scoped Worker.
+## 3. Install and prove discovery
 
-## Rollback pointer
-`releases/2026-11-11-full-library/ROLLBACK.md` (append-only `git revert`, written + rehearsed, **NOT executed**). Any remote rollback needs a fresh Owner decision.
+Follow `references/INSTALL.md` for a project-scoped whole-package copy, checks run
+from the installed location, and actual OMP catalog/read commands. Verify the
+resolved source path and SHA-256 against this reviewed package. Copying a directory,
+passing the package validator and loading the skill are separate results.
 
-## Honest caveat
-`RELEASE_GATE=RED` / `COMPLETENESS_VERDICT=NOT_COMPLETE` / 295 claims, 27 REAL, 268 blockers. Strict in-package receipts = 0/27 (prior verifier D3). This repo ships evidence + claims, NOT "all capabilities work".
+For an already installed package, run `verify.py` and `tests/entry_checks.py` from
+that package directory; do not prepend the repository's `skills/2026-11-11/` path.
+
+## Repair, rollback and closeout
+
+Use `SELF-REPAIR.md` and a relevant dated FIX-KB row. Keep the preimage of the file
+you change, verify the result and roll back your own failed change without
+discarding unrelated work. Repository history/publication changes require the
+applicable Owner authorization; do not infer them from a historical quote.
+
+Keep credentials, raw corpora and private content out of public artifacts; do not
+change private visibility, install drivers silently, run untrusted samples on the
+host or widen user-global MCP. The dated release caveat and retired VRC family
+boundary are recorded in `SKILL.md`. Report package checks, harness loading,
+station runtime tests and remote publication separately, marking unrun steps.
